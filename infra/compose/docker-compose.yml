@@ -1,0 +1,213 @@
+# Pile Logeo. Profils : `dev` (réglages locaux, code monté, HTTP) et `prod` (voir docker-compose.prod.yml).
+# Démarrage : `make up`. Les services de données ne publient jamais de port sur l'hôte en production.
+name: logeo
+
+x-image: &image
+  image: logeo-serveur:local
+  build:
+    context: ../..
+    dockerfile: infra/docker/Dockerfile
+  restart: unless-stopped
+
+x-profils: &profils
+  profiles: ["dev", "prod"]
+
+x-code-dev: &code_dev
+  volumes:
+    - ../../serveur:/app
+
+services:
+  postgres:
+    <<: *profils
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    env_file: env/postgres.env
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c log_min_duration_statement=200
+      -c max_connections=100
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [interne]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d logeo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-cache:
+    <<: *profils
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    networks: [interne]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-queue:
+    <<: *profils
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_queue_data:/data
+    networks: [interne]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrer:
+    <<: [*profils, *image, *code_dev]
+    command: ["migrer"]
+    restart: "no"
+    env_file: [env/migrer.env]
+    volumes:
+      - ../../serveur:/app
+      - static:/var/lib/logeo/static
+    environment:
+      STATIC_ROOT: /var/lib/logeo/static
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [interne]
+
+  web-api:
+    <<: [*profils, *image, *code_dev]
+    command: ["web-api"]
+    env_file: [env/web-api.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      LOGEO_RELOAD: "1"
+    volumes:
+      - ../../serveur:/app
+      - media_tmp:/var/lib/logeo/media_tmp
+      - media_public:/var/lib/logeo/media_public
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+      redis-cache: {condition: service_healthy}
+      redis-queue: {condition: service_healthy}
+    networks: [interne, sortie]
+
+  realtime:
+    <<: [*profils, *image, *code_dev]
+    command: ["realtime"]
+    env_file: [env/realtime.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      LOGEO_RELOAD: "1"
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+      redis-queue: {condition: service_healthy}
+    networks: [interne]
+
+  admin:
+    <<: [*profils, *image, *code_dev]
+    command: ["admin"]
+    env_file: [env/admin.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.admin_local
+      LOGEO_RELOAD: "1"
+    volumes:
+      - ../../serveur:/app
+      - media_public:/var/lib/logeo/media_public:ro
+      - media_private:/var/lib/logeo/media_private
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+    networks: [interne]
+
+  worker:
+    <<: [*profils, *image, *code_dev]
+    command: ["worker"]
+    env_file: [env/worker.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+      redis-queue: {condition: service_healthy}
+    networks: [interne, sortie]
+
+  worker-media:
+    <<: [*profils, *image, *code_dev]
+    command: ["worker-media"]
+    env_file: [env/worker-media.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    volumes:
+      - ../../serveur:/app
+      - media_tmp:/var/lib/logeo/media_tmp
+      - media_public:/var/lib/logeo/media_public
+    cpus: 2.0
+    mem_limit: 1536m
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+      redis-queue: {condition: service_healthy}
+    networks: [interne]  # réseau interne : aucun accès à Internet
+
+  beat:
+    <<: [*profils, *image, *code_dev]
+    command: ["beat"]
+    env_file: [env/beat.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    deploy:
+      replicas: 1
+    depends_on:
+      migrer: {condition: service_completed_successfully}
+      redis-queue: {condition: service_healthy}
+    networks: [interne]
+
+  backup:
+    <<: *profils
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    command: ["bash", "/scripts/boucle.sh"]
+    env_file: [env/backup.env]
+    volumes:
+      - ../backup:/scripts:ro
+      - backups:/backups
+      - media_public:/var/lib/logeo/media_public:ro
+      - media_private:/var/lib/logeo/media_private:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [interne, sortie]
+
+  caddy:
+    <<: *profils
+    image: caddy:2
+    restart: unless-stopped
+    env_file: [env/caddy.env]
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile.local", "--adapter", "caddyfile"]
+    ports:
+      - "8080:80"
+    volumes:
+      - ../caddy/Caddyfile.local:/etc/caddy/Caddyfile.local:ro
+      - ../caddy/wellknown:/srv/wellknown:ro
+      - static:/srv/static:ro
+      - media_public:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web-api, realtime, admin]
+    networks: [interne, exposition]
+
+networks:
+  interne:
+    internal: true   # aucun accès à Internet, aucun port publié : réseau des données
+  sortie:            # sortie vers Internet (SMS, push, anti-robot) pour les seuls services qui en ont besoin
+  exposition:        # seul réseau relié à l'hôte, réservé à Caddy
+
+volumes:
+  pg_data:
+  redis_queue_data:
+  static:
+  media_tmp:
+  media_public:
+  media_private:   # monté uniquement dans admin et backup
+  backups:
+  caddy_data:
+  caddy_config:

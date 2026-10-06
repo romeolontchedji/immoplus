@@ -1,0 +1,128 @@
+# Caddy de production. Variables : DOMAIN, ADMIN_ALLOWED_IPS (liste d'adresses ou de plages, séparées par des espaces).
+# Les limites de corps (`request_body`) sont dans des branches `handle` distinctes : elles ne s'imbriquent jamais.
+{
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+(en_tetes_securite) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+	}
+}
+
+(statiques) {
+	handle /static/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+	handle /media/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+	handle /.well-known/assetlinks.json {
+		root * /srv/wellknown
+		rewrite * /assetlinks.json
+		file_server
+	}
+}
+
+www.{$DOMAIN} {
+	encode zstd gzip
+	import en_tetes_securite
+	log {
+		output stdout
+		format json
+	}
+	import statiques
+	handle /ws/* {
+		reverse_proxy realtime:8001
+	}
+	handle /uploads/* {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy web-api:8000
+	}
+	handle {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy web-api:8000
+	}
+}
+
+api.{$DOMAIN} {
+	encode zstd gzip
+	import en_tetes_securite
+	log {
+		output stdout
+		format json
+	}
+	handle /.well-known/assetlinks.json {
+		root * /srv/wellknown
+		rewrite * /assetlinks.json
+		file_server
+	}
+	handle /ws/* {
+		reverse_proxy realtime:8001
+	}
+	handle /uploads/* {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy web-api:8000
+	}
+	handle /v1/* {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy web-api:8000
+	}
+	handle /healthz {
+		reverse_proxy web-api:8000
+	}
+	handle /readyz {
+		reverse_proxy web-api:8000
+	}
+	handle {
+		respond 404
+	}
+}
+
+# Hôte d'administration : nom non devinable, absent de tout lien ; liste blanche obligatoire.
+# Si ADMIN_ALLOWED_IPS est vide, la valeur par défaut est une adresse de documentation (RFC 5737)
+# qui ne correspond à personne : l'hôte répond 404 à tout le monde.
+pilotage.{$DOMAIN} {
+	encode zstd gzip
+	import en_tetes_securite
+	header X-Robots-Tag "noindex, nofollow"
+	log {
+		output stdout
+		format json
+	}
+	@autorise remote_ip {$ADMIN_ALLOWED_IPS:192.0.2.1/32}
+	handle @autorise {
+		handle /static/* {
+			root * /srv
+			header Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+		handle {
+			request_body {
+				max_size 5MB
+			}
+			reverse_proxy admin:8002
+		}
+	}
+	handle {
+		respond 404
+	}
+}
