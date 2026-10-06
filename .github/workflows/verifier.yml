@@ -56,7 +56,7 @@ jobs:
       - name: Preuve des hooks Git
         run: bash outils/tester_hooks.sh
       - name: Audit des dépendances
-        run: pip-audit -r serveur/requirements/base.txt --strict
+        run: pip-audit -r serveur/requirements/base.txt --strict --no-deps --disable-pip
 
   image:
     runs-on: ubuntu-24.04

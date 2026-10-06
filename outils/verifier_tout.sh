@@ -29,8 +29,8 @@ etape "nom de la branche courante" python3 outils/verifier_branche.py
 optionnelle ruff "ruff check (serveur)" ruff check serveur
 optionnelle ruff "ruff check (outils)" ruff check --config outils/ruff.toml outils
 optionnelle ruff "ruff format --check" bash -c 'ruff format --check serveur && ruff format --check --config outils/ruff.toml outils'
-optionnelle djlint "djlint --check" djlint --check serveur/web
-etape "contrastes WCAG des jetons" python3 outils/contraste.py
+[ -d serveur/web ] && optionnelle djlint "djlint --check" djlint --check serveur/web
+[ -f serveur/web/static/css/tokens.css ] && etape "contrastes WCAG des jetons" python3 outils/contraste.py
 [ -d outils/tests ] && etape "tests des outils" python3 -m unittest discover -s outils/tests -q
 
 if [ -f serveur/manage.py ] && command -v python3 >/dev/null && python3 -c "import django" 2>/dev/null; then

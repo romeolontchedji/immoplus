@@ -9,8 +9,9 @@ git init -q -b main "$TMP/depot"
 cd "$TMP/depot"
 git config user.name "Test" && git config user.email "test@logeo.local"
 git remote add origin "$TMP/distant.git"
-mkdir -p outils .githooks
-cp "$SRC"/outils/*.py "$SRC"/outils/*.sh "$SRC"/outils/mots-interdits.toml outils/
+mkdir -p outils .githooks serveur
+cp "$SRC"/outils/*.py "$SRC"/outils/*.sh "$SRC"/outils/mots-interdits.toml "$SRC"/outils/ruff.toml outils/
+cp "$SRC"/serveur/pyproject.toml serveur/   # configuration ruff héritée par outils/ruff.toml
 cp "$SRC"/.githooks/* .githooks/
 git config core.hooksPath .githooks
 git add . && git commit -q -m "chore(outils): amorcer le dépôt de test" || { echo "✗ amorçage impossible"; exit 1; }
@@ -50,7 +51,7 @@ echo "Cas 7 — commit wip poussé"
 git checkout -q -b fix/essai-wip; ecrire b.txt deux; git commit -q --no-verify -m "wip"
 pousser origin fix/essai-wip; verdict 7 "commit « wip » poussé" refus $?
 echo "Cas 8 — secret"
-git checkout -q main; git checkout -q -b fix/essai-secret; ecrire c.py "cle = '$FAUX'"
+git checkout -q main; git checkout -q -b fix/essai-secret; ecrire c.py "cle = \"$FAUX\""   # guillemets doubles : conforme à ruff, seul le secret peut provoquer le refus
 git commit -q -m "chore(serveur): ajouter une clé"; verdict 8 "fausse clé secrète (commit)" refus $?
 git commit -q --no-verify -m "chore(serveur): ajouter une clé"
 pousser origin fix/essai-secret; verdict 8 "fausse clé secrète (push après --no-verify)" refus $?
