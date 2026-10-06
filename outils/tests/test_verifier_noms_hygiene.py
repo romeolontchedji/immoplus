@@ -78,3 +78,22 @@ class TestHygiene(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestExceptionsDjango(unittest.TestCase):
+    """Les chemins de modules imposés par Django sont tolérés ; le mot interdit reste refusé ailleurs."""
+
+    def setUp(self):
+        self.conf = vn.configuration()
+
+    def test_moteur_de_session_tolere(self):
+        ligne = 'SESSION_ENGINE = "django.contrib.sessions.backends.db"'
+        self.assertEqual(vn.erreurs_contenu("serveur/config/x.py", ligne, self.conf), [])
+
+    def test_moteur_de_base_tolere(self):
+        ligne = '"ENGINE": "django.db.backends.postgresql",'
+        self.assertEqual(vn.erreurs_contenu("serveur/config/x.py", ligne, self.conf), [])
+
+    def test_le_mot_seul_reste_refuse(self):
+        erreurs = vn.erreurs_contenu("serveur/apps/x.py", "dossier = 'backend/utils'", self.conf)
+        self.assertEqual(len(erreurs), 1)
