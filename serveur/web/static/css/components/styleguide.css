@@ -1,0 +1,41 @@
+/* Nuancier du styleguide (généré : une classe par jeton de couleur). */
+.nuancier { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); }
+.pastille { display: flex; flex-direction: column; gap: var(--sp-1); font-size: var(--fs-12); font-variant-numeric: tabular-nums; }
+.pastille__couleur { height: 3rem; border-radius: var(--rayon-1); border: var(--bordure); }
+.pastille__couleur--marque-50 { background: var(--marque-50); }
+.pastille__couleur--marque-100 { background: var(--marque-100); }
+.pastille__couleur--marque-200 { background: var(--marque-200); }
+.pastille__couleur--marque-300 { background: var(--marque-300); }
+.pastille__couleur--marque-400 { background: var(--marque-400); }
+.pastille__couleur--marque-500 { background: var(--marque-500); }
+.pastille__couleur--marque-600 { background: var(--marque-600); }
+.pastille__couleur--marque-700 { background: var(--marque-700); }
+.pastille__couleur--marque-800 { background: var(--marque-800); }
+.pastille__couleur--marque-900 { background: var(--marque-900); }
+.pastille__couleur--accent-50 { background: var(--accent-50); }
+.pastille__couleur--accent-100 { background: var(--accent-100); }
+.pastille__couleur--accent-200 { background: var(--accent-200); }
+.pastille__couleur--accent-300 { background: var(--accent-300); }
+.pastille__couleur--accent-400 { background: var(--accent-400); }
+.pastille__couleur--accent-500 { background: var(--accent-500); }
+.pastille__couleur--accent-600 { background: var(--accent-600); }
+.pastille__couleur--accent-700 { background: var(--accent-700); }
+.pastille__couleur--accent-800 { background: var(--accent-800); }
+.pastille__couleur--accent-900 { background: var(--accent-900); }
+.pastille__couleur--sable-0 { background: var(--sable-0); }
+.pastille__couleur--sable-25 { background: var(--sable-25); }
+.pastille__couleur--sable-50 { background: var(--sable-50); }
+.pastille__couleur--sable-100 { background: var(--sable-100); }
+.pastille__couleur--sable-200 { background: var(--sable-200); }
+.pastille__couleur--sable-300 { background: var(--sable-300); }
+.pastille__couleur--sable-400 { background: var(--sable-400); }
+.pastille__couleur--sable-500 { background: var(--sable-500); }
+.pastille__couleur--sable-600 { background: var(--sable-600); }
+.pastille__couleur--sable-700 { background: var(--sable-700); }
+.pastille__couleur--sable-800 { background: var(--sable-800); }
+.pastille__couleur--sable-900 { background: var(--sable-900); }
+.pastille__couleur--sable-950 { background: var(--sable-950); }
+.pastille__couleur--succes { background: var(--succes); }
+.pastille__couleur--avertissement { background: var(--avertissement); }
+.pastille__couleur--danger { background: var(--danger); }
+.pastille__couleur--information { background: var(--information); }

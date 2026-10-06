@@ -1,0 +1,24 @@
+.bouton {
+  --bouton-bg: var(--surface); --bouton-fg: var(--text); --bouton-bord: var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: var(--cible); padding: 0 var(--sp-5); border-radius: var(--rayon-pilule);
+  border: 1px solid var(--bouton-bord); background: var(--bouton-bg); color: var(--bouton-fg);
+  font-weight: 600; font-size: var(--fs-16); line-height: 1; text-decoration: none; cursor: pointer;
+  transition: background-color var(--duree-1) var(--courbe), transform var(--duree-1) var(--courbe), box-shadow var(--duree-1) var(--courbe);
+}
+.bouton:hover { background: var(--surface-sunken); }
+.bouton:active { transform: translateY(1px); }
+.bouton--primaire { --bouton-bg: var(--primary); --bouton-fg: var(--on-primary); --bouton-bord: var(--primary); box-shadow: var(--ombre-1); }
+.bouton--primaire:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.bouton--fantome { --bouton-bg: transparent; --bouton-bord: transparent; }
+.bouton--fantome:hover { background: var(--primary-soft); }
+.bouton--danger { --bouton-bg: var(--danger); --bouton-fg: var(--sable-0); --bouton-bord: var(--danger); }
+.bouton--danger:hover { background: var(--danger-text); border-color: var(--danger-text); }
+.bouton--grand { min-height: var(--cible-principale); padding-inline: var(--sp-8); font-size: var(--fs-18); }
+.bouton--petit { min-height: 2rem; padding-inline: var(--sp-3); font-size: var(--fs-14); }
+.bouton[disabled], .bouton[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.bouton[aria-busy="true"]::before {
+  content: ""; width: 1em; height: 1em; border-radius: 50%;
+  border: 2px solid currentColor; border-top-color: transparent; animation: tourne 0.7s linear infinite;
+}
+@keyframes tourne { to { transform: rotate(360deg); } }
