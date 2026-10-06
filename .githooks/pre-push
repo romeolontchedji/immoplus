@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Refuse le push au premier défaut : branche, push sur main, format des commits, contrôles complets.
+set -u
+cd "$(git rev-parse --show-toplevel)"
+ZERO="0000000000000000000000000000000000000000"
+remote="$1"
+refuser() { echo "" >&2; echo "✗ Push annulé : $1" >&2; echo "" >&2; exit 1; }
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$ZERO" ] && continue            # suppression de branche : rien à contrôler
+  branche="${remote_ref#refs/heads/}"
+  case "$remote_ref" in refs/heads/*) ;; *) continue ;; esac
+  if [ "$branche" = "main" ]; then
+    if [ "${LOGEO_PREMIER_PUSH:-0}" = "1" ] && [ "$remote_sha" = "$ZERO" ]; then
+      echo "ℹ Premier push d'amorçage sur main autorisé (LOGEO_PREMIER_PUSH=1)." >&2
+    else
+      refuser "push direct sur « main » interdit. Crée une branche (ex. feat/mon-changement) et ouvre une demande de fusion."
+    fi
+  fi
+  outils/dans-docker.sh python3 outils/verifier_branche.py "$branche" || refuser "nom de branche refusé (voir ci-dessus)."
+  if [ "$remote_sha" = "$ZERO" ]; then plage=("$local_sha" --not "--remotes=$remote"); else plage=("$remote_sha..$local_sha"); fi
+  for c in $(git rev-list "${plage[@]}"); do
+    [ "$(git rev-list --parents -n1 "$c" | wc -w)" -gt 2 ] && continue   # commit de fusion toléré
+    git log -1 --format=%B "$c" > /tmp/logeo-message-commit
+    outils/dans-docker.sh python3 outils/verifier_commit.py --push /tmp/logeo-message-commit \
+      || refuser "le commit ${c:0:8} ne respecte pas le format (voir ci-dessus)."
+  done
+done
+outils/verifier_tout.sh || refuser "les contrôles complets ont échoué (voir ci-dessus)."

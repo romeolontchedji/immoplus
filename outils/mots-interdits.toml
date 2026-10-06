@@ -1,0 +1,31 @@
+# Mots interdits dans les chemins, noms et contenus suivis par Git (voir AGENTS.md et le prompt §2).
+motifs = ["backend", "back-end"]
+
+# Jetons techniques imposés par les outils : une ligne qui en contient un est tolérée.
+exceptions_jetons = [
+  "AUTHENTICATION_BACKENDS",
+  "EMAIL_BACKEND",
+  "result_backend",
+  "CELERY_RESULT_BACKEND",
+  '"BACKEND"',
+  "'BACKEND'",
+  "BACKEND:",
+]
+
+# Fichiers qui expliquent la règle ou citent le cahier des charges : exemptés du contrôle de contenu.
+fichiers_exemptes = [
+  "AGENTS.md",
+  "docs/cahier-des-charges.md",
+  "docs/adr/",
+  "docs/verification.md",
+  "outils/mots-interdits.toml",
+  "outils/verifier_noms.py",
+  "outils/tester_hooks.sh",
+  "outils/tests/",
+]
+
+# Noms de fichiers majuscules autorisés.
+noms_majuscules = ["README", "AGENTS", "CLAUDE", "LICENSE", "CODEOWNERS", "Makefile", "Dockerfile", "LISEZMOI"]
+
+# Fichiers dont le nom est imposé par un outil externe.
+noms_imposes = ["pull_request_template.md"]
