@@ -30,7 +30,7 @@ fichiers_exemptes = [
 ]
 
 # Noms de fichiers majuscules autorisés.
-noms_majuscules = ["README", "AGENTS", "CLAUDE", "LICENSE", "CODEOWNERS", "Makefile", "Dockerfile", "LISEZMOI"]
+noms_majuscules = ["README", "AGENTS", "CLAUDE", "LICENSE", "CODEOWNERS", "Makefile", "Dockerfile", "LISEZMOI", "Caddyfile"]
 
 # Fichiers dont le nom est imposé par un outil externe.
 noms_imposes = ["pull_request_template.md"]

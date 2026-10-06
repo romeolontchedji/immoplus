@@ -97,3 +97,13 @@ class TestExceptionsDjango(unittest.TestCase):
     def test_le_mot_seul_reste_refuse(self):
         erreurs = vn.erreurs_contenu("serveur/apps/x.py", "dossier = 'backend/utils'", self.conf)
         self.assertEqual(len(erreurs), 1)
+
+
+class TestCaddyfile(unittest.TestCase):
+    def test_noms_imposes_par_caddy(self):
+        conf = vn.configuration()
+        for chemin in ("infra/caddy/Caddyfile", "infra/caddy/Caddyfile.local"):
+            self.assertEqual(vn.erreurs_chemin(chemin, conf), [], chemin)
+
+    def test_un_autre_nom_majuscule_reste_refuse(self):
+        self.assertTrue(vn.erreurs_chemin("infra/caddy/MonFichier", vn.configuration()))
