@@ -1,0 +1,39 @@
+name: commits
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Titre de la demande de fusion
+        env:
+          TITRE: ${{ github.event.pull_request.title }}
+        run: |
+          # Le titre suit le format d'en-tête ; la ligne Refs n'a de sens que dans les commits.
+          printf '%s\n\nRefs: n/a\n' "$TITRE" > /tmp/titre.txt
+          python3 outils/verifier_commit.py /tmp/titre.txt
+      - name: Nom de la branche
+        env:
+          BRANCHE: ${{ github.head_ref }}
+        run: python3 outils/verifier_branche.py "$BRANCHE"
+      - name: Chaque commit de la demande
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          TETE: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for c in $(git rev-list --no-merges "$BASE..$TETE"); do
+            git log -1 --format=%B "$c" > /tmp/message.txt
+            echo "== $c"
+            python3 outils/verifier_commit.py --push /tmp/message.txt
+          done
