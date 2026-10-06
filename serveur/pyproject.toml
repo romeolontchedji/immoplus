@@ -1,0 +1,139 @@
+[project]
+name = "logeo-serveur"
+version = "0.1.0"
+description = "Serveur Logeo : site, API et administration (monolithe modulaire Django)."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "T20", "DJ", "N"]
+ignore = ["S101", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/test.py" = ["S105"]
+"**/tests/**" = ["S", "B"]
+"tests/**" = ["S", "B"]
+"conftest.py" = ["S"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+testpaths = ["tests", "apps", "web", "adminsite"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers --strict-config"
+asyncio_mode = "auto"
+markers = [
+  "unitaire: test sans réseau, sans base si possible",
+  "integration: PostgreSQL réel, tâches immédiates, Channels en mémoire",
+  "api: test d'API et de contrat",
+  "ws: test temps réel (WebSocket)",
+  "securite: test de sécurité",
+  "e2e: site web, Playwright + axe",
+  "lent: charge et performance",
+  "pg: exige PostgreSQL réel",
+  "ffmpeg: exige ffmpeg",
+  "exigence(id): identifiant d'exigence du CDC couvert (EF-XXX-NN, ENF-XXX-NN)",
+]
+
+[tool.importlinter]
+root_packages = ["apps", "web", "adminsite", "config"]
+include_external_packages = false
+
+[[tool.importlinter.contracts]]
+name = "core n'importe aucune application"
+type = "forbidden"
+source_modules = ["apps.core"]
+forbidden_modules = [
+  "apps.accounts", "apps.listings", "apps.media", "apps.chat",
+  "apps.notifications", "apps.moderation", "apps.billing", "apps.audit",
+]
+
+[[tool.importlinter.contracts]]
+name = "accounts n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.accounts"]
+forbidden_modules = ["apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "listings n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.listings"]
+forbidden_modules = ["apps.accounts.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "media n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.media"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "chat n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.chat"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "notifications n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.notifications"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "moderation n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.moderation"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.billing.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "billing n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.billing"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.audit.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "audit n'importe pas les modèles des autres applications"
+type = "forbidden"
+source_modules = ["apps.audit"]
+forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "les adaptateurs n'importent pas les modèles"
+type = "forbidden"
+source_modules = ["apps.*.api", "apps.*.web", "apps.*.consumers", "apps.*.tasks"]
+forbidden_modules = ["apps.*.models"]
+allow_indirect_imports = true
+
+[tool.coverage.run]
+branch = true
+# Exclus de la mesure : réglages (vérifiés par sous-processus dans tests/securite/test_reglages.py),
+# amorces de processus (ASGI, Celery, beat) et URL d'administration (phase 1).
+omit = [
+  "config/settings/*",
+  "config/asgi.py",
+  "config/celery.py",
+  "config/beat_unique.py",
+  "config/urls_admin.py",
+  "*/tests/*",
+  "conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+
+[tool.djlint]
+profile = "django"
+indent = 2
+max_line_length = 120
+ignore = "H030,H031"

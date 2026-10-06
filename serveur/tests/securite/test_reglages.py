@@ -1,0 +1,72 @@
+"""Le démarrage échoue en production si DEBUG, OTP_DEBUG_CODE ou un secret de développement est présent."""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.securite
+SERVEUR = Path(__file__).resolve().parents[2]
+
+
+def importer(module: str, **env) -> subprocess.CompletedProcess:
+    propre = {
+        k: v for k, v in os.environ.items() if k not in {"SECRET_KEY", "DEBUG", "OTP_DEBUG_CODE"}
+    }
+    return subprocess.run(
+        [sys.executable, "-c", f"import {module}"],
+        cwd=SERVEUR,
+        env={**propre, **env},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize("module", ["config.settings.public", "config.settings.admin"])
+class TestRefusEnProduction:
+    def test_secret_absent(self, module):
+        r = importer(module)
+        assert r.returncode != 0 and "SECRET_KEY" in r.stderr
+
+    def test_secret_de_developpement(self, module):
+        r = importer(module, SECRET_KEY="dev-secret")
+        assert r.returncode != 0 and "SECRET_KEY" in r.stderr
+
+    def test_debug_actif(self, module):
+        r = importer(module, SECRET_KEY="x" * 60, DEBUG="1")
+        assert r.returncode != 0 and "DEBUG" in r.stderr
+
+    def test_code_otp_de_debogage(self, module):
+        r = importer(module, SECRET_KEY="x" * 60, OTP_DEBUG_CODE="123456")
+        assert r.returncode != 0 and "OTP_DEBUG_CODE" in r.stderr
+
+    def test_configuration_saine(self, module):
+        r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
+        assert r.returncode == 0, r.stderr
+
+
+def test_cookies_distincts_site_et_administration():
+    site = importer("config.settings.public", SECRET_KEY="a" * 60)
+    assert site.returncode == 0
+    sortie = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import config.settings.public as p, config.settings.admin as a;"
+            "import sys; sys.stdout.write(' '.join([p.SESSION_COOKIE_NAME, a.SESSION_COOKIE_NAME, p.SESSION_ENGINE, a.SESSION_ENGINE]))",
+        ],
+        cwd=SERVEUR,
+        env={**os.environ, "SECRET_KEY": "a" * 60},
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+    assert sortie[0] == "__Host-lgsid" and sortie[1] == "__Host-lgadm"
+    assert (
+        sortie[2].endswith("cached_db")
+        and sortie[3].endswith("db")
+        and not sortie[3].endswith("cached_db")
+    )

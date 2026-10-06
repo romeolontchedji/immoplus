@@ -1,0 +1,182 @@
+"""Réglages communs à tous les processus. Les réglages `public`, `admin`, `local` et `test` les complètent."""
+
+from pathlib import Path
+
+from config import env
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+DEBUG = False
+SECRET_KEY = env.texte("SECRET_KEY", "dev-secret-ne-jamais-utiliser-en-production")
+ALLOWED_HOSTS = env.liste("ALLOWED_HOSTS", "localhost,127.0.0.1")
+DOMAIN = env.texte("DOMAIN", "localhost")
+OTP_DEBUG_CODE = env.texte("OTP_DEBUG_CODE", "")
+
+INSTALLED_APPS = [
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "drf_spectacular",
+    "channels",
+    "apps.core",
+    "apps.accounts",
+    "apps.listings",
+    "apps.media",
+    "apps.chat",
+    "apps.notifications",
+    "apps.moderation",
+    "apps.billing",
+    "apps.audit",
+    "web",
+]
+
+MIDDLEWARE = [
+    "apps.core.middleware.IdentifiantRequeteMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.EnTetesSecuriteMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+]
+
+ROOT_URLCONF = "config.urls_public"
+ASGI_APPLICATION = "config.asgi.application"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "web" / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+            ],
+        },
+    }
+]
+
+# --- Base de données : un rôle PostgreSQL par processus (app, admin_app, migrate) ---
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env.texte("DB_NAME", "logeo"),
+        "USER": env.texte("DB_USER", "app"),
+        "PASSWORD": env.texte("DB_PASSWORD", "app-dev"),
+        "HOST": env.texte("DB_HOST", "localhost"),
+        "PORT": env.texte("DB_PORT", "5432"),
+        "CONN_MAX_AGE": 0,
+        "CONN_HEALTH_CHECKS": True,
+        "OPTIONS": {
+            "pool": {"min_size": 2, "max_size": env.entier("DB_POOL_MAX", 10), "timeout": 5},
+            "options": f"-c statement_timeout={env.entier('DB_STATEMENT_TIMEOUT_MS', 5000)}",
+        },
+    }
+}
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Redis : `redis-cache` (éviction LRU, perdable) et `redis-queue` (AOF, sans éviction) ---
+REDIS_CACHE_URL = env.texte("REDIS_CACHE_URL", "redis://localhost:6379/0")
+REDIS_QUEUE_URL = env.texte("REDIS_QUEUE_URL", "redis://localhost:6379/1")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_CACHE_URL,
+        "KEY_PREFIX": "logeo",
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_QUEUE_URL], "capacity": 500, "expiry": 30},
+    }
+}
+
+# --- Celery : files séparées pour qu'une vidéo lente ne retarde jamais un message ---
+CELERY_BROKER_URL = REDIS_QUEUE_URL
+CELERY_RESULT_BACKEND = None
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_ROUTES = {
+    "apps.notifications.*": {"queue": "notifications"},
+    "apps.media.*": {"queue": "media"},
+}
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600}
+CELERY_TIMEZONE = "Africa/Porto-Novo"
+
+# --- Authentification ---
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.Argon2PasswordHasher"]
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+]
+
+# --- Régionalisation : français, fuseau du Bénin, montants en FCFA entiers ---
+LANGUAGE_CODE = "fr"
+TIME_ZONE = "Africa/Porto-Novo"
+USE_I18N = True
+USE_TZ = True
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# --- Fichiers statiques et médias ---
+STATIC_URL = "/static/"
+STATIC_ROOT = Path(env.texte("STATIC_ROOT", str(BASE_DIR / "var" / "static")))
+STATICFILES_DIRS = [BASE_DIR / "web" / "static"]
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(env.texte("MEDIA_PUBLIC_ROOT", str(BASE_DIR / "var" / "media_public")))
+MEDIA_TMP_ROOT = Path(env.texte("MEDIA_TMP_ROOT", str(BASE_DIR / "var" / "media_tmp")))
+MEDIA_DISK_REFUS_POURCENT = 85
+
+# --- API ---
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["apps.core.api.permissions.RefusParDefaut"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "UNAUTHENTICATED_USER": None,
+}
+SPECTACULAR_SETTINGS = {
+    "TITLE": "API Logeo",
+    "DESCRIPTION": "API REST de Logeo (additive uniquement, versionnée sous /v1).",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+# --- Fournisseurs (interfaces dans apps.core.providers) ---
+SMS_PROVIDER = env.texte("SMS_PROVIDER", "console")
+PUSH_PROVIDER = env.texte("PUSH_PROVIDER", "console")
+STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
+VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
+PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
+DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
+
+# --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---
+SUBSCRIPTION_ENABLED = env.booleen("SUBSCRIPTION_ENABLED", False)
+
+# --- Journalisation JSON ---
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"masque": {"()": "apps.core.logging.FiltreMasque"}},
+    "formatters": {"json": {"()": "apps.core.logging.FormateurJson"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["masque"]}
+    },
+    "root": {"handlers": ["console"], "level": env.texte("LOG_LEVEL", "INFO")},
+}
+
+# --- En-têtes de sécurité (la CSP est posée par EnTetesSecuriteMiddleware) ---
+CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com"]
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
