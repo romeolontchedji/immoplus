@@ -3,13 +3,16 @@
 # LOGEO_STRICT=1 (intégration continue) : un contrôle sauté fait échouer l'ensemble.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+[ -d .venv/bin ] && PATH="$PWD/.venv/bin:$PATH"
 echec=0; saute=0
+journal="$(mktemp)"; trap 'rm -f "$journal"' EXIT
+
 etape() { # etape <libellé> <commande...>
   local libelle="$1"; shift
-  if "$@" >/tmp/logeo-etape.log 2>&1; then
+  if "$@" >"$journal" 2>&1; then
     echo "  ✔ $libelle"
   else
-    echo "  ✗ $libelle"; sed 's/^/      /' /tmp/logeo-etape.log; echec=1
+    echo "  ✗ $libelle"; sed 's/^/      /' "$journal"; echec=1
   fi
 }
 optionnelle() { # optionnelle <outil> <libellé> <commande...>
@@ -17,19 +20,34 @@ optionnelle() { # optionnelle <outil> <libellé> <commande...>
   if command -v "$outil" >/dev/null 2>&1; then etape "$libelle" "$@"
   else echo "  ⏭ $libelle — sauté ($outil absent)"; saute=$((saute + 1)); fi
 }
+dans_serveur() { ( cd serveur && "$@" ); }
+
 echo "Contrôles Logeo :"
 etape "noms et mots interdits" python3 outils/verifier_noms.py
 etape "hygiène (secrets, débogage, tailles)" python3 outils/verifier_hygiene.py
 etape "nom de la branche courante" python3 outils/verifier_branche.py
-optionnelle ruff "ruff check" ruff check .
-optionnelle ruff "ruff format --check" ruff format --check .
+optionnelle ruff "ruff check (serveur)" ruff check serveur
+optionnelle ruff "ruff check (outils)" ruff check --config outils/ruff.toml outils
+optionnelle ruff "ruff format --check" bash -c 'ruff format --check serveur && ruff format --check --config outils/ruff.toml outils'
 optionnelle djlint "djlint --check" djlint --check serveur/web
+etape "contrastes WCAG des jetons" python3 outils/contraste.py
 [ -d outils/tests ] && etape "tests des outils" python3 -m unittest discover -s outils/tests -q
-if [ -f serveur/manage.py ]; then
-  optionnelle pytest "pytest (hors tests lents)" python3 -m pytest -x -q -m "not lent" serveur
-  optionnelle lint-imports "import-linter" lint-imports
-  optionnelle bandit "bandit" bandit -q -r serveur/apps
+
+if [ -f serveur/manage.py ] && command -v python3 >/dev/null && python3 -c "import django" 2>/dev/null; then
+  optionnelle lint-imports "import-linter" bash -c 'cd serveur && lint-imports'
+  optionnelle bandit "bandit" bandit -q -r serveur/apps serveur/config serveur/web -x "*/tests/*,*/tests"
+  etape "makemigrations --check" dans_serveur python3 manage.py makemigrations --check --dry-run
+  etape "OpenAPI valide et à jour" bash -c 'cd serveur && python3 manage.py spectacular --format openapi-json --file /tmp/openapi-courant.json --validate --fail-on-warn && cmp -s /tmp/openapi-courant.json ../docs/api/openapi.json || { echo "docs/api/openapi.json périmé : lance make openapi"; exit 1; }'
+  if python3 outils/base_disponible.py; then
+    optionnelle pytest "pytest (hors lent et e2e)" dans_serveur python3 -m pytest -q -m "not lent and not e2e"
+  else
+    echo "  ⏭ pytest avec PostgreSQL — sauté (PostgreSQL injoignable)"; saute=$((saute + 1))
+    optionnelle pytest "pytest partiel (sans PostgreSQL)" dans_serveur python3 -m pytest -q -m "not lent and not e2e and not pg"
+  fi
+else
+  echo "  ⏭ contrôles Django — sautés (Django non installé)"; saute=$((saute + 1))
 fi
+
 if [ "$echec" -ne 0 ]; then echo "✗ Contrôles en échec."; exit 1; fi
 if [ "$saute" -ne 0 ] && [ "${LOGEO_STRICT:-0}" = "1" ]; then echo "✗ $saute contrôle(s) sauté(s) en mode strict."; exit 1; fi
 echo "✔ Contrôles réussis ($saute sauté(s))."

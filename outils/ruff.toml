@@ -1,0 +1,5 @@
+# Les outils lancent des sous-processus git/gitleaks par conception et écrivent sur la sortie standard.
+extend = "../serveur/pyproject.toml"
+
+[lint]
+extend-ignore = ["S603", "S607", "S404"]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Refuse les chemins et contenus qui violent les conventions de nommage de Logeo."""
+
 import os
 import re
 import sys
@@ -30,14 +31,18 @@ def erreurs_chemin(chemin, conf):
     erreurs = []
     motifs = re.compile("|".join(re.escape(m) for m in conf["motifs"]), re.I)
     if motifs.search(chemin):
-        erreurs.append(f"{chemin} : le chemin contient un mot interdit (« backend »). Le dossier s'appelle « serveur/ ».")
+        erreurs.append(
+            f"{chemin} : le chemin contient un mot interdit (« backend »). Le dossier s'appelle « serveur/ »."
+        )
     segments = chemin.split("/")
     nom = segments[-1]
     for seg in segments[:-1]:
         if seg.startswith(".") or seg in SEGMENTS_IMPOSES:
             continue
         if not SEGMENT_SOUPLE.match(seg):
-            erreurs.append(f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _).")
+            erreurs.append(
+                f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
+            )
     radical = nom.split(".")[0]
     if nom in conf["noms_imposes"] or radical in conf["noms_majuscules"] or nom.startswith("."):
         return erreurs
@@ -47,18 +52,24 @@ def erreurs_chemin(chemin, conf):
             regle = "snake_case" if nom.endswith(".py") else "kebab-case"
             erreurs.append(f"{chemin} : nom de fichier hors convention ({regle} attendu).")
     elif not SEGMENT_SOUPLE.match(nom):
-        erreurs.append(f"{chemin} : nom de fichier hors convention (minuscules, chiffres, - _ et .).")
+        erreurs.append(
+            f"{chemin} : nom de fichier hors convention (minuscules, chiffres, - _ et .)."
+        )
     return erreurs
 
 
 def erreurs_contenu(chemin, texte, conf):
-    if any(chemin == f or (f.endswith("/") and chemin.startswith(f)) for f in conf["fichiers_exemptes"]):
+    if any(
+        chemin == f or (f.endswith("/") and chemin.startswith(f)) for f in conf["fichiers_exemptes"]
+    ):
         return []
     motifs = re.compile("|".join(re.escape(m) for m in conf["motifs"]), re.I)
     erreurs = []
     for numero, ligne in enumerate(texte.splitlines(), start=1):
         if motifs.search(ligne) and not any(j in ligne for j in conf["exceptions_jetons"]):
-            erreurs.append(f"{chemin}:{numero} : mot interdit (« backend »). Exceptions : outils/mots-interdits.toml.")
+            erreurs.append(
+                f"{chemin}:{numero} : mot interdit (« backend »). Exceptions : outils/mots-interdits.toml."
+            )
     return erreurs
 
 

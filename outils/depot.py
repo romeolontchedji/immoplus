@@ -1,4 +1,5 @@
 """Utilitaires communs aux contrôles : liste des fichiers suivis et lecture de leur contenu."""
+
 import subprocess
 
 
