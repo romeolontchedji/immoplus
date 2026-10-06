@@ -1,0 +1,7 @@
+.alerte { display: flex; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--rayon-2); border: 1px solid transparent; font-size: var(--fs-14); }
+.alerte__titre { font-weight: 700; margin: 0 0 var(--sp-1); }
+.alerte p { margin: 0; }
+.alerte--succes { background: var(--succes-bg); color: var(--succes-text); }
+.alerte--avertissement { background: var(--avertissement-bg); color: var(--avertissement-text); }
+.alerte--danger { background: var(--danger-bg); color: var(--danger-text); }
+.alerte--information { background: var(--information-bg); color: var(--information-text); }

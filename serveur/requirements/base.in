@@ -1,0 +1,24 @@
+# Dépendances d'exécution (voir docs/adr/0001-versions-et-pile.md). Versions exactes dans base.txt.
+Django>=5.2,<5.3
+djangorestframework
+drf-spectacular
+channels
+channels-redis
+uvicorn
+gunicorn
+celery
+redis
+psycopg[binary,pool]
+PyJWT
+argon2-cffi
+django-otp
+django-axes
+phonenumbers
+django-unfold
+Pillow
+pillow-heif
+nh3
+markdown-it-py
+cryptography
+sentry-sdk
+uvicorn-worker

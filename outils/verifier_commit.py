@@ -1,16 +1,50 @@
 #!/usr/bin/env python3
 """Valide un message de commit au format Logeo (Conventional Commits en français)."""
+
 import re
 import sys
 
-TYPES = ("feat", "fix", "refactor", "perf", "test", "docs", "style", "build", "ci", "chore", "revert", "sec")
+TYPES = (
+    "feat",
+    "fix",
+    "refactor",
+    "perf",
+    "test",
+    "docs",
+    "style",
+    "build",
+    "ci",
+    "chore",
+    "revert",
+    "sec",
+)
 PORTEES = (
-    "serveur", "web", "admin", "api", "ws", "media", "auth", "annonces", "messagerie",
-    "notifications", "moderation", "abonnement", "audit", "infra", "docs", "deps",
-    "design", "i18n", "outils", "mobile",
+    "serveur",
+    "web",
+    "admin",
+    "api",
+    "ws",
+    "media",
+    "auth",
+    "annonces",
+    "messagerie",
+    "notifications",
+    "moderation",
+    "abonnement",
+    "audit",
+    "infra",
+    "docs",
+    "deps",
+    "design",
+    "i18n",
+    "outils",
+    "mobile",
 )
 ENTETE = re.compile(r"^(?P<type>[a-z]+)\((?P<portee>[a-z]+)\)(?P<casse>!)?: (?P<sujet>.+)$")
-REFS = re.compile(r"^Refs: (?:n/a|(?:(?:EF|ENF)-[A-Z0-9]+(?:-[A-Z0-9]+)*)(?:, (?:EF|ENF)-[A-Z0-9]+(?:-[A-Z0-9]+)*)*)$", re.M)
+REFS = re.compile(
+    r"^Refs: (?:n/a|(?:(?:EF|ENF)-[A-Z0-9]+(?:-[A-Z0-9]+)*)(?:, (?:EF|ENF)-[A-Z0-9]+(?:-[A-Z0-9]+)*)*)$",
+    re.M,
+)
 EXEMPLE = "feat(messagerie): ajouter l'envoi de message\n\n    Refs: EF-MSG-03"
 
 
@@ -25,13 +59,21 @@ def verifier(message, push=False):
     if entete.startswith(("Merge ", 'Revert "')):
         return []
     if entete.startswith(("fixup!", "squash!")):
-        return ["Commit « fixup!/squash! » refusé au push : réécris l'historique (git rebase -i --autosquash)."] if push else []
+        return (
+            [
+                "Commit « fixup!/squash! » refusé au push : réécris l'historique (git rebase -i --autosquash)."
+            ]
+            if push
+            else []
+        )
     if re.match(r"(?i)^wip\b", entete):
         return ["Commit « WIP » refusé : termine le travail et nomme-le correctement."]
     erreurs = []
     m = ENTETE.match(entete)
     if not m:
-        return [f"En-tête invalide : « {entete} ».\n    Format attendu : type(portée): sujet\n    Exemple :\n    {EXEMPLE}"]
+        return [
+            f"En-tête invalide : « {entete} ».\n    Format attendu : type(portée): sujet\n    Exemple :\n    {EXEMPLE}"
+        ]
     if m["type"] not in TYPES:
         erreurs.append(f"Type « {m['type']} » inconnu. Types : {', '.join(TYPES)}.")
     if m["portee"] not in PORTEES:
@@ -50,11 +92,17 @@ def verifier(message, push=False):
     corps = lignes[1:]
     for i, ligne in enumerate(corps, start=2):
         if len(ligne) > 100:
-            erreurs.append(f"Ligne {i} du corps trop longue ({len(ligne)} caractères, 100 au plus).")
-    if m["casse"] and not [ligne for ligne in corps if ligne.strip() and not ligne.startswith("Refs:")]:
+            erreurs.append(
+                f"Ligne {i} du corps trop longue ({len(ligne)} caractères, 100 au plus)."
+            )
+    if m["casse"] and not [
+        ligne for ligne in corps if ligne.strip() and not ligne.startswith("Refs:")
+    ]:
         erreurs.append("Un changement cassant (« ! ») exige un corps expliquant la migration.")
     if m["type"] in ("feat", "fix") and not REFS.search("\n".join(corps)):
-        erreurs.append("Les commits feat/fix exigent une ligne « Refs: EF-XXX-NN[, ENF-XXX-NN] » ou « Refs: n/a ».")
+        erreurs.append(
+            "Les commits feat/fix exigent une ligne « Refs: EF-XXX-NN[, ENF-XXX-NN] » ou « Refs: n/a »."
+        )
     return erreurs
 
 

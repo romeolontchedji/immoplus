@@ -1,0 +1,21 @@
+-r base.in
+ruff
+pytest
+pytest-django
+pytest-cov
+pytest-xdist
+pytest-randomly
+pytest-asyncio
+factory_boy
+hypothesis
+time-machine
+fakeredis
+httpx
+schemathesis
+import-linter
+django-migration-linter
+bandit
+pip-audit
+djlint
+playwright
+axe-playwright-python

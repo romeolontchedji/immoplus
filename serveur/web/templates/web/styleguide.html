@@ -1,0 +1,151 @@
+{% extends "web/base.html" %}
+{% block titre %}Styleguide — Logeo{% endblock %}
+{% block contenu %}
+  <div class="conteneur section pile pile--large">
+    <header class="pile--serree pile">
+      <h1>Styleguide</h1>
+      <p class="texte-doux">Revue visuelle des jetons et composants, en clair et en sombre. Disponible en local seulement.</p>
+    </header>
+    <section class="pile" aria-labelledby="sg-couleurs">
+      <h2 id="sg-couleurs">Couleurs</h2>
+      {% for nom, nuances in echelles %}
+        <h3>{{ nom|capfirst }}</h3>
+        <div class="nuancier">
+          {% for n in nuances %}
+            <div class="pastille">
+              <div class="pastille__couleur pastille__couleur--{{ nom }}-{{ n }}"></div>
+              <span>{{ nom }}-{{ n }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <h3>Sémantiques</h3>
+      <div class="nuancier">
+        {% for nom in semantiques %}
+          <div class="pastille">
+            <div class="pastille__couleur pastille__couleur--{{ nom }}"></div>
+            <span>{{ nom }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-typo">
+      <h2 id="sg-typo">Typographie</h2>
+      <h1>Titre de niveau 1</h1>
+      <h2>Titre de niveau 2</h2>
+      <h3>Titre de niveau 3</h3>
+      <h4>Titre de niveau 4</h4>
+      <p>Texte courant. Une chambre douche interne à 25&nbsp;000&nbsp;FCFA, à 10 minutes du campus. Les phrases restent courtes et chaleureuses.</p>
+      <p class="prix gras">25&nbsp;000 FCFA / mois</p>
+    </section>
+    <section class="pile" aria-labelledby="sg-boutons">
+      <h2 id="sg-boutons">Boutons</h2>
+      <div class="rangee">
+        <button class="bouton bouton--primaire" type="button">Contacter</button>
+        <button class="bouton" type="button">Secondaire</button>
+        <button class="bouton bouton--fantome" type="button">Fantôme</button>
+        <button class="bouton bouton--danger" type="button">Supprimer</button>
+      </div>
+      <div class="rangee">
+        <button class="bouton bouton--primaire bouton--grand" type="button">Action principale</button>
+        <button class="bouton bouton--petit" type="button">Petit</button>
+        <button class="bouton bouton--primaire" type="button" aria-busy="true">Envoi…</button>
+        <button class="bouton" type="button" disabled>Désactivé</button>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-champs">
+      <h2 id="sg-champs">Champs</h2>
+      <div class="grille grille--2">
+        <div class="champ">
+          <label class="champ__etiquette" for="sg-tel">Numéro de téléphone</label>
+          <div class="champ__groupe">
+            <span class="champ__prefixe">+229</span><input class="champ__saisie"
+       id="sg-tel"
+       type="tel"
+       inputmode="numeric"
+       autocomplete="tel-national">
+          </div>
+          <p class="champ__aide">Huit chiffres, sans espace.</p>
+        </div>
+        <div class="champ">
+          <label class="champ__etiquette" for="sg-nom">Nom</label>
+          <input class="champ__saisie"
+                 id="sg-nom"
+                 type="text"
+                 aria-invalid="true"
+                 aria-describedby="sg-nom-err">
+          <p class="champ__erreur" id="sg-nom-err">Ce champ est obligatoire.</p>
+        </div>
+        <div class="champ">
+          <label class="champ__etiquette" for="sg-desc">Description</label>
+          <textarea class="champ__saisie" id="sg-desc"></textarea>
+        </div>
+        <div class="champ">
+          <label class="champ__etiquette" for="sg-off">Champ désactivé</label>
+          <input class="champ__saisie"
+                 id="sg-off"
+                 type="text"
+                 value="Non modifiable"
+                 disabled>
+        </div>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-badges">
+      <h2 id="sg-badges">Badges et puces</h2>
+      <div class="rangee">
+        <span class="badge">Neutre</span><span class="badge badge--marque">Vérifié</span>
+        <span class="badge badge--succes">Publiée</span><span class="badge badge--avertissement">En relecture</span>
+        <span class="badge badge--danger">Refusée</span><span class="badge badge--information">Brouillon</span>
+      </div>
+      <div class="rangee">
+        <button class="puce" type="button" aria-pressed="false">Douche interne</button>
+        <button class="puce" type="button" aria-pressed="true">Clôture</button>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-alertes">
+      <h2 id="sg-alertes">Alertes</h2>
+      <div class="alerte alerte--succes" role="status">
+        <div>
+          <p class="alerte__titre">C'est fait</p>
+          <p>Ta chambre est confirmée.</p>
+        </div>
+      </div>
+      <div class="alerte alerte--avertissement" role="status">
+        <div>
+          <p class="alerte__titre">À confirmer</p>
+          <p>Confirme que ta chambre est libre.</p>
+        </div>
+      </div>
+      <div class="alerte alerte--danger" role="alert">
+        <div>
+          <p class="alerte__titre">Erreur</p>
+          <p>Le code est incorrect.</p>
+        </div>
+      </div>
+      <div class="alerte alerte--information" role="status">
+        <div>
+          <p class="alerte__titre">Bon à savoir</p>
+          <p>Aucun contact hors de la plateforme.</p>
+        </div>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-cartes">
+      <h2 id="sg-cartes">Cartes</h2>
+      <div class="grille grille--3">
+        <article class="carte carte--interactive">
+          <div class="carte__corps">
+            <h3 class="carte__titre">Chambre à Banikanni</h3>
+            <p class="carte__prix">25&nbsp;000 <small>FCFA / mois</small></p>
+            <p class="texte-doux texte-petit mb-0">Douche interne · Eau · Clôture</p>
+          </div>
+        </article>
+        <article class="carte">
+          <div class="carte__corps">
+            <h3 class="carte__titre">Carte simple</h3>
+            <p class="texte-doux mb-0">Sans interaction.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+{% endblock %}

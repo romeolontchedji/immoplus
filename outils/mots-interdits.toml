@@ -10,6 +10,10 @@ exceptions_jetons = [
   '"BACKEND"',
   "'BACKEND'",
   "BACKEND:",
+  # Chemins de modules imposés par Django (moteurs de base, de session et de cache).
+  "django.db.backends.",
+  "django.contrib.sessions.backends.",
+  "django.core.cache.backends.",
 ]
 
 # Fichiers qui expliquent la règle ou citent le cahier des charges : exemptés du contrôle de contenu.
@@ -22,10 +26,11 @@ fichiers_exemptes = [
   "outils/verifier_noms.py",
   "outils/tester_hooks.sh",
   "outils/tests/",
+  "serveur/tests/test_agents.py",
 ]
 
 # Noms de fichiers majuscules autorisés.
-noms_majuscules = ["README", "AGENTS", "CLAUDE", "LICENSE", "CODEOWNERS", "Makefile", "Dockerfile", "LISEZMOI"]
+noms_majuscules = ["README", "AGENTS", "CLAUDE", "LICENSE", "CODEOWNERS", "Makefile", "Dockerfile", "LISEZMOI", "Caddyfile"]
 
 # Fichiers dont le nom est imposé par un outil externe.
 noms_imposes = ["pull_request_template.md"]

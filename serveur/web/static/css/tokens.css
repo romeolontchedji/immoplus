@@ -1,0 +1,143 @@
+/* Jetons de design Logeo — SEUL fichier où une couleur, une taille ou une ombre s'écrit en dur.
+   Points de rupture (non utilisables dans @media, rappel) : 360 (base), 640, 768, 1024, 1280. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Marque émeraude */
+  --marque-50: #ECF8F3; --marque-100: #D3F0E3; --marque-200: #A9E1C9; --marque-300: #76CCA9;
+  --marque-400: #43B287; --marque-500: #1F9669; --marque-600: #117853; --marque-700: #0E6045;
+  --marque-800: #0D4C38; --marque-900: #0A3D2E;
+
+  /* Accent terre cuite */
+  --accent-50: #FEF3EE; --accent-100: #FDE1D3; --accent-200: #FAC0A3; --accent-300: #F69771;
+  --accent-400: #EE7143; --accent-500: #E4572E; --accent-600: #C9421F; --accent-700: #A5341A;
+  --accent-800: #852D1B; --accent-900: #6D281A;
+
+  /* Neutres « sable » */
+  --sable-0: #FFFFFF; --sable-25: #FCFAF6; --sable-50: #F8F4EC; --sable-100: #F0EADF;
+  --sable-200: #E3DACA; --sable-300: #CFC3AE; --sable-400: #A89B84; --sable-500: #81755F;
+  --sable-600: #625845; --sable-700: #4A4234; --sable-800: #342E24; --sable-900: #211D16;
+  --sable-950: #14110C;
+
+  /* Sémantiques (valeur pleine, teinte de fond, teinte de texte) */
+  --succes: #1F9669; --avertissement: #D99A00; --danger: #D13B3B; --information: #2F6FDE;
+
+  /* Jetons sémantiques — thème clair */
+  --bg: var(--sable-25);
+  --surface: var(--sable-0);
+  --surface-raised: var(--sable-0);
+  --surface-sunken: var(--sable-50);
+  --border: var(--sable-200);
+  --border-strong: var(--sable-300);
+  --text: var(--sable-900);
+  --text-muted: var(--sable-600);
+  --primary: var(--marque-600);
+  --primary-hover: var(--marque-700);
+  --on-primary: var(--sable-0);
+  --primary-soft: var(--marque-50);
+  --on-primary-soft: var(--marque-800);
+  --accent: var(--accent-600);
+  --accent-soft: var(--accent-50);
+  --on-accent-soft: var(--accent-800);
+  --focus: var(--marque-500);
+  --link: var(--marque-700);
+  --succes-bg: #E6F5EE; --succes-text: #0D4C38;
+  --avertissement-bg: #FFF6DB; --avertissement-text: #6B4A00;
+  --danger-bg: #FDECEC; --danger-text: #8A1F1F;
+  --information-bg: #E8F0FD; --information-text: #17418F;
+  --scrim: rgb(20 17 12 / 0.55);
+
+  /* Typographie */
+  --police-texte: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --police-titre: var(--police-texte);
+  --fs-12: 0.75rem; --fs-14: 0.875rem; --fs-16: 1rem; --fs-18: 1.125rem; --fs-20: 1.25rem;
+  --fs-24: 1.5rem; --fs-30: 1.875rem; --fs-36: 2.25rem; --fs-48: 3rem; --fs-60: 3.75rem;
+  --lh-texte: 1.5; --lh-titre: 1.2; --lh-titre-serre: 1.15;
+  --crenage-titre: -0.02em;
+  --mesure: 70ch;
+
+  /* Espacement (grille de 4 px) */
+  --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem; --sp-5: 1.25rem; --sp-6: 1.5rem;
+  --sp-8: 2rem; --sp-10: 2.5rem; --sp-12: 3rem; --sp-16: 4rem; --sp-20: 5rem;
+
+  /* Formes */
+  --rayon-1: 0.5rem; --rayon-2: 0.75rem; --rayon-3: 1rem; --rayon-4: 1.5rem; --rayon-pilule: 999px;
+  --bordure: 1px solid var(--border);
+  --ombre-1: 0 1px 2px rgb(52 46 36 / 0.06), 0 1px 3px rgb(52 46 36 / 0.08);
+  --ombre-2: 0 2px 4px rgb(52 46 36 / 0.06), 0 6px 16px rgb(52 46 36 / 0.1);
+  --ombre-3: 0 4px 8px rgb(52 46 36 / 0.08), 0 16px 40px rgb(52 46 36 / 0.16);
+  --anneau-focus: 0 0 0 2px var(--bg), 0 0 0 5px var(--focus);
+  --cible: 2.75rem;
+  --cible-principale: 3rem;
+
+  /* Mouvement */
+  --duree-1: 150ms; --duree-2: 200ms; --duree-3: 250ms;
+  --courbe: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Gabarits */
+  --largeur-page: 72rem;
+  --largeur-texte: 44rem;
+}
+
+/* Thème sombre : préférence du système (sauf si le thème clair est forcé)… */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--sable-950);
+    --surface: var(--sable-900);
+    --surface-raised: var(--sable-800);
+    --surface-sunken: #0E0C08;
+    --border: var(--sable-700);
+    --border-strong: var(--sable-600);
+    --text: var(--sable-50);
+    --text-muted: var(--sable-300);
+    --primary: var(--marque-400);
+    --primary-hover: var(--marque-300);
+    --on-primary: var(--sable-950);
+    --primary-soft: #0F2E24;
+    --on-primary-soft: var(--marque-200);
+    --accent: var(--accent-400);
+    --accent-soft: #3A1B12;
+    --on-accent-soft: var(--accent-200);
+    --focus: var(--marque-300);
+    --link: var(--marque-300);
+    --succes-bg: #0F2E24; --succes-text: #A9E1C9;
+    --avertissement-bg: #3A2B00; --avertissement-text: #F5D77A;
+    --danger-bg: #3E1616; --danger-text: #F5B5B5;
+    --information-bg: #14264A; --information-text: #B3CCF7;
+    --scrim: rgb(0 0 0 / 0.7);
+    --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
+    --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);
+  }
+}
+
+/* … ou thème sombre forcé par l'attribut data-theme (mêmes valeurs : vérifié par un test). */
+:root[data-theme="dark"] {
+  --bg: var(--sable-950);
+  --surface: var(--sable-900);
+  --surface-raised: var(--sable-800);
+  --surface-sunken: #0E0C08;
+  --border: var(--sable-700);
+  --border-strong: var(--sable-600);
+  --text: var(--sable-50);
+  --text-muted: var(--sable-300);
+  --primary: var(--marque-400);
+  --primary-hover: var(--marque-300);
+  --on-primary: var(--sable-950);
+  --primary-soft: #0F2E24;
+  --on-primary-soft: var(--marque-200);
+  --accent: var(--accent-400);
+  --accent-soft: #3A1B12;
+  --on-accent-soft: var(--accent-200);
+  --focus: var(--marque-300);
+  --link: var(--marque-300);
+  --succes-bg: #0F2E24; --succes-text: #A9E1C9;
+  --avertissement-bg: #3A2B00; --avertissement-text: #F5D77A;
+  --danger-bg: #3E1616; --danger-text: #F5B5B5;
+  --information-bg: #14264A; --information-text: #B3CCF7;
+  --scrim: rgb(0 0 0 / 0.7);
+  --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
+  --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);
+}

@@ -1,0 +1,55 @@
+# Surcharge de production : `docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile prod up -d`.
+# Réglages `public` et `admin` stricts, aucun code monté, HTTPS et HTTP/3 par Caddy.
+
+services:
+  migrer:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+    volumes: !override
+      - static:/var/lib/logeo/static
+  web-api:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+      LOGEO_RELOAD: "0"
+    volumes: !override
+      - media_tmp:/var/lib/logeo/media_tmp
+      - media_public:/var/lib/logeo/media_public
+  realtime:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+      LOGEO_RELOAD: "0"
+    volumes: !override []
+  admin:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.admin
+      LOGEO_RELOAD: "0"
+    volumes: !override
+      - media_public:/var/lib/logeo/media_public:ro
+      - media_private:/var/lib/logeo/media_private
+  worker:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+    volumes: !override []
+  worker-media:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+    volumes: !override
+      - media_tmp:/var/lib/logeo/media_tmp
+      - media_public:/var/lib/logeo/media_public
+  beat:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.public
+    volumes: !override []
+  caddy:
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    ports: !override
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes: !override
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../caddy/wellknown:/srv/wellknown:ro
+      - static:/srv/static:ro
+      - media_public:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config

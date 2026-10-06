@@ -1,0 +1,10 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "API Logeo",
+        "version": "1.0.0",
+        "description": "API REST de Logeo (additive uniquement, versionnée sous /v1)."
+    },
+    "paths": {},
+    "components": {}
+}

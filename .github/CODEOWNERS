@@ -1,0 +1,6 @@
+# Ces chemins exigent la revue du porteur du projet (remplace @porteur-du-projet par ton identifiant GitHub).
+/AGENTS.md          @porteur-du-projet
+/.githooks/         @porteur-du-projet
+/outils/            @porteur-du-projet
+/.github/           @porteur-du-projet
+/infra/             @porteur-du-projet

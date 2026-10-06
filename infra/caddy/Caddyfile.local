@@ -1,0 +1,73 @@
+# Caddy de développement : HTTP simple sur www.localhost, api.localhost, pilotage.localhost.
+{
+	auto_https off
+	admin off
+}
+
+(statiques) {
+	handle /static/* {
+		root * /srv
+		file_server
+	}
+	handle /media/* {
+		root * /srv
+		file_server
+	}
+	handle /.well-known/assetlinks.json {
+		root * /srv/wellknown
+		rewrite * /assetlinks.json
+		file_server
+	}
+}
+
+http://www.localhost {
+	encode zstd gzip
+	import statiques
+	handle /ws/* {
+		reverse_proxy realtime:8001
+	}
+	handle /uploads/* {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy web-api:8000
+	}
+	handle {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy web-api:8000
+	}
+}
+
+http://api.localhost {
+	encode zstd gzip
+	handle /ws/* {
+		reverse_proxy realtime:8001
+	}
+	handle /uploads/* {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy web-api:8000
+	}
+	handle {
+		reverse_proxy web-api:8000
+	}
+}
+
+http://pilotage.localhost {
+	@autorise remote_ip {$ADMIN_ALLOWED_IPS:192.0.2.1/32}
+	handle @autorise {
+		handle /static/* {
+			root * /srv
+			file_server
+		}
+		handle {
+			reverse_proxy admin:8002
+		}
+	}
+	handle {
+		respond 404
+	}
+}

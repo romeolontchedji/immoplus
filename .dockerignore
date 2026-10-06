@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+!.env.example
+infra/compose/env/*.env
+serveur/var
+docs
+mobile
+*.zip
+serveur/web/static/css/dist

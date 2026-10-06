@@ -12,25 +12,41 @@ MOT = "back" + "end"
 
 class TestNoms(unittest.TestCase):
     def test_chemins_valides(self):
-        for chemin in ["serveur/apps/accounts/models.py", "docs/guide-installation-pas-a-pas.md", "README.md",
-                       "serveur/web/templates/web/fil-annonces.html", "Makefile", ".github/ISSUE_TEMPLATE/bug.md",
-                       "serveur/apps/accounts/migrations/0001_initial.py", ".env.example"]:
+        for chemin in [
+            "serveur/apps/accounts/models.py",
+            "docs/guide-installation-pas-a-pas.md",
+            "README.md",
+            "serveur/web/templates/web/fil-annonces.html",
+            "Makefile",
+            ".github/ISSUE_TEMPLATE/bug.md",
+            "serveur/apps/accounts/migrations/0001_initial.py",
+            ".env.example",
+        ]:
             self.assertEqual(vn.erreurs_chemin(chemin, CONF), [], chemin)
 
     def test_chemins_invalides(self):
-        for chemin in [f"{MOT}/x.py", f"serveur/{MOT.capitalize()}/x.py", "serveur/MonModule/x.py",
-                       "serveur/apps/Mon_Fichier.py", "docs/Mon_Guide.md", "serveur/web/static/css/Tokens.css"]:
+        for chemin in [
+            f"{MOT}/x.py",
+            f"serveur/{MOT.capitalize()}/x.py",
+            "serveur/MonModule/x.py",
+            "serveur/apps/Mon_Fichier.py",
+            "docs/Mon_Guide.md",
+            "serveur/web/static/css/Tokens.css",
+        ]:
             self.assertTrue(vn.erreurs_chemin(chemin, CONF), chemin)
 
     def test_contenu(self):
         self.assertTrue(vn.erreurs_contenu("serveur/x.py", f"mon_{MOT}_service = 1", CONF))
-        self.assertEqual(vn.erreurs_contenu("serveur/x.py", "EMAIL_" + MOT.upper() + " = 'x'", CONF), [])
+        self.assertEqual(
+            vn.erreurs_contenu("serveur/x.py", "EMAIL_" + MOT.upper() + " = 'x'", CONF), []
+        )
         self.assertEqual(vn.erreurs_contenu("AGENTS.md", f"jamais {MOT}/", CONF), [])
 
 
 class TestHygiene(unittest.TestCase):
     def _texte(self, lignes, chemin="serveur/x.py"):
         import tempfile
+
         with tempfile.TemporaryDirectory() as d:
             ancien = os.getcwd()
             os.chdir(d)
@@ -62,3 +78,32 @@ class TestHygiene(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestExceptionsDjango(unittest.TestCase):
+    """Les chemins de modules imposés par Django sont tolérés ; le mot interdit reste refusé ailleurs."""
+
+    def setUp(self):
+        self.conf = vn.configuration()
+
+    def test_moteur_de_session_tolere(self):
+        ligne = 'SESSION_ENGINE = "django.contrib.sessions.backends.db"'
+        self.assertEqual(vn.erreurs_contenu("serveur/config/x.py", ligne, self.conf), [])
+
+    def test_moteur_de_base_tolere(self):
+        ligne = '"ENGINE": "django.db.backends.postgresql",'
+        self.assertEqual(vn.erreurs_contenu("serveur/config/x.py", ligne, self.conf), [])
+
+    def test_le_mot_seul_reste_refuse(self):
+        erreurs = vn.erreurs_contenu("serveur/apps/x.py", "dossier = 'backend/utils'", self.conf)
+        self.assertEqual(len(erreurs), 1)
+
+
+class TestCaddyfile(unittest.TestCase):
+    def test_noms_imposes_par_caddy(self):
+        conf = vn.configuration()
+        for chemin in ("infra/caddy/Caddyfile", "infra/caddy/Caddyfile.local"):
+            self.assertEqual(vn.erreurs_chemin(chemin, conf), [], chemin)
+
+    def test_un_autre_nom_majuscule_reste_refuse(self):
+        self.assertTrue(vn.erreurs_chemin("infra/caddy/MonFichier", vn.configuration()))
