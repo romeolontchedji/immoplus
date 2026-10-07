@@ -3,7 +3,6 @@
 from django.http import Http404
 from rest_framework import exceptions
 from rest_framework.response import Response
-from rest_framework.views import exception_handler as _gestionnaire_drf
 
 from . import requete
 
@@ -52,9 +51,13 @@ def gestionnaire_exceptions(exc, contexte):
     """Convertit toute exception en `{"error": {code, message, fields, request_id}}`."""
     if isinstance(exc, ErreurMetier):
         return reponse_erreur(exc)
+    from rest_framework.views import (
+        exception_handler as gestionnaire_drf,
+    )  # import tardif : évite un cycle
+
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
-    reponse = _gestionnaire_drf(exc, contexte)
+    reponse = gestionnaire_drf(exc, contexte)
     if reponse is None:
         return None
     if isinstance(exc, exceptions.ValidationError):

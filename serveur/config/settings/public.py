@@ -45,3 +45,4 @@ MIDDLEWARE = list(MIDDLEWARE)
 # Caddy porte la redirection HTTP→HTTPS et l'en-tête HSTS (includeSubDomains) : Django ne les double pas.
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SILENCED_SYSTEM_CHECKS = ["security.W008", "security.W021"]
+USE_X_FORWARDED_FOR = True  # Caddy écrase tout X-Forwarded-For reçu

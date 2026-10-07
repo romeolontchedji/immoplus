@@ -5,6 +5,1068 @@
         "version": "1.0.0",
         "description": "API REST de Logeo (additive uniquement, versionnée sous /v1)."
     },
-    "paths": {},
-    "components": {}
+    "paths": {
+        "/v1/auth/activate": {
+            "post": {
+                "operationId": "v1_auth_activate_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Activer un compte gérant",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "operationId": "v1_auth_login_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Se connecter",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "operationId": "v1_auth_logout_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Se déconnecter de cet appareil",
+                "tags": [
+                    "Authentification"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/request": {
+            "post": {
+                "operationId": "v1_auth_otp_request_create",
+                "description": "Réponse identique que le numéro ait un compte ou non. Plafonds et coupe-circuit : CDC §5.3.",
+                "summary": "Demander un code à usage unique",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpDemandeOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/verify": {
+            "post": {
+                "operationId": "v1_auth_otp_verify_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Vérifier un code",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpJetonOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/password/change": {
+            "post": {
+                "operationId": "v1_auth_password_change_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Changer le mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/password/reset": {
+            "post": {
+                "operationId": "v1_auth_password_reset_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Réinitialiser le mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "operationId": "v1_auth_refresh_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Renouveler les jetons",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JetonsOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/register": {
+            "post": {
+                "operationId": "v1_auth_register_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Créer un compte locataire",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/devices": {
+            "get": {
+                "operationId": "v1_devices_list",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Mes appareils connectés",
+                "tags": [
+                    "Appareils"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AppareilOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/devices/{appareil_id}": {
+            "delete": {
+                "operationId": "v1_devices_destroy",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Déconnecter un appareil",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "appareil_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Appareils"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/devices/current/push-token": {
+            "put": {
+                "operationId": "v1_devices_current_push_token_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Enregistrer le jeton de notification",
+                "tags": [
+                    "Appareils"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/me": {
+            "get": {
+                "operationId": "v1_me_retrieve",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Mon profil",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_me_partial_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Modifier mon profil",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_destroy",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Supprimer mon compte",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/me/phone/change": {
+            "post": {
+                "operationId": "v1_me_phone_change_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Changer de numéro",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me/preferences": {
+            "get": {
+                "operationId": "v1_me_preferences_retrieve",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Préférences de notification",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_me_preferences_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Modifier les préférences de notification",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ActivationIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "terms_accepted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "otp_token",
+                    "password",
+                    "platform",
+                    "terms_accepted"
+                ]
+            },
+            "AppareilOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "platform": {
+                        "type": "string"
+                    },
+                    "app_version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "current": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "app_version",
+                    "created_at",
+                    "current",
+                    "id",
+                    "label",
+                    "last_seen_at",
+                    "platform"
+                ]
+            },
+            "ChangementMotDePasseIn": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "new_password"
+                ]
+            },
+            "ChangementNumeroIn": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    }
+                },
+                "required": [
+                    "otp_token",
+                    "password"
+                ]
+            },
+            "ConnexionIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "password",
+                    "phone",
+                    "platform"
+                ]
+            },
+            "InscriptionIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "terms_accepted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "full_name",
+                    "otp_token",
+                    "password",
+                    "platform",
+                    "terms_accepted"
+                ]
+            },
+            "JetonPushIn": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "maxLength": 8
+                    },
+                    "token": {
+                        "type": "string",
+                        "maxLength": 4096
+                    }
+                },
+                "required": [
+                    "provider",
+                    "token"
+                ]
+            },
+            "JetonsOut": {
+                "type": "object",
+                "properties": {
+                    "access": {
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "access",
+                    "expires_in",
+                    "refresh"
+                ]
+            },
+            "MotDePasseOublieIn": {
+                "type": "object",
+                "properties": {
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "new_password",
+                    "otp_token"
+                ]
+            },
+            "OtpDemandeIn": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "purpose": {
+                        "$ref": "#/components/schemas/PurposeEnum"
+                    },
+                    "attestation_token": {
+                        "type": "string",
+                        "maxLength": 4096
+                    }
+                },
+                "required": [
+                    "phone",
+                    "purpose"
+                ]
+            },
+            "OtpDemandeOut": {
+                "type": "object",
+                "properties": {
+                    "resend_after_s": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "resend_after_s"
+                ]
+            },
+            "OtpJetonOut": {
+                "type": "object",
+                "properties": {
+                    "otp_token": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "expires_in",
+                    "otp_token"
+                ]
+            },
+            "OtpVerificationIn": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "purpose": {
+                        "$ref": "#/components/schemas/PurposeEnum"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 12
+                    }
+                },
+                "required": [
+                    "code",
+                    "phone",
+                    "purpose"
+                ]
+            },
+            "PatchedProfilIn": {
+                "type": "object",
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                }
+            },
+            "PlatformEnum": {
+                "enum": [
+                    "android",
+                    "ios",
+                    "web"
+                ],
+                "type": "string",
+                "description": "* `android` - android\n* `ios` - ios\n* `web` - web"
+            },
+            "PurposeEnum": {
+                "enum": [
+                    "signup",
+                    "reset_password",
+                    "change_phone",
+                    "gerant_activation"
+                ],
+                "type": "string",
+                "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone\n* `gerant_activation` - gerant_activation"
+            },
+            "RafraichissementIn": {
+                "type": "object",
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "refresh_token"
+                ]
+            },
+            "RoleEnum": {
+                "enum": [
+                    "client",
+                    "gerant"
+                ],
+                "type": "string",
+                "description": "* `client` - client\n* `gerant` - gerant"
+            },
+            "SessionOut": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UtilisateurOut"
+                    },
+                    "tokens": {
+                        "$ref": "#/components/schemas/JetonsOut"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "device_id",
+                    "tokens",
+                    "user"
+                ]
+            },
+            "UtilisateurOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/RoleEnum"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "terms_version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "full_name",
+                    "id",
+                    "phone",
+                    "role",
+                    "terms_version"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "BearerJwt": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Jeton d'accès de 15 minutes (`aud` = client ou gerant), obtenu par /auth/login."
+            }
+        }
+    }
 }

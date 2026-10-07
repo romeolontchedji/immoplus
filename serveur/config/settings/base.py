@@ -142,7 +142,7 @@ MEDIA_DISK_REFUS_POURCENT = 85
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.core.errors.gestionnaire_exceptions",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.accounts.api.authentication.AuthJwt"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.api.permissions.RefusParDefaut"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "UNAUTHENTICATED_USER": None,
@@ -190,6 +190,7 @@ LOGGING = {
 
 # --- En-têtes de sécurité (la CSP est posée par EnTetesSecuriteMiddleware) ---
 CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com"]
+USE_X_FORWARDED_FOR = False  # vrai derrière Caddy (réglages public et admin)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
