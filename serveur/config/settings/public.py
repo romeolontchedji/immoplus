@@ -1,5 +1,7 @@
 """Réglages de `web-api` et `realtime` : site, API, WebSocket. Jamais de route d'administration ici."""
 
+from django.core.exceptions import ImproperlyConfigured
+
 from config import env
 
 from .base import *  # noqa: F403
@@ -9,18 +11,22 @@ ROOT_URLCONF = "config.urls_public"
 DEBUG = False
 
 if env.texte("SECRET_KEY") == "" or env.texte("SECRET_KEY").startswith("dev-"):
-    from django.core.exceptions import ImproperlyConfigured
-
     raise ImproperlyConfigured("SECRET_KEY de production absente ou de développement.")
 if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
-    from django.core.exceptions import ImproperlyConfigured
-
     raise ImproperlyConfigured(
         "DEBUG et OTP_DEBUG_CODE sont interdits avec les réglages « public »."
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
+OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY")
+for _nom, _valeur in (("JWT_SIGNING_KEY", JWT_SIGNING_KEY), ("OTP_HMAC_KEY", OTP_HMAC_KEY)):
+    if not _valeur or _valeur.startswith("dev-"):
+        raise ImproperlyConfigured(f"{_nom} de production absente ou de développement.")
+if len({SECRET_KEY, JWT_SIGNING_KEY, OTP_HMAC_KEY}) != 3:
+    raise ImproperlyConfigured(
+        "SECRET_KEY, JWT_SIGNING_KEY et OTP_HMAC_KEY doivent être trois clés différentes."
+    )
 
 # Site : cookie `__Host-lgsid`, sessions en `cached_db`.
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"

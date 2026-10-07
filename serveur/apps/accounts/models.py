@@ -233,7 +233,15 @@ class Device(models.Model):
                 name="devices_push_fournisseur_valide",
             ),
         ]
-        indexes = [models.Index(fields=["user", "revoked_at"], name="devices_user_revoked_idx")]
+        indexes = [
+            models.Index(fields=["user", "revoked_at"], name="devices_user_revoked_idx"),
+            # Détection de réutilisation d'un ancien jeton de rafraîchissement (hors du modèle du CDC §9.5).
+            models.Index(
+                fields=["prev_refresh_hash"],
+                name="devices_prev_refresh_idx",
+                condition=models.Q(prev_refresh_hash__isnull=False),
+            ),
+        ]
 
 
 class StatutVerification(models.TextChoices):

@@ -44,12 +44,17 @@ class TestRefusEnProduction:
         assert r.returncode != 0 and "OTP_DEBUG_CODE" in r.stderr
 
     def test_configuration_saine(self, module):
-        r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
+        r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60)
         assert r.returncode == 0, r.stderr
 
 
 def test_cookies_distincts_site_et_administration():
-    site = importer("config.settings.public", SECRET_KEY="a" * 60)
+    site = importer(
+        "config.settings.public",
+        SECRET_KEY="a" * 60,
+        JWT_SIGNING_KEY="b" * 60,
+        OTP_HMAC_KEY="c" * 60,
+    )
     assert site.returncode == 0
     sortie = subprocess.run(
         [
@@ -59,7 +64,12 @@ def test_cookies_distincts_site_et_administration():
             "import sys; sys.stdout.write(' '.join([p.SESSION_COOKIE_NAME, a.SESSION_COOKIE_NAME, p.SESSION_ENGINE, a.SESSION_ENGINE]))",
         ],
         cwd=SERVEUR,
-        env={**os.environ, "SECRET_KEY": "a" * 60},
+        env={
+            **os.environ,
+            "SECRET_KEY": "a" * 60,
+            "JWT_SIGNING_KEY": "b" * 60,
+            "OTP_HMAC_KEY": "c" * 60,
+        },
         capture_output=True,
         text=True,
         check=True,
@@ -70,3 +80,21 @@ def test_cookies_distincts_site_et_administration():
         and sortie[3].endswith("db")
         and not sortie[3].endswith("cached_db")
     )
+
+
+CLES = {"SECRET_KEY": "a" * 60, "JWT_SIGNING_KEY": "b" * 60, "OTP_HMAC_KEY": "c" * 60}
+
+
+@pytest.mark.parametrize("cle", ["JWT_SIGNING_KEY", "OTP_HMAC_KEY"])
+class TestClesDeSecurite:
+    def test_absente(self, cle):
+        r = importer("config.settings.public", **{k: v for k, v in CLES.items() if k != cle})
+        assert r.returncode != 0 and cle in r.stderr
+
+    def test_de_developpement(self, cle):
+        r = importer("config.settings.public", **{**CLES, cle: "dev-quelque-chose"})
+        assert r.returncode != 0 and cle in r.stderr
+
+    def test_identique_a_une_autre_cle(self, cle):
+        r = importer("config.settings.public", **{**CLES, cle: CLES["SECRET_KEY"]})
+        assert r.returncode != 0 and "trois clés différentes" in r.stderr

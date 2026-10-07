@@ -140,6 +140,7 @@ MEDIA_DISK_REFUS_POURCENT = 85
 
 # --- API ---
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apps.core.errors.gestionnaire_exceptions",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.api.permissions.RefusParDefaut"],
@@ -160,6 +161,17 @@ STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
 VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
 PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
 DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
+CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER", "fake")
+TURNSTILE_SECRET = env.texte("TURNSTILE_SECRET")
+TURNSTILE_SITE_KEY = env.texte("TURNSTILE_SITE_KEY")
+SMS_HTTP_URL = env.texte("SMS_HTTP_URL")
+SMS_HTTP_TOKEN = env.texte("SMS_HTTP_TOKEN")
+SMS_HTTP_SECRET = env.texte("SMS_HTTP_SECRET")
+
+# --- Clés de sécurité : distinctes entre elles et de SECRET_KEY ; refusées en production si elles viennent d'ici ---
+JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY", "dev-jwt-ne-jamais-utiliser-en-production")
+OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY", "dev-otp-ne-jamais-utiliser-en-production")
+REDIS_QUEUE_FAKE = False
 
 # --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---
 SUBSCRIPTION_ENABLED = env.booleen("SUBSCRIPTION_ENABLED", False)

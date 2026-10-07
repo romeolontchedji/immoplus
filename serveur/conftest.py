@@ -59,3 +59,18 @@ def roles_postgres():
 @pytest.fixture(scope="session")
 def django_db_setup(roles_postgres, django_db_setup):
     """La base de test est créée après les rôles : les migrations posent alors les droits."""
+
+
+@pytest.fixture(autouse=True)
+def etat_propre(settings):
+    """Chaque test repart d'un cache et de compteurs Redis vides (les compteurs de sécurité sont en mémoire en test)."""
+    from django.core.cache import cache
+
+    from apps.core import redis_file
+
+    cache.clear()
+    redis_file.reinitialiser()
+    if getattr(settings, "REDIS_QUEUE_FAKE", False):
+        redis_file.client().flushall()
+    yield
+    cache.clear()

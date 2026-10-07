@@ -16,3 +16,5 @@ DEV_INBOX_ENABLED = True
 SCHEMA_ENABLED = True
 ALLOWED_HOSTS = ["*"]
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+REDIS_QUEUE_FAKE = True
+SMS_PROVIDER = "console"
