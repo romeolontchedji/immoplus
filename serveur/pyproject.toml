@@ -11,7 +11,9 @@ extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S", "T20", "DJ", "N"]
-ignore = ["S101", "E501"]
+# DJ001 : le cahier des charges impose des colonnes texte nullables (§9) ; DJ008 : __str__ inutile sur les tables techniques ;
+# N818 : exceptions métier nommées en français sans suffixe « Error ».
+ignore = ["S101", "E501", "DJ001", "DJ008", "DJ012", "N818"]
 
 [tool.ruff.lint.per-file-ignores]
 "config/settings/test.py" = ["S105"]
