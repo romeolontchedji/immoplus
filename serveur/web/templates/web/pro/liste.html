@@ -1,0 +1,24 @@
+{% extends "web/base.html" %}
+{% block titre %}Mes annonces — Logeo{% endblock %}
+{% block navigation %}<a class="bouton bouton--primaire bouton--petit" href="/pro/annonces/nouvelle">Nouvelle annonce</a>{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur pile">
+      <h1>Mes annonces</h1>
+      {% if profil.verification_status != "verified" %}
+        <div class="alerte alerte--avertissement" role="status"><p>Ton profil n'est pas encore vérifié : tu pourras publier après l'entretien avec l'équipe Logeo.</p></div>
+      {% endif %}
+      <div class="grille grille--3">
+        {% for a in annonces %}
+          <article class="carte carte--interactive"><div class="carte__corps">
+            <h2 class="carte__titre"><a href="/pro/annonces/{{ a.id }}">{{ a.title }}</a></h2>
+            <p class="carte__prix">{{ a.rent_amount }} <small>FCFA / mois</small></p>
+            <p class="texte-doux texte-petit mb-0">{{ a.district.name }} · <span class="badge">{{ a.get_status_display }}</span></p>
+          </div></article>
+        {% empty %}
+          <p class="texte-doux">Aucune annonce pour l'instant.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

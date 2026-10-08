@@ -35,6 +35,11 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "ADMIN_SESSION_MAX_H": (8, "Durée maximale d'une session d'administration, en heures."),
     "TURNSTILE_ENABLED": (True, "Défi anti-robot du site."),
     "TERMS_VERSION": ("1", "Version courante des CGU et de la politique de confidentialité."),
+    "CAMPUS_REFERENCE": (
+        {"latitude": 9.337, "longitude": 2.6303},
+        "Point de référence du campus (Université de Parakou) : coordonnées à relever.",
+    ),
+    "CONTACT_LEAK_MODE": ("mask", "Détection des coordonnées : mask, flag ou block."),
     "SUBSCRIPTION_ENABLED": (False, "Abonnement des gérants (désactivé au lancement)."),
 }
 

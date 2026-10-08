@@ -1,0 +1,38 @@
+{% extends "web/base.html" %}
+{% block titre %}{{ titre }} — Logeo{% endblock %}
+{% block navigation %}<a class="bouton bouton--fantome bouton--petit" href="/pro/annonces">Mes annonces</a>{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile pile--large">
+      <h1>{{ titre }}</h1>
+      {% if annonce %}<p><span class="badge badge--marque">{{ annonce.get_status_display }}</span></p>{% endif %}
+      {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
+      {% if manques %}<div class="alerte alerte--avertissement" role="alert"><div><p class="alerte__titre">Il manque :</p><ul>{% for m in manques %}<li>{{ m }}</li>{% endfor %}</ul></div></div>{% endif %}
+      {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+      <form method="post" class="pile" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="enregistrer">
+        {% for champ in form.visible_fields %}
+          <div class="champ">
+            <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+            {{ champ }}
+            {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        <button class="bouton bouton--primaire" type="submit">Enregistrer</button>
+      </form>
+      {% if annonce %}
+        <h2>Médias</h2>
+        <ul>{% for m in medias %}<li>{{ m.get_kind_display }} — {{ m.get_status_display }}</li>{% empty %}<li class="texte-doux">Aucun média envoyé.</li>{% endfor %}</ul>
+        <h2>Actions</h2>
+        <form method="post" class="rangee">{% csrf_token %}
+          <button class="bouton bouton--primaire" name="action" value="publier" type="submit">Publier</button>
+          <button class="bouton" name="action" value="confirmer" type="submit">Confirmer la disponibilité</button>
+          <button class="bouton" name="action" value="masquer" type="submit">Masquer</button>
+          <button class="bouton" name="action" value="louee" type="submit">Marquer louée</button>
+          <button class="bouton" name="action" value="annuler-louee" type="submit">Annuler « louée »</button>
+          <button class="bouton bouton--danger" name="action" value="supprimer" type="submit">Supprimer le brouillon</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

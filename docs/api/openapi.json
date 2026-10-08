@@ -496,6 +496,33 @@
                 }
             }
         },
+        "/v1/districts": {
+            "get": {
+                "operationId": "v1_districts_list",
+                "summary": "Quartiers actifs",
+                "tags": [
+                    "Référentiels"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DistrictOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/me": {
             "get": {
                 "operationId": "v1_me_retrieve",
@@ -669,6 +696,429 @@
                     }
                 }
             }
+        },
+        "/v1/pro/listings": {
+            "get": {
+                "operationId": "v1_pro_listings_list",
+                "summary": "Mes annonces",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AnnonceProOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pro_listings_create",
+                "summary": "Créer un brouillon",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}": {
+            "get": {
+                "operationId": "v1_pro_listings_retrieve",
+                "summary": "Lire une annonce (adresse privée comprise)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_pro_listings_partial_update",
+                "summary": "Modifier une annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_pro_listings_destroy",
+                "summary": "Supprimer un brouillon",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/confirm": {
+            "post": {
+                "operationId": "v1_pro_listings_confirm_create",
+                "summary": "Confirmer la disponibilité",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/hide": {
+            "post": {
+                "operationId": "v1_pro_listings_hide_create",
+                "summary": "Masquer l'annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/mark-rented": {
+            "post": {
+                "operationId": "v1_pro_listings_mark_rented_create",
+                "summary": "Marquer comme louée",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/publish": {
+            "post": {
+                "operationId": "v1_pro_listings_publish_create",
+                "summary": "Publier (règles du §9.23)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/undo-rented": {
+            "post": {
+                "operationId": "v1_pro_listings_undo_rented_create",
+                "summary": "Annuler « louée »",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/markdown/preview": {
+            "post": {
+                "operationId": "v1_pro_markdown_preview_create",
+                "summary": "Aperçu du texte enrichi",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApercuOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -700,6 +1150,248 @@
                     "password",
                     "platform",
                     "terms_accepted"
+                ]
+            },
+            "AnnonceIn": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "room_type": {
+                        "$ref": "#/components/schemas/RoomTypeEnum"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "landmark_text": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "address_private": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "longitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "rent_amount": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "deposit_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "advance_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    },
+                    "electricity_meter": {
+                        "$ref": "#/components/schemas/ElectricityMeterEnum"
+                    },
+                    "description_md": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                },
+                "required": [
+                    "advance_months",
+                    "available_from",
+                    "deposit_months",
+                    "district",
+                    "electricity_meter",
+                    "has_private_bathroom",
+                    "is_fenced",
+                    "landmark_text",
+                    "latitude",
+                    "longitude",
+                    "rent_amount",
+                    "room_type",
+                    "title",
+                    "water_source"
+                ]
+            },
+            "AnnonceProOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "room_type": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "district_name": {
+                        "type": "string"
+                    },
+                    "landmark_text": {
+                        "type": "string"
+                    },
+                    "address_private": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "distance_to_campus_m": {
+                        "type": "integer"
+                    },
+                    "rent_amount": {
+                        "type": "integer"
+                    },
+                    "deposit_months": {
+                        "type": "integer"
+                    },
+                    "advance_months": {
+                        "type": "integer"
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "type": "string"
+                    },
+                    "electricity_meter": {
+                        "type": "string"
+                    },
+                    "description_md": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/StatusEnum"
+                    },
+                    "hidden_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "last_confirmed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "address_private",
+                    "advance_months",
+                    "agent_fee_amount",
+                    "available_from",
+                    "created_at",
+                    "deposit_months",
+                    "description_md",
+                    "distance_to_campus_m",
+                    "district",
+                    "district_name",
+                    "electricity_meter",
+                    "has_private_bathroom",
+                    "hidden_reason",
+                    "id",
+                    "is_fenced",
+                    "landmark_text",
+                    "last_confirmed_at",
+                    "latitude",
+                    "longitude",
+                    "published_at",
+                    "rent_amount",
+                    "room_type",
+                    "slug",
+                    "status",
+                    "title",
+                    "updated_at",
+                    "water_source"
+                ]
+            },
+            "ApercuIn": {
+                "type": "object",
+                "properties": {
+                    "markdown": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                },
+                "required": [
+                    "markdown"
+                ]
+            },
+            "ApercuOut": {
+                "type": "object",
+                "properties": {
+                    "markdown": {
+                        "type": "string"
+                    },
+                    "html": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "html",
+                    "markdown"
                 ]
             },
             "AppareilOut": {
@@ -801,6 +1493,44 @@
                     "phone",
                     "platform"
                 ]
+            },
+            "DistrictOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "id",
+                    "latitude",
+                    "longitude",
+                    "name",
+                    "slug"
+                ]
+            },
+            "ElectricityMeterEnum": {
+                "enum": [
+                    "individual",
+                    "shared"
+                ],
+                "type": "string",
+                "description": "* `individual` - individual\n* `shared` - shared"
             },
             "InscriptionIn": {
                 "type": "object",
@@ -956,6 +1686,78 @@
                     "purpose"
                 ]
             },
+            "PatchedAnnonceIn": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "room_type": {
+                        "$ref": "#/components/schemas/RoomTypeEnum"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "landmark_text": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "address_private": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "longitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "rent_amount": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "deposit_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "advance_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    },
+                    "electricity_meter": {
+                        "$ref": "#/components/schemas/ElectricityMeterEnum"
+                    },
+                    "description_md": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                }
+            },
             "PatchedProfilIn": {
                 "type": "object",
                 "properties": {
@@ -1004,6 +1806,16 @@
                 "type": "string",
                 "description": "* `client` - client\n* `gerant` - gerant"
             },
+            "RoomTypeEnum": {
+                "enum": [
+                    "single",
+                    "entree_coucher",
+                    "chambre_salon",
+                    "studio"
+                ],
+                "type": "string",
+                "description": "* `single` - single\n* `entree_coucher` - entree_coucher\n* `chambre_salon` - chambre_salon\n* `studio` - studio"
+            },
             "SessionOut": {
                 "type": "object",
                 "properties": {
@@ -1023,6 +1835,19 @@
                     "tokens",
                     "user"
                 ]
+            },
+            "StatusEnum": {
+                "enum": [
+                    "draft",
+                    "processing",
+                    "published",
+                    "hidden",
+                    "rented",
+                    "archived",
+                    "removed"
+                ],
+                "type": "string",
+                "description": "* `draft` - draft\n* `processing` - processing\n* `published` - published\n* `hidden` - hidden\n* `rented` - rented\n* `archived` - archived\n* `removed` - removed"
             },
             "UtilisateurOut": {
                 "type": "object",
@@ -1058,6 +1883,15 @@
                     "role",
                     "terms_version"
                 ]
+            },
+            "WaterSourceEnum": {
+                "enum": [
+                    "running",
+                    "well",
+                    "borehole"
+                ],
+                "type": "string",
+                "description": "* `running` - running\n* `well` - well\n* `borehole` - borehole"
             }
         },
         "securitySchemes": {

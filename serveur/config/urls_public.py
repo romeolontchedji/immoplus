@@ -9,6 +9,7 @@ urlpatterns = [
     path("healthz", vues_core.healthz, name="healthz"),
     path("readyz", vues_core.readyz, name="readyz"),
     path("v1/", include("apps.accounts.api.urls")),
+    path("v1/", include("apps.listings.api.urls")),
     path("", include("web.urls")),
 ]
 
