@@ -4,7 +4,8 @@
   <section class="section">
     <div class="conteneur conteneur--texte pile">
       <h1>{{ titre }}</h1>
-      {% if request.GET.reinitialise %}<div class="alerte alerte--succes" role="status"><p>Mot de passe changé. Connecte-toi.</p></div>{% endif %}
+      {% if request.GET.reinitialise %}<div class="alerte alerte--succes"
+     role="status"><p>Mot de passe changé. Connecte-toi.</p></div>{% endif %}
       {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
       <form method="post" class="pile" novalidate>
         {% csrf_token %}
@@ -18,8 +19,12 @@
         {% endfor %}
         {% for champ in form.hidden_fields %}{{ champ }}{% endfor %}
         {% if captcha_requis and not captcha_fictif and site_key %}
-          <div class="cf-turnstile" data-sitekey="{{ site_key }}" data-response-field-name="captcha"></div>
-          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+          <div class="cf-turnstile"
+               data-sitekey="{{ site_key }}"
+               data-response-field-name="captcha"></div>
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                  async
+                  defer></script>
         {% endif %}
         <button class="bouton bouton--primaire bouton--grand" type="submit">{{ bouton }}</button>
       </form>

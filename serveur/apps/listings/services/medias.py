@@ -2,18 +2,21 @@
 
 import logging
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 from django.db import transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 
-from apps.accounts.models import GerantProfile
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 from apps.media import stockage, traitement
 
 from ..enums import StatutAnnonce, StatutMedia, TypeMedia
 from ..models import Listing, ListingMedia
+
+if TYPE_CHECKING:
+    from apps.accounts.models import GerantProfile
 
 journal = logging.getLogger(__name__)
 
@@ -25,7 +28,7 @@ MORCEAU_MAX = 2 * 1024 * 1024
 ACTIFS = [StatutMedia.UPLOADING, StatutMedia.UPLOADED, StatutMedia.PROCESSING, StatutMedia.READY]
 
 
-def _annonce(gerant: GerantProfile, annonce_id) -> Listing:
+def _annonce(gerant: "GerantProfile", annonce_id) -> Listing:
     try:
         return Listing.objects.select_for_update().get(
             pk=annonce_id, gerant=gerant, deleted_at__isnull=True
@@ -34,7 +37,7 @@ def _annonce(gerant: GerantProfile, annonce_id) -> Listing:
         raise ErreurMetier("not_found", "Annonce introuvable.", statut=404) from erreur
 
 
-def _media(gerant: GerantProfile, annonce_id, media_id, *, verrou=False) -> ListingMedia:
+def _media(gerant: "GerantProfile", annonce_id, media_id, *, verrou=False) -> ListingMedia:
     requete = ListingMedia.objects.select_related("listing")
     requete = requete.select_for_update(of=("self",)) if verrou else requete
     filtres = {"pk": media_id, "listing__gerant": gerant}
@@ -47,7 +50,7 @@ def _media(gerant: GerantProfile, annonce_id, media_id, *, verrou=False) -> List
 
 
 @transaction.atomic
-def creer_envoi(gerant: GerantProfile, annonce_id, kind: str, taille: int) -> ListingMedia:
+def creer_envoi(gerant: "GerantProfile", annonce_id, kind: str, taille: int) -> ListingMedia:
     """Crée le média et son envoi, après quotas (CDC §11.2) : `429 upload_quota`, `503 storage_full`."""
     annonce = _annonce(gerant, annonce_id)
     if kind not in TypeMedia.values:
@@ -88,12 +91,12 @@ def creer_envoi(gerant: GerantProfile, annonce_id, kind: str, taille: int) -> Li
 
 
 # --------------------------------------------------------------- protocole tus (reprise)
-def decalage(gerant: GerantProfile, annonce_id, media_id) -> ListingMedia:
+def decalage(gerant: "GerantProfile", annonce_id, media_id) -> ListingMedia:
     return _media(gerant, annonce_id, media_id)
 
 
 def recevoir_morceau(
-    gerant: GerantProfile, annonce_id, media_id, offset: int, morceau: bytes
+    gerant: "GerantProfile", annonce_id, media_id, offset: int, morceau: bytes
 ) -> ListingMedia:
     """Ajoute un morceau au fichier. L'offset doit être exactement `received_bytes` (sinon 409 : le client relit)."""
     with transaction.atomic():
@@ -221,7 +224,7 @@ def _suite_de_publication(annonce_id, *, echec: bool = False) -> None:
 
 
 # --------------------------------------------------------------- lecture, ordre, suppression
-def lister(gerant: GerantProfile, annonce_id) -> list[ListingMedia]:
+def lister(gerant: "GerantProfile", annonce_id) -> list[ListingMedia]:
     return list(
         ListingMedia.objects.filter(listing_id=annonce_id, listing__gerant=gerant)
         .exclude(status=StatutMedia.DELETED).order_by("position", "created_at")
@@ -230,7 +233,7 @@ def lister(gerant: GerantProfile, annonce_id) -> list[ListingMedia]:
 
 @transaction.atomic
 def definir_ordre(
-    gerant: GerantProfile, annonce_id, ordre: list[str], couverture: str | None
+    gerant: "GerantProfile", annonce_id, ordre: list[str], couverture: str | None
 ) -> list[ListingMedia]:
     _annonce(gerant, annonce_id)
     medias = {str(m.pk): m for m in lister(gerant, annonce_id)}
@@ -257,7 +260,7 @@ def definir_ordre(
 
 
 @transaction.atomic
-def supprimer(gerant: GerantProfile, annonce_id, media_id) -> None:
+def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
     media = _media(gerant, annonce_id, media_id, verrou=True)
     if media.status == StatutMedia.DELETED:
         raise ErreurMetier("not_found", "Média introuvable.", statut=404)

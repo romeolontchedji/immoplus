@@ -44,6 +44,7 @@ markers = [
 [tool.importlinter]
 root_packages = ["apps", "web", "adminsite", "config"]
 include_external_packages = false
+exclude_type_checking_imports = true
 
 [[tool.importlinter.contracts]]
 name = "core n'importe aucune application"

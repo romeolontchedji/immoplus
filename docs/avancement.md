@@ -1,5 +1,7 @@
 # Avancement
 
+> **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
+
 **Phase en cours : 0 (fondations) — terminée côté code, avec les réserves listées ci-dessous.**
 Prochaine étape : phase 1 (comptes : modèles, OTP, appareils, administration séparée).
 

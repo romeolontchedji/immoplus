@@ -1,7 +1,8 @@
 {% extends "web/base.html" %}
 {% load static %}
 {% block titre %}{{ titre }} — Logeo{% endblock %}
-{% block navigation %}<a class="bouton bouton--fantome bouton--petit" href="/pro/annonces">Mes annonces</a>{% endblock %}
+{% block navigation %}<a class="bouton bouton--fantome bouton--petit"
+   href="/pro/annonces">Mes annonces</a>{% endblock %}
 {% block contenu %}
   <section class="section">
     <div class="conteneur conteneur--texte pile pile--large">
@@ -11,7 +12,8 @@
       {% if manques %}<div class="alerte alerte--avertissement" role="alert"><div><p class="alerte__titre">Il manque :</p><ul>{% for m in manques %}<li>{{ m }}</li>{% endfor %}</ul></div></div>{% endif %}
       {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
       <form method="post" class="pile" novalidate>
-        {% csrf_token %}<input type="hidden" name="action" value="enregistrer">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="enregistrer">
         {% for champ in form.visible_fields %}
           <div class="champ">
             <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
@@ -25,19 +27,30 @@
         <h2>Médias</h2>
         <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="champ">
           <label class="champ__etiquette" for="envoi-fichiers">Ajouter une vidéo (10 à 60 s) ou des photos</label>
-          <input class="champ__saisie" id="envoi-fichiers" type="file" accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic" multiple>
+          <input class="champ__saisie"
+                 id="envoi-fichiers"
+                 type="file"
+                 accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
+                 multiple>
           <p class="champ__aide" id="envoi-etat" role="status"></p>
         </div>
         <script src="{% static 'js/envoi.js' %}" defer></script>
         <ul>{% for m in medias %}<li>{{ m.get_kind_display }} — {{ m.get_status_display }}{% if m.error_detail %} : {{ m.error_detail }}{% endif %}</li>{% empty %}<li class="texte-doux">Aucun média envoyé.</li>{% endfor %}</ul>
         <h2>Actions</h2>
-        <form method="post" class="rangee">{% csrf_token %}
-          <button class="bouton bouton--primaire" name="action" value="publier" type="submit">Publier</button>
+        <form method="post" class="rangee">
+          {% csrf_token %}
+          <button class="bouton bouton--primaire"
+                  name="action"
+                  value="publier"
+                  type="submit">Publier</button>
           <button class="bouton" name="action" value="confirmer" type="submit">Confirmer la disponibilité</button>
           <button class="bouton" name="action" value="masquer" type="submit">Masquer</button>
           <button class="bouton" name="action" value="louee" type="submit">Marquer louée</button>
           <button class="bouton" name="action" value="annuler-louee" type="submit">Annuler « louée »</button>
-          <button class="bouton bouton--danger" name="action" value="supprimer" type="submit">Supprimer le brouillon</button>
+          <button class="bouton bouton--danger"
+                  name="action"
+                  value="supprimer"
+                  type="submit">Supprimer le brouillon</button>
         </form>
       {% endif %}
     </div>

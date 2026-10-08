@@ -1,18 +1,22 @@
 """Annonces : création de brouillons, modification, publication et cycle de vie (CDC §9.8, §9.23, §11.1)."""
 
 import uuid
+from typing import TYPE_CHECKING
 
 from django.db import connection, transaction
 from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.accounts.models import GerantProfile, Statut, StatutVerification
+from apps.accounts.enums import Statut, StatutVerification
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 
 from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeChambre, TypeMedia
 from ..models import District, Listing, ListingMedia
 from . import contenu, geo
+
+if TYPE_CHECKING:
+    from apps.accounts.models import GerantProfile
 
 CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "description_md")
 CHAMPS_MODIFIABLES = (
@@ -62,12 +66,12 @@ def _quartier(identifiant) -> District:
         raise _champ("district", "Quartier inconnu.") from erreur
 
 
-def _gerant_actif(gerant: GerantProfile) -> None:
+def _gerant_actif(gerant: "GerantProfile") -> None:
     if not gerant.user.is_active or gerant.user.status != Statut.ACTIVE:
         raise ErreurMetier("account_suspended", "Ton compte est suspendu.", statut=403)
 
 
-def _annonce_du_gerant(gerant: GerantProfile, annonce_id, *, verrou: bool = False) -> Listing:
+def _annonce_du_gerant(gerant: "GerantProfile", annonce_id, *, verrou: bool = False) -> Listing:
     requete = Listing.objects.select_for_update() if verrou else Listing.objects
     try:
         return requete.get(pk=annonce_id, gerant=gerant, deleted_at__isnull=True)
@@ -106,7 +110,7 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
 
 
 @transaction.atomic
-def creer_brouillon(gerant: GerantProfile, donnees: dict) -> Listing:
+def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
     _gerant_actif(gerant)
     manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "")]
     if manquants:
@@ -131,7 +135,7 @@ def creer_brouillon(gerant: GerantProfile, donnees: dict) -> Listing:
 
 
 @transaction.atomic
-def modifier(gerant: GerantProfile, annonce_id, donnees: dict) -> Listing:
+def modifier(gerant: "GerantProfile", annonce_id, donnees: dict) -> Listing:
     _gerant_actif(gerant)
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status in (StatutAnnonce.ARCHIVED, StatutAnnonce.REMOVED):
@@ -155,7 +159,7 @@ def modifier(gerant: GerantProfile, annonce_id, donnees: dict) -> Listing:
 
 
 @transaction.atomic
-def supprimer_brouillon(gerant: GerantProfile, annonce_id) -> None:
+def supprimer_brouillon(gerant: "GerantProfile", annonce_id) -> None:
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status != StatutAnnonce.DRAFT:
         raise ErreurMetier("listing_locked", "Seul un brouillon peut être supprimé.", statut=409)
@@ -208,7 +212,7 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
 
 
 @transaction.atomic
-def publier(gerant: GerantProfile, annonce_id) -> Listing:
+def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     """Publie si toutes les conditions sont réunies ; sinon 409 `listing_not_publishable` avec les manques."""
     _gerant_actif(gerant)
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
@@ -247,7 +251,7 @@ def mettre_en_ligne(annonce: Listing, *, acteur) -> None:
 
 
 @transaction.atomic
-def confirmer(gerant: GerantProfile, annonce_id) -> Listing:
+def confirmer(gerant: "GerantProfile", annonce_id) -> Listing:
     """Confirme la disponibilité : fraîcheur réinitialisée ; une annonce masquée pour péremption est remise en ligne."""
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status not in (StatutAnnonce.PUBLISHED, StatutAnnonce.HIDDEN):
@@ -274,7 +278,7 @@ def confirmer(gerant: GerantProfile, annonce_id) -> Listing:
 
 
 @transaction.atomic
-def masquer(gerant: GerantProfile, annonce_id) -> Listing:
+def masquer(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status != StatutAnnonce.PUBLISHED:
         raise ErreurMetier(
@@ -285,7 +289,7 @@ def masquer(gerant: GerantProfile, annonce_id) -> Listing:
 
 
 @transaction.atomic
-def marquer_louee(gerant: GerantProfile, annonce_id) -> Listing:
+def marquer_louee(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status != StatutAnnonce.PUBLISHED:
         raise ErreurMetier(
@@ -300,7 +304,7 @@ def marquer_louee(gerant: GerantProfile, annonce_id) -> Listing:
 
 
 @transaction.atomic
-def annuler_louee(gerant: GerantProfile, annonce_id) -> Listing:
+def annuler_louee(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status != StatutAnnonce.RENTED:
         raise ErreurMetier("listing_locked", "Cette annonce n'est pas marquée louée.", statut=409)

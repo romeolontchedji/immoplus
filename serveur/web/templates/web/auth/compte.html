@@ -1,7 +1,9 @@
 {% extends "web/base.html" %}
 {% block titre %}Mon compte — Logeo{% endblock %}
 {% block navigation %}
-  <form method="post" action="/deconnexion">{% csrf_token %}<button class="bouton bouton--fantome" type="submit">Se déconnecter</button></form>
+  <form method="post"
+        action="/deconnexion">{% csrf_token %}<button class="bouton bouton--fantome"
+        type="submit">Se déconnecter</button></form>
 {% endblock %}
 {% block contenu %}
   <section class="section">
@@ -11,16 +13,25 @@
       <p class="texte-doux">{{ u.full_name }} · {{ u.phone_e164 }} · {{ u.get_role_display }}</p>
       <form method="post" class="pile"><h2>Mon nom</h2>{% csrf_token %}<input type="hidden" name="action" value="nom">
         {% for champ in nom.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Enregistrer</button></form>
-      <form method="post" class="pile"><h2>Mot de passe</h2>{% csrf_token %}<input type="hidden" name="action" value="mot-de-passe">
+        <button class="bouton" type="submit">Enregistrer</button>
+      </form>
+      <form method="post"
+            class="pile"><h2>Mot de passe</h2>{% csrf_token %}<input type="hidden"
+       name="action"
+       value="mot-de-passe">
         {% for e in mdp.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
         {% for champ in mdp.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Changer le mot de passe</button></form>
-      <form method="post" class="pile"><h2>Supprimer mon compte</h2>{% csrf_token %}<input type="hidden" name="action" value="suppression">
+        <button class="bouton" type="submit">Changer le mot de passe</button>
+      </form>
+      <form method="post"
+            class="pile"><h2>Supprimer mon compte</h2>{% csrf_token %}<input type="hidden"
+       name="action"
+       value="suppression">
         <p class="texte-doux">Ton compte sera anonymisé. Cette action est définitive.</p>
         {% for e in suppression.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
         {% for champ in suppression.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton bouton--danger" type="submit">Supprimer définitivement</button></form>
+        <button class="bouton bouton--danger" type="submit">Supprimer définitivement</button>
+      </form>
     </div>
   </section>
 {% endblock %}
