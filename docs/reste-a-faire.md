@@ -15,7 +15,7 @@ Priorité fixée en cours de route : un système complet qui tourne de bout en b
 | b. annonces | Quartiers, annonces, médias (modèles), brouillon, modification, publication avec règles (§9.23), confirmation, masquage, louée/annuler louée, Markdown restreint assaini, détection des coordonnées, distance au campus. API `/v1/districts`, `/v1/pro/listings*`, `/v1/pro/markdown/preview`. Pages `/pro/annonces*` | `apps/listings`, `web/views_pro.py` |
 | c. médias | Ouverture d'envoi avec quotas, envoi reprenable (tus minimal, `/uploads/{id}`), traitement photo (variantes WebP, EXIF retiré) et vidéo réel avec ffmpeg (MP4 720p + affiche), ordre, couverture, suppression, nettoyage des envois expirés, script d'envoi du site (`web/static/js/envoi.js`) | `apps/media`, `apps/listings/services/medias.py` |
 
-Mesures du dernier passage : **569 tests passent**, couverture **94 %** (hors e2e). `ruff`, `bandit`, `import-linter` (10 contrats), `djlint`, `makemigrations --check`, OpenAPI valide et à jour : tous verts individuellement. Le script complet `outils/verifier_tout.sh` n'a pas été relancé une dernière fois après les deux derniers correctifs (import-linter, djlint).
+Mesures du dernier passage : **569 tests passent**, couverture **94 %** (hors e2e). `ruff`, `bandit`, `import-linter` (10 contrats), `djlint`, `makemigrations --check`, OpenAPI valide et à jour : tous verts individuellement. Le script complet `outils/verifier_tout.sh` a été relancé en mode strict après les derniers correctifs : 0 contrôle en échec, 0 sauté.
 
 ## À faire, dans l'ordre
 
