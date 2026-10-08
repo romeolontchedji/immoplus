@@ -76,7 +76,7 @@ def marquer_appareil_revoque(appareil_id) -> None:
     cache.set(_cle_appareil(appareil_id), "revoque", int(DUREE_REFRESH.total_seconds()))
 
 
-def _etat_utilisateur(uid: str) -> dict | None:
+def etat_utilisateur(uid: str) -> dict | None:
     etat = cache.get(_cle_utilisateur(uid))
     if etat is None:
         ligne = (
@@ -133,7 +133,7 @@ def verifier_acces(jeton: str) -> Identite:
         )
     except jwt.PyJWTError as erreur:
         raise _non_valide() from erreur
-    etat = _etat_utilisateur(charge["sub"])
+    etat = etat_utilisateur(charge["sub"])
     if etat is None or etat["ver"] != charge["ver"] or not _appareil_actif(charge["did"]):
         raise _non_valide()
     if etat["role"] != charge["aud"]:

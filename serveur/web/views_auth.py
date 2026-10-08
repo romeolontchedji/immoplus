@@ -1,0 +1,281 @@
+"""Pages d'authentification et d'espace compte du site (adaptateurs : aucune règle métier ici)."""
+
+from functools import wraps
+
+from django.conf import settings
+from django.contrib.auth import login, logout, update_session_auth_hash
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
+
+from apps.accounts.services import authentification, compte, inscription, otp
+from apps.core.errors import ErreurMetier
+from apps.core.http import ip_client, user_agent
+
+from . import forms
+
+
+def _contexte_otp(request, captcha: str | None) -> otp.Contexte:
+    return otp.Contexte(ip=ip_client(request), jeton_captcha=captcha, surface="web")
+
+
+def _signaler(form, erreur: ErreurMetier) -> None:
+    """Affiche une erreur métier dans le formulaire (champ concerné, sinon erreur générale)."""
+    rattachee = False
+    for champ, messages in erreur.champs.items():
+        cible = champ if champ in form.fields else None
+        for m in messages:
+            form.add_error(cible, erreur.message if cible is None else m)
+            rattachee = True
+    if not rattachee:
+        form.add_error(None, erreur.message)
+
+
+def _ouvrir_session(request, utilisateur) -> None:
+    login(request, utilisateur, backend="django.contrib.auth.backends.ModelBackend")
+    request.session["tv"] = utilisateur.token_version
+
+
+def connecte_obligatoire(vue):
+    @wraps(vue)
+    def enveloppe(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f"/connexion?next={request.path}")
+        return vue(request, *args, **kwargs)
+
+    return enveloppe
+
+
+def _suite(request) -> str:
+    cible = request.GET.get("next") or request.POST.get("next") or "/compte"
+    sure = url_has_allowed_host_and_scheme(
+        cible, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    )
+    return cible if sure and cible.startswith("/") and not cible.startswith("//") else "/compte"
+
+
+def _page(request, gabarit: str, form, titre: str, **extra):
+    contexte = {
+        "form": form, "titre": titre,
+        "captcha_fictif": settings.CAPTCHA_PROVIDER == "fake",
+        "site_key": settings.TURNSTILE_SITE_KEY,
+        **extra,
+    }  # fmt: skip
+    return render(request, gabarit, contexte)
+
+
+# --------------------------------------------------------------- connexion
+def connexion(request):
+    if request.user.is_authenticated:
+        return redirect("/compte")
+    form = forms.Connexion(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            utilisateur = authentification.authentifier(
+                form.cleaned_data["phone"],
+                form.cleaned_data["password"],
+                ip_client(request) or "web",
+            )
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            _ouvrir_session(request, utilisateur)
+            return redirect(_suite(request))
+    return _page(request, "web/auth/formulaire.html", form, "Connexion", bouton="Se connecter", suite=request.GET.get("next", ""),
+                 liens=[("/inscription", "Créer un compte"), ("/mot-de-passe-oublie", "Mot de passe oublié")])  # fmt: skip
+
+
+@require_POST
+def deconnexion(request):
+    logout(request)
+    return redirect("/")
+
+
+# --------------------------------------------------------------- flux OTP commun (inscription, mot de passe oublié)
+def _etape_telephone(request, objet: str, cle: str, gabarit_titre: str, suivante: str, bouton: str):
+    form = forms.Telephone(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            otp.demander(
+                form.cleaned_data["phone"],
+                objet,
+                _contexte_otp(request, form.cleaned_data["captcha"]),
+            )
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            request.session[cle] = {"phone": form.cleaned_data["phone"]}
+            return redirect(suivante)
+    if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
+        form.fields["captcha"].initial = "captcha-ok"
+    return _page(
+        request, "web/auth/formulaire.html", form, gabarit_titre, bouton=bouton, captcha_requis=True
+    )
+
+
+def _etape_code(request, objet: str, cle: str, retour: str, suivante: str, titre: str):
+    flux = request.session.get(cle)
+    if not flux:
+        return redirect(retour)
+    form = forms.Code(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            flux["otp_token"] = otp.verifier(flux["phone"], objet, form.cleaned_data["code"])
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            request.session[cle] = flux
+            return redirect(suivante)
+    return _page(
+        request,
+        "web/auth/formulaire.html",
+        form,
+        titre,
+        bouton="Vérifier",
+        liens=[(retour, "Changer de numéro")],
+    )
+
+
+# --------------------------------------------------------------- inscription
+def inscription_telephone(request):
+    return _etape_telephone(
+        request, "signup", "inscription", "Créer un compte", "/inscription/code", "Recevoir un code"
+    )
+
+
+def inscription_code(request):
+    return _etape_code(
+        request,
+        "signup",
+        "inscription",
+        "/inscription",
+        "/inscription/profil",
+        "Saisis le code reçu",
+    )
+
+
+def inscription_profil(request):
+    flux = request.session.get("inscription")
+    if not flux or "otp_token" not in flux:
+        return redirect("/inscription")
+    form = forms.Profil(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        try:
+            utilisateur = inscription.inscrire_client(
+                flux["otp_token"], d["full_name"], d["password"], d["terms_accepted"],
+                ip=ip_client(request), user_agent=user_agent(request),
+            )  # fmt: skip
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+            if erreur.code in ("otp_token_invalid", "phone_already_registered"):
+                request.session.pop("inscription", None)
+        else:
+            request.session.pop("inscription", None)
+            _ouvrir_session(request, utilisateur)
+            return redirect("/compte")
+    return _page(
+        request,
+        "web/auth/formulaire.html",
+        form,
+        "Termine ton inscription",
+        bouton="Créer mon compte",
+    )
+
+
+# --------------------------------------------------------------- mot de passe oublié
+def oubli_telephone(request):
+    return _etape_telephone(
+        request,
+        "reset_password",
+        "oubli",
+        "Mot de passe oublié",
+        "/mot-de-passe-oublie/code",
+        "Recevoir un code",
+    )
+
+
+def oubli_code(request):
+    return _etape_code(
+        request,
+        "reset_password",
+        "oubli",
+        "/mot-de-passe-oublie",
+        "/mot-de-passe-oublie/nouveau",
+        "Saisis le code reçu",
+    )
+
+
+def oubli_nouveau(request):
+    flux = request.session.get("oubli")
+    if not flux or "otp_token" not in flux:
+        return redirect("/mot-de-passe-oublie")
+    form = forms.NouveauMotDePasse(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            inscription.reinitialiser_mot_de_passe(
+                flux["otp_token"],
+                form.cleaned_data["password"],
+                ip=ip_client(request),
+                user_agent=user_agent(request),
+            )
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            request.session.pop("oubli", None)
+            return redirect("/connexion?reinitialise=1")
+    return _page(
+        request, "web/auth/formulaire.html", form, "Nouveau mot de passe", bouton="Enregistrer"
+    )
+
+
+# --------------------------------------------------------------- espace compte
+@connecte_obligatoire
+def espace_compte(request):
+    u = request.user
+    nom = forms.ChangementNom(
+        request.POST if request.POST.get("action") == "nom" else None,
+        initial={"full_name": u.full_name},
+    )
+    mdp = forms.ChangementMotDePasse(
+        request.POST if request.POST.get("action") == "mot-de-passe" else None
+    )
+    suppression = forms.Suppression(
+        request.POST if request.POST.get("action") == "suppression" else None
+    )
+    message = None
+    if request.method == "POST":
+        action = request.POST.get("action")
+        try:
+            if action == "nom" and nom.is_valid():
+                compte.modifier_profil(u, nom=nom.cleaned_data["full_name"])
+                message = "Ton nom a été mis à jour."
+            elif action == "mot-de-passe" and mdp.is_valid():
+                compte.changer_mot_de_passe(
+                    u, mdp.cleaned_data["current_password"], mdp.cleaned_data["new_password"]
+                )
+                update_session_auth_hash(
+                    request, u
+                )  # garde CETTE session ouverte ; les autres tombent
+                message = "Ton mot de passe a été changé. Les autres appareils sont déconnectés."
+            elif action == "suppression" and suppression.is_valid():
+                compte.supprimer(u, suppression.cleaned_data["password"])
+                logout(request)
+                return redirect("/?compte_supprime=1")
+        except ErreurMetier as erreur:
+            _signaler(
+                {"nom": nom, "mot-de-passe": mdp, "suppression": suppression}.get(action, nom),
+                erreur,
+            )
+    return render(
+        request,
+        "web/auth/compte.html",
+        {
+            "u": u,
+            "nom": nom,
+            "mdp": mdp,
+            "suppression": suppression,
+            "message": message,
+            "titre": "Mon compte",
+        },
+    )
