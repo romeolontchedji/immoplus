@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.accounts.models import Objet, Plateforme
+from apps.accounts.enums import Objet, Plateforme
 
 
 class OtpDemandeIn(serializers.Serializer):

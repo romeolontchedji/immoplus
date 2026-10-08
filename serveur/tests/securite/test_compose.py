@@ -162,3 +162,14 @@ def test_chaque_service_applicatif_a_son_fichier_d_environnement(pile):
 
 def test_caddy_de_production_ouvre_https_et_http3(prod):
     assert set(prod["services"]["caddy"]["ports"]) == {"80:80", "443:443", "443:443/udp"}
+
+
+def test_migrer_cree_tout_le_schema_avec_ses_propres_reglages(pile, prod):
+    assert (
+        pile["services"]["migrer"]["environment"]["DJANGO_SETTINGS_MODULE"]
+        == "config.settings.migrer"
+    )
+    assert (
+        prod["services"]["migrer"]["environment"]["DJANGO_SETTINGS_MODULE"]
+        == "config.settings.migrer"
+    )

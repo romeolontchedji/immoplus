@@ -91,6 +91,14 @@ class TestSmsHttp:
         with pytest.raises(ImproperlyConfigured):
             sms.GenericHttpSmsProvider()
 
+    @pytest.mark.parametrize(
+        "url", ["file:///etc/passwd", "ftp://x/y", "javascript:alert(1)", "//hote/chemin"]
+    )
+    def test_schemas_autres_que_http_refuses(self, settings, url):
+        settings.SMS_HTTP_URL = url
+        with pytest.raises(ImproperlyConfigured):
+            sms.GenericHttpSmsProvider()
+
     def test_envoi_signe_et_lecture_du_cout(self, settings, agregateur):
         a = agregateur([(200, {"id": "msg-42", "cost": 12})])
         self.configurer(settings, a.url)

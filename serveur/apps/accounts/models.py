@@ -7,23 +7,17 @@ from django.db import models
 from django.db.models.functions import Now
 from django.utils import timezone
 
-
-class Role(models.TextChoices):
-    CLIENT = "client", "Locataire"
-    GERANT = "gerant", "Gérant"
-    MODERATOR = "moderator", "Modérateur"
-    ADMIN = "admin", "Administrateur"
-
-
-class Statut(models.TextChoices):
-    ACTIVE = "active", "Actif"
-    SUSPENDED = "suspended", "Suspendu"
-    BANNED = "banned", "Banni"
-    DELETED = "deleted", "Supprimé"
-
-
-ROLES_CLIENTELE = (Role.CLIENT, Role.GERANT)
-ROLES_PERSONNEL = (Role.MODERATOR, Role.ADMIN)
+from .enums import (  # noqa: F401  (réexportées : l'import historique depuis `models` continue de fonctionner)
+    ROLES_CLIENTELE,
+    ROLES_PERSONNEL,
+    FournisseurPush,
+    Objet,
+    Plateforme,
+    Role,
+    Statut,
+    StatutVerification,
+    TypePiece,
+)
 
 
 def _in(champ: str, valeurs) -> str:
@@ -137,13 +131,6 @@ class User(AbstractBaseUser):
         return autorise_module(self, app_label)
 
 
-class Objet(models.TextChoices):
-    SIGNUP = "signup", "Inscription"
-    RESET_PASSWORD = "reset_password", "Mot de passe oublié"
-    CHANGE_PHONE = "change_phone", "Changement de numéro"
-    GERANT_ACTIVATION = "gerant_activation", "Activation gérant"
-
-
 class OtpCode(models.Model):
     """Un enregistrement par code envoyé : sert aussi à compter les envois et leur coût (budget, plafonds)."""
 
@@ -179,18 +166,6 @@ class OtpCode(models.Model):
             models.Index(fields=["ip", "created_at"], name="otp_ip_idx"),
             models.Index(fields=["purpose", "created_at"], name="otp_purpose_date_idx"),
         ]
-
-
-class Plateforme(models.TextChoices):
-    ANDROID = "android", "Android"
-    IOS = "ios", "iOS"
-    WEB = "web", "Web"
-
-
-class FournisseurPush(models.TextChoices):
-    EXPO = "expo", "Expo"
-    FCM = "fcm", "FCM"
-    WEBPUSH = "webpush", "Web Push"
 
 
 class Device(models.Model):
@@ -242,19 +217,6 @@ class Device(models.Model):
                 condition=models.Q(prev_refresh_hash__isnull=False),
             ),
         ]
-
-
-class StatutVerification(models.TextChoices):
-    PENDING = "pending", "En attente"
-    INTERVIEW = "interview", "Entretien"
-    VERIFIED = "verified", "Vérifié"
-    REJECTED = "rejected", "Refusé"
-
-
-class TypePiece(models.TextChoices):
-    ID_CARD = "id_card", "Carte d'identité"
-    PASSPORT = "passport", "Passeport"
-    OTHER = "other", "Autre"
 
 
 # Colonnes que le rôle PostgreSQL `app` ne peut pas lire (pièces et notes : administration seulement).

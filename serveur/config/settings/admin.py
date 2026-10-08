@@ -16,7 +16,7 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
-ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")
+ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")  # vide = tout refuser
 PRIVATE_FILES_KEY = env.texte("PRIVATE_FILES_KEY")  # injectée uniquement dans admin et backup
 
 SESSION_COOKIE_NAME = "__Host-lgadm"

@@ -49,6 +49,7 @@ include_external_packages = false
 name = "core n'importe aucune application"
 type = "forbidden"
 source_modules = ["apps.core"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = [
   "apps.accounts", "apps.listings", "apps.media", "apps.chat",
   "apps.notifications", "apps.moderation", "apps.billing", "apps.audit",
@@ -58,6 +59,7 @@ forbidden_modules = [
 name = "accounts n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.accounts"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -65,6 +67,7 @@ allow_indirect_imports = true
 name = "listings n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.listings"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -72,6 +75,7 @@ allow_indirect_imports = true
 name = "media n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.media"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -79,6 +83,7 @@ allow_indirect_imports = true
 name = "chat n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.chat"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -86,6 +91,7 @@ allow_indirect_imports = true
 name = "notifications n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.notifications"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.moderation.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -93,6 +99,7 @@ allow_indirect_imports = true
 name = "moderation n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.moderation"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.billing.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -100,6 +107,7 @@ allow_indirect_imports = true
 name = "billing n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.billing"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.audit.models"]
 allow_indirect_imports = true
 
@@ -107,6 +115,7 @@ allow_indirect_imports = true
 name = "audit n'importe pas les modèles des autres applications"
 type = "forbidden"
 source_modules = ["apps.audit"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.accounts.models", "apps.listings.models", "apps.media.models", "apps.chat.models", "apps.notifications.models", "apps.moderation.models", "apps.billing.models"]
 allow_indirect_imports = true
 
@@ -114,6 +123,7 @@ allow_indirect_imports = true
 name = "les adaptateurs n'importent pas les modèles"
 type = "forbidden"
 source_modules = ["apps.*.api", "apps.*.web", "apps.*.consumers", "apps.*.tasks"]
+ignore_imports = ["apps.*.tests.** -> apps.*.models"]  # les tests montent leurs données directement
 forbidden_modules = ["apps.*.models"]
 allow_indirect_imports = true
 

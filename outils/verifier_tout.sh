@@ -36,7 +36,7 @@ optionnelle ruff "ruff format --check" bash -c 'ruff format --check serveur && r
 if [ -f serveur/manage.py ] && command -v python3 >/dev/null && python3 -c "import django" 2>/dev/null; then
   optionnelle lint-imports "import-linter" bash -c 'cd serveur && lint-imports'
   optionnelle bandit "bandit" bandit -q -r serveur/apps serveur/config serveur/web -x "*/tests/*,*/tests"
-  etape "makemigrations --check" dans_serveur python3 manage.py makemigrations --check --dry-run
+  etape "makemigrations --check (tous les modèles)" dans_serveur env DJANGO_SETTINGS_MODULE=config.settings.migrer SECRET_KEY=controle python3 manage.py makemigrations --check --dry-run
   etape "OpenAPI valide et à jour" bash -c 'cd serveur && python3 manage.py spectacular --format openapi-json --file /tmp/openapi-courant.json --validate --fail-on-warn && cmp -s /tmp/openapi-courant.json ../docs/api/openapi.json || { echo "docs/api/openapi.json périmé : lance make openapi"; exit 1; }'
   if python3 outils/base_disponible.py; then
     optionnelle pytest "pytest (hors lent et e2e)" dans_serveur python3 -m pytest -q -m "not lent and not e2e"

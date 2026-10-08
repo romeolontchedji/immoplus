@@ -64,6 +64,10 @@ class GenericHttpSmsProvider(SmsProvider):
             raise ImproperlyConfigured(
                 "SMS_HTTP_URL est requis pour le fournisseur « generic_http »."
             )
+        if not self.url.startswith(("https://", "http://")):
+            raise ImproperlyConfigured(
+                "SMS_HTTP_URL doit commencer par https:// (ou http:// en développement)."
+            )
         self.jeton = getattr(settings, "SMS_HTTP_TOKEN", "")
         self.secret = getattr(settings, "SMS_HTTP_SECRET", "").encode()
         self.delai = float(getattr(settings, "SMS_HTTP_TIMEOUT_S", 5))
@@ -82,7 +86,7 @@ class GenericHttpSmsProvider(SmsProvider):
         derniere: Exception | None = None
         for essai in range(self.reprises + 1):
             try:
-                with urllib.request.urlopen(self._requete(corps), timeout=self.delai) as reponse:  # noqa: S310
+                with urllib.request.urlopen(self._requete(corps), timeout=self.delai) as reponse:  # noqa: S310  # nosec B310
                     donnees = json.loads(reponse.read() or b"{}")
                 cout = donnees.get(self.champ_cout)
                 return ResultatSms(

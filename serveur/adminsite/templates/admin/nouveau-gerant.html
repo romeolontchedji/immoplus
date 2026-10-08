@@ -1,0 +1,9 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p class="help">Le gérant reçoit un code par SMS pour choisir son mot de passe. Aucun mot de passe n'est communiqué.</p>
+    <input type="submit" value="Créer le compte gérant" class="default">
+  </form>
+{% endblock %}

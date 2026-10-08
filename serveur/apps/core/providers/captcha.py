@@ -43,7 +43,7 @@ class TurnstileProvider(CaptchaProvider):
             URL_VERIFICATION, data=urllib.parse.urlencode(donnees).encode(), method="POST"
         )
         try:
-            with urllib.request.urlopen(requete, timeout=5) as reponse:  # noqa: S310
+            with urllib.request.urlopen(requete, timeout=5) as reponse:  # noqa: S310  # nosec B310
                 return bool(json.loads(reponse.read()).get("success"))
         except (urllib.error.URLError, TimeoutError, OSError, ValueError):
             return False  # en cas de doute, le défi est considéré comme échoué

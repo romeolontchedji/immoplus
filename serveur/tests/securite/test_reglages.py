@@ -75,11 +75,10 @@ def test_cookies_distincts_site_et_administration():
         check=True,
     ).stdout.split()
     assert sortie[0] == "__Host-lgsid" and sortie[1] == "__Host-lgadm"
+    assert sortie[2].endswith("cached_db")
     assert (
-        sortie[2].endswith("cached_db")
-        and sortie[3].endswith("db")
-        and not sortie[3].endswith("cached_db")
-    )
+        sortie[3] == "adminsite.stockage_sessions"
+    )  # table `admin_sessions`, jamais celle du site
 
 
 CLES = {"SECRET_KEY": "a" * 60, "JWT_SIGNING_KEY": "b" * 60, "OTP_HMAC_KEY": "c" * 60}
