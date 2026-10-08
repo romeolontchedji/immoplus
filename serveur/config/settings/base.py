@@ -41,6 +41,11 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+]
+
+# Le site (pas l'administration) déconnecte une session dont la version de sécurité a changé.
+MIDDLEWARE_SITE = [
+    *MIDDLEWARE[: MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1],
     "web.middleware.VersionDeSessionMiddleware",
 ]
 

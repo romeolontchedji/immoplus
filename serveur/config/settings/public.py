@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from config import env
 
 from .base import *  # noqa: F403
-from .base import MIDDLEWARE
+from .base import MIDDLEWARE_SITE
 
 ROOT_URLCONF = "config.urls_public"
 DEBUG = False
@@ -40,7 +40,7 @@ CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [f"https://www.{env.texte('DOMAIN')}"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_HSTS_SECONDS = 31536000
-MIDDLEWARE = list(MIDDLEWARE)
+MIDDLEWARE = list(MIDDLEWARE_SITE)
 
 # Caddy porte la redirection HTTP→HTTPS et l'en-tête HSTS (includeSubDomains) : Django ne les double pas.
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
