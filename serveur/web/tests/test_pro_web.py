@@ -86,3 +86,71 @@ def test_l_annonce_d_un_autre_gerant_est_introuvable(session_gerant):
     autre = ListingFactory()
     assert c.get(f"/pro/annonces/{autre.pk}").status_code == 404
     assert c.post(f"/pro/annonces/{autre.pk}", {"action": "masquer"}).status_code == 404
+
+
+def test_la_page_d_edition_charge_le_script_d_envoi_externe(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft")
+    html = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "js/envoi.js" in html and 'id="envoi-medias"' in html
+    assert "<script>" not in html and " onclick=" not in html
+
+
+def test_envoi_depuis_le_site_avec_session_et_csrf(
+    session_gerant, settings, tmp_path, django_capture_on_commit_callbacks
+):
+    import io
+
+    from PIL import Image
+
+    settings.MEDIA_TMP_ROOT, settings.MEDIA_ROOT = tmp_path / "t", tmp_path / "p"
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft")
+    c = Client(enforce_csrf_checks=True)
+    c.post(
+        "/connexion",
+        {
+            "phone": g.user.phone_e164[4:],
+            "password": MOT_DE_PASSE,
+            "csrfmiddlewaretoken": _jeton(c),
+        },
+    )
+    jeton = _jeton(c, f"/pro/annonces/{a.pk}")
+    tampon = io.BytesIO()
+    Image.new("RGB", (300, 200)).save(tampon, "JPEG")
+    donnees = tampon.getvalue()
+    sans = c.post(
+        f"/v1/pro/listings/{a.pk}/media",
+        {"kind": "photo", "size_bytes": len(donnees)},
+        content_type="application/json",
+    )
+    assert sans.status_code == 403  # session sans jeton CSRF : refusée
+    r = c.post(
+        f"/v1/pro/listings/{a.pk}/media",
+        {"kind": "photo", "size_bytes": len(donnees)},
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=jeton,
+    )
+    assert r.status_code == 201
+    with django_capture_on_commit_callbacks(execute=True):
+        p = c.patch(
+            r.json()["upload_url"],
+            donnees,
+            content_type="application/offset+octet-stream",
+            HTTP_TUS_RESUMABLE="1.0.0",
+            HTTP_UPLOAD_OFFSET="0",
+            HTTP_X_CSRFTOKEN=jeton,
+        )
+    assert p.status_code == 204
+
+
+def _jeton(client, url="/connexion"):
+    import re
+
+    html = client.get(url).content.decode()
+    trouve = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', html)
+    return (
+        trouve.group(1)
+        if trouve
+        else client.cookies["csrftoken" if "csrftoken" in client.cookies else "lgcsrf"].value
+    )

@@ -68,3 +68,31 @@ class ApercuIn(serializers.Serializer):
 class ApercuOut(serializers.Serializer):
     markdown = serializers.CharField()
     html = serializers.CharField()
+
+
+class MediaIn(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=["video", "photo"])
+    size_bytes = serializers.IntegerField(min_value=1)
+
+
+class MediaOut(serializers.Serializer):
+    id = serializers.UUIDField()
+    kind = serializers.CharField()
+    status = serializers.CharField()
+    position = serializers.IntegerField()
+    is_cover = serializers.BooleanField()
+    declared_size_bytes = serializers.IntegerField()
+    received_bytes = serializers.IntegerField()
+    width = serializers.IntegerField(allow_null=True)
+    height = serializers.IntegerField(allow_null=True)
+    duration_s = serializers.FloatField(allow_null=True)
+    playback_url = serializers.CharField(allow_null=True)
+    poster_url = serializers.CharField(allow_null=True)
+    error_code = serializers.CharField(allow_null=True)
+    error_detail = serializers.CharField(allow_null=True)
+    upload_url = serializers.CharField(allow_null=True)
+
+
+class OrdreMediasIn(serializers.Serializer):
+    order = serializers.ListField(child=serializers.UUIDField(), allow_empty=False, max_length=20)
+    cover = serializers.UUIDField(required=False, allow_null=True)

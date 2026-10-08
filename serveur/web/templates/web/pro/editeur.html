@@ -1,4 +1,5 @@
 {% extends "web/base.html" %}
+{% load static %}
 {% block titre %}{{ titre }} — Logeo{% endblock %}
 {% block navigation %}<a class="bouton bouton--fantome bouton--petit" href="/pro/annonces">Mes annonces</a>{% endblock %}
 {% block contenu %}
@@ -22,7 +23,13 @@
       </form>
       {% if annonce %}
         <h2>Médias</h2>
-        <ul>{% for m in medias %}<li>{{ m.get_kind_display }} — {{ m.get_status_display }}</li>{% empty %}<li class="texte-doux">Aucun média envoyé.</li>{% endfor %}</ul>
+        <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="champ">
+          <label class="champ__etiquette" for="envoi-fichiers">Ajouter une vidéo (10 à 60 s) ou des photos</label>
+          <input class="champ__saisie" id="envoi-fichiers" type="file" accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic" multiple>
+          <p class="champ__aide" id="envoi-etat" role="status"></p>
+        </div>
+        <script src="{% static 'js/envoi.js' %}" defer></script>
+        <ul>{% for m in medias %}<li>{{ m.get_kind_display }} — {{ m.get_status_display }}{% if m.error_detail %} : {{ m.error_detail }}{% endif %}</li>{% empty %}<li class="texte-doux">Aucun média envoyé.</li>{% endfor %}</ul>
         <h2>Actions</h2>
         <form method="post" class="rangee">{% csrf_token %}
           <button class="bouton bouton--primaire" name="action" value="publier" type="submit">Publier</button>

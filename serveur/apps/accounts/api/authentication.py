@@ -42,9 +42,13 @@ class _Audience(BasePermission):
     role = ""
 
     def has_permission(self, request, view):
-        if request.auth is None:
+        # Jeton Bearer (application) ou session du site (même règle d'audience).
+        role = (
+            request.auth.role if request.auth is not None else getattr(request.user, "role", None)
+        )
+        if role is None:
             return False
-        if request.auth.role != self.role:
+        if role != self.role:
             raise ErreurMetier("wrong_audience", "Ce jeton n'ouvre pas cet espace.", statut=403)
         return True
 

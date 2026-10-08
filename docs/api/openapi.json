@@ -6,6 +6,50 @@
         "description": "API REST de Logeo (additive uniquement, versionnée sous /v1)."
     },
     "paths": {
+        "/uploads/{media_id}": {
+            "patch": {
+                "operationId": "uploads_partial_update",
+                "description": "Protocole tus minimal : HEAD donne la position, PATCH ajoute un morceau (2 Mo au plus).",
+                "summary": "Envoyer un morceau",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/offset+octet-stream": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/v1/auth/activate": {
             "post": {
                 "operationId": "v1_auth_activate_create",
@@ -1000,6 +1044,211 @@
                 }
             }
         },
+        "/v1/pro/listings/{annonce_id}/media": {
+            "get": {
+                "operationId": "v1_pro_listings_media_list",
+                "summary": "Médias d'une annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MediaOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pro_listings_media_create",
+                "summary": "Ouvrir un envoi (quotas vérifiés)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/media/{media_id}": {
+            "delete": {
+                "operationId": "v1_pro_listings_media_destroy",
+                "summary": "Supprimer un média",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/media/order": {
+            "patch": {
+                "operationId": "v1_pro_listings_media_order_partial_update",
+                "summary": "Ordre des médias et couverture",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MediaOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/pro/listings/{annonce_id}/publish": {
             "post": {
                 "operationId": "v1_pro_listings_publish_create",
@@ -1602,6 +1851,107 @@
                     "refresh"
                 ]
             },
+            "KindEnum": {
+                "enum": [
+                    "video",
+                    "photo"
+                ],
+                "type": "string",
+                "description": "* `video` - video\n* `photo` - photo"
+            },
+            "MediaIn": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/KindEnum"
+                    },
+                    "size_bytes": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                },
+                "required": [
+                    "kind",
+                    "size_bytes"
+                ]
+            },
+            "MediaOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "is_cover": {
+                        "type": "boolean"
+                    },
+                    "declared_size_bytes": {
+                        "type": "integer"
+                    },
+                    "received_bytes": {
+                        "type": "integer"
+                    },
+                    "width": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "duration_s": {
+                        "type": "number",
+                        "format": "double",
+                        "nullable": true
+                    },
+                    "playback_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "poster_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "error_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "error_detail": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "upload_url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "declared_size_bytes",
+                    "duration_s",
+                    "error_code",
+                    "error_detail",
+                    "height",
+                    "id",
+                    "is_cover",
+                    "kind",
+                    "playback_url",
+                    "position",
+                    "poster_url",
+                    "received_bytes",
+                    "status",
+                    "upload_url",
+                    "width"
+                ]
+            },
             "MotDePasseOublieIn": {
                 "type": "object",
                 "properties": {
@@ -1758,6 +2108,24 @@
                     }
                 }
             },
+            "PatchedOrdreMediasIn": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 20
+                    },
+                    "cover": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    }
+                }
+            },
             "PatchedProfilIn": {
                 "type": "object",
                 "properties": {
@@ -1900,6 +2268,11 @@
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
                 "description": "Jeton d'accès de 15 minutes (`aud` = client ou gerant), obtenu par /auth/login."
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "lgsid"
             }
         }
     }

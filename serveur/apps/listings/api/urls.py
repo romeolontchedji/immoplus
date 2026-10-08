@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views as v
+from . import views_media as m
 
 urlpatterns = [
     path("districts", v.Quartiers.as_view(), name="districts"),
@@ -26,6 +27,17 @@ urlpatterns = [
         "pro/listings/<uuid:annonce_id>/undo-rented",
         v.AnnulerLouee.as_view(),
         name="pro-listing-undo-rented",
+    ),
+    path("pro/listings/<uuid:annonce_id>/media", m.MediasAnnonce.as_view(), name="pro-media"),
+    path(
+        "pro/listings/<uuid:annonce_id>/media/order",
+        m.OrdreMedias.as_view(),
+        name="pro-media-order",
+    ),
+    path(
+        "pro/listings/<uuid:annonce_id>/media/<uuid:media_id>",
+        m.MediaDetail.as_view(),
+        name="pro-media-detail",
     ),
     path("pro/markdown/preview", v.ApercuMarkdown.as_view(), name="pro-markdown-preview"),
 ]
