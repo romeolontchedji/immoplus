@@ -4,7 +4,7 @@
 services:
   migrer:
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.public
+      DJANGO_SETTINGS_MODULE: config.settings.migrer
     volumes: !override
       - static:/var/lib/logeo/static
   web-api:

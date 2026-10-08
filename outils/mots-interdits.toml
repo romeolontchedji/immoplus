@@ -14,6 +14,11 @@ exceptions_jetons = [
   "django.db.backends.",
   "django.contrib.sessions.backends.",
   "django.core.cache.backends.",
+  # Nom de réglage et chemin de module imposés par Django et django-axes.
+  "AUTHENTICATION_BACKENDS",
+  "axes.backends.",
+  "django.contrib.auth.backends",
+  "BaseBackend",
 ]
 
 # Fichiers qui expliquent la règle ou citent le cahier des charges : exemptés du contrôle de contenu.

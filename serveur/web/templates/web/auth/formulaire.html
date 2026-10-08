@@ -1,0 +1,34 @@
+{% extends "web/base.html" %}
+{% block titre %}{{ titre }} — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile">
+      <h1>{{ titre }}</h1>
+      {% if request.GET.reinitialise %}<div class="alerte alerte--succes"
+     role="status"><p>Mot de passe changé. Connecte-toi.</p></div>{% endif %}
+      {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+      <form method="post" class="pile" novalidate>
+        {% csrf_token %}
+        {% if suite %}<input type="hidden" name="next" value="{{ suite }}">{% endif %}
+        {% for champ in form.visible_fields %}
+          <div class="champ">
+            <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+            {{ champ }}
+            {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        {% for champ in form.hidden_fields %}{{ champ }}{% endfor %}
+        {% if captcha_requis and not captcha_fictif and site_key %}
+          <div class="cf-turnstile"
+               data-sitekey="{{ site_key }}"
+               data-response-field-name="captcha"></div>
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                  async
+                  defer></script>
+        {% endif %}
+        <button class="bouton bouton--primaire bouton--grand" type="submit">{{ bouton }}</button>
+      </form>
+      {% for lien, texte in liens %}<p><a href="{{ lien }}">{{ texte }}</a></p>{% endfor %}
+    </div>
+  </section>
+{% endblock %}

@@ -73,6 +73,7 @@ services:
       - static:/var/lib/logeo/static
     environment:
       STATIC_ROOT: /var/lib/logeo/static
+      DJANGO_SETTINGS_MODULE: config.settings.migrer
     depends_on:
       postgres: {condition: service_healthy}
     networks: [interne]

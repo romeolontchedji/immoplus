@@ -3,7 +3,7 @@
 from config import env
 
 from .base import *  # noqa: F403
-from .base import INSTALLED_APPS
+from .base import INSTALLED_APPS, MIDDLEWARE_SITE
 
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
@@ -15,3 +15,4 @@ SCHEMA_ENABLED = True
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_COOKIE_NAME = "lgsid"
 CSRF_COOKIE_NAME = "lgcsrf"
+MIDDLEWARE = list(MIDDLEWARE_SITE)

@@ -18,6 +18,9 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE ROLE migrate LOGIN PASSWORD :'migrate_pw';
 CREATE ROLE app LOGIN PASSWORD :'app_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE;
 CREATE ROLE admin_app LOGIN PASSWORD :'admin_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+-- Rôle de rétention (purges d'audit_logs, CDC §9.18) : sans connexion, endossé par migrate via SET ROLE.
+CREATE ROLE retention NOLOGIN;
+GRANT retention TO migrate;
 
 REVOKE ALL ON DATABASE :"base" FROM PUBLIC;
 GRANT CONNECT ON DATABASE :"base" TO migrate, app, admin_app;

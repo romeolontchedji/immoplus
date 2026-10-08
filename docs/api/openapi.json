@@ -5,6 +5,2275 @@
         "version": "1.0.0",
         "description": "API REST de Logeo (additive uniquement, versionnée sous /v1)."
     },
-    "paths": {},
-    "components": {}
+    "paths": {
+        "/uploads/{media_id}": {
+            "patch": {
+                "operationId": "uploads_partial_update",
+                "description": "Protocole tus minimal : HEAD donne la position, PATCH ajoute un morceau (2 Mo au plus).",
+                "summary": "Envoyer un morceau",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/offset+octet-stream": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/activate": {
+            "post": {
+                "operationId": "v1_auth_activate_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Activer un compte gérant",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivationIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "operationId": "v1_auth_login_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Se connecter",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnexionIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "operationId": "v1_auth_logout_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Se déconnecter de cet appareil",
+                "tags": [
+                    "Authentification"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/request": {
+            "post": {
+                "operationId": "v1_auth_otp_request_create",
+                "description": "Réponse identique que le numéro ait un compte ou non. Plafonds et coupe-circuit : CDC §5.3.",
+                "summary": "Demander un code à usage unique",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpDemandeIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpDemandeOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/otp/verify": {
+            "post": {
+                "operationId": "v1_auth_otp_verify_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Vérifier un code",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerificationIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpJetonOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/password/change": {
+            "post": {
+                "operationId": "v1_auth_password_change_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Changer le mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementMotDePasseIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/password/reset": {
+            "post": {
+                "operationId": "v1_auth_password_reset_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Réinitialiser le mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "operationId": "v1_auth_refresh_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Renouveler les jetons",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RafraichissementIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JetonsOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/register": {
+            "post": {
+                "operationId": "v1_auth_register_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Créer un compte locataire",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InscriptionIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/devices": {
+            "get": {
+                "operationId": "v1_devices_list",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Mes appareils connectés",
+                "tags": [
+                    "Appareils"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AppareilOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/devices/{appareil_id}": {
+            "delete": {
+                "operationId": "v1_devices_destroy",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Déconnecter un appareil",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "appareil_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Appareils"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/devices/current/push-token": {
+            "put": {
+                "operationId": "v1_devices_current_push_token_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Enregistrer le jeton de notification",
+                "tags": [
+                    "Appareils"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JetonPushIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/districts": {
+            "get": {
+                "operationId": "v1_districts_list",
+                "summary": "Quartiers actifs",
+                "tags": [
+                    "Référentiels"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DistrictOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me": {
+            "get": {
+                "operationId": "v1_me_retrieve",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Mon profil",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_me_partial_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Modifier mon profil",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedProfilIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_destroy",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Supprimer mon compte",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/me/phone/change": {
+            "post": {
+                "operationId": "v1_me_phone_change_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Changer de numéro",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangementNumeroIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UtilisateurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me/preferences": {
+            "get": {
+                "operationId": "v1_me_preferences_retrieve",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Préférences de notification",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_me_preferences_update",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Modifier les préférences de notification",
+                "tags": [
+                    "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings": {
+            "get": {
+                "operationId": "v1_pro_listings_list",
+                "summary": "Mes annonces",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AnnonceProOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pro_listings_create",
+                "summary": "Créer un brouillon",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnnonceIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}": {
+            "get": {
+                "operationId": "v1_pro_listings_retrieve",
+                "summary": "Lire une annonce (adresse privée comprise)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_pro_listings_partial_update",
+                "summary": "Modifier une annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnnonceIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_pro_listings_destroy",
+                "summary": "Supprimer un brouillon",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/confirm": {
+            "post": {
+                "operationId": "v1_pro_listings_confirm_create",
+                "summary": "Confirmer la disponibilité",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/hide": {
+            "post": {
+                "operationId": "v1_pro_listings_hide_create",
+                "summary": "Masquer l'annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/mark-rented": {
+            "post": {
+                "operationId": "v1_pro_listings_mark_rented_create",
+                "summary": "Marquer comme louée",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/media": {
+            "get": {
+                "operationId": "v1_pro_listings_media_list",
+                "summary": "Médias d'une annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MediaOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pro_listings_media_create",
+                "summary": "Ouvrir un envoi (quotas vérifiés)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MediaIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/media/{media_id}": {
+            "delete": {
+                "operationId": "v1_pro_listings_media_destroy",
+                "summary": "Supprimer un média",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/media/order": {
+            "patch": {
+                "operationId": "v1_pro_listings_media_order_partial_update",
+                "summary": "Ordre des médias et couverture",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Médias"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOrdreMediasIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MediaOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/publish": {
+            "post": {
+                "operationId": "v1_pro_listings_publish_create",
+                "summary": "Publier (règles du §9.23)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/undo-rented": {
+            "post": {
+                "operationId": "v1_pro_listings_undo_rented_create",
+                "summary": "Annuler « louée »",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnonceProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/markdown/preview": {
+            "post": {
+                "operationId": "v1_pro_markdown_preview_create",
+                "summary": "Aperçu du texte enrichi",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApercuIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApercuOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ActivationIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "terms_accepted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "otp_token",
+                    "password",
+                    "platform",
+                    "terms_accepted"
+                ]
+            },
+            "AnnonceIn": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "room_type": {
+                        "$ref": "#/components/schemas/RoomTypeEnum"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "landmark_text": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "address_private": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "longitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "rent_amount": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "deposit_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "advance_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    },
+                    "electricity_meter": {
+                        "$ref": "#/components/schemas/ElectricityMeterEnum"
+                    },
+                    "description_md": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                },
+                "required": [
+                    "advance_months",
+                    "available_from",
+                    "deposit_months",
+                    "district",
+                    "electricity_meter",
+                    "has_private_bathroom",
+                    "is_fenced",
+                    "landmark_text",
+                    "latitude",
+                    "longitude",
+                    "rent_amount",
+                    "room_type",
+                    "title",
+                    "water_source"
+                ]
+            },
+            "AnnonceProOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "room_type": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "district_name": {
+                        "type": "string"
+                    },
+                    "landmark_text": {
+                        "type": "string"
+                    },
+                    "address_private": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "distance_to_campus_m": {
+                        "type": "integer"
+                    },
+                    "rent_amount": {
+                        "type": "integer"
+                    },
+                    "deposit_months": {
+                        "type": "integer"
+                    },
+                    "advance_months": {
+                        "type": "integer"
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "type": "string"
+                    },
+                    "electricity_meter": {
+                        "type": "string"
+                    },
+                    "description_md": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/StatusEnum"
+                    },
+                    "hidden_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "last_confirmed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "address_private",
+                    "advance_months",
+                    "agent_fee_amount",
+                    "available_from",
+                    "created_at",
+                    "deposit_months",
+                    "description_md",
+                    "distance_to_campus_m",
+                    "district",
+                    "district_name",
+                    "electricity_meter",
+                    "has_private_bathroom",
+                    "hidden_reason",
+                    "id",
+                    "is_fenced",
+                    "landmark_text",
+                    "last_confirmed_at",
+                    "latitude",
+                    "longitude",
+                    "published_at",
+                    "rent_amount",
+                    "room_type",
+                    "slug",
+                    "status",
+                    "title",
+                    "updated_at",
+                    "water_source"
+                ]
+            },
+            "ApercuIn": {
+                "type": "object",
+                "properties": {
+                    "markdown": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                },
+                "required": [
+                    "markdown"
+                ]
+            },
+            "ApercuOut": {
+                "type": "object",
+                "properties": {
+                    "markdown": {
+                        "type": "string"
+                    },
+                    "html": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "html",
+                    "markdown"
+                ]
+            },
+            "AppareilOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "platform": {
+                        "type": "string"
+                    },
+                    "app_version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "current": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "app_version",
+                    "created_at",
+                    "current",
+                    "id",
+                    "label",
+                    "last_seen_at",
+                    "platform"
+                ]
+            },
+            "ChangementMotDePasseIn": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "new_password"
+                ]
+            },
+            "ChangementNumeroIn": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    }
+                },
+                "required": [
+                    "otp_token",
+                    "password"
+                ]
+            },
+            "ConnexionIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "password",
+                    "phone",
+                    "platform"
+                ]
+            },
+            "DistrictOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "id",
+                    "latitude",
+                    "longitude",
+                    "name",
+                    "slug"
+                ]
+            },
+            "ElectricityMeterEnum": {
+                "enum": [
+                    "individual",
+                    "shared"
+                ],
+                "type": "string",
+                "description": "* `individual` - individual\n* `shared` - shared"
+            },
+            "InscriptionIn": {
+                "type": "object",
+                "properties": {
+                    "platform": {
+                        "$ref": "#/components/schemas/PlatformEnum"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "terms_accepted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "full_name",
+                    "otp_token",
+                    "password",
+                    "platform",
+                    "terms_accepted"
+                ]
+            },
+            "JetonPushIn": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "maxLength": 8
+                    },
+                    "token": {
+                        "type": "string",
+                        "maxLength": 4096
+                    }
+                },
+                "required": [
+                    "provider",
+                    "token"
+                ]
+            },
+            "JetonsOut": {
+                "type": "object",
+                "properties": {
+                    "access": {
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "access",
+                    "expires_in",
+                    "refresh"
+                ]
+            },
+            "KindEnum": {
+                "enum": [
+                    "video",
+                    "photo"
+                ],
+                "type": "string",
+                "description": "* `video` - video\n* `photo` - photo"
+            },
+            "MediaIn": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/KindEnum"
+                    },
+                    "size_bytes": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                },
+                "required": [
+                    "kind",
+                    "size_bytes"
+                ]
+            },
+            "MediaOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "is_cover": {
+                        "type": "boolean"
+                    },
+                    "declared_size_bytes": {
+                        "type": "integer"
+                    },
+                    "received_bytes": {
+                        "type": "integer"
+                    },
+                    "width": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "duration_s": {
+                        "type": "number",
+                        "format": "double",
+                        "nullable": true
+                    },
+                    "playback_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "poster_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "error_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "error_detail": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "upload_url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "declared_size_bytes",
+                    "duration_s",
+                    "error_code",
+                    "error_detail",
+                    "height",
+                    "id",
+                    "is_cover",
+                    "kind",
+                    "playback_url",
+                    "position",
+                    "poster_url",
+                    "received_bytes",
+                    "status",
+                    "upload_url",
+                    "width"
+                ]
+            },
+            "MotDePasseOublieIn": {
+                "type": "object",
+                "properties": {
+                    "otp_token": {
+                        "type": "string",
+                        "maxLength": 2048
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "new_password",
+                    "otp_token"
+                ]
+            },
+            "OtpDemandeIn": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "purpose": {
+                        "$ref": "#/components/schemas/PurposeEnum"
+                    },
+                    "attestation_token": {
+                        "type": "string",
+                        "maxLength": 4096
+                    }
+                },
+                "required": [
+                    "phone",
+                    "purpose"
+                ]
+            },
+            "OtpDemandeOut": {
+                "type": "object",
+                "properties": {
+                    "resend_after_s": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "resend_after_s"
+                ]
+            },
+            "OtpJetonOut": {
+                "type": "object",
+                "properties": {
+                    "otp_token": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "expires_in",
+                    "otp_token"
+                ]
+            },
+            "OtpVerificationIn": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "purpose": {
+                        "$ref": "#/components/schemas/PurposeEnum"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 12
+                    }
+                },
+                "required": [
+                    "code",
+                    "phone",
+                    "purpose"
+                ]
+            },
+            "PatchedAnnonceIn": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "room_type": {
+                        "$ref": "#/components/schemas/RoomTypeEnum"
+                    },
+                    "district": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "landmark_text": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "address_private": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "longitude": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                    },
+                    "rent_amount": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "deposit_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "advance_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    },
+                    "electricity_meter": {
+                        "$ref": "#/components/schemas/ElectricityMeterEnum"
+                    },
+                    "description_md": {
+                        "type": "string",
+                        "maxLength": 6000
+                    }
+                }
+            },
+            "PatchedOrdreMediasIn": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 20
+                    },
+                    "cover": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    }
+                }
+            },
+            "PatchedProfilIn": {
+                "type": "object",
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                }
+            },
+            "PlatformEnum": {
+                "enum": [
+                    "android",
+                    "ios",
+                    "web"
+                ],
+                "type": "string",
+                "description": "* `android` - android\n* `ios` - ios\n* `web` - web"
+            },
+            "PurposeEnum": {
+                "enum": [
+                    "signup",
+                    "reset_password",
+                    "change_phone",
+                    "gerant_activation"
+                ],
+                "type": "string",
+                "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone\n* `gerant_activation` - gerant_activation"
+            },
+            "RafraichissementIn": {
+                "type": "object",
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "refresh_token"
+                ]
+            },
+            "RoleEnum": {
+                "enum": [
+                    "client",
+                    "gerant"
+                ],
+                "type": "string",
+                "description": "* `client` - client\n* `gerant` - gerant"
+            },
+            "RoomTypeEnum": {
+                "enum": [
+                    "single",
+                    "entree_coucher",
+                    "chambre_salon",
+                    "studio"
+                ],
+                "type": "string",
+                "description": "* `single` - single\n* `entree_coucher` - entree_coucher\n* `chambre_salon` - chambre_salon\n* `studio` - studio"
+            },
+            "SessionOut": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UtilisateurOut"
+                    },
+                    "tokens": {
+                        "$ref": "#/components/schemas/JetonsOut"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "device_id",
+                    "tokens",
+                    "user"
+                ]
+            },
+            "StatusEnum": {
+                "enum": [
+                    "draft",
+                    "processing",
+                    "published",
+                    "hidden",
+                    "rented",
+                    "archived",
+                    "removed"
+                ],
+                "type": "string",
+                "description": "* `draft` - draft\n* `processing` - processing\n* `published` - published\n* `hidden` - hidden\n* `rented` - rented\n* `archived` - archived\n* `removed` - removed"
+            },
+            "UtilisateurOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "full_name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/RoleEnum"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "terms_version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "full_name",
+                    "id",
+                    "phone",
+                    "role",
+                    "terms_version"
+                ]
+            },
+            "WaterSourceEnum": {
+                "enum": [
+                    "running",
+                    "well",
+                    "borehole"
+                ],
+                "type": "string",
+                "description": "* `running` - running\n* `well` - well\n* `borehole` - borehole"
+            }
+        },
+        "securitySchemes": {
+            "BearerJwt": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Jeton d'accès de 15 minutes (`aud` = client ou gerant), obtenu par /auth/login."
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "lgsid"
+            }
+        }
+    }
 }

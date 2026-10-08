@@ -16,7 +16,7 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
-ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")
+ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")  # vide = tout refuser
 PRIVATE_FILES_KEY = env.texte("PRIVATE_FILES_KEY")  # injectée uniquement dans admin et backup
 
 SESSION_COOKIE_NAME = "__Host-lgadm"
@@ -29,3 +29,4 @@ SECURE_HSTS_SECONDS = 31536000
 # Caddy porte la redirection HTTP→HTTPS et l'en-tête HSTS (includeSubDomains) : Django ne les double pas.
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SILENCED_SYSTEM_CHECKS = ["security.W008", "security.W021"]
+USE_X_FORWARDED_FOR = True  # Caddy écrase tout X-Forwarded-For reçu
