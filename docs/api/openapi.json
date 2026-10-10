@@ -439,6 +439,441 @@
                 }
             }
         },
+        "/v1/conversations": {
+            "get": {
+                "operationId": "conversations_list",
+                "summary": "Mes conversations",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "listing",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filtre par annonce (gérant)"
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListeConversationsOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_conversations_create",
+                "summary": "Ouvrir ou retrouver la conversation d'une annonce et envoyer le premier message",
+                "tags": [
+                    "Messagerie"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConversationOuvertureIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConversationOuvertureIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConversationOuvertureIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OuvertureOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OuvertureOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/conversations/{conversation_id}": {
+            "get": {
+                "operationId": "v1_conversations_retrieve",
+                "summary": "Détail d'une conversation",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationDetailOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_conversations_partial_update",
+                "summary": "Mettre la conversation en silence",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSilenceIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSilenceIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSilenceIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/conversations/{conversation_id}/block": {
+            "post": {
+                "operationId": "v1_conversations_block_create",
+                "summary": "Bloquer la conversation",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/conversations/{conversation_id}/messages": {
+            "get": {
+                "operationId": "v1_conversations_messages_retrieve",
+                "summary": "Historique (50 par page)",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "after_seq",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "before_seq",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HistoriqueOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_conversations_messages_create",
+                "summary": "Envoyer un message (idempotent)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MessageIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MessageIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MessageIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EnvoiOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EnvoiOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/conversations/{conversation_id}/read": {
+            "post": {
+                "operationId": "v1_conversations_read_create",
+                "summary": "Marquer comme lu jusqu'à une position",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LectureIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LectureIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LectureIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/conversations/{conversation_id}/unblock": {
+            "post": {
+                "operationId": "v1_conversations_unblock_create",
+                "summary": "Débloquer la conversation",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "conversation_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/devices": {
             "get": {
                 "operationId": "v1_devices_list",
@@ -567,6 +1002,268 @@
                 }
             }
         },
+        "/v1/listings": {
+            "get": {
+                "operationId": "listings_list",
+                "summary": "Fil et recherche",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "available_before",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Disponible avant cette date (AAAA-MM-JJ)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bathroom",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Douche et WC internes (true/false)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Curseur de la page précédente"
+                    },
+                    {
+                        "in": "query",
+                        "name": "district",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Slugs de quartiers séparés par des virgules"
+                    },
+                    {
+                        "in": "query",
+                        "name": "fenced",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Clôture (true/false)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "10 par défaut, 50 au plus"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_distance_m",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Distance maximale au campus (m)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "meter",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Compteurs séparés par des virgules"
+                    },
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Recherche texte (sans accents, tolérante aux fautes)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "rent_max",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Loyer maximum (FCFA)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "rent_min",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Loyer minimum (FCFA)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "recent, rent_asc, rent_desc, distance"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Types de logement séparés par des virgules"
+                    },
+                    {
+                        "in": "query",
+                        "name": "water",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Sources d'eau séparées par des virgules"
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FilOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/listings/{annonce_id}/report-rented": {
+            "post": {
+                "operationId": "v1_listings_report_rented_create",
+                "summary": "Signaler qu'une annonce est déjà louée",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Signalements"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalementOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalementOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/listings/{ident}": {
+            "get": {
+                "operationId": "listings_retrieve",
+                "summary": "Fiche d'une annonce (identifiant ou slug)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FicheOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/listings/{ident}/views": {
+            "post": {
+                "operationId": "v1_listings_views_create",
+                "summary": "Compter une vue",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VueOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/me": {
             "get": {
                 "operationId": "v1_me_retrieve",
@@ -643,6 +1340,247 @@
                 "summary": "Supprimer mon compte",
                 "tags": [
                     "Compte"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/me/alerts": {
+            "get": {
+                "operationId": "v1_me_alerts_list",
+                "summary": "Mes alertes",
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AlerteOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_me_alerts_create",
+                "summary": "Créer une alerte (5 actives au plus)",
+                "tags": [
+                    "Espace locataire"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlerteIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlerteIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlerteIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlerteOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me/alerts/{alerte_id}": {
+            "patch": {
+                "operationId": "v1_me_alerts_partial_update",
+                "summary": "Modifier une alerte",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "alerte_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlerteIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlerteIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlerteIn"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlerteOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_alerts_destroy",
+                "summary": "Supprimer une alerte",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "alerte_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/me/favorites": {
+            "get": {
+                "operationId": "v1_me_favorites_list",
+                "summary": "Mes favoris",
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CarteOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me/favorites/{annonce_id}": {
+            "put": {
+                "operationId": "v1_me_favorites_update",
+                "summary": "Ajouter aux favoris",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_favorites_destroy",
+                "summary": "Retirer des favoris",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
                 ],
                 "security": [
                     {
@@ -737,6 +1675,158 @@
                 "responses": {
                     "200": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/notifications": {
+            "get": {
+                "operationId": "v1_notifications_retrieve",
+                "summary": "Centre de notifications",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Curseur de la page précédente"
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "30 par défaut, 50 au plus"
+                    }
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListeNotificationsOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/notifications/{notification_id}/read": {
+            "post": {
+                "operationId": "v1_notifications_read_create",
+                "summary": "Marquer une notification comme lue",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "notification_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/read-all": {
+            "post": {
+                "operationId": "v1_notifications_read_all_create",
+                "summary": "Tout marquer comme lu",
+                "tags": [
+                    "Notifications"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ToutLuOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/notifications/unread-count": {
+            "get": {
+                "operationId": "v1_notifications_unread_count_retrieve",
+                "summary": "Compteur de non lues",
+                "tags": [
+                    "Notifications"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompteurOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/dashboard": {
+            "get": {
+                "operationId": "v1_pro_dashboard_retrieve",
+                "summary": "Tableau de bord",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TableauOut"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -1368,6 +2458,91 @@
                     }
                 }
             }
+        },
+        "/v1/reports": {
+            "post": {
+                "operationId": "v1_reports_create",
+                "summary": "Signaler une annonce, un message, une conversation ou un utilisateur",
+                "tags": [
+                    "Signalements"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalementIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalementIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalementIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalementOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalementOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/ws-ticket": {
+            "post": {
+                "operationId": "v1_ws_ticket_create",
+                "summary": "Ticket de connexion WebSocket (usage unique, 30 s)",
+                "tags": [
+                    "Messagerie"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TicketOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1399,6 +2574,101 @@
                     "password",
                     "platform",
                     "terms_accepted"
+                ]
+            },
+            "AlerteIn": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "district_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 30
+                    },
+                    "room_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 16
+                        },
+                        "maxItems": 4
+                    },
+                    "max_rent": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "private_bathroom_required": {
+                        "type": "boolean"
+                    },
+                    "max_distance_m": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "AlerteOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "district_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "room_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "max_rent": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "private_bathroom_required": {
+                        "type": "boolean"
+                    },
+                    "max_distance_m": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "district_ids",
+                    "id",
+                    "is_active",
+                    "label",
+                    "max_distance_m",
+                    "max_rent",
+                    "private_bathroom_required",
+                    "room_types"
                 ]
             },
             "AnnonceIn": {
@@ -1616,6 +2886,34 @@
                     "water_source"
                 ]
             },
+            "AnnonceResumeOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "id",
+                    "slug",
+                    "status",
+                    "title"
+                ]
+            },
             "ApercuIn": {
                 "type": "object",
                 "properties": {
@@ -1684,6 +2982,95 @@
                     "platform"
                 ]
             },
+            "CarteOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "room_type": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "$ref": "#/components/schemas/QuartierRefOut"
+                    },
+                    "landmark_text": {
+                        "type": "string"
+                    },
+                    "rent_amount": {
+                        "type": "integer"
+                    },
+                    "deposit_months": {
+                        "type": "integer"
+                    },
+                    "advance_months": {
+                        "type": "integer"
+                    },
+                    "distance_m": {
+                        "type": "integer"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cover_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "video_poster_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "has_video": {
+                        "type": "boolean"
+                    },
+                    "gerant": {
+                        "$ref": "#/components/schemas/GerantCarteOut"
+                    }
+                },
+                "required": [
+                    "advance_months",
+                    "available_from",
+                    "cover_url",
+                    "deposit_months",
+                    "distance_m",
+                    "district",
+                    "gerant",
+                    "has_private_bathroom",
+                    "has_video",
+                    "id",
+                    "is_fenced",
+                    "landmark_text",
+                    "published_at",
+                    "rent_amount",
+                    "room_type",
+                    "slug",
+                    "status",
+                    "title",
+                    "video_poster_url"
+                ]
+            },
             "ChangementMotDePasseIn": {
                 "type": "object",
                 "properties": {
@@ -1718,6 +3105,17 @@
                     "password"
                 ]
             },
+            "CompteurOut": {
+                "type": "object",
+                "properties": {
+                    "unread_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "unread_count"
+                ]
+            },
             "ConnexionIn": {
                 "type": "object",
                 "properties": {
@@ -1741,6 +3139,137 @@
                     "password",
                     "phone",
                     "platform"
+                ]
+            },
+            "ConversationDetailOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "listing": {
+                        "$ref": "#/components/schemas/AnnonceResumeOut"
+                    },
+                    "other": {
+                        "$ref": "#/components/schemas/InterlocuteurOut"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "blocked_by_me": {
+                        "type": "boolean"
+                    },
+                    "last_message_preview": {
+                        "type": "string"
+                    },
+                    "last_message_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "unread_count": {
+                        "type": "integer"
+                    },
+                    "muted": {
+                        "type": "boolean"
+                    },
+                    "address_private": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "my_read_seq": {
+                        "type": "integer"
+                    },
+                    "other_read_seq": {
+                        "type": "integer"
+                    },
+                    "last_seq": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "address_private",
+                    "blocked_by_me",
+                    "id",
+                    "last_message_at",
+                    "last_message_preview",
+                    "last_seq",
+                    "listing",
+                    "muted",
+                    "my_read_seq",
+                    "other",
+                    "other_read_seq",
+                    "status",
+                    "unread_count"
+                ]
+            },
+            "ConversationOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "listing": {
+                        "$ref": "#/components/schemas/AnnonceResumeOut"
+                    },
+                    "other": {
+                        "$ref": "#/components/schemas/InterlocuteurOut"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "blocked_by_me": {
+                        "type": "boolean"
+                    },
+                    "last_message_preview": {
+                        "type": "string"
+                    },
+                    "last_message_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "unread_count": {
+                        "type": "integer"
+                    },
+                    "muted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "blocked_by_me",
+                    "id",
+                    "last_message_at",
+                    "last_message_preview",
+                    "listing",
+                    "muted",
+                    "other",
+                    "status",
+                    "unread_count"
+                ]
+            },
+            "ConversationOuvertureIn": {
+                "type": "object",
+                "properties": {
+                    "listing_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "body": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "client_msg_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "body",
+                    "client_msg_id",
+                    "listing_id"
                 ]
             },
             "DistrictOut": {
@@ -1781,6 +3310,222 @@
                 "type": "string",
                 "description": "* `individual` - individual\n* `shared` - shared"
             },
+            "EnvoiOut": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/MessageOut"
+                    },
+                    "warning": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "message",
+                    "warning"
+                ]
+            },
+            "FicheOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "room_type": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "$ref": "#/components/schemas/QuartierRefOut"
+                    },
+                    "landmark_text": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "distance_m": {
+                        "type": "integer"
+                    },
+                    "rent_amount": {
+                        "type": "integer"
+                    },
+                    "deposit_months": {
+                        "type": "integer"
+                    },
+                    "advance_months": {
+                        "type": "integer"
+                    },
+                    "agent_fee_amount": {
+                        "type": "integer"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "has_private_bathroom": {
+                        "type": "boolean"
+                    },
+                    "is_fenced": {
+                        "type": "boolean"
+                    },
+                    "water_source": {
+                        "type": "string"
+                    },
+                    "electricity_meter": {
+                        "type": "string"
+                    },
+                    "description_md": {
+                        "type": "string"
+                    },
+                    "description_html": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "last_confirmed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "media": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaPublicOut"
+                        }
+                    },
+                    "gerant": {
+                        "$ref": "#/components/schemas/GerantFicheOut"
+                    },
+                    "is_favorite": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "advance_months",
+                    "agent_fee_amount",
+                    "available_from",
+                    "deposit_months",
+                    "description_html",
+                    "description_md",
+                    "distance_m",
+                    "district",
+                    "electricity_meter",
+                    "gerant",
+                    "has_private_bathroom",
+                    "id",
+                    "is_favorite",
+                    "is_fenced",
+                    "landmark_text",
+                    "last_confirmed_at",
+                    "latitude",
+                    "longitude",
+                    "media",
+                    "published_at",
+                    "rent_amount",
+                    "room_type",
+                    "slug",
+                    "status",
+                    "title",
+                    "water_source"
+                ]
+            },
+            "FilOut": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CarteOut"
+                        }
+                    },
+                    "next_cursor": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "items",
+                    "next_cursor"
+                ]
+            },
+            "GerantCarteOut": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "verified": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "verified"
+                ]
+            },
+            "GerantFicheOut": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "verified": {
+                        "type": "boolean"
+                    },
+                    "median_response_min": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "median_response_min",
+                    "name",
+                    "verified"
+                ]
+            },
+            "HistoriqueOut": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MessageOut"
+                        }
+                    },
+                    "has_more": {
+                        "type": "boolean"
+                    },
+                    "last_seq": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "has_more",
+                    "items",
+                    "last_seq"
+                ]
+            },
             "InscriptionIn": {
                 "type": "object",
                 "properties": {
@@ -1813,6 +3558,23 @@
                     "password",
                     "platform",
                     "terms_accepted"
+                ]
+            },
+            "InterlocuteurOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
                 ]
             },
             "JetonPushIn": {
@@ -1858,6 +3620,64 @@
                 ],
                 "type": "string",
                 "description": "* `video` - video\n* `photo` - photo"
+            },
+            "LectureIn": {
+                "type": "object",
+                "properties": {
+                    "up_to_seq": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "up_to_seq"
+                ]
+            },
+            "ListeConversationsOut": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConversationOut"
+                        }
+                    },
+                    "next_cursor": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "unread_total": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "items",
+                    "next_cursor",
+                    "unread_total"
+                ]
+            },
+            "ListeNotificationsOut": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/NotificationOut"
+                        }
+                    },
+                    "next_cursor": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "unread_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "items",
+                    "next_cursor",
+                    "unread_count"
+                ]
             },
             "MediaIn": {
                 "type": "object",
@@ -1952,6 +3772,121 @@
                     "width"
                 ]
             },
+            "MediaPublicOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "playback_url": {
+                        "type": "string"
+                    },
+                    "poster_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "duration_s": {
+                        "type": "number",
+                        "format": "double",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "thumb_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_cover": {
+                        "type": "boolean"
+                    },
+                    "width": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "height",
+                    "id",
+                    "kind",
+                    "width"
+                ]
+            },
+            "MessageIn": {
+                "type": "object",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "client_msg_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "body",
+                    "client_msg_id"
+                ]
+            },
+            "MessageOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "seq": {
+                        "type": "integer"
+                    },
+                    "sender_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "client_msg_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "moderation_status": {
+                        "type": "string"
+                    },
+                    "flag_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "body",
+                    "client_msg_id",
+                    "created_at",
+                    "flag_reason",
+                    "id",
+                    "kind",
+                    "moderation_status",
+                    "sender_id",
+                    "seq"
+                ]
+            },
             "MotDePasseOublieIn": {
                 "type": "object",
                 "properties": {
@@ -1967,6 +3902,46 @@
                 "required": [
                     "new_password",
                     "otp_token"
+                ]
+            },
+            "NotificationOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "body",
+                    "created_at",
+                    "data",
+                    "id",
+                    "kind",
+                    "read_at",
+                    "title"
                 ]
             },
             "OtpDemandeIn": {
@@ -2035,6 +4010,67 @@
                     "phone",
                     "purpose"
                 ]
+            },
+            "OuvertureOut": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/MessageOut"
+                    },
+                    "warning": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "conversation": {
+                        "$ref": "#/components/schemas/ConversationOut"
+                    }
+                },
+                "required": [
+                    "conversation",
+                    "message",
+                    "warning"
+                ]
+            },
+            "PatchedAlerteIn": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "district_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 30
+                    },
+                    "room_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 16
+                        },
+                        "maxItems": 4
+                    },
+                    "max_rent": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "private_bathroom_required": {
+                        "type": "boolean"
+                    },
+                    "max_distance_m": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                }
             },
             "PatchedAnnonceIn": {
                 "type": "object",
@@ -2135,6 +4171,16 @@
                     }
                 }
             },
+            "PatchedSilenceIn": {
+                "type": "object",
+                "properties": {
+                    "muted_until": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                }
+            },
             "PlatformEnum": {
                 "enum": [
                     "android",
@@ -2154,6 +4200,21 @@
                 "type": "string",
                 "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone\n* `gerant_activation` - gerant_activation"
             },
+            "QuartierRefOut": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "slug"
+                ]
+            },
             "RafraichissementIn": {
                 "type": "object",
                 "properties": {
@@ -2165,6 +4226,19 @@
                 "required": [
                     "refresh_token"
                 ]
+            },
+            "ReasonCodeEnum": {
+                "enum": [
+                    "fake_listing",
+                    "already_rented",
+                    "price_mismatch",
+                    "contact_leak",
+                    "harassment",
+                    "scam",
+                    "other"
+                ],
+                "type": "string",
+                "description": "* `fake_listing` - fake_listing\n* `already_rented` - already_rented\n* `price_mismatch` - price_mismatch\n* `contact_leak` - contact_leak\n* `harassment` - harassment\n* `scam` - scam\n* `other` - other"
             },
             "RoleEnum": {
                 "enum": [
@@ -2204,6 +4278,51 @@
                     "user"
                 ]
             },
+            "SignalementIn": {
+                "type": "object",
+                "properties": {
+                    "target_type": {
+                        "$ref": "#/components/schemas/TargetTypeEnum"
+                    },
+                    "target_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "reason_code": {
+                        "$ref": "#/components/schemas/ReasonCodeEnum"
+                    },
+                    "details": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "reason_code",
+                    "target_id",
+                    "target_type"
+                ]
+            },
+            "SignalementOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "created",
+                    "id",
+                    "status"
+                ]
+            },
             "StatusEnum": {
                 "enum": [
                     "draft",
@@ -2216,6 +4335,87 @@
                 ],
                 "type": "string",
                 "description": "* `draft` - draft\n* `processing` - processing\n* `published` - published\n* `hidden` - hidden\n* `rented` - rented\n* `archived` - archived\n* `removed` - removed"
+            },
+            "TableauOut": {
+                "type": "object",
+                "properties": {
+                    "listings_by_status": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    },
+                    "views_30d": {
+                        "type": "integer"
+                    },
+                    "favorites_30d": {
+                        "type": "integer"
+                    },
+                    "conversations_30d": {
+                        "type": "integer"
+                    },
+                    "to_confirm": {
+                        "type": "integer"
+                    },
+                    "unread_messages": {
+                        "type": "integer"
+                    },
+                    "response_rate_30d": {
+                        "type": "number",
+                        "format": "double",
+                        "nullable": true
+                    },
+                    "median_response_min": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "conversations_30d",
+                    "favorites_30d",
+                    "listings_by_status",
+                    "median_response_min",
+                    "response_rate_30d",
+                    "to_confirm",
+                    "unread_messages",
+                    "views_30d"
+                ]
+            },
+            "TargetTypeEnum": {
+                "enum": [
+                    "listing",
+                    "message",
+                    "user",
+                    "conversation"
+                ],
+                "type": "string",
+                "description": "* `listing` - listing\n* `message` - message\n* `user` - user\n* `conversation` - conversation"
+            },
+            "TicketOut": {
+                "type": "object",
+                "properties": {
+                    "ticket": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "expires_in",
+                    "ticket"
+                ]
+            },
+            "ToutLuOut": {
+                "type": "object",
+                "properties": {
+                    "updated": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "updated"
+                ]
             },
             "UtilisateurOut": {
                 "type": "object",
@@ -2252,6 +4452,17 @@
                     "terms_version"
                 ]
             },
+            "VueOut": {
+                "type": "object",
+                "properties": {
+                    "counted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "counted"
+                ]
+            },
             "WaterSourceEnum": {
                 "enum": [
                     "running",
@@ -2272,7 +4483,7 @@
             "cookieAuth": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "lgsid"
+                "name": "sessionid"
             }
         }
     }

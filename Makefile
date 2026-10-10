@@ -31,8 +31,8 @@ down: ## Arrête la pile
 migrate: ## Applique les migrations (rôle PostgreSQL `migrate`)
 	$(COMPOSE) run --rm migrer
 
-seed: ## Jeu de données de démonstration (disponible à partir de la phase 1)
-	@echo "Non disponible : le jeu de données arrive avec les modèles (phase 1, voir docs/avancement.md)."; exit 1
+seed: ## Paramètres et quartiers de Parakou ; ajouter DEMO=1 pour des annonces d'exemple (développement)
+	$(COMPOSE) run --rm web-api python manage.py seed $(if $(DEMO),--demo,)
 
 css: ## Assemble, minifie et empreinte le CSS
 	$(PYTHON) outils/construire_css.py

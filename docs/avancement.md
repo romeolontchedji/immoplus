@@ -39,3 +39,7 @@ Anneau de focus en `marque-500` (clair) au lieu de `marque-300` : voir `docs/adr
 - Le bac à sable peut redémarrer : PostgreSQL et Redis ne sont pas relancés tout seuls (`pg_ctlcluster 16 main start`, `redis-server --daemonize yes`).
 - `tester_hooks.sh` crée un dépôt temporaire : il doit y copier la configuration ruff, et le fichier du cas 8 doit être conforme
   au formateur, sinon le refus vient de ruff et non du détecteur de secrets.
+
+## Mise à jour — fonctionnalités d à g
+Les fonctionnalités a à g sont implémentées et testées. Détail dans `docs/reste-a-faire.md` ; points à vérifier, décisions prises seul et limites dans `docs/a-verifier.md`.
+

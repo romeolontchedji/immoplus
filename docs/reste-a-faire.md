@@ -1,47 +1,36 @@
 # Reste à faire — état au point d'arrêt
 
-Priorité fixée en cours de route : un système complet qui tourne de bout en bout, sans polissage. Ordre imposé : a comptes, b annonces, c médias, d fil et recherche, e messagerie, f notifications, g modération et administration minimales.
+Priorité fixée : un système complet qui tourne de bout en bout, sans polissage. Ordre imposé : a comptes, b annonces, c médias, d fil et recherche, e messagerie, f notifications, g modération et administration minimales.
 
-**Arrêt demandé après c.** Les lettres d à g n'ont pas été commencées.
+**Les lettres a à g sont toutes implémentées et testées** (PostgreSQL et Redis réels). La liste exhaustive de ce qui reste à vérifier, des décisions prises seul et des limites est dans **`docs/a-verifier.md`** : la lire en premier.
 
 ## Fait
 
 | | Contenu | Où |
 |---|---|---|
-| Phase 0 | Dépôt, hooks, Django, Docker/Compose/Caddy écrits, design (jetons, CSS), outils | voir `docs/avancement.md` |
-| a. comptes | OTP (plafonds, budget, friction, attestation), connexion à réponse uniforme et verrouillage progressif, JWT 15 min + rotation du refresh avec détection de vol, appareils, inscription, activation gérant, mot de passe oublié, changement de numéro, suppression (anonymisation), préférences. API `/v1/auth/*`, `/v1/me*`, `/v1/devices*`. Pages web : `/inscription`, `/connexion`, `/mot-de-passe-oublie`, `/compte` | `apps/accounts`, `web/views_auth.py` |
-| a. administration | Hôte séparé, connexion e-mail + mot de passe + TOTP obligatoire, verrouillage `axes`, liste blanche d'IP (Caddy + Django), sessions dans `admin_sessions`, durée 30 min / 8 h, journal des actions, création de gérants, suspension/bannissement, paramètres, journal en lecture seule, commande `creer_personnel` | `adminsite/` |
-| Base de données | Contraintes CHECK, déclencheurs (`users`, `gerant_profiles`, `audit_logs` en ajout seul), droits par colonne pour le rôle `app`, isolation des tables d'administration | migrations `accounts/0002`, `adminsite/0002` |
-| b. annonces | Quartiers, annonces, médias (modèles), brouillon, modification, publication avec règles (§9.23), confirmation, masquage, louée/annuler louée, Markdown restreint assaini, détection des coordonnées, distance au campus. API `/v1/districts`, `/v1/pro/listings*`, `/v1/pro/markdown/preview`. Pages `/pro/annonces*` | `apps/listings`, `web/views_pro.py` |
-| c. médias | Ouverture d'envoi avec quotas, envoi reprenable (tus minimal, `/uploads/{id}`), traitement photo (variantes WebP, EXIF retiré) et vidéo réel avec ffmpeg (MP4 720p + affiche), ordre, couverture, suppression, nettoyage des envois expirés, script d'envoi du site (`web/static/js/envoi.js`) | `apps/media`, `apps/listings/services/medias.py` |
+| Phase 0 | Dépôt, hooks, Django, Docker/Compose/Caddy écrits, design (jetons, CSS), outils | `docs/avancement.md` |
+| a. comptes | OTP, connexion, JWT + rotation, appareils, inscription, activation gérant, mot de passe oublié, changement de numéro, suppression, préférences | `apps/accounts`, `web/views_auth.py` |
+| a. administration | Hôte séparé, 2FA TOTP, verrouillage, liste blanche d'IP, sessions propres, journal, création de gérants, suspension/bannissement, paramètres | `adminsite/` |
+| b. annonces | Quartiers, annonces, brouillon, publication avec règles, confirmation, masquage, louée, Markdown assaini, détection des coordonnées, distance au campus | `apps/listings`, `web/views_pro.py` |
+| c. médias | Envoi reprenable, photos (WebP, EXIF retiré), vidéo (MP4 720p + affiche), ordre, couverture, nettoyage | `apps/media`, `apps/listings/services/medias.py` |
+| d. fil et recherche | `GET /v1/listings` (filtres, tri, curseur, recherche sans accents tolérante aux fautes, cache 60 s), fiche par id ou slug (jamais d'adresse ni de numéro), vues dédupliquées (Redis puis `daily_stats`), favoris, alertes (5 actives), notifications « plus disponible » et « nouvelle correspondance », tableau de bord gérant. Pages `/`, `/annonces`, `/annonces/<slug>`, `/quartiers/<slug>`, `/compte/favoris`, `/compte/alertes`, `robots.txt`, `sitemap.xml` | `apps/listings/{selectors,services/{fil,filtres,vues,favoris,alertes}}`, `web/views_public.py` |
+| e. messagerie | Conversations et messages (séquence verrouillée, idempotence `client_msg_id`), ouverture + premier message, contrôle des coordonnées (modes `mask`, `flag`, `block`), lecture, blocage, silence, lecture seule 30 j après location, WebSocket (ticket 30 s, 5 connexions, présence par appareil, 30 événements/min, inactivité 60 s), rattrapage des notifications, rappel au gérant après 2 h, délai et taux de réponse. Pages `/compte/messages*` | `apps/chat`, `web/views_public.py` |
+| f. notifications | Centre (liste, non lues bornées à 100, lue, tout lu), unicité par clé, préférences par catégorie, push par appareil avec cinq essais, présence qui supprime le push, jetons invalides désactivés, fournisseurs console / Expo / squelette FCM, diffusion `notification.new` | `apps/notifications`, `apps/core/providers/push.py` |
+| g. modération | Signalements (un ouvert par auteur et cible), signalements automatiques, « déjà louée » (3 distincts), actions (message masqué ou supprimé, annonce masquée ou retirée, avertissement, suspension, bannissement, rétablissement), plafonds par rôle, lecture de conversation journalisée avec motif, tableau de bord de file. Administration : relecture des annonces (approuver / refuser), signalements, décisions | `apps/moderation`, `adminsite/admin_moderation.py` |
+| Liaisons | Suspension ou bannissement d'un gérant masque ses annonces et les remet à la levée ; suppression d'un compte gérant archive ses annonces | `apps/listings/receivers.py`, `apps/accounts/signals.py` |
+| Planification | 12 tâches périodiques dans `config/celery.py` (fraîcheur, vidéos louées, archivage, fin de suspension, OTP, rétention d'audit, indicateurs) | `config/celery.py`, `*/tasks.py` |
+| Données de départ | `make seed` (paramètres, 12 quartiers de Parakou) ; `make seed DEMO=1` ajoute un gérant et 6 annonces (développement) | `adminsite/management/commands/seed.py` |
 
-Mesures du dernier passage : **569 tests passent**, couverture **94 %** (hors e2e). `ruff`, `bandit`, `import-linter` (10 contrats), `djlint`, `makemigrations --check`, OpenAPI valide et à jour : tous verts individuellement. Le script complet `outils/verifier_tout.sh` a été relancé en mode strict après les derniers correctifs : 0 contrôle en échec, 0 sauté.
+Mesures : voir `docs/a-verifier.md`, section « Résultats ».
 
-## À faire, dans l'ordre
+## Reste à faire
 
-### Bloquant pour que ça tourne de bout en bout
-1. **Première annonce bloquée en `processing`** : la relecture de la première annonce d'un gérant n'a aucune action d'approbation. Ajouter dans l'administration (g) un `ListingAdmin` avec l'action « Approuver et publier » qui appelle `apps.listings.services.annonces.mettre_en_ligne`, et « Refuser » (statut `hidden` + `moderation`).
-2. **Aucune donnée de départ** : pas de quartiers de Parakou, pas de ligne `app_settings`. Écrire `make seed` (quartiers avec coordonnées réelles, un gérant et quelques annonces de démonstration). `CAMPUS_REFERENCE` vaut un point approximatif (9.337, 2.6303) : **à relever**.
-3. **d. Fil, recherche, filtres, fiche** : rien d'écrit côté public. Sont déjà prêts : `search_vector` (tsvector français, GIN), index `unaccent` et `pg_trgm` (extensions créées), `distance_to_campus_m`, indexes de tri. À faire : `GET /v1/listings` (curseur, filtres, tri), `GET /v1/listings/{slug}` (position arrondie 3 décimales, distance arrondie à 50 m, **jamais** `address_private` ni le numéro du gérant), pages `/`, `/annonces`, `/annonces/<slug>`, lecteur vidéo (`playback_url`).
-4. **e. Messagerie** : conversations, messages, HTTP d'envoi, WebSocket (Channels est configuré, `config/asgi.py` n'a aucune route), accusés de lecture, ticket WebSocket. Le contrôle des coordonnées (`listings.services.contenu.detecter`) est réutilisable pour les messages (mode `CONTACT_LEAK_MODE`).
-5. **f. Notifications** : modèle, création, envoi push avec le fournisseur factice. Les jetons d'appareil sont déjà stockés (`PUT /v1/devices/current/push-token`) ; le fournisseur `PUSH_PROVIDER` n'est pas encore codé (seul SMS, attestation et anti-robot existent dans `apps/core/providers`).
-6. **g. Modération** : signalements, actions, tableau de bord minimal dans `adminsite/admin.py` (gérants, annonces, signalements).
-
-### Tâches planifiées jamais branchées
-Aucun `beat_schedule` n'est défini (`config/celery.py`). À planifier :
-- `apps.media.nettoyer_envois` (écrite),
-- suppression des vidéos dont `delete_after` est passé et des originaux (`media_tmp`) 24 h après `ready` (non écrite),
-- relances de fraîcheur des annonces (`reminder_stage`, masquage `stale`) (non écrite),
-- réactivation des suspensions échues, purge des `otp_codes` anciens, purge d'audit via le rôle `retention` (non écrites).
-
-### Liaisons manquantes
-- Le signal `apps.accounts.signals.compte_supprime` n'a **aucun récepteur** : les annonces d'un gérant supprimé ne sont pas archivées.
-- La suspension ou le bannissement d'un gérant ne masque pas ses annonces (`hidden_reason = gerant_suspended` prévu, non appliqué).
-- Le coupe-circuit OTP n'alerte que par journal critique et trace d'audit (pas de notification, phase f).
-- Vidéo : une seule variante MP4 ; pas de HLS multi-qualité (volontairement reporté).
-
-### Reste de la phase 0 (inchangé)
-`make seed`, `make vendor`, `make docs` échouent volontairement. `AGENTS.md`, `docs/verification.md` et `docs/avancement.md` décrivent la phase 0 et ne mentionnent pas les fonctionnalités a à c. `django-unfold` a été retiré (voir `decisions.md`).
+1. **Tout ce qui est listé dans `docs/a-verifier.md`** (priorités A1 à A4).
+2. Coordonnées réelles des quartiers et du campus (relevé terrain).
+3. Fournisseurs réels : push (Expo ou FCM), SMS.
+4. Client mobile (hors dépôt actuel) : consomme l'API et le WebSocket.
+5. Facturation (`apps/billing`) : désactivée au lancement (`SUBSCRIPTION_ENABLED`).
+6. Vidéo : une seule variante MP4 ; pas de HLS multi-qualité (reporté volontairement).
 
 ## Jamais exécuté ou jamais testé
 - **Docker, Compose, `make up`, `make fumee`** : Docker absent du bac à sable. La pile n'a **jamais démarré** ; seul le YAML est lu par des tests. Le script d'initialisation PostgreSQL (`infra/postgres/init/01-roles.sh`) n'a jamais tourné : les droits par colonne sont testés avec `SET ROLE` sur des rôles recréés, pas avec les vrais mots de passe de connexion.
