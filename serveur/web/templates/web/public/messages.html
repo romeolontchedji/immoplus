@@ -1,0 +1,20 @@
+{% extends "web/base.html" %}
+{% block titre %}Messages — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile pile--large">
+      <h1>Messages</h1>
+      <ul class="liste-lignes">
+        {% for c in conversations %}
+          <li>
+            <a class="ligne {% if c.unread_count %}ligne--non-lue{% endif %}"
+               href="/compte/messages/{{ c.id }}">
+              <span><strong>{{ c.other.name }}</strong> · {{ c.listing.title }}
+                <br>
+                <span class="texte-doux">{{ c.last_message_preview }}</span></span>
+              <span>{% if c.unread_count %}<span class="badge badge--marque">{{ c.unread_count }}</span>{% endif %}{% if c.status != "open" %}<span class="badge">{{ c.status }}</span>{% endif %}</span></a></li>
+{% empty %}<li class="texte-doux">Aucune conversation pour le moment.</li>{% endfor %}
+  </ul>
+  </div>
+  </section>
+{% endblock %}

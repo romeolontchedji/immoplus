@@ -18,7 +18,9 @@
       <header class="entete">
         <div class="conteneur entete__barre">
           <a class="logotype" href="/">Logeo<span class="logotype__point">.</span></a>
-          {% block navigation %}{% endblock %}
+          {% block navigation %}
+            {% include "web/composants/navigation.html" %}
+          {% endblock %}
         </div>
       </header>
       <main id="contenu" class="page__contenu">

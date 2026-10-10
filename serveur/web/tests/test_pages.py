@@ -9,6 +9,7 @@ from web import views
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.django_db
 def test_accueil():
     reponse = Client().get("/")
     assert reponse.status_code == 200
@@ -30,6 +31,7 @@ def test_styleguide_introuvable_si_desactive(settings):
         views.styleguide(RequestFactory().get("/styleguide"))
 
 
+@pytest.mark.django_db
 def test_aucun_style_ni_script_en_ligne():
     for url in ("/", "/styleguide"):
         html = Client().get(url).content.decode()

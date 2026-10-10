@@ -1,0 +1,11 @@
+<nav class="navigation" aria-label="Navigation principale">
+  <a href="/annonces">Chambres</a>
+  {% if request.user.is_authenticated %}
+    {% if request.user.role == "gerant" %}<a href="/pro/annonces">Mes annonces</a>{% else %}<a href="/compte/favoris">Favoris</a><a href="/compte/alertes">Alertes</a>{% endif %}
+    <a href="/compte/messages">Messages{% if non_lus_messages %} ({{ non_lus_messages }}){% endif %}</a>
+    <a href="/compte/notifications">Notifications{% if non_lues_notifications %} ({{ non_lues_notifications }}){% endif %}</a>
+    <a href="/compte">Mon compte</a>
+  {% else %}
+    <a href="/connexion">Se connecter</a><a class="bouton" href="/inscription">Créer un compte</a>
+  {% endif %}
+</nav>

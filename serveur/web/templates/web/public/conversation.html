@@ -1,0 +1,42 @@
+{% extends "web/base.html" %}
+{% block titre %}{{ c.listing.title }} — Messages — Logeo{% endblock %}
+{% block tete %}<meta http-equiv="refresh" content="60">{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile pile--large">
+      <p><a href="/compte/messages">← Toutes les conversations</a></p>
+      <h1>{{ c.other.name }}</h1>
+      <p class="texte-doux"><a href="/annonces/{{ c.listing.slug }}">{{ c.listing.title }}</a>{% if adresse %} · Adresse : {{ adresse }}{% endif %}</p>
+      {% if message %}<div class="alerte alerte--{{ niveau|default:'information' }}"
+     role="status"><p>{{ message }}</p></div>{% endif %}
+      {% if c.listing.status == "rented" %}<div class="alerte alerte--avertissement"><p>Cette chambre est louée.</p></div>{% endif %}
+      <div class="conversation" aria-live="polite">
+        {% for m in messages %}<div class="bulle {% if m.mine %}bulle--moi{% endif %}">{{ m.body }}<span class="bulle__heure">{{ m.created_at|date:"d/m H:i" }}</span></div>{% empty %}<p class="texte-doux">Aucun message.</p>{% endfor %}
+      </div>
+      {% if c.status == "open" or c.blocked_by_me %}
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden"
+                 name="action"
+                 value="envoyer"><input type="hidden"
+       name="client_msg_id"
+       value="{{ client_msg_id }}">
+          <div class="champ">
+            <label class="champ__etiquette"
+                   for="body">Ton message</label><textarea id="body"
+          name="body"
+          rows="3"
+          maxlength="2000"
+          required></textarea>
+          </div>
+          <button class="bouton" type="submit">Envoyer</button>
+        </form>
+{% else %}<p class="texte-doux">Tu ne peux plus écrire dans cette conversation ({{ c.status }}).</p>{% endif %}
+<form method="post" class="fiche__actions">
+  {% csrf_token %}
+  {% if c.status == "blocked" and c.blocked_by_me %}<input type="hidden" name="action" value="debloquer"><button class="bouton bouton--secondaire" type="submit">Débloquer</button>
+{% elif c.status == "open" %}<input type="hidden" name="action" value="bloquer"><button class="bouton bouton--fantome" type="submit">Bloquer cette conversation</button>{% endif %}
+</form>
+</div>
+</section>
+{% endblock %}

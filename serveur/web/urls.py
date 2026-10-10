@@ -6,9 +6,23 @@ from django.urls import path
 from . import views
 from . import views_auth as a
 from . import views_pro as p
+from . import views_public as pub
 
 urlpatterns = [
-    path("", views.accueil, name="accueil"),
+    path("", pub.accueil, name="accueil"),
+    path("annonces", pub.annonces, name="annonces"),
+    path("annonces/<slug:slug>", pub.fiche, name="fiche"),
+    path("annonces/<slug:slug>/contacter", pub.contacter, name="contacter"),
+    path("annonces/<slug:slug>/favori", pub.basculer_favori, name="favori"),
+    path("annonces/<slug:slug>/signaler", pub.signaler, name="signaler"),
+    path("quartiers/<slug:slug>", pub.quartier, name="quartier"),
+    path("compte/favoris", pub.mes_favoris, name="favoris"),
+    path("compte/alertes", pub.mes_alertes, name="alertes"),
+    path("compte/messages", pub.mes_conversations, name="messages"),
+    path("compte/messages/<str:conversation_id>", pub.conversation, name="conversation"),
+    path("compte/notifications", pub.mes_notifications, name="notifications"),
+    path("robots.txt", pub.robots, name="robots"),
+    path("sitemap.xml", pub.sitemap, name="sitemap"),
     path("connexion", a.connexion, name="connexion"),
     path("deconnexion", a.deconnexion, name="deconnexion"),
     path("inscription", a.inscription_telephone, name="inscription"),

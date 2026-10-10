@@ -1,0 +1,75 @@
+{% extends "web/base.html" %}
+{% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Logeo{% endblock %}
+{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount }} FCFA par mois.{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur fiche">
+      {% if message %}<div class="alerte alerte--{{ niveau|default:'succes' }}"
+     role="status"><p>{{ message }}</p></div>{% endif %}
+      {% if f.status == "rented" %}<div class="alerte alerte--avertissement"
+     role="status"><p>Cette chambre est déjà louée.</p></div>{% endif %}
+      {% for m in f.media %}
+        {% if m.kind == "video" %}
+          <video class="lecteur"
+                 controls
+                 preload="metadata"
+                 playsinline
+                 poster="{{ m.poster_url }}">
+            <source src="{{ m.playback_url }}" type="video/mp4">
+          </video>
+        {% endif %}
+      {% endfor %}
+      <div class="galerie">
+        {% for m in f.media %}
+          {% if m.kind == "photo" %}
+            <a href="{{ m.url }}">
+              <img src="{{ m.thumb_url }}" alt="Photo de la chambre" loading="lazy">
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="pile">
+        <h1>{{ f.title }}</h1>
+        <p class="fiche__prix">{{ f.rent_amount }} <small>FCFA / mois</small></p>
+        <p class="annonce__meta"><span>{{ f.district.name }}</span><span>{{ f.landmark_text }}</span><span>{{ f.distance_m }} m du campus</span></p>
+        <ul>
+          <li>Caution : {{ f.deposit_months }} mois · Avance : {{ f.advance_months }} mois{% if f.agent_fee_amount %} · Frais d'agence : {{ f.agent_fee_amount }} FCFA{% endif %}</li>
+          <li>Disponible à partir du {{ f.available_from|date:"d/m/Y" }}</li>
+          <li>{% if f.has_private_bathroom %}Douche et WC internes{% else %}Sanitaires partagés{% endif %} · {% if f.is_fenced %}Clôturée{% else %}Non clôturée{% endif %}</li>
+        </ul>
+        <div class="fiche__description">{{ f.description_html|safe }}</div>
+        <p>Gérant : {{ f.gerant.name }}{% if f.gerant.verified %} <span class="badge badge--succes">Vérifié</span>{% endif %}{% if f.gerant.median_response_min %} · répond en général en {{ f.gerant.median_response_min }} min{% endif %}</p>
+        {% if f.last_confirmed_at %}<p class="texte-doux">Disponibilité confirmée le {{ f.last_confirmed_at|date:"d/m/Y" }}.</p>{% endif %}
+      </div>
+      {% if f.status == "published" and peut_contacter %}
+        <form method="post" action="/annonces/{{ f.slug }}/contacter" class="pile">
+          {% csrf_token %}
+          <div class="champ">
+            <label class="champ__etiquette" for="body">Ton message au gérant</label><textarea id="body" name="body" rows="4" maxlength="2000" required>{{ message_propose }}</textarea>
+          </div>
+          <p class="texte-doux">Garde les échanges dans Logeo : n'envoie ni numéro, ni e-mail, ni lien.</p>
+          <button class="bouton" type="submit">Envoyer le message</button>
+        </form>
+      {% elif not request.user.is_authenticated %}
+        <p><a class="bouton" href="/connexion?next=/annonces/{{ f.slug }}">Connecte-toi pour écrire au gérant</a></p>
+      {% endif %}
+      {% if request.user.is_authenticated and request.user.role == "client" %}
+        <div class="fiche__actions">
+          <form method="post" action="/annonces/{{ f.slug }}/favori">{% csrf_token %}<button class="bouton bouton--secondaire" type="submit">{% if f.is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}</button></form>
+          <form method="post" action="/annonces/{{ f.slug }}/signaler">
+            {% csrf_token %}
+            <label class="champ__etiquette" for="reason">Signaler</label>
+            <select id="reason" name="reason_code">
+              <option value="already_rented">Déjà louée</option>
+              <option value="fake_listing">Fausse annonce</option>
+              <option value="price_mismatch">Prix différent</option>
+              <option value="scam">Arnaque</option>
+              <option value="other">Autre</option>
+            </select>
+            <button class="bouton bouton--fantome" type="submit">Envoyer</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

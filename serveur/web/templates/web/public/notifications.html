@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% block titre %}Notifications — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile pile--large">
+      <h1>Notifications</h1>
+      <form method="post">{% csrf_token %}<button class="bouton bouton--secondaire"
+        type="submit">Tout marquer comme lu</button></form>
+      <ul class="liste-lignes">
+        {% for n in notifications %}<li class="ligne {% if not n.read_at %}ligne--non-lue{% endif %}"><span><strong>{{ n.title }}</strong><br>{{ n.body }}</span><span class="texte-doux">{{ n.created_at|date:"d/m H:i" }}</span></li>
+      {% empty %}<li class="texte-doux">Aucune notification.</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

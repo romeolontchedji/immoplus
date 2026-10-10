@@ -1,0 +1,48 @@
+{% extends "web/base.html" %}
+{% block titre %}{% if quartier %}Chambres à {{ quartier.name }}, Parakou{% else %}Chambres à Parakou{% endif %} — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <h1>{% if quartier %}Chambres à {{ quartier.name }}{% else %}Trouve ta chambre à Parakou{% endif %}</h1>
+      <form method="get" action="{{ action }}" class="filtres" role="search">
+        <div class="champ">
+          <label class="champ__etiquette" for="q">Recherche</label><input id="q"
+       name="q"
+       type="search"
+       value="{{ params.q }}"
+       maxlength="100"
+       placeholder="Quartier, repère, type…">
+        </div>
+        {% if not quartier %}<div class="champ"><label class="champ__etiquette" for="district">Quartier</label><select id="district" name="district"><option value="">Tous</option>{% for d in quartiers %}<option value="{{ d.slug }}"
+        {% if d.slug == params.district %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+        <div class="champ"><label class="champ__etiquette" for="type">Type</label><select id="type" name="type"><option value="">Tous</option>{% for v, l in types %}<option value="{{ v }}" {% if v == params.type %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        <div class="champ">
+          <label class="champ__etiquette" for="rent_max">Loyer maximum (FCFA)</label><input id="rent_max"
+       name="rent_max"
+       type="number"
+       min="0"
+       step="1000"
+       value="{{ params.rent_max }}">
+        </div>
+        <div class="champ"><label class="champ__etiquette" for="bathroom">Douche et WC internes</label><select id="bathroom" name="bathroom"><option value="">Peu importe</option><option value="true" {% if params.bathroom == "true" %}selected{% endif %}>Oui</option></select></div>
+        <div class="champ"><label class="champ__etiquette" for="sort">Trier par</label><select id="sort" name="sort">{% for v, l in tris %}<option value="{{ v }}" {% if v == params.sort %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        <button class="bouton" type="submit">Chercher</button>
+      </form>
+      {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
+      {% if resultat.vide %}
+        <div class="alerte alerte--information" role="status">
+          <p>Aucune chambre ne correspond pour le moment.</p>
+          {% if resultat.alerte_proposee %}<p><a href="/compte/alertes?{{ requete_alerte }}">Crée une alerte</a> : tu seras prévenu dès qu'une chambre correspond.</p>{% endif %}
+        </div>
+      {% else %}
+        <div class="grille-annonces">
+          {% for a in resultat.items %}
+            {% include "web/composants/carte.html" %}
+          {% endfor %}
+        </div>
+        {% if resultat.next_cursor %}<p><a class="bouton bouton--secondaire"
+   href="?{{ suite }}">Voir plus de chambres</a></p>{% endif %}
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

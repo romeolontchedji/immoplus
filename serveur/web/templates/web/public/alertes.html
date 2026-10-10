@@ -1,0 +1,45 @@
+{% extends "web/base.html" %}
+{% block titre %}Mes alertes — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile pile--large">
+      <h1>Mes alertes</h1>
+      {% if message %}<div class="alerte alerte--{{ niveau|default:'succes' }}"
+     role="status"><p>{{ message }}</p></div>{% endif %}
+      <ul class="liste-lignes">
+        {% for al in alertes %}
+          <li class="ligne"><span>{{ al.label|default:"Alerte" }}{% if al.max_rent %} · jusqu'à {{ al.max_rent }} FCFA{% endif %}{% if al.private_bathroom_required %} · douche interne{% endif %}{% if not al.is_active %} · <em>en pause</em>{% endif %}</span>
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="supprimer"><input type="hidden" name="alerte_id" value="{{ al.id }}"><button class="bouton bouton--fantome" type="submit">Supprimer</button></form></li>
+{% empty %}<li class="texte-doux">Aucune alerte. Crée-en une pour être prévenu des nouvelles chambres.</li>{% endfor %}
+  </ul>
+  <form method="post"
+        class="pile"><h2>Nouvelle alerte</h2>{% csrf_token %}<input type="hidden"
+       name="action"
+       value="creer">
+    <div class="champ">
+      <label class="champ__etiquette"
+             for="label">Nom</label><input id="label"
+       name="label"
+       maxlength="80"
+       value="{{ proposition.label }}">
+    </div>
+    <div class="champ"><label class="champ__etiquette" for="district_ids">Quartier</label><select id="district_ids" name="district_ids"><option value="">Tous</option>{% for d in quartiers %}<option value="{{ d.id }}"
+        {% if d.slug == proposition.district %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+    <div class="champ"><label class="champ__etiquette" for="room_types">Type</label><select id="room_types" name="room_types"><option value="">Tous</option>{% for v, l in types %}<option value="{{ v }}" {% if v == proposition.type %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="champ">
+      <label class="champ__etiquette" for="max_rent">Loyer maximum (FCFA)</label><input id="max_rent"
+       name="max_rent"
+       type="number"
+       min="1"
+       step="1000"
+       value="{{ proposition.rent_max }}">
+    </div>
+    <div class="champ"><label><input type="checkbox"
+       name="private_bathroom_required"
+       value="1"
+       {% if proposition.bathroom %}checked{% endif %}> Douche et WC internes obligatoires</label></div>
+    <button class="bouton" type="submit">Créer l'alerte</button>
+  </form>
+  </div>
+  </section>
+{% endblock %}

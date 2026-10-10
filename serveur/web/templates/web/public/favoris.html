@@ -1,0 +1,16 @@
+{% extends "web/base.html" %}
+{% block titre %}Mes favoris — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <h1>Mes favoris</h1>
+      {% if cartes %}
+        <div class="grille-annonces">
+          {% for a in cartes %}
+            {% include "web/composants/carte.html" %}
+          {% endfor %}
+        </div>
+{% else %}<p class="texte-doux">Tu n'as encore aucun favori. <a href="/annonces">Parcourir les chambres</a>.</p>{% endif %}
+  </div>
+  </section>
+{% endblock %}
