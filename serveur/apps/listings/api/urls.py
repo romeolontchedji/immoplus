@@ -2,9 +2,19 @@ from django.urls import path
 
 from . import views as v
 from . import views_media as m
+from . import views_publics as p
+from . import views_tableau as t
 
 urlpatterns = [
     path("districts", v.Quartiers.as_view(), name="districts"),
+    path("pro/dashboard", t.Tableau.as_view(), name="pro-dashboard"),
+    path("listings", p.Fil.as_view(), name="listings"),
+    path("listings/<str:ident>", p.Fiche.as_view(), name="listing"),
+    path("listings/<str:ident>/views", p.Vue.as_view(), name="listing-views"),
+    path("me/favorites", p.Favoris.as_view(), name="favorites"),
+    path("me/favorites/<uuid:annonce_id>", p.FavoriDetail.as_view(), name="favorite"),
+    path("me/alerts", p.Alertes.as_view(), name="alerts"),
+    path("me/alerts/<str:alerte_id>", p.AlerteDetail.as_view(), name="alert"),
     path("pro/listings", v.AnnoncesPro.as_view(), name="pro-listings"),
     path("pro/listings/<uuid:annonce_id>", v.AnnonceProDetail.as_view(), name="pro-listing"),
     path(

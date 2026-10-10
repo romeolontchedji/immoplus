@@ -1,7 +1,23 @@
-"""Lectures des annonces et quartiers."""
+"""Lectures des annonces et quartiers : espace gérant, fil public, fiche, favoris, alertes."""
 
-from .enums import StatutAnnonce
-from .models import District, Listing
+import base64
+import hashlib
+import json
+import posixpath
+import uuid
+
+from django.core.cache import cache
+from django.db.models import BooleanField, Q
+from django.db.models.expressions import RawSQL
+from django.utils.dateparse import parse_datetime
+
+from apps.accounts import selectors as comptes
+from apps.core.errors import ErreurMetier
+from apps.media import stockage
+
+from .enums import StatutAnnonce, StatutMedia, TypeMedia
+from .models import Alert, District, Favorite, Listing, ListingMedia
+from .services import geo
 
 
 def quartiers_actifs():
@@ -26,3 +42,422 @@ def annonce_du_gerant(gerant, annonce_id) -> Listing | None:
 
 def statuts_publics() -> tuple[str, ...]:
     return (StatutAnnonce.PUBLISHED,)
+
+
+# ----------------------------------------------------------------------------- fil public (CDC §10.3)
+STATUTS_VISIBLES = (StatutAnnonce.PUBLISHED, StatutAnnonce.RENTED)
+_CHAMP_TRI = {
+    "recent": ("published_at", True),
+    "rent_asc": ("rent_amount", False),
+    "rent_desc": ("rent_amount", True),
+    "distance": ("distance_to_campus_m", False),
+}
+DELAI_CACHE_FIL_S = 60
+
+
+def _version_fil() -> int:
+    return cache.get("fil:version", 1)
+
+
+def invalider_fil() -> None:
+    """Incrémente le compteur de version : toutes les pages de fil en cache deviennent obsolètes."""
+    try:
+        cache.incr("fil:version")
+    except ValueError:
+        cache.set("fil:version", 2, None)
+
+
+def _encoder_curseur(tri: str, valeur, identifiant) -> str:
+    brut = json.dumps({"s": tri, "v": str(valeur), "i": str(identifiant)})
+    return base64.urlsafe_b64encode(brut.encode()).decode().rstrip("=")
+
+
+def _decoder_curseur(curseur: str, tri: str) -> tuple[str, str]:
+    try:
+        brut = base64.urlsafe_b64decode(curseur + "=" * (-len(curseur) % 4))
+        donnees = json.loads(brut)
+        if donnees["s"] != tri:
+            raise ValueError("tri différent")
+        uuid.UUID(donnees["i"])
+        return donnees["v"], donnees["i"]
+    except (ValueError, KeyError, TypeError) as erreur:
+        raise ErreurMetier(
+            "invalid_cursor", "Curseur invalide.", champs={"cursor": ["Invalide"]}
+        ) from erreur
+
+
+def _appliquer_criteres(requete, f: dict):
+    if f["q"]:
+        # Gabarit constant : le texte saisi n'entre que par les paramètres liés. La tolérance aux fautes
+        # (trigrammes) ne s'applique qu'à partir de 4 caractères : en dessous, elle ramènerait trop de bruit.
+        sql = "search_vector @@ websearch_to_tsquery('french', unaccent(%s))"
+        params = [f["q"]]
+        if len(f["q"]) >= 4:
+            sql += (
+                " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
+                " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4"
+            )
+            params += [f["q"], f["q"]]
+        requete = requete.annotate(
+            _recherche=RawSQL(f"({sql})", params, output_field=BooleanField())  # noqa: S611
+        ).filter(_recherche=True)
+    if f["districts"]:
+        requete = requete.filter(district__slug__in=f["districts"])
+    if f["types"]:
+        requete = requete.filter(room_type__in=f["types"])
+    if f["rent_min"] is not None:
+        requete = requete.filter(rent_amount__gte=f["rent_min"])
+    if f["rent_max"] is not None:
+        requete = requete.filter(rent_amount__lte=f["rent_max"])
+    if f["bathroom"] is not None:
+        requete = requete.filter(has_private_bathroom=f["bathroom"])
+    if f["water"]:
+        requete = requete.filter(water_source__in=f["water"])
+    if f["meter"]:
+        requete = requete.filter(electricity_meter__in=f["meter"])
+    if f["fenced"] is not None:
+        requete = requete.filter(is_fenced=f["fenced"])
+    if f["available_before"]:
+        requete = requete.filter(available_from__lte=f["available_before"])
+    if f["max_distance_m"] is not None:
+        requete = requete.filter(distance_to_campus_m__lte=f["max_distance_m"])
+    return requete
+
+
+def _url_variante(media: ListingMedia, largeur: str | None = None) -> str | None:
+    """URL d'une variante WebP d'une photo : la plus proche de `largeur`, ou la plus grande."""
+    variantes = media.variants or {}
+    if not variantes or not media.poster_path:
+        return None
+    dossier = posixpath.dirname(media.poster_path)
+    if largeur is None or largeur not in variantes:
+        choisi = variantes[max(variantes, key=int)]
+        if largeur is not None:
+            plus_proches = [v for v in variantes if int(v) >= int(largeur)]
+            choisi = variantes[min(plus_proches, key=int)] if plus_proches else choisi
+    else:
+        choisi = variantes[largeur]
+    return stockage.url_publique(posixpath.join(dossier, choisi))
+
+
+def _medias_prets(ids) -> dict:
+    par_annonce: dict = {}
+    for m in ListingMedia.objects.filter(
+        listing_id__in=list(ids), status=StatutMedia.READY, deleted_at__isnull=True
+    ).order_by("position", "created_at"):
+        par_annonce.setdefault(m.listing_id, []).append(m)
+    return par_annonce
+
+
+def _carte(annonce: Listing, medias: list, gerants: dict) -> dict:
+    photos = [m for m in medias if m.kind == TypeMedia.PHOTO]
+    video = next((m for m in medias if m.kind == TypeMedia.VIDEO), None)
+    couverture = next((m for m in photos if m.is_cover), photos[0] if photos else None)
+    gerant = gerants.get(annonce.gerant_id, {})
+    return {
+        "id": annonce.pk,
+        "slug": annonce.slug,
+        "title": annonce.title,
+        "room_type": annonce.room_type,
+        "district": {"name": annonce.district.name, "slug": annonce.district.slug},
+        "landmark_text": annonce.landmark_text,
+        "rent_amount": annonce.rent_amount,
+        "deposit_months": annonce.deposit_months,
+        "advance_months": annonce.advance_months,
+        "distance_m": geo.arrondir_50(annonce.distance_to_campus_m),
+        "has_private_bathroom": annonce.has_private_bathroom,
+        "is_fenced": annonce.is_fenced,
+        "available_from": annonce.available_from,
+        "status": annonce.status,
+        "published_at": annonce.published_at,
+        "cover_url": _url_variante(couverture, "480") if couverture else None,
+        "video_poster_url": stockage.url_publique(video.poster_path)
+        if video and annonce.status == StatutAnnonce.PUBLISHED
+        else None,
+        "has_video": bool(video) and annonce.status == StatutAnnonce.PUBLISHED,
+        "gerant": {"name": gerant.get("name"), "verified": gerant.get("verified", False)},
+    }
+
+
+def _cartes(annonces: list[Listing]) -> list[dict]:
+    medias = _medias_prets(a.pk for a in annonces)
+    gerants = comptes.gerants_publics({a.gerant_id for a in annonces})
+    return [_carte(a, medias.get(a.pk, []), gerants) for a in annonces]
+
+
+def fil(filtres: dict) -> dict:
+    """Fil des annonces publiées : filtres, recherche, tri, pagination par curseur ; page en cache 60 s."""
+    empreinte = hashlib.sha256(
+        json.dumps(filtres, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    cle = f"fil:{_version_fil()}:{empreinte}"
+    en_cache = cache.get(cle)
+    if en_cache is not None:
+        return en_cache
+    tri = filtres["sort"]
+    champ, decroissant = _CHAMP_TRI[tri]
+    requete = _appliquer_criteres(
+        Listing.objects.filter(
+            status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True
+        ).select_related("district"),
+        filtres,
+    )
+    if filtres["cursor"]:
+        valeur, identifiant = _decoder_curseur(filtres["cursor"], tri)
+        if champ == "published_at":
+            valeur = parse_datetime(valeur)
+            if valeur is None:
+                raise ErreurMetier(
+                    "invalid_cursor", "Curseur invalide.", champs={"cursor": ["Invalide"]}
+                )
+        else:
+            try:
+                valeur = int(valeur)
+            except ValueError as erreur:
+                raise ErreurMetier(
+                    "invalid_cursor", "Curseur invalide.", champs={"cursor": ["Invalide"]}
+                ) from erreur
+        sens = "lt" if decroissant else "gt"
+        requete = requete.filter(
+            Q(**{f"{champ}__{sens}": valeur}) | Q(**{champ: valeur, f"id__{sens}": identifiant})
+        )
+    prefixe = "-" if decroissant else ""
+    lignes = list(requete.order_by(f"{prefixe}{champ}", f"{prefixe}id")[: filtres["limit"] + 1])
+    suivant = None
+    if len(lignes) > filtres["limit"]:
+        lignes = lignes[: filtres["limit"]]
+        derniere = lignes[-1]
+        suivant = _encoder_curseur(
+            tri,
+            getattr(derniere, champ).isoformat()
+            if champ == "published_at"
+            else getattr(derniere, champ),
+            derniere.pk,
+        )
+    resultat = {"items": _cartes(lignes), "next_cursor": suivant}
+    cache.set(cle, resultat, DELAI_CACHE_FIL_S)
+    return resultat
+
+
+def _trouver_visible(ident) -> Listing | None:
+    requete = Listing.objects.filter(
+        status__in=STATUTS_VISIBLES, deleted_at__isnull=True
+    ).select_related("district")
+    try:
+        return requete.filter(pk=uuid.UUID(str(ident))).first()
+    except ValueError:
+        return requete.filter(slug=str(ident)).first()
+
+
+def fiche_publique(ident) -> dict | None:
+    """Fiche d'une annonce (par identifiant ou par slug). Jamais d'adresse privée ni de numéro (EF-REC-08)."""
+    annonce = _trouver_visible(ident)
+    if annonce is None:
+        return None
+    medias = _medias_prets([annonce.pk]).get(annonce.pk, [])
+    louee = annonce.status == StatutAnnonce.RENTED
+    sortie_medias = []
+    for m in medias:
+        if m.kind == TypeMedia.VIDEO:
+            if louee:
+                continue  # annonce louée : sans vidéo (EF-REC-10)
+            sortie_medias.append(
+                {
+                    "id": m.pk,
+                    "kind": "video",
+                    "playback_url": stockage.url_publique(m.playback_path),
+                    "poster_url": stockage.url_publique(m.poster_path),
+                    "duration_s": float(m.duration_s) if m.duration_s is not None else None,
+                    "width": m.width,
+                    "height": m.height,
+                }
+            )
+        else:
+            sortie_medias.append(
+                {
+                    "id": m.pk,
+                    "kind": "photo",
+                    "url": _url_variante(m, "960"),
+                    "thumb_url": _url_variante(m, "480"),
+                    "width": m.width,
+                    "height": m.height,
+                    "is_cover": m.is_cover,
+                }
+            )
+    gerant = comptes.gerants_publics([annonce.gerant_id]).get(annonce.gerant_id, {})
+    return {
+        "id": annonce.pk,
+        "slug": annonce.slug,
+        "title": annonce.title,
+        "room_type": annonce.room_type,
+        "district": {"name": annonce.district.name, "slug": annonce.district.slug},
+        "landmark_text": annonce.landmark_text,
+        "latitude": geo.arrondir_position(annonce.latitude),
+        "longitude": geo.arrondir_position(annonce.longitude),
+        "distance_m": geo.arrondir_50(annonce.distance_to_campus_m),
+        "rent_amount": annonce.rent_amount,
+        "deposit_months": annonce.deposit_months,
+        "advance_months": annonce.advance_months,
+        "agent_fee_amount": annonce.agent_fee_amount,
+        "available_from": annonce.available_from,
+        "has_private_bathroom": annonce.has_private_bathroom,
+        "is_fenced": annonce.is_fenced,
+        "water_source": annonce.water_source,
+        "electricity_meter": annonce.electricity_meter,
+        "description_md": annonce.description_md,
+        "description_html": annonce.description_html,
+        "status": annonce.status,
+        "published_at": annonce.published_at,
+        "last_confirmed_at": annonce.last_confirmed_at,
+        "media": sortie_medias,
+        "gerant": {
+            "name": gerant.get("name"),
+            "verified": gerant.get("verified", False),
+            "median_response_min": gerant.get("median_response_min"),
+        },
+        "gerant_user_id": annonce.gerant_id,
+    }
+
+
+def quartier_par_slug(slug: str) -> District | None:
+    return District.objects.filter(slug=slug, is_active=True).first()
+
+
+def slugs_publies() -> list[tuple[str, object]]:
+    """(slug, date de dernière mise à jour) des annonces visibles : plan du site."""
+    return list(
+        Listing.objects.filter(status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True)
+        .order_by("-published_at")
+        .values_list("slug", "updated_at")[:5000]
+    )
+
+
+def annonce_pour_messagerie(annonce_id) -> dict | None:
+    """Ce dont la messagerie a besoin d'une annonce : jamais l'adresse privée (voir `adresse_privee`)."""
+    ligne = (
+        Listing.objects.filter(pk=annonce_id, deleted_at__isnull=True)
+        .select_related("district")
+        .first()
+    )
+    if ligne is None:
+        return None
+    return {
+        "id": ligne.pk,
+        "slug": ligne.slug,
+        "title": ligne.title,
+        "status": ligne.status,
+        "rented_at": ligne.rented_at,
+        "gerant_user_id": ligne.gerant_id,
+        "district_name": ligne.district.name,
+        "rent_amount": ligne.rent_amount,
+    }
+
+
+def annonces_pour_messagerie(ids) -> dict:
+    return {
+        a.pk: {
+            "id": a.pk, "slug": a.slug, "title": a.title, "status": a.status,
+            "rented_at": a.rented_at, "gerant_user_id": a.gerant_id,
+            "district_name": a.district.name, "rent_amount": a.rent_amount,
+        }
+        for a in Listing.objects.filter(pk__in=list(ids)).select_related("district")
+    }  # fmt: skip
+
+
+def adresse_privee(annonce_id) -> str:
+    """Adresse précise, réservée aux participants d'une conversation (CDC §10.5)."""
+    return (
+        Listing.objects.filter(pk=annonce_id).values_list("address_private", flat=True).first()
+        or ""
+    )
+
+
+# ----------------------------------------------------------------------------- favoris et alertes
+def ids_favoris(utilisateur_id, annonce_ids) -> set:
+    return set(
+        Favorite.objects.filter(
+            user_id=utilisateur_id, listing_id__in=list(annonce_ids)
+        ).values_list("listing_id", flat=True)
+    )
+
+
+def favoris_de(utilisateur_id) -> list[dict]:
+    """Annonces favorites, plus récemment ajoutées d'abord ; les annonces louées restent affichées."""
+    liens = list(Favorite.objects.filter(user_id=utilisateur_id).order_by("-created_at")[:200])
+    annonces = {
+        a.pk: a
+        for a in Listing.objects.filter(
+            pk__in=[f.listing_id for f in liens], deleted_at__isnull=True
+        ).select_related("district")
+    }
+    ordonnees = [annonces[f.listing_id] for f in liens if f.listing_id in annonces]
+    return _cartes(ordonnees)
+
+
+def alertes_de(utilisateur_id) -> list[Alert]:
+    return list(Alert.objects.filter(user_id=utilisateur_id).order_by("-created_at"))
+
+
+def alertes_correspondantes(annonce_id) -> list[tuple[uuid.UUID, uuid.UUID]]:
+    """(alerte, locataire) dont les critères couvrent l'annonce, calculé en SQL (CDC §8.6)."""
+    annonce = Listing.objects.filter(pk=annonce_id).first()
+    if annonce is None:
+        return []
+    requete = Alert.objects.filter(is_active=True).filter(
+        Q(district_ids=[]) | Q(district_ids__contains=[annonce.district_id])
+    )
+    requete = requete.filter(Q(room_types=[]) | Q(room_types__contains=[annonce.room_type]))
+    requete = requete.filter(Q(max_rent__isnull=True) | Q(max_rent__gte=annonce.rent_amount))
+    requete = requete.filter(
+        Q(max_distance_m__isnull=True) | Q(max_distance_m__gte=annonce.distance_to_campus_m)
+    )
+    if not annonce.has_private_bathroom:
+        requete = requete.filter(private_bathroom_required=False)
+    return list(requete.values_list("pk", "user_id"))
+
+
+def locataires_favoris(annonce_id) -> list:
+    return list(Favorite.objects.filter(listing_id=annonce_id).values_list("user_id", flat=True))
+
+
+def annonce_par_id(annonce_id) -> Listing | None:
+    """Annonce (objet complet) pour les décisions de modération."""
+    try:
+        return Listing.objects.filter(pk=uuid.UUID(str(annonce_id))).first()
+    except ValueError:
+        return None
+
+
+def tableau_de_bord_gerant(gerant) -> dict:
+    """Indicateurs de l'espace gérant : annonces par statut, vues et conversations sur 30 jours, à faire (EF-DSH)."""
+    import datetime
+
+    from django.db.models import Count
+    from django.utils import timezone
+
+    from apps.core import stats
+
+    par_statut = dict(
+        Listing.objects.filter(gerant=gerant, deleted_at__isnull=True)
+        .values_list("status")
+        .annotate(n=Count("id"))
+        .values_list("status", "n")
+    )
+    publiees = list(
+        Listing.objects.filter(gerant=gerant, status=StatutAnnonce.PUBLISHED).values_list(
+            "id", flat=True
+        )
+    )
+    ids = [str(i) for i in publiees]
+    depuis = timezone.localdate() - datetime.timedelta(days=30)
+    delai = timezone.now() - datetime.timedelta(days=7)
+    a_confirmer = Listing.objects.filter(
+        gerant=gerant, status=StatutAnnonce.PUBLISHED, last_confirmed_at__lt=delai
+    ).count()
+    return {
+        "listings_by_status": par_statut,
+        "views_30d": stats.somme("views", ids, depuis=depuis),
+        "favorites_30d": stats.somme("favorites_added", ids, depuis=depuis),
+        "conversations_30d": stats.somme("conversations_started", ids, depuis=depuis),
+        "to_confirm": a_confirmer,
+    }

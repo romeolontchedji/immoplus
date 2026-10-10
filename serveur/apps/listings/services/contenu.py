@@ -111,3 +111,21 @@ def refuser_si_coordonnees(**champs: str) -> None:
             "Retire les numéros, e-mails et liens de ton annonce : les échanges se font dans Logeo.",
             champs=fautes,
         )
+
+
+def masquer(texte: str) -> str:
+    """Remplace par des étoiles les séquences détectées comme coordonnées (mode `mask`, CDC §11.7)."""
+
+    def etoiles(m: re.Match) -> str:
+        return "*" * len(m.group())
+
+    def telephone(m: re.Match) -> str:
+        suite = texte[m.end() : m.end() + 12]
+        if len(re.sub(r"\D", "", m.group())) >= 8 and not _MONTANT_APRES.match(suite):
+            return etoiles(m)
+        return m.group()
+
+    resultat = _TELEPHONE.sub(telephone, texte)
+    for motif in (_EPELE, _EMAIL, _LIEN):
+        resultat = motif.sub(etoiles, resultat)
+    return resultat

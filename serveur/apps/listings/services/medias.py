@@ -11,7 +11,9 @@ from django.utils import timezone
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 from apps.media import stockage, traitement
+from apps.notifications import services as notifications
 
+from .. import selectors
 from ..enums import StatutAnnonce, StatutMedia, TypeMedia
 from ..models import Listing, ListingMedia
 
@@ -165,6 +167,7 @@ def traiter(media_id) -> None:
             error_detail=None, updated_at=timezone.now(), **champs,
         )  # fmt: skip
         _poser_couverture(media.listing_id)
+        selectors.invalider_fil()
         _suite_de_publication(media.listing_id)
     except traitement.ErreurTraitement as erreur:
         stockage.supprimer_derives(media.listing_id, media.pk)
@@ -174,6 +177,7 @@ def traiter(media_id) -> None:
             error_detail=erreur.message,
             updated_at=timezone.now(),
         )
+        _notifier_echec(media, erreur.message)
         _suite_de_publication(media.listing_id, echec=True)
     except Exception:  # noqa: BLE001 - une panne imprévue ne doit pas laisser le média bloqué en traitement
         journal.exception("Échec inattendu du traitement du média %s", media.pk)
@@ -199,6 +203,24 @@ def _poser_couverture(annonce_id) -> None:
     if premiere:
         ListingMedia.objects.filter(listing_id=annonce_id, is_cover=True).update(is_cover=False)
         ListingMedia.objects.filter(pk=premiere.pk).update(is_cover=True)
+
+
+def _notifier_echec(media: ListingMedia, motif: str) -> None:
+    """Le gérant est prévenu avec un motif lisible (annexe B : listing.media_failed)."""
+    gerant_id = (
+        Listing.objects.filter(pk=media.listing_id).values_list("gerant_id", flat=True).first()
+    )
+    if gerant_id is None:
+        return
+    nature = "vidéo" if media.kind == TypeMedia.VIDEO else "photo"
+    notifications.creer(
+        gerant_id,
+        "listing.media_failed",
+        f"Ta {nature} n'a pas pu être traitée",
+        motif,
+        data={"listing_id": str(media.listing_id), "media_id": str(media.pk)},
+        dedupe_key=f"media-failed:{media.pk}",
+    )
 
 
 def _suite_de_publication(annonce_id, *, echec: bool = False) -> None:

@@ -1,6 +1,8 @@
 """Annonces : création de brouillons, modification, publication et cycle de vie (CDC §9.8, §9.23, §11.1)."""
 
+import logging
 import uuid
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from django.db import connection, transaction
@@ -9,11 +11,16 @@ from django.utils.text import slugify
 
 from apps.accounts.enums import Statut, StatutVerification
 from apps.audit import services as audit
+from apps.core import parametres
 from apps.core.errors import ErreurMetier
+from apps.notifications import services as notifications
 
+from .. import selectors, signals
 from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeChambre, TypeMedia
 from ..models import District, Listing, ListingMedia
 from . import contenu, geo
+
+journal = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from apps.accounts.models import GerantProfile
@@ -151,6 +158,7 @@ def modifier(gerant: "GerantProfile", annonce_id, donnees: dict) -> Listing:
     _appliquer(annonce, donnees)
     annonce.save()
     _vecteur_de_recherche(annonce)
+    selectors.invalider_fil()
     audit.enregistrer(
         "listing.modifiee", acteur=gerant.user, cible=annonce,
         metadata={"champs": sorted(donnees), "loyer_avant": loyer_avant, "loyer_apres": annonce.rent_amount},
@@ -189,6 +197,59 @@ def changer_statut(annonce: Listing, nouveau: str, *, acteur, raison: str | None
         "listing.status_changed", acteur=acteur, cible=annonce,
         metadata={"ancien": ancien, "nouveau": nouveau, "loyer": annonce.rent_amount, "raison": raison},
     )  # fmt: skip
+    selectors.invalider_fil()
+    transaction.on_commit(lambda: _apres_changement(annonce.pk, ancien, nouveau, raison))
+
+
+def _apres_changement(annonce_id, ancien: str, nouveau: str, raison: str | None) -> None:
+    """Après validation de la transaction : alertes, favoris, messagerie (signal) — sans jamais bloquer le statut."""
+    from ..tasks import notifier_alertes, notifier_indisponibilite
+
+    if nouveau == StatutAnnonce.PUBLISHED and ancien != StatutAnnonce.PUBLISHED:
+        notifier_alertes.delay(str(annonce_id))
+    if (
+        nouveau in (StatutAnnonce.RENTED, StatutAnnonce.HIDDEN)
+        and ancien == StatutAnnonce.PUBLISHED
+    ):
+        notifier_indisponibilite.delay(str(annonce_id), nouveau)
+    _prevenir_gerant(annonce_id, ancien, nouveau, raison)
+    signals.statut_annonce_change.send(
+        sender=Listing, annonce_id=annonce_id, ancien=ancien, nouveau=nouveau, raison=raison
+    )
+
+
+_MOTIFS_MASQUAGE = {
+    "stale": "Elle n'a pas été confirmée à temps. Confirme sa disponibilité pour la remettre en ligne.",
+    "moderation": "Elle a été masquée par la modération de Logeo.",
+    "gerant_suspended": "Ton compte est suspendu : elle sera remise en ligne à la levée de la suspension.",
+}
+
+
+def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) -> None:
+    """Notifications au gérant d'après l'annexe B ; l'échec d'une notification ne bloque jamais le statut."""
+    annonce = Listing.objects.filter(pk=annonce_id).first()
+    if annonce is None:
+        return
+    data = {"listing_id": str(annonce.pk), "slug": annonce.slug}
+    try:
+        if ancien == StatutAnnonce.PROCESSING and nouveau == StatutAnnonce.PUBLISHED:
+            notifications.creer(
+                annonce.gerant_id, "listing.published", "Ton annonce est en ligne",
+                f"« {annonce.title} » est visible par les locataires.", data=data,
+                dedupe_key=f"published:{annonce.pk}:{annonce.published_at.isoformat() if annonce.published_at else ''}",
+            )  # fmt: skip
+        elif nouveau == StatutAnnonce.HIDDEN and raison in _MOTIFS_MASQUAGE:
+            notifications.creer(
+                annonce.gerant_id, "listing.hidden", "Ton annonce est masquée",
+                f"« {annonce.title} » : {_MOTIFS_MASQUAGE[raison]}", data={**data, "reason": raison},
+            )  # fmt: skip
+        elif nouveau == StatutAnnonce.RENTED:
+            notifications.creer(
+                annonce.gerant_id, "listing.rented_video_scheduled", "Annonce marquée louée",
+                "La vidéo sera supprimée dans 7 jours. Tu peux annuler « louée » d'ici là.", data=data,
+            )  # fmt: skip
+    except Exception:  # noqa: BLE001
+        journal.exception("notification_gerant_echouee")
 
 
 def manques_a_la_publication(annonce: Listing) -> list[str]:
@@ -319,3 +380,76 @@ def annuler_louee(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce.rented_at = None
     mettre_en_ligne(annonce, acteur=gerant.user)
     return annonce
+
+
+# --------------------------------------------------------------- décisions de la modération
+def approuver_premiere(annonce: Listing, *, acteur) -> None:
+    """Relecture terminée : la première annonce d'un gérant est publiée (EF-ANN-11)."""
+    if annonce.status != StatutAnnonce.PROCESSING:
+        raise ErreurMetier(
+            "listing_locked", "Seule une annonce en attente de relecture s'approuve.", statut=409
+        )
+    manques = manques_a_la_publication(annonce)
+    if manques:
+        raise ErreurMetier(
+            "listing_not_publishable",
+            "L'annonce n'est pas publiable.",
+            statut=409,
+            champs={"manques": manques},
+        )
+    mettre_en_ligne(annonce, acteur=acteur)
+
+
+def refuser(annonce: Listing, *, acteur) -> None:
+    """Relecture refusée : l'annonce est masquée par la modération ; le gérant peut la corriger."""
+    if annonce.status not in (StatutAnnonce.PROCESSING, StatutAnnonce.PUBLISHED):
+        raise ErreurMetier("listing_locked", "Cette annonce ne se refuse pas.", statut=409)
+    changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="moderation")
+
+
+def masquer_pour_gerant_suspendu(gerant_user_id, *, acteur) -> int:
+    """Suspension ou bannissement d'un gérant : ses annonces en ligne sont masquées (EF-MOD-06)."""
+    total = 0
+    for annonce in Listing.objects.filter(gerant_id=gerant_user_id, status=StatutAnnonce.PUBLISHED):
+        changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="gerant_suspended")
+        total += 1
+    return total
+
+
+def remettre_apres_suspension(gerant_user_id, *, acteur) -> int:
+    """Rétablissement : les annonces masquées pour suspension reviennent en ligne si elles sont encore valides.
+
+    Une annonce devenue périmée pendant la suspension reste masquée « sans confirmation » : le gérant la confirme.
+    """
+    delai = timezone.now() - timedelta(days=int(parametres.lire("STALE_HIDE_DAYS")))
+    remises = 0
+    for annonce in Listing.objects.filter(
+        gerant_id=gerant_user_id, status=StatutAnnonce.HIDDEN, hidden_reason="gerant_suspended"
+    ).select_related("gerant"):
+        perimee = annonce.last_confirmed_at is None or annonce.last_confirmed_at < delai
+        if perimee or manques_a_la_publication(annonce):
+            Listing.objects.filter(pk=annonce.pk).update(hidden_reason="stale")
+            continue
+        mettre_en_ligne(annonce, acteur=acteur)
+        remises += 1
+    return remises
+
+
+def archiver_du_gerant(gerant_user_id) -> int:
+    """Compte supprimé : ses annonces visibles sont archivées, ses brouillons supprimés (CDC §7.1)."""
+    total = 0
+    for annonce in Listing.objects.filter(
+        gerant_id=gerant_user_id,
+        status__in=[
+            StatutAnnonce.PUBLISHED,
+            StatutAnnonce.HIDDEN,
+            StatutAnnonce.PROCESSING,
+            StatutAnnonce.RENTED,
+        ],
+    ):
+        changer_statut(annonce, StatutAnnonce.ARCHIVED, acteur=None)
+        total += 1
+    Listing.objects.filter(
+        gerant_id=gerant_user_id, status=StatutAnnonce.DRAFT, deleted_at__isnull=True
+    ).update(deleted_at=timezone.now())
+    return total

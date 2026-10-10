@@ -41,6 +41,32 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     ),
     "CONTACT_LEAK_MODE": ("mask", "Détection des coordonnées : mask, flag ou block."),
     "SUBSCRIPTION_ENABLED": (False, "Abonnement des gérants (désactivé au lancement)."),
+    "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
+    "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),
+    "NEW_CONVERSATIONS_PER_DAY": (20, "Nouvelles conversations par jour et par locataire."),
+    "READONLY_AFTER_RENT_DAYS": (
+        30,
+        "Jours après la location avant la lecture seule des conversations.",
+    ),
+    "ARCHIVE_AFTER_RENT_DAYS": (90, "Jours après la location avant l'archivage de l'annonce."),
+    "RENTED_VIDEO_DELETE_DAYS": (7, "Jours après la location avant la suppression de la vidéo."),
+    "UNANSWERED_REMINDER_H": (2, "Heures avant le rappel au gérant pour un message non lu."),
+    "SMS_FALLBACK_ENABLED": (False, "SMS de repli au gérant (désactivé par défaut)."),
+    "LISTING_PREMODERATION": (
+        False,
+        "Pré-modération de toutes les annonces (désactivée par défaut).",
+    ),
+    "STAFF_READS_ALERT_THRESHOLD": (
+        20,
+        "Lectures de conversation par jour avant alerte, par compte du personnel.",
+    ),
+    "MODERATOR_MAX_SUSPENSION_DAYS": (
+        30,
+        "Durée maximale d'une suspension prononcée par un modérateur.",
+    ),
+    "RENTED_REPORTS_THRESHOLD": (3, "Signalements « déjà louée » distincts avant dossier."),
+    "STALE_HIDE_DAYS": (14, "Jours sans confirmation avant le masquage d'une annonce."),
+    "STALE_REMINDER_DAYS": ([7, 10], "Jours sans confirmation avant chaque relance."),
 }
 
 _DELAI_CACHE_S = 30

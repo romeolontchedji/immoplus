@@ -9,6 +9,7 @@ from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
 
+from .. import signals
 from . import appareils, jetons
 
 
@@ -68,6 +69,7 @@ def changer_statut(
         raise ErreurMetier("forbidden", "Seul un administrateur modifie le personnel.", statut=403)
     if cible.pk == acteur.pk:
         raise ErreurMetier("forbidden", "Tu ne peux pas modifier ton propre statut.", statut=403)
+    ancien = cible.status
     cible.status = statut
     cible.suspended_until = jusqu_a if statut == Statut.SUSPENDED else None
     if statut != Statut.ACTIVE:
@@ -86,6 +88,7 @@ def changer_statut(
             "motif": motif[:200],
         },
     )
+    signals.statut_compte_change.send(sender=User, utilisateur=cible, ancien=ancien, nouveau=statut)
 
 
 def changer_role(*, acteur: User, cible: User, role: str) -> None:
@@ -107,3 +110,38 @@ def changer_role(*, acteur: User, cible: User, role: str) -> None:
     audit.enregistrer(
         "compte.role", acteur=acteur, cible=cible, metadata={"ancien": ancien, "nouveau": role}
     )
+
+
+def lever_suspension_echue(cible: User) -> bool:
+    """Fin de suspension : le compte redevient actif, sans acteur humain (tâche planifiée)."""
+    if (
+        cible.status != Statut.SUSPENDED
+        or cible.suspended_until is None
+        or cible.suspended_until > timezone.now()
+    ):
+        return False
+    cible.status, cible.suspended_until = Statut.ACTIVE, None
+    cible.save()
+    audit.enregistrer("compte.suspension_levee", cible=cible, metadata={"automatique": True})
+    signals.statut_compte_change.send(
+        sender=User, utilisateur=cible, ancien=Statut.SUSPENDED, nouveau=Statut.ACTIVE
+    )
+    return True
+
+
+def maj_indicateurs_gerants(indicateurs: dict) -> int:
+    """Écrit le taux et le délai de réponse calculés chaque nuit : {identifiant du gérant: (taux %, délai en minutes)}."""
+    total = 0
+    for gerant_id, (taux, delai) in indicateurs.items():
+        total += GerantProfile.objects.filter(pk=gerant_id).update(
+            response_rate_30d=taux, median_response_min=delai
+        )
+    return total
+
+
+def purger_otp(jours: int = 7) -> int:
+    """Supprime les codes à usage unique expirés depuis plus de `jours` jours."""
+    from apps.accounts.models import OtpCode
+
+    limite = timezone.now() - timezone.timedelta(days=jours)
+    return OtpCode.objects.filter(expires_at__lt=limite).delete()[0]

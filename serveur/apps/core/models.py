@@ -21,3 +21,17 @@ class AppSetting(models.Model):
 
     class Meta:
         db_table = "app_settings"
+
+
+class DailyStat(models.Model):
+    """Compteurs agrégés par jour (CDC §9.10). Les compteurs par annonce viennent de Redis (UPSERT toutes les 5 min)."""
+
+    pk = models.CompositePrimaryKey("day", "metric", "subject")
+    day = models.DateField()
+    metric = models.CharField(max_length=32)
+    subject = models.CharField(max_length=40, default="global", db_default="global")
+    value = models.IntegerField(default=0, db_default=0)
+
+    class Meta:
+        db_table = "daily_stats"
+        indexes = [models.Index(fields=["subject", "day"], name="daily_stats_sujet_idx")]

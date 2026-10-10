@@ -2,6 +2,7 @@
 
 import uuid
 
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
@@ -119,6 +120,21 @@ class Listing(models.Model):
         ]
         indexes = [
             models.Index(fields=["status", "-published_at"], name="listings_fil_idx"),
+            models.Index(
+                fields=["-published_at", "-id"],
+                condition=models.Q(status="published"),
+                name="listings_fil_publie_idx",
+            ),
+            models.Index(
+                fields=["district", "rent_amount"],
+                condition=models.Q(status="published"),
+                name="listings_quartier_loyer_idx",
+            ),
+            models.Index(
+                fields=["last_confirmed_at"],
+                condition=models.Q(status="published"),
+                name="listings_fraicheur_idx",
+            ),
             models.Index(fields=["district", "status"], name="listings_quartier_idx"),
             models.Index(fields=["gerant", "status"], name="listings_gerant_idx"),
             models.Index(fields=["rent_amount"], name="listings_loyer_idx"),
@@ -183,4 +199,48 @@ class ListingMedia(models.Model):
         indexes = [
             models.Index(fields=["listing", "position"], name="media_ordre_idx"),
             models.Index(fields=["sha256"], name="media_sha256_idx"),
+        ]
+
+
+class Favorite(models.Model):
+    """Favori d'un locataire (CDC §9.11)."""
+
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="+")
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="favorites")
+    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+
+    class Meta:
+        db_table = "favorites"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "listing"], name="favorites_un_par_couple")
+        ]
+        indexes = [models.Index(fields=["listing"], name="favorites_annonce_idx")]
+
+
+class Alert(models.Model):
+    """Alerte d'un locataire : critères appliqués à chaque publication (CDC §9.12)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="+")
+    label = models.CharField(max_length=80, default="", blank=True)
+    district_ids = ArrayField(models.UUIDField(), default=list, db_default=[])
+    room_types = ArrayField(models.CharField(max_length=16), default=list, db_default=[])
+    max_rent = models.IntegerField(null=True, blank=True)
+    private_bathroom_required = models.BooleanField(default=False, db_default=False)
+    max_distance_m = models.IntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, db_default=True)
+    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+
+    class Meta:
+        db_table = "alerts"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(max_rent__isnull=True) | models.Q(max_rent__gt=0),
+                name="alerts_loyer_positif",
+            ),
+        ]
+        indexes = [
+            GinIndex(fields=["district_ids"], name="alerts_quartiers_idx"),
+            models.Index(fields=["user", "is_active"], name="alerts_utilisateur_idx"),
         ]
