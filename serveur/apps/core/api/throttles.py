@@ -43,3 +43,10 @@ class LimiteCompte(LimiteParIp):
 
     categorie = "compte"
     limite = 60
+
+
+class LimiteLecture(LimiteParIp):
+    """Lectures du compte connecté (listes, comptes, interrogation de rattrapage) : 240 par minute et par adresse."""
+
+    categorie = "lecture"
+    limite = 240
