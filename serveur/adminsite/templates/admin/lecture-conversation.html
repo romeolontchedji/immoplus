@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  {% if messages_conversation is None %}
+    <form method="post">
+      {% csrf_token %}
+      <p>La lecture d'une conversation est journalisée (qui, quand, motif). Saisis le motif avant l'ouverture.</p>
+      {{ form.as_p }}
+      <input type="submit" value="Ouvrir la conversation" class="default">
+    </form>
+  {% else %}
+    <p class="help">Lecture journalisée. Les textes affichés sont les textes d'origine.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Expéditeur</th>
+          <th>Message</th>
+          <th>État</th>
+          <th>Motif de marquage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in messages_conversation %}
+          <tr>
+            <td>{{ m.seq }}</td>
+            <td>{{ m.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ m.sender_id|default:"système" }}</td>
+            <td>{{ m.body }}</td>
+            <td>{{ m.moderation_status }}</td>
+            <td>{{ m.flag_reason|default:"" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}

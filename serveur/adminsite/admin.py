@@ -256,3 +256,6 @@ class AppSettingAdmin(admin.ModelAdmin):
             cible_type="parametre",
             metadata={"cle": obj.key},
         )
+
+
+from . import admin_moderation  # noqa: E402,F401  (annonces, signalements, sanctions)
