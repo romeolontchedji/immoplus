@@ -14,6 +14,9 @@ urlpatterns = [
     path("uploads/<uuid:media_id>", envoi_media, name="uploads"),
     path("v1/", include("apps.accounts.api.urls")),
     path("v1/", include("apps.listings.api.urls")),
+    path("v1/", include("apps.notifications.api.urls")),
+    path("v1/", include("apps.chat.api.urls")),
+    path("v1/", include("apps.moderation.api.urls")),
     path("", include("web.urls")),
 ]
 
