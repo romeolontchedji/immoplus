@@ -63,6 +63,18 @@ class TestFilEtFiche:
         assert lien and "Voir plus" in page
         assert Client().get("/annonces?" + lien.group(1).replace("&amp;", "&")).status_code == 200
 
+    def test_recapitulatif_des_filtres_actifs_retirable(self):
+        q = DistrictFactory(slug="zongo", name="Zongo")
+        ListingFactory(district=q, title="Chambre Zongo", rent_amount=15000)
+        page = html(Client().get("/annonces?district=zongo&rent_max=20000&bathroom=true"))
+        assert "Filtres actifs" in page
+        assert "Quartier : Zongo" in page and "Douche et WC internes" in page
+        retrait = re.search(
+            r'href="([^"]*)"[^>]*aria-label="Retirer le filtre : Quartier : Zongo"', page
+        )
+        assert retrait and "district=zongo" not in retrait.group(1)
+        assert "rent_max=20000" in retrait.group(1)
+
     def test_page_quartier(self):
         q = DistrictFactory(slug="titirou", name="Titirou")
         ListingFactory(district=q, title="Chambre à Titirou")
@@ -82,6 +94,19 @@ class TestFilEtFiche:
         assert r.status_code == 200 and "Belle chambre" in page and "<video" in page
         assert "Rue 12" not in page and p.user.phone_e164 not in page
         assert "Connecte-toi pour écrire" in page
+
+    def test_fiche_galerie_visionneuse_et_alerte(self):
+        q = DistrictFactory(slug="banikanni", name="Banikanni")
+        a = ListingFactory(
+            district=q, title="Studio calme", room_type="studio", rent_amount=20000,
+            has_private_bathroom=True,
+        )  # fmt: skip
+        medias_prets(a, photos=2)
+        page = html(Client().get(f"/annonces/{a.slug}"))
+        assert 'class="visionneuse"' in page and 'id="photo-' in page
+        assert "galerie-fiche__vignette" in page
+        assert "/compte/alertes?district=banikanni" in page
+        assert "type=studio" in page and "rent_max=20000" in page and "bathroom=true" in page
 
     def test_fiche_inconnue_ou_masquee(self):
         assert Client().get("/annonces/inconnue").status_code == 404
@@ -171,6 +196,52 @@ class TestEspaceLocataire:
         )
         assert not Alert.objects.filter(user=u).exists()
 
+    def test_pause_et_reactive_une_alerte(self):
+        u = ClientFactory()
+        alerte = Alert.objects.create(user=u, label="Pas cher")
+        c = connecte(u)
+        assert "Mettre en pause" in html(c.get("/compte/alertes"))
+        r = c.post("/compte/alertes", {"action": "pause", "alerte_id": str(alerte.pk)})
+        assert "mise en pause" in html(r)
+        alerte.refresh_from_db()
+        assert alerte.is_active is False
+        r = c.post("/compte/alertes", {"action": "reactiver", "alerte_id": str(alerte.pk)})
+        assert "réactivée" in html(r)
+        alerte.refresh_from_db()
+        assert alerte.is_active is True
+
+    def test_une_alerte_peut_se_modifier(self):
+        q, u = DistrictFactory(slug="zongo"), ClientFactory()
+        alerte = Alert.objects.create(
+            user=u, label="Zongo pas cher", max_rent=20000, district_ids=[str(q.pk)]
+        )
+        c = connecte(u)
+        page_edition = html(c.get(f"/compte/alertes?modifier={alerte.pk}"))
+        assert "Modifier l'alerte" in page_edition
+        assert re.search(rf'value="{q.pk}"\s+selected', page_edition)
+        r = c.post(
+            "/compte/alertes",
+            {
+                "action": "modifier",
+                "alerte_id": str(alerte.pk),
+                "label": "Zongo plus cher",
+                "district_ids": str(q.pk),
+                "max_rent": "30000",
+            },
+        )
+        assert "modifiée" in html(r)
+        alerte.refresh_from_db()
+        assert alerte.label == "Zongo plus cher" and alerte.max_rent == 30000
+
+    def test_la_suppression_d_une_alerte_passe_par_une_confirmation(self):
+        u = ClientFactory()
+        Alert.objects.create(user=u, label="Pas cher")
+        c = connecte(u)
+        page = html(c.get("/compte/alertes"))
+        assert (
+            '<details class="confirmation">' in page and 'name="action" value="supprimer"' in page
+        )
+
     def test_limite_d_alertes_expliquee(self):
         u = ClientFactory()
         for _ in range(5):
@@ -253,6 +324,13 @@ class TestMessagesWeb:
 
 
 class TestNotificationsEtReferencement:
+    def test_notifications_identiques_sont_regroupees(self):
+        u = ClientFactory()
+        for _ in range(3):
+            notifications.creer(u.pk, "alert.match", "Chambre a Zongo", "25000 FCFA / mois")
+        page = html(connecte(u).get("/compte/notifications"))
+        assert "×3" in page and page.count("Zongo") == 1
+
     def test_notifications_et_tout_lire(self):
         u = ClientFactory()
         notifications.creer(u.pk, "alert.match", "Nouvelle chambre", "Corps")
@@ -261,6 +339,25 @@ class TestNotificationsEtReferencement:
         assert "Notifications (1)" in html(c.get("/annonces"))
         assert c.post("/compte/notifications").status_code == 302
         assert "Notifications (1)" not in html(c.get("/annonces"))
+
+    def test_notification_lien_profond_et_lecture_individuelle(self):
+        u = ClientFactory()
+        a = ListingFactory()
+        n = notifications.creer(
+            u.pk, "alert.match", "Nouvelle chambre", "Corps", data={"slug": a.slug}
+        )
+        c = connecte(u)
+        page = html(c.get("/compte/notifications"))
+        assert f'href="/annonces/{a.slug}"' in page
+        assert "Marquer lue" in page
+        assert (
+            c.post(
+                "/compte/notifications", {"action": "lire", "notification_id": str(n.pk)}
+            ).status_code
+            == 302
+        )
+        n.refresh_from_db()
+        assert n.read_at is not None
 
     def test_robots_et_sitemap(self):
         a = ListingFactory()

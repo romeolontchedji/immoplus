@@ -1,0 +1,34 @@
+{% extends "web/base.html" %}
+{% block titre %}Appareils connectés — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile">
+      <p class="fil-ariane"><a href="/compte">Mon compte</a> <span aria-hidden="true">›</span> Appareils</p>
+      <h1>Appareils connectés</h1>
+      <p class="texte-doux">Ces appareils peuvent accéder à ton compte. Déconnecte ceux que tu ne reconnais pas.</p>
+      {% if appareils %}
+        <ul class="liste-appareils">
+          {% for a in appareils %}
+            <li class="liste-appareils__item">
+              <div>
+                <p class="liste-appareils__nom">{{ a.label|default:"Appareil sans nom" }}</p>
+                <p class="texte-doux">{{ a.get_platform_display }} · dernière activité {{ a.last_seen_at|date:"j F Y à H:i" }}</p>
+              </div>
+              <form method="post"
+                    action="/compte/appareils/{{ a.pk }}/revoquer">{% csrf_token %}<button class="bouton bouton--fantome" type="submit">Déconnecter</button></form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="etat-vide">
+          <span class="etat-vide__symbole" aria-hidden="true">?</span>
+          <div>
+            <h2 class="etat-vide__titre">Aucun appareil connecté</h2>
+            <p class="etat-vide__texte">Les appareils apparaissent ici après une connexion depuis l'application.</p>
+          </div>
+        </div>
+      {% endif %}
+      <p><a class="bouton bouton--fantome" href="/compte">Retour au compte</a></p>
+    </div>
+  </section>
+{% endblock %}

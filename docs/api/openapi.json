@@ -4483,7 +4483,7 @@
             "cookieAuth": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "sessionid"
+                "name": "lgsid"
             }
         }
     }

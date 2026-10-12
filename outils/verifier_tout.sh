@@ -39,10 +39,11 @@ if [ -f serveur/manage.py ] && command -v python3 >/dev/null && python3 -c "impo
   etape "makemigrations --check (tous les modèles)" dans_serveur env DJANGO_SETTINGS_MODULE=config.settings.migrer SECRET_KEY=controle python3 manage.py makemigrations --check --dry-run
   etape "OpenAPI valide et à jour" bash -c 'cd serveur && python3 manage.py spectacular --format openapi-json --file /tmp/openapi-courant.json --validate --fail-on-warn && cmp -s /tmp/openapi-courant.json ../docs/api/openapi.json || { echo "docs/api/openapi.json périmé : lance make openapi"; exit 1; }'
   if python3 outils/base_disponible.py; then
-    optionnelle pytest "pytest (hors lent et e2e)" dans_serveur python3 -m pytest -q -m "not lent and not e2e"
+    etape "migration-linter (ruptures de schéma)" dans_serveur env DJANGO_SETTINGS_MODULE=config.settings.migrer SECRET_KEY=controle python3 manage.py lintmigrations
+    optionnelle pytest "pytest (complet)" dans_serveur python3 -m pytest -q
   else
     echo "  ⏭ pytest avec PostgreSQL — sauté (PostgreSQL injoignable)"; saute=$((saute + 1))
-    optionnelle pytest "pytest partiel (sans PostgreSQL)" dans_serveur python3 -m pytest -q -m "not lent and not e2e and not pg"
+    optionnelle pytest "pytest partiel (sans PostgreSQL)" dans_serveur python3 -m pytest -q -m "not pg"
   fi
 else
   echo "  ⏭ contrôles Django — sautés (Django non installé)"; saute=$((saute + 1))

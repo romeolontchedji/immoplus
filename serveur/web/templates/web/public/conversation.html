@@ -1,42 +1,118 @@
 {% extends "web/base.html" %}
-{% block titre %}{{ c.listing.title }} — Messages — Logeo{% endblock %}
-{% block tete %}<meta http-equiv="refresh" content="60">{% endblock %}
+{% block titre %}
+  {{ c.other.name }} — Messages — Logeo
+{% endblock %}
+{% block tete %}
+  <meta http-equiv="refresh" content="60">
+{% endblock %}
 {% block contenu %}
   <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <p><a href="/compte/messages">← Toutes les conversations</a></p>
-      <h1>{{ c.other.name }}</h1>
-      <p class="texte-doux"><a href="/annonces/{{ c.listing.slug }}">{{ c.listing.title }}</a>{% if adresse %} · Adresse : {{ adresse }}{% endif %}</p>
-      {% if message %}<div class="alerte alerte--{{ niveau|default:'information' }}"
-     role="status"><p>{{ message }}</p></div>{% endif %}
-      {% if c.listing.status == "rented" %}<div class="alerte alerte--avertissement"><p>Cette chambre est louée.</p></div>{% endif %}
-      <div class="conversation" aria-live="polite">
-        {% for m in messages %}<div class="bulle {% if m.mine %}bulle--moi{% endif %}">{{ m.body }}<span class="bulle__heure">{{ m.created_at|date:"d/m H:i" }}</span></div>{% empty %}<p class="texte-doux">Aucun message.</p>{% endfor %}
-      </div>
-      {% if c.status == "open" or c.blocked_by_me %}
-        <form method="post" class="pile">
-          {% csrf_token %}
-          <input type="hidden"
-                 name="action"
-                 value="envoyer"><input type="hidden"
-       name="client_msg_id"
-       value="{{ client_msg_id }}">
-          <div class="champ">
-            <label class="champ__etiquette"
-                   for="body">Ton message</label><textarea id="body"
-          name="body"
-          rows="3"
-          maxlength="2000"
-          required></textarea>
+    <div class="conteneur conteneur--texte pile">
+      <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a href="/compte/messages">← Retour aux messages</a>
+      </nav>
+      <!-- En-tête de conversation avec interlocuteur -->
+      <div class="carte p-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-rond">{{ c.other.name|default:"U"|slice:":2"|upper }}</div>
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <h1 class="fs-18 fw-bold mb-0">{{ c.other.name }}</h1>
+                {% if c.other.verified %}
+                  <span class="badge badge--succes">✔ Vérifié</span>
+                {% endif %}
+              </div>
+              <p class="texte-doux texte-petit mb-0">Échange sécurisé via Logeo</p>
+            </div>
           </div>
-          <button class="bouton" type="submit">Envoyer</button>
+          {% if c.status != "open" %}
+            <span class="badge badge--avertissement">{{ c.status }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <!-- Encart récapitulatif de la chambre liée -->
+      <div class="carte p-3 bg-surface-sunken">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-20">🏠</span>
+            <div>
+              <strong>{{ c.listing.title }}</strong>
+              {% if adresse %}
+                <span class="texte-doux texte-petit">· {{ adresse }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <a class="bouton bouton--petit bouton--secondaire"
+             href="/annonces/{{ c.listing.slug }}">Voir la chambre</a>
+        </div>
+      </div>
+      {% if message %}
+        <div class="alerte alerte--{{ niveau|default:'information' }}"
+             role="status">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
+      {% if c.listing.status == "rented" %}
+        <div class="alerte alerte--avertissement" role="status">
+          <p>⚠️ Cette chambre est désormais louée.</p>
+        </div>
+      {% endif %}
+      <!-- Notice de sécurité -->
+      <div class="alerte alerte--information py-2 px-3 texte-petit" role="note">
+        🔒 <strong>Règle de sécurité :</strong> Gardez tous vos échanges dans Logeo. Aucun numéro de téléphone, paiement direct hors plateforme ni compte WhatsApp n'est autorisé.
+      </div>
+      <!-- Fil des messages -->
+      <div class="conversation" aria-live="polite">
+        {% for m in messages %}
+          <div class="bulle {% if m.mine %}bulle--moi{% endif %}">
+            <span class="sr-only">{% if m.mine %}Toi{% else %}{{ c.other.name }}{% endif %} :</span>
+            {{ m.body }}
+            <span class="bulle__heure">{{ m.created_at|date:"j M Y à H:i" }}</span>
+            {% if m.moderation_status != "visible" %}
+              <span class="badge badge--avertissement">Message masqué par la modération</span>
+            {% endif %}
+          </div>
+        {% empty %}
+          <div class="text-center p-6 texte-doux">Aucun message pour l'instant. Posez votre question au gérant.</div>
+        {% endfor %}
+      </div>
+      <!-- Formulaire d'envoi -->
+      {% if c.status == "open" or c.blocked_by_me %}
+        <form method="post" class="pile mt-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="envoyer">
+          <input type="hidden" name="client_msg_id" value="{{ client_msg_id }}">
+          <div class="champ">
+            <label class="champ__etiquette sr-only" for="body">Votre message</label>
+            <textarea class="champ__saisie"
+                      id="body"
+                      name="body"
+                      rows="3"
+                      placeholder="Écrivez votre message..."
+                      maxlength="2000"
+                      required></textarea>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <button class="bouton bouton--primaire bouton--grand" type="submit">Envoyer le message</button>
+            {% if c.status == "open" %}
+              <button class="bouton bouton--fantome texte-doux texte-petit"
+                      type="submit"
+                      name="action"
+                      value="bloquer">Bloquer</button>
+            {% endif %}
+          </div>
         </form>
-{% else %}<p class="texte-doux">Tu ne peux plus écrire dans cette conversation ({{ c.status }}).</p>{% endif %}
-<form method="post" class="fiche__actions">
-  {% csrf_token %}
-  {% if c.status == "blocked" and c.blocked_by_me %}<input type="hidden" name="action" value="debloquer"><button class="bouton bouton--secondaire" type="submit">Débloquer</button>
-{% elif c.status == "open" %}<input type="hidden" name="action" value="bloquer"><button class="bouton bouton--fantome" type="submit">Bloquer cette conversation</button>{% endif %}
-</form>
-</div>
-</section>
+      {% else %}
+        <p class="texte-doux">Cette conversation est fermée ({{ c.status }}).</p>
+      {% endif %}
+      {% if c.status == "blocked" and c.blocked_by_me %}
+        <form method="post" class="mt-2">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="debloquer">
+          <button class="bouton bouton--secondaire" type="submit">Débloquer cette conversation</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
 {% endblock %}

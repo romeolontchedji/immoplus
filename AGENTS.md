@@ -13,21 +13,21 @@ Source unique. `CLAUDE.md` renvoie ici. En cas de doute : `docs/cahier-des-charg
 
 ## 2. Commandes essentielles
 
-| Commande | Effet |
-|---|---|
-| `make up` / `make down` | démarre / arrête la pile Docker locale (site : http://www.localhost:8080) |
-| `make migrate` | applique les migrations (rôle `migrate`) |
-| `make seed` | données de démonstration (à partir de la phase 1) |
-| `make css` | assemble le CSS empreinté |
-| `make test` | tests hors `lent` et `e2e` |
-| `make test-unitaires`, `make test-integration`, `make test-e2e`, `make test-securite`, `make test-lent` | tests par marqueur |
-| `make couverture` | couverture, seuil 85 % |
-| `make lint` | ruff |
-| `make verifier` | tous les contrôles (hook `pre-push` et CI) |
-| `make hooks` | installe les hooks Git |
-| `make openapi` | régénère `docs/api/openapi.json` |
-| `make docs` | cohérence de la documentation (phase 9) |
-| `make fumee`, `make diagnostic` | test de fumée, diagnostic de l'environnement |
+| Commande                                                             | Effet                                                                     |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `make up` / `make down`                                              | démarre / arrête la pile Docker locale (site : http://www.localhost:8080) |
+| `make migrate`                                                       | applique les migrations (rôle `migrate`)                                  |
+| `make seed`                                                          | données de démonstration (à partir de la phase 1)                         |
+| `make css`                                                           | assemble le CSS empreinté                                                 |
+| `make test`                                                          | tests hors `lent` et `e2e`                                                |
+| `make test-unitaires`, `make test-integration`, `make test-securite` | tests par marqueur                                                        |
+| `make couverture`                                                    | couverture, seuil 85 %                                                    |
+| `make lint`                                                          | ruff                                                                      |
+| `make verifier`                                                      | tous les contrôles (hook `pre-push` et CI)                                |
+| `make hooks`                                                         | installe les hooks Git                                                    |
+| `make openapi`                                                       | régénère `docs/api/openapi.json`                                          |
+| `make docs`                                                          | cohérence de la documentation (phase 9)                                   |
+| `make fumee`, `make diagnostic`                                      | test de fumée, diagnostic de l'environnement                              |
 
 Un seul test : `cd serveur && python -m pytest apps/core/tests/integration/test_sante.py::test_healthz_repond_ok`.
 Shell Django : `make shell`. Installation locale hors Docker : `make installer`.
@@ -111,3 +111,12 @@ Ajouter une dépendance sans ADR · mettre de la logique dans une vue · contour
 ## 13. Sources de vérité
 
 `docs/cahier-des-charges.md`, puis `docs/adr/`.
+
+## Design
+
+Avant toute tâche d'interface (Django templates ou React Native), lis `docs/design/DESIGN.md` et compare avec les maquettes de `docs/design/screens/`.
+Règles clés : pas d'emoji ni de sticker (icônes Lucide uniquement), logo `docs/design/assets/logo.svg` inchangé, tokens de DESIGN.md uniquement, tutoiement, inscription publique réservée aux locataires.
+
+## Données
+
+La base (models.py, migrations) et le cahier des charges priment sur les maquettes. Le design est strict pour le style ; les champs s'adaptent à l'existant. N'invente aucun champ ni migration : signale les écarts dans `docs/design/ECARTS.md` et demande avant de modifier le schéma. Voir section 12 de DESIGN.md.

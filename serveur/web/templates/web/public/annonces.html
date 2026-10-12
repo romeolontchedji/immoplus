@@ -1,48 +1,180 @@
 {% extends "web/base.html" %}
+{% load logeo %}
 {% block titre %}{% if quartier %}Chambres à {{ quartier.name }}, Parakou{% else %}Chambres à Parakou{% endif %} — Logeo{% endblock %}
 {% block contenu %}
-  <section class="section">
-    <div class="conteneur pile pile--large">
-      <h1>{% if quartier %}Chambres à {{ quartier.name }}{% else %}Trouve ta chambre à Parakou{% endif %}</h1>
-      <form method="get" action="{{ action }}" class="filtres" role="search">
-        <div class="champ">
-          <label class="champ__etiquette" for="q">Recherche</label><input id="q"
-       name="q"
-       type="search"
-       value="{{ params.q }}"
-       maxlength="100"
-       placeholder="Quartier, repère, type…">
+  <section class="section section--catalogue">
+    <div class="conteneur">
+      <div class="catalogue-layout">
+        <!-- Sidebar Filtres conforme à la maquette Web · Chambres -->
+        <aside class="catalogue-sidebar">
+          <form method="get"
+                action="{{ action }}"
+                class="catalogue-sidebar-carte"
+                role="search">
+            <h2 class="catalogue-sidebar-carte__titre">Filtres</h2>
+            {% if params.q %}
+              <input type="hidden" name="q" value="{{ params.q }}">
+            {% endif %}
+            <!-- QUARTIER -->
+            <div class="filtre-groupe">
+              <label class="filtre-groupe__titre" for="district">Quartier</label>
+              {% if not quartier %}
+                <div class="filtre-chips">
+                  <a class="filtre-chip {% if not params.district %}filtre-chip--actif{% endif %}"
+                     href="{{ action }}">Tous</a>
+                  {% for d in quartiers %}
+                    <a class="filtre-chip {% if d.slug == params.district %}filtre-chip--actif{% endif %}"
+                       href="{{ action }}?district={{ d.slug }}">{{ d.name }}</a>
+                  {% endfor %}
+                </div>
+                <input type="hidden"
+                       id="district"
+                       name="district"
+                       value="{{ params.district }}">
+              {% else %}
+                <p class="texte-petit texte-doux mb-0">{{ quartier.name }}</p>
+              {% endif %}
+            </div>
+            <!-- BUDGET MAX -->
+            <div class="filtre-groupe">
+              <div class="rangee" style="justify-content: space-between;">
+                <label class="filtre-groupe__titre" for="rent_max">Budget max</label>
+                <span class="filtre-slider-valeur">{% if params.rent_max %}Jusqu'à {{ params.rent_max|fcfa }} F/mois{% else %}Tous budgets{% endif %}</span>
+              </div>
+              <input class="filtre-slider champ__saisie"
+                     id="rent_max"
+                     name="rent_max"
+                     type="number"
+                     min="0"
+                     step="1000"
+                     value="{{ params.rent_max }}"
+                     placeholder="Ex. 15000">
+            </div>
+            <!-- TYPE DE LOGEMENT -->
+            <div class="filtre-groupe">
+              <span class="filtre-groupe__titre">Type</span>
+              <div class="pile pile--serree">
+                {% for v, l in types %}
+                  <label class="champ--case">
+                    <input type="radio"
+                           name="type"
+                           value="{{ v }}"
+                           {% if v == params.type %}checked{% endif %}>
+                    <span class="champ__etiquette">{{ l }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+            <!-- SALLE D'EAU -->
+            <div class="filtre-groupe">
+              <label class="champ--case">
+                <input type="checkbox"
+                       id="bathroom"
+                       name="bathroom"
+                       value="true"
+                       {% if params.bathroom == "true" %}checked{% endif %}>
+                <span class="champ__etiquette">Douche interne</span>
+              </label>
+            </div>
+            <!-- GÉRANTS VÉRIFIÉS -->
+            <div class="filtre-ligne-switch">
+              <span class="filtre-ligne-switch__label">Gérants vérifiés</span>
+              <label class="interrupteur" for="verified_only">
+                <input type="checkbox"
+                       id="verified_only"
+                       name="verified"
+                       value="true"
+                       checked>
+                <span class="interrupteur__piste" aria-hidden="true">
+                  <span class="interrupteur__curseur"></span>
+                </span>
+              </label>
+            </div>
+            <button class="bouton bouton--primaire largeur-pleine" type="submit">Appliquer les filtres</button>
+            {% if actifs %}
+              <a class="bouton bouton--fantome bouton--petit texte-centre"
+                 href="{{ action }}">Réinitialiser</a>
+            {% endif %}
+          </form>
+        </aside>
+        <!-- Contenu principal du catalogue -->
+        <div class="catalogue-contenu pile pile--large">
+          <div class="catalogue-entete-barre">
+            <h1 class="catalogue-titre-principal">
+              {% if quartier %}
+                {{ resultat.items|length }} chambre{{ resultat.items|length|pluralize }} à {{ quartier.name }}
+              {% else %}
+                {{ resultat.items|length }} chambre{{ resultat.items|length|pluralize }} près de l'Université de Parakou
+              {% endif %}
+            </h1>
+            <div class="catalogue-tri-select">
+              <label for="sort-select">Trier :</label>
+              <form method="get" action="{{ action }}" style="display: inline;">
+                {% for k, v in params.items %}
+                  {% if k != "sort" and v %}
+                    <input type="hidden" name="{{ k }}" value="{{ v }}">
+                  {% endif %}
+                {% endfor %}
+                <select id="sort-select" name="sort" onchange="this.form.submit()">
+                  {% for v, l in tris %}
+                    <option value="{{ v }}" {% if v == params.sort %}selected{% endif %}>{{ l }}</option>
+                  {% endfor %}
+                </select>
+                <noscript>
+                  <button class="bouton bouton--petit" type="submit">OK</button>
+                </noscript>
+              </form>
+            </div>
+          </div>
+          {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
+          {% if actifs %}
+            <div class="recapitulatif">
+              <span class="recapitulatif__etiquette">Filtres actifs</span>
+              <ul class="filtres-actifs">
+                {% for f in actifs %}
+                  <li>
+                    {% if f.fixe %}
+                      <span class="puce">{{ f.label }}</span>
+                    {% else %}
+                      <a class="puce puce--retirable"
+                         href="{{ f.url }}"
+                         aria-label="Retirer le filtre : {{ f.label }}">{{ f.label }} <span class="puce__retirer" aria-hidden="true">×</span></a>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+              <a class="recapitulatif__effacer" href="{{ action }}">Tout effacer</a>
+            </div>
+          {% endif %}
+          {% if resultat.vide %}
+            <div class="etat-vide" role="status">
+              <span class="etat-vide__symbole" aria-hidden="true">?</span>
+              <div>
+                <h2 class="etat-vide__titre">Aucune chambre à afficher</h2>
+                <p class="etat-vide__texte">Essaie d'élargir ta recherche ou de retirer un filtre.</p>
+              </div>
+              <div class="etat-vide__actions">
+                {% if resultat.alerte_proposee %}
+                  <a class="bouton bouton--primaire"
+                     href="/compte/alertes?{{ requete_alerte }}">Crée une alerte pour cette recherche</a>
+                {% endif %}
+                <a class="bouton" href="{{ action }}">Effacer les filtres</a>
+              </div>
+            </div>
+          {% else %}
+            <div class="grille-annonces">
+              {% for a in resultat.items %}
+                {% include "web/composants/carte.html" %}
+              {% endfor %}
+            </div>
+            {% if resultat.next_cursor %}
+              <p class="texte-centre" style="margin-top: var(--sp-6);">
+                <a class="bouton bouton--secondaire" href="?{{ suite }}">Voir plus de chambres</a>
+              </p>
+            {% endif %}
+          {% endif %}
         </div>
-        {% if not quartier %}<div class="champ"><label class="champ__etiquette" for="district">Quartier</label><select id="district" name="district"><option value="">Tous</option>{% for d in quartiers %}<option value="{{ d.slug }}"
-        {% if d.slug == params.district %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
-        <div class="champ"><label class="champ__etiquette" for="type">Type</label><select id="type" name="type"><option value="">Tous</option>{% for v, l in types %}<option value="{{ v }}" {% if v == params.type %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-        <div class="champ">
-          <label class="champ__etiquette" for="rent_max">Loyer maximum (FCFA)</label><input id="rent_max"
-       name="rent_max"
-       type="number"
-       min="0"
-       step="1000"
-       value="{{ params.rent_max }}">
-        </div>
-        <div class="champ"><label class="champ__etiquette" for="bathroom">Douche et WC internes</label><select id="bathroom" name="bathroom"><option value="">Peu importe</option><option value="true" {% if params.bathroom == "true" %}selected{% endif %}>Oui</option></select></div>
-        <div class="champ"><label class="champ__etiquette" for="sort">Trier par</label><select id="sort" name="sort">{% for v, l in tris %}<option value="{{ v }}" {% if v == params.sort %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-        <button class="bouton" type="submit">Chercher</button>
-      </form>
-      {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
-      {% if resultat.vide %}
-        <div class="alerte alerte--information" role="status">
-          <p>Aucune chambre ne correspond pour le moment.</p>
-          {% if resultat.alerte_proposee %}<p><a href="/compte/alertes?{{ requete_alerte }}">Crée une alerte</a> : tu seras prévenu dès qu'une chambre correspond.</p>{% endif %}
-        </div>
-      {% else %}
-        <div class="grille-annonces">
-          {% for a in resultat.items %}
-            {% include "web/composants/carte.html" %}
-          {% endfor %}
-        </div>
-        {% if resultat.next_cursor %}<p><a class="bouton bouton--secondaire"
-   href="?{{ suite }}">Voir plus de chambres</a></p>{% endif %}
-      {% endif %}
+      </div>
     </div>
   </section>
 {% endblock %}

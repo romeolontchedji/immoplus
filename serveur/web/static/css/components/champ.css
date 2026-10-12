@@ -11,3 +11,9 @@ textarea.champ__saisie { padding-block: var(--sp-3); min-height: 7rem; resize: v
 .champ__groupe { display: flex; align-items: stretch; }
 .champ__prefixe { display: inline-flex; align-items: center; padding: 0 var(--sp-3); background: var(--surface-sunken); border: 1px solid var(--border-strong); border-right: 0; border-radius: var(--rayon-2) 0 0 var(--rayon-2); font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .champ__groupe .champ__saisie { border-radius: 0 var(--rayon-2) var(--rayon-2) 0; }
+.champ--case { flex-direction: row; align-items: center; gap: var(--sp-3); min-height: var(--cible); }
+.champ--case input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: var(--primary); }
+.champ--case .champ__etiquette { font-weight: 400; }
+.champ__actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.champ__groupe-bloc { border: var(--bordure); border-radius: var(--rayon-3); padding: var(--sp-4) var(--sp-5) var(--sp-5); margin: 0; background: var(--surface); }
+.champ__groupe-bloc legend { font-weight: 700; padding-inline: var(--sp-2); }

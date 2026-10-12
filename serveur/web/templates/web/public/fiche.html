@@ -1,75 +1,253 @@
 {% extends "web/base.html" %}
+{% load logeo %}
 {% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Logeo{% endblock %}
-{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount }} FCFA par mois.{% endblock %}
+{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount|fcfa }} FCFA par mois.{% endblock %}
 {% block contenu %}
   <section class="section">
-    <div class="conteneur fiche">
-      {% if message %}<div class="alerte alerte--{{ niveau|default:'succes' }}"
-     role="status"><p>{{ message }}</p></div>{% endif %}
-      {% if f.status == "rented" %}<div class="alerte alerte--avertissement"
-     role="status"><p>Cette chambre est déjà louée.</p></div>{% endif %}
-      {% for m in f.media %}
-        {% if m.kind == "video" %}
-          <video class="lecteur"
-                 controls
-                 preload="metadata"
-                 playsinline
-                 poster="{{ m.poster_url }}">
-            <source src="{{ m.playback_url }}" type="video/mp4">
-          </video>
-        {% endif %}
-      {% endfor %}
-      <div class="galerie">
-        {% for m in f.media %}
-          {% if m.kind == "photo" %}
-            <a href="{{ m.url }}">
-              <img src="{{ m.thumb_url }}" alt="Photo de la chambre" loading="lazy">
-            </a>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="pile">
-        <h1>{{ f.title }}</h1>
-        <p class="fiche__prix">{{ f.rent_amount }} <small>FCFA / mois</small></p>
-        <p class="annonce__meta"><span>{{ f.district.name }}</span><span>{{ f.landmark_text }}</span><span>{{ f.distance_m }} m du campus</span></p>
-        <ul>
-          <li>Caution : {{ f.deposit_months }} mois · Avance : {{ f.advance_months }} mois{% if f.agent_fee_amount %} · Frais d'agence : {{ f.agent_fee_amount }} FCFA{% endif %}</li>
-          <li>Disponible à partir du {{ f.available_from|date:"d/m/Y" }}</li>
-          <li>{% if f.has_private_bathroom %}Douche et WC internes{% else %}Sanitaires partagés{% endif %} · {% if f.is_fenced %}Clôturée{% else %}Non clôturée{% endif %}</li>
-        </ul>
-        <div class="fiche__description">{{ f.description_html|safe }}</div>
-        <p>Gérant : {{ f.gerant.name }}{% if f.gerant.verified %} <span class="badge badge--succes">Vérifié</span>{% endif %}{% if f.gerant.median_response_min %} · répond en général en {{ f.gerant.median_response_min }} min{% endif %}</p>
-        {% if f.last_confirmed_at %}<p class="texte-doux">Disponibilité confirmée le {{ f.last_confirmed_at|date:"d/m/Y" }}.</p>{% endif %}
-      </div>
-      {% if f.status == "published" and peut_contacter %}
-        <form method="post" action="/annonces/{{ f.slug }}/contacter" class="pile">
-          {% csrf_token %}
-          <div class="champ">
-            <label class="champ__etiquette" for="body">Ton message au gérant</label><textarea id="body" name="body" rows="4" maxlength="2000" required>{{ message_propose }}</textarea>
-          </div>
-          <p class="texte-doux">Garde les échanges dans Logeo : n'envoie ni numéro, ni e-mail, ni lien.</p>
-          <button class="bouton" type="submit">Envoyer le message</button>
-        </form>
-      {% elif not request.user.is_authenticated %}
-        <p><a class="bouton" href="/connexion?next=/annonces/{{ f.slug }}">Connecte-toi pour écrire au gérant</a></p>
-      {% endif %}
-      {% if request.user.is_authenticated and request.user.role == "client" %}
-        <div class="fiche__actions">
-          <form method="post" action="/annonces/{{ f.slug }}/favori">{% csrf_token %}<button class="bouton bouton--secondaire" type="submit">{% if f.is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}</button></form>
-          <form method="post" action="/annonces/{{ f.slug }}/signaler">
-            {% csrf_token %}
-            <label class="champ__etiquette" for="reason">Signaler</label>
-            <select id="reason" name="reason_code">
-              <option value="already_rented">Déjà louée</option>
-              <option value="fake_listing">Fausse annonce</option>
-              <option value="price_mismatch">Prix différent</option>
-              <option value="scam">Arnaque</option>
-              <option value="other">Autre</option>
-            </select>
-            <button class="bouton bouton--fantome" type="submit">Envoyer</button>
-          </form>
+    <div class="conteneur">
+      <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a href="/annonces">← Retour aux chambres</a>
+        <span aria-hidden="true">/</span>
+        <a href="/quartiers/{{ f.district.slug }}">{{ f.district.name }}</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{{ f.title }}</span>
+      </nav>
+      {% if message %}
+        <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status">
+          <p>{{ message }}</p>
         </div>
       {% endif %}
+      {% if f.status == "rented" %}
+        <div class="alerte alerte--avertissement" role="status">
+          <p>Cette chambre est déjà louée.</p>
+        </div>
+      {% endif %}
+      <div class="fiche-layout">
+        <!-- Colonne Principale (Gauche) -->
+        <div class="fiche-principale">
+          <!-- Lecteur Vidéo Principal -->
+          {% if video %}
+            <div class="fiche-lecteur-conteneur">
+              <video class="lecteur"
+                     controls
+                     preload="metadata"
+                     playsinline
+                     poster="{{ video.poster_url }}">
+                <source src="{{ video.playback_url }}" type="video/mp4">
+              </video>
+              <div class="carte-media__overlay-badges">
+                <span class="badge badge--video">🎥 Visite certifiée</span>
+                {% if video.duration_s %}
+                  <span class="badge badge--duree">{{ video.duration_s|duree_video }}</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+          <!-- Galerie de vignettes sous la vidéo -->
+          {% if photos %}
+            <div class="fiche-vignettes-barre" id="galerie">
+              {% for m in photos %}
+                <a class="fiche-vignette {% if m.is_cover %}fiche-vignette--active{% endif %}"
+                   href="#photo-{{ m.id }}"
+                   aria-label="Agrandir la photo {{ forloop.counter }} de {{ f.title }}">
+                  <img src="{{ m.thumb_url }}"
+                       alt="Photo {{ forloop.counter }} de {{ f.title }}"
+                       loading="lazy">
+                </a>
+              {% endfor %}
+            </div>
+            <!-- Modales pour les photos agrandies (accessibles sans JS) -->
+            {% for m in photos %}
+              <div class="visionneuse"
+                   id="photo-{{ m.id }}"
+                   tabindex="-1"
+                   role="dialog"
+                   aria-modal="true"
+                   aria-label="Photo {{ forloop.counter }} de {{ f.title }}">
+                <a class="visionneuse__fond"
+                   href="#galerie"
+                   aria-label="Fermer la photo"></a>
+                <figure class="visionneuse__contenu">
+                  <a class="visionneuse__fermer" href="#galerie" aria-label="Fermer">×</a>
+                  <img src="{{ m.url }}" alt="Photo {{ forloop.counter }} de {{ f.title }}">
+                </figure>
+              </div>
+            {% endfor %}
+          {% endif %}
+          <!-- Titre, Localisation et Prix -->
+          <div class="fiche-entete-barre">
+            <div>
+              <h1 class="fiche-titre">{{ f.title }}</h1>
+              <p class="fiche-localisation-ligne">
+                <span>📍 {{ f.district.name }}, Parakou</span>
+                <span>·</span>
+                <span>À {{ f.distance_m }} m du campus</span>
+                <span>·</span>
+                <span>Réf : #{{ f.slug }}</span>
+              </p>
+            </div>
+            <p class="fiche-prix-montant">
+              {{ f.rent_amount|fcfa }} <small>FCFA / mois</small>
+            </p>
+          </div>
+          <!-- Badges de caractéristiques -->
+          <div class="fiche-badges-caracteristiques">
+            <span class="fiche-caracteristique-pilule">🏠 {{ f.type_label }}</span>
+            {% if f.has_private_bathroom %}
+              <span class="fiche-caracteristique-pilule">🚿 Douche interne</span>
+            {% else %}
+              <span class="fiche-caracteristique-pilule">🚿 Sanitaires partagés</span>
+            {% endif %}
+            {% if f.compteur_label %}
+              <span class="fiche-caracteristique-pilule">⚡ Compteur {{ f.compteur_label|lower }}</span>
+            {% endif %}
+            {% if f.eau_label %}
+              <span class="fiche-caracteristique-pilule">💧 {{ f.eau_label }}</span>
+            {% endif %}
+            {% if f.is_fenced %}
+              <span class="fiche-caracteristique-pilule">🔒 Clôturée</span>
+            {% endif %}
+          </div>
+          <!-- Conditions du loyer -->
+          <h2 class="fiche-section-titre">Conditions du loyer</h2>
+          <div class="fiche-conditions-grille">
+            <div class="fiche-condition-carte">
+              <span class="fiche-condition-label">Loyer mensuel</span>
+              <strong class="fiche-condition-valeur">{{ f.rent_amount|fcfa }} F</strong>
+            </div>
+            <div class="fiche-condition-carte">
+              <span class="fiche-condition-label">Caution</span>
+              <strong class="fiche-condition-valeur">{{ f.deposit_months }} mois</strong>
+            </div>
+            <div class="fiche-condition-carte">
+              <span class="fiche-condition-label">Avance</span>
+              <strong class="fiche-condition-valeur">{{ f.advance_months }} mois</strong>
+            </div>
+            <div class="fiche-condition-carte">
+              <span class="fiche-condition-label">Frais d'agence</span>
+              <strong class="fiche-condition-valeur">{% if f.agent_fee_amount %}{{ f.agent_fee_amount|fcfa }} F{% else %}0 F{% endif %}</strong>
+            </div>
+            <div class="fiche-condition-carte">
+              <span class="fiche-condition-label">Disponibilité</span>
+              <strong class="fiche-condition-valeur">{{ f.available_from|date:"d/m/Y" }}</strong>
+            </div>
+          </div>
+          <!-- Description -->
+          {% if f.description_html %}
+            <h2 class="fiche-section-titre">Description du gérant</h2>
+            <div class="fiche-description-texte">{{ f.description_html|safe }}</div>
+          {% endif %}
+        </div>
+        <!-- Colonne Latérale / Sidebar (Droite) -->
+        <aside class="fiche-sidebar">
+          <!-- Carte Action & Contact -->
+          <div class="carte-action-fiche">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="texte-doux texte-petit">Loyer mensuel</span>
+                <p class="fiche-prix-montant mb-0">{{ f.rent_amount|fcfa }} <small>FCFA</small></p>
+              </div>
+              {% if f.status == "published" %}
+                <span class="badge badge--succes">Disponible</span>
+              {% else %}
+                <span class="badge badge--avertissement">Déjà louée</span>
+              {% endif %}
+            </div>
+            {% if est_proprietaire %}
+              <a class="bouton bouton--primaire largeur-pleine"
+                 href="/pro/annonces/{{ f.id }}">Gérer cette annonce</a>
+            {% elif f.status == "published" and peut_contacter %}
+              <form method="post" action="/annonces/{{ f.slug }}/contacter" class="pile">
+                {% csrf_token %}
+                <div class="champ">
+                  <label class="champ__etiquette" for="body">Message au gérant</label>
+                  <textarea id="body" name="body" rows="3" maxlength="2000" required>{{ message_propose }}</textarea>
+                  <p class="champ__aide">Garde les échanges dans Logeo : aucun contact hors plateforme.</p>
+                </div>
+                <button class="bouton bouton--primaire bouton--grand largeur-pleine"
+                        type="submit">💬 Contacter le gérant</button>
+              </form>
+            {% elif f.status == "published" and not request.user.is_authenticated %}
+              <a class="bouton bouton--primaire bouton--grand largeur-pleine"
+                 href="/connexion?next=/annonces/{{ f.slug }}">💬 Contacter le gérant</a>
+              <p class="texte-doux texte-petit text-center mb-0">Connecte-toi pour échanger directement et en sécurité.</p>
+            {% endif %}
+            <div class="d-flex gap-2">
+              {% if request.user.is_authenticated and request.user.role == "client" %}
+                <form method="post" action="/annonces/{{ f.slug }}/favori" class="flex-1">
+                  {% csrf_token %}
+                  <button class="bouton bouton--secondaire largeur-pleine" type="submit">
+                    {% if f.is_favorite %}❤️ Retirer{% else %}🤍 Favori{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+              <a class="bouton bouton--secondaire flex-1 text-center"
+                 href="{{ alerte_url }}">🔔 Alerte proche</a>
+            </div>
+          </div>
+          <!-- Carte Profil du Gérant -->
+          <div class="carte-gerant-fiche">
+            <div class="carte-gerant-fiche__entete">
+              <div class="avatar-rond">{{ f.gerant.name|default:"G"|slice:":2"|upper }}</div>
+              <div class="carte-gerant-fiche__infos">
+                <div class="carte-gerant-fiche__nom-ligne">
+                  <h3 class="carte-gerant-fiche__nom">{{ f.gerant.name|default:"Gérant Logeo" }}</h3>
+                  {% if f.gerant.verified %}
+                    <span class="badge badge--succes">✔ Vérifié</span>
+                  {% endif %}
+                </div>
+                <p class="carte-gerant-fiche__role">Gérant certifié Logeo</p>
+              </div>
+            </div>
+            {% if f.gerant.median_response_min %}
+              <p class="texte-doux texte-petit mb-0">⚡ Répond en général en <strong>{{ f.gerant.median_response_min }} min</strong></p>
+            {% endif %}
+            {% if f.last_confirmed_at %}
+              <p class="texte-doux texte-petit mb-0">Disponibilité confirmée le {{ f.last_confirmed_at|date:"d/m/Y" }}.</p>
+            {% endif %}
+            <div class="p-3 bg-surface-sunken rounded text-muted texte-petit">
+              🔒 Aucun contact hors plateforme. Vos échanges et visites sont encadrés par Logeo.
+            </div>
+          </div>
+          <!-- Carte Localisation et Repère -->
+          <div class="carte-localisation-fiche">
+            <div class="carte-localisation-visuel">
+              <div class="text-center p-4">
+                <div class="fs-24 mb-1">📍</div>
+                <strong>Quartier {{ f.district.name }}</strong>
+                <p class="texte-doux texte-petit mb-0">À {{ f.distance_m }} m du campus de Parakou</p>
+              </div>
+            </div>
+            {% if f.landmark_text %}
+              <p class="carte-localisation-repere">
+                <strong>Repère :</strong> {{ f.landmark_text }}
+              </p>
+            {% endif %}
+          </div>
+          <!-- Signalement -->
+          {% if request.user.is_authenticated and request.user.role == "client" %}
+            <details class="signalement">
+              <summary class="signalement__declencheur">Signaler cette annonce</summary>
+              <form method="post"
+                    action="/annonces/{{ f.slug }}/signaler"
+                    class="pile mt-3">
+                {% csrf_token %}
+                <div class="champ">
+                  <label class="champ__etiquette" for="reason">Motif du signalement</label>
+                  <select class="champ__saisie" id="reason" name="reason_code">
+                    <option value="already_rented">Déjà louée</option>
+                    <option value="fake_listing">Fausse annonce</option>
+                    <option value="price_mismatch">Prix différent</option>
+                    <option value="scam">Arnaque</option>
+                    <option value="other">Autre</option>
+                  </select>
+                </div>
+                <button class="bouton bouton--danger largeur-pleine" type="submit">Envoyer le signalement</button>
+              </form>
+            </details>
+          {% endif %}
+        </aside>
+      </div>
     </div>
   </section>
 {% endblock %}

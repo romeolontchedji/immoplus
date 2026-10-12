@@ -1,15 +1,68 @@
 {% extends "web/base.html" %}
+{% load logeo %}
 {% block titre %}Notifications — Logeo{% endblock %}
 {% block contenu %}
   <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <h1>Notifications</h1>
-      <form method="post">{% csrf_token %}<button class="bouton bouton--secondaire"
-        type="submit">Tout marquer comme lu</button></form>
-      <ul class="liste-lignes">
-        {% for n in notifications %}<li class="ligne {% if not n.read_at %}ligne--non-lue{% endif %}"><span><strong>{{ n.title }}</strong><br>{{ n.body }}</span><span class="texte-doux">{{ n.created_at|date:"d/m H:i" }}</span></li>
-      {% empty %}<li class="texte-doux">Aucune notification.</li>{% endfor %}
-    </ul>
-  </div>
-</section>
+    <div class="conteneur conteneur--texte pile">
+      <div class="entete-resultats mb-4">
+        <div>
+          <h1 class="entete-resultats__titre">Notifications</h1>
+          <p class="texte-doux mb-0">Restez informé de vos annonces, messages et alertes</p>
+        </div>
+        {% if non_lues %}
+          <form method="post">
+            {% csrf_token %}
+            <button class="bouton bouton--secondaire bouton--petit"
+                    type="submit">Tout marquer comme lu ({{ non_lues }})</button>
+          </form>
+        {% endif %}
+      </div>
+      <ul class="liste-annonces">
+        {% for g in groupes %}
+          <li>
+            <div class="carte p-4 {% if g.non_lues %}border-primary bg-surface{% else %}bg-surface-sunken{% endif %}">
+              <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="avatar-rond fs-18">🔔</div>
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <strong class="color-text">{{ g.derniere.title }}</strong>
+                      {% if g.compte > 1 %}
+                        <span class="badge badge--marque">×{{ g.compte }}</span>
+                      {% endif %}
+                      {% if g.non_lues %}
+                        <span class="badge badge--succes">Nouveau</span>
+                      {% endif %}
+                    </div>
+                    <p class="texte-doux texte-petit mb-2">{{ g.derniere.body }}</p>
+                    <span class="texte-doux texte-tres-petit">{{ g.derniere.created_at|date:"j F Y à H:i" }}</span>
+                  </div>
+                </div>
+                <div class="rangee">
+                  {% if g.derniere.lien %}
+                    <a class="bouton bouton--petit bouton--primaire"
+                       href="{{ g.derniere.lien }}">Consulter</a>
+                  {% endif %}
+                  {% if g.non_lues %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="lire">
+                      <input type="hidden" name="notification_id" value="{{ g.derniere.id }}">
+                      <button class="bouton bouton--petit bouton--secondaire" type="submit">Marquer lu</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </li>
+        {% empty %}
+          <li class="panneau text-center p-8">
+            <div class="fs-32 mb-2">🔕</div>
+            <h2 class="fs-18 fw-bold mb-1">Aucune notification</h2>
+            <p class="texte-doux mb-0">Vous êtes à jour ! Vos notifications futures apparaîtront ici.</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
 {% endblock %}

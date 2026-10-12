@@ -1,0 +1,13 @@
+/* Barre d'étapes (assistant de publication, inscription) : indicateur de progression, sans JavaScript. */
+.barre-etapes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); }
+.barre-etapes__etape { display: flex; align-items: center; gap: var(--sp-2); color: var(--text-muted); font-size: var(--fs-14); }
+.barre-etapes__numero {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.75rem; height: 1.75rem; border-radius: var(--rayon-pilule);
+  border: 1px solid var(--border-strong); background: var(--surface);
+  font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.barre-etapes__etape--active { color: var(--text); font-weight: 700; }
+.barre-etapes__etape--active .barre-etapes__numero { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.barre-etapes__etape--faite { color: var(--on-primary-soft); }
+.barre-etapes__etape--faite .barre-etapes__numero { background: var(--primary-soft); color: var(--on-primary-soft); border-color: transparent; }

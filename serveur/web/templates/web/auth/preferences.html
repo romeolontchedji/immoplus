@@ -1,0 +1,27 @@
+{% extends "web/base.html" %}
+{% block titre %}Préférences de notification — Logeo{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile">
+      <p class="fil-ariane"><a href="/compte">Mon compte</a> <span aria-hidden="true">›</span> Préférences</p>
+      <h1>Préférences de notification</h1>
+      {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
+      <p class="texte-doux">Choisis ce que tu veux recevoir. Les notifications de sécurité ne peuvent pas être désactivées.</p>
+      {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+      <form method="post" class="pile" novalidate>
+        {% csrf_token %}
+        {% for champ in form.visible_fields %}
+          <div class="champ champ--case">
+            {{ champ }}
+            <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+            {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+        <div class="champ__actions">
+          <button class="bouton bouton--primaire" type="submit">Enregistrer</button>
+          <a class="bouton bouton--fantome" href="/compte">Retour</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

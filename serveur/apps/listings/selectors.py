@@ -44,6 +44,25 @@ def statuts_publics() -> tuple[str, ...]:
     return (StatutAnnonce.PUBLISHED,)
 
 
+def stats_par_annonce(annonce_ids: list, *, jours: int = 30) -> dict:
+    """Retourne un dictionnaire {annonce_id: {'views': int, 'contacts': int}} sur les X derniers jours."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.core import stats
+
+    depuis = timezone.localdate() - datetime.timedelta(days=jours)
+    resultats = {}
+    for aid in annonce_ids:
+        sid = str(aid)
+        resultats[aid] = {
+            "views": stats.somme("views", [sid], depuis=depuis),
+            "contacts": stats.somme("conversations_started", [sid], depuis=depuis),
+        }
+    return resultats
+
+
 # ----------------------------------------------------------------------------- fil public (CDC §10.3)
 STATUTS_VISIBLES = (StatutAnnonce.PUBLISHED, StatutAnnonce.RENTED)
 _CHAMP_TRI = {
@@ -99,7 +118,9 @@ def _appliquer_criteres(requete, f: dict):
             )
             params += [f["q"], f["q"]]
         requete = requete.annotate(
-            _recherche=RawSQL(f"({sql})", params, output_field=BooleanField())  # noqa: S611
+            _recherche=RawSQL(  # noqa: S611  # nosec B611
+                f"({sql})", params, output_field=BooleanField()
+            )
         ).filter(_recherche=True)
     if f["districts"]:
         requete = requete.filter(district__slug__in=f["districts"])
@@ -171,11 +192,21 @@ def _carte(annonce: Listing, medias: list, gerants: dict) -> dict:
         "status": annonce.status,
         "published_at": annonce.published_at,
         "cover_url": _url_variante(couverture, "480") if couverture else None,
-        "video_poster_url": stockage.url_publique(video.poster_path)
-        if video and annonce.status == StatutAnnonce.PUBLISHED
-        else None,
+        "video_poster_url": (
+            stockage.url_publique(video.poster_path)
+            if video and annonce.status == StatutAnnonce.PUBLISHED
+            else None
+        ),
         "has_video": bool(video) and annonce.status == StatutAnnonce.PUBLISHED,
-        "gerant": {"name": gerant.get("name"), "verified": gerant.get("verified", False)},
+        "video_duration_s": (
+            float(video.duration_s)
+            if video and annonce.status == StatutAnnonce.PUBLISHED and video.duration_s is not None
+            else None
+        ),
+        "gerant": {
+            "name": gerant.get("name"),
+            "verified": gerant.get("verified", False),
+        },
     }
 
 
@@ -183,6 +214,20 @@ def _cartes(annonces: list[Listing]) -> list[dict]:
     medias = _medias_prets(a.pk for a in annonces)
     gerants = comptes.gerants_publics({a.gerant_id for a in annonces})
     return [_carte(a, medias.get(a.pk, []), gerants) for a in annonces]
+
+
+def carte_apercu(annonce: Listing) -> dict:
+    """Carte d'aperçu gérant : même rendu public, sans exiger que l'annonce soit publiée."""
+    medias = _medias_prets([annonce.pk]).get(annonce.pk, [])
+    gerants = comptes.gerants_publics({annonce.gerant_id})
+    carte = _carte(annonce, medias, gerants)
+    video = next((m for m in medias if m.kind == TypeMedia.VIDEO), None)
+    carte["has_video"] = video is not None
+    carte["video_duration_s"] = (
+        float(video.duration_s) if video and video.duration_s is not None else None
+    )
+    carte["video_poster_url"] = stockage.url_publique(video.poster_path) if video else None
+    return carte
 
 
 def fil(filtres: dict) -> dict:
@@ -208,14 +253,18 @@ def fil(filtres: dict) -> dict:
             valeur = parse_datetime(valeur)
             if valeur is None:
                 raise ErreurMetier(
-                    "invalid_cursor", "Curseur invalide.", champs={"cursor": ["Invalide"]}
+                    "invalid_cursor",
+                    "Curseur invalide.",
+                    champs={"cursor": ["Invalide"]},
                 )
         else:
             try:
                 valeur = int(valeur)
             except ValueError as erreur:
                 raise ErreurMetier(
-                    "invalid_cursor", "Curseur invalide.", champs={"cursor": ["Invalide"]}
+                    "invalid_cursor",
+                    "Curseur invalide.",
+                    champs={"cursor": ["Invalide"]},
                 ) from erreur
         sens = "lt" if decroissant else "gt"
         requete = requete.filter(
@@ -229,9 +278,11 @@ def fil(filtres: dict) -> dict:
         derniere = lignes[-1]
         suivant = _encoder_curseur(
             tri,
-            getattr(derniere, champ).isoformat()
-            if champ == "published_at"
-            else getattr(derniere, champ),
+            (
+                getattr(derniere, champ).isoformat()
+                if champ == "published_at"
+                else getattr(derniere, champ)
+            ),
             derniere.pk,
         )
     resultat = {"items": _cartes(lignes), "next_cursor": suivant}
@@ -267,7 +318,7 @@ def fiche_publique(ident) -> dict | None:
                     "kind": "video",
                     "playback_url": stockage.url_publique(m.playback_path),
                     "poster_url": stockage.url_publique(m.poster_path),
-                    "duration_s": float(m.duration_s) if m.duration_s is not None else None,
+                    "duration_s": (float(m.duration_s) if m.duration_s is not None else None),
                     "width": m.width,
                     "height": m.height,
                 }

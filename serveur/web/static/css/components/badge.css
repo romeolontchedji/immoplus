@@ -4,5 +4,8 @@
 .badge--danger { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
 .badge--information { background: var(--information-bg); color: var(--information-text); border-color: transparent; }
 .badge--marque { background: var(--primary-soft); color: var(--on-primary-soft); border-color: transparent; }
+.badge--neutre { background: var(--surface-sunken); color: var(--text-muted); border-color: transparent; }
+.badge--video { background: var(--media-overlay-bg); color: var(--media-overlay-fg); border-color: transparent; }
+.badge--duree { background: var(--media-overlay-bg); color: var(--media-overlay-fg); border-color: transparent; }
 .puce { display: inline-flex; align-items: center; min-height: var(--cible); padding: 0 var(--sp-4); border-radius: var(--rayon-pilule); border: 1px solid var(--border-strong); background: var(--surface); font-size: var(--fs-14); font-weight: 500; cursor: pointer; }
 .puce[aria-pressed="true"] { background: var(--primary-soft); color: var(--on-primary-soft); border-color: var(--primary); }

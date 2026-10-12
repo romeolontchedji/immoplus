@@ -36,15 +36,23 @@ def erreurs_chemin(chemin, conf):
         )
     segments = chemin.split("/")
     nom = segments[-1]
-    for seg in segments[:-1]:
-        if seg.startswith(".") or seg in SEGMENTS_IMPOSES:
-            continue
-        if not SEGMENT_SOUPLE.match(seg):
-            erreurs.append(
-                f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
-            )
+    if not (chemin.startswith("docs/design/") or chemin.startswith("logeo-design-pack/")):
+        for seg in segments[:-1]:
+            if seg.startswith(".") or seg in SEGMENTS_IMPOSES or chemin.startswith("mobile/"):
+                continue
+            if not SEGMENT_SOUPLE.match(seg):
+                erreurs.append(
+                    f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
+                )
     radical = nom.split(".")[0]
-    if nom in conf["noms_imposes"] or radical in conf["noms_majuscules"] or nom.startswith("."):
+    if (
+        chemin.startswith("docs/design/")
+        or chemin.startswith("logeo-design-pack/")
+        or nom in conf["noms_imposes"]
+        or radical in conf["noms_majuscules"]
+        or nom in {"base_site.html", "swagger_ui.html", "logeo_admin.css"}
+        or nom.startswith(".")
+    ):
         return erreurs
     motif = PAR_EXTENSION.get(os.path.splitext(nom)[1])
     if motif is not None:

@@ -1,0 +1,101 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "admin/css/dashboard.css" %}">
+{% endblock %}
+{% block coltype %}colMS{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    {% if vue_ensemble %}
+      <div class="mb-6">
+        <h1 class="mb-1">Vue d'ensemble</h1>
+        <p class="texte-doux mb-4">Console d'administration et de modération de la plateforme Logeo</p>
+
+        <!-- 4 Cartes Métriques Clés -->
+        <div class="lg-dashboard">
+          <div class="lg-carte">
+            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.gerants_a_verifier }}</p>
+            <p class="lg-etiquette">Gérants en attente</p>
+            <p class="help">
+              {{ vue_ensemble.gerants_en_entretien }} en entretien ·
+              <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Examiner</a>
+            </p>
+          </div>
+
+          <div class="lg-carte">
+            <p class="lg-valeur lg-valeur--vert">{{ vue_ensemble.annonces_publiees }}</p>
+            <p class="lg-etiquette">Chambres en ligne</p>
+            <p class="help">
+              {% if vue_ensemble.taux_reponse is not None %}Taux de réponse moyen {{ vue_ensemble.taux_reponse }}%{% else %}Parakou, Bénin{% endif %}
+            </p>
+          </div>
+
+          <div class="lg-carte">
+            <p class="lg-valeur {% if vue_ensemble.moderation.ouverts %}lg-valeur--ambre{% endif %}">{{ vue_ensemble.moderation.ouverts }}</p>
+            <p class="lg-etiquette">Dossiers de modération</p>
+            <p class="help">
+              {{ vue_ensemble.moderation.hors_delai }} hors délai (24h) ·
+              <a href="{% url 'admin:moderation_report_changelist' %}">Traiter</a>
+            </p>
+          </div>
+
+          <div class="lg-carte">
+            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.compteurs_jour.messages }}</p>
+            <p class="lg-etiquette">Messages aujourd'hui</p>
+            <p class="help">
+              {{ vue_ensemble.compteurs_jour.conversations_started }} conversations ·
+              {{ vue_ensemble.comptes_total }} comptes actifs
+            </p>
+          </div>
+        </div>
+
+        <!-- Section Alertes / Actions prioritaires -->
+        {% if vue_ensemble.moderation.hors_delai or vue_ensemble.gerants_a_verifier %}
+          <div class="module p-4 mb-6">
+            <h2 class="mb-3">Actions prioritaires requises</h2>
+            <div class="d-flex gap-4 flex-wrap">
+              {% if vue_ensemble.gerants_a_verifier %}
+                <div class="d-flex align-items-center gap-3">
+                  <span class="badge badge--avertissement">⚠️ {{ vue_ensemble.gerants_a_verifier }} gérant(s)</span>
+                  <span>en attente de validation de leur pièce d'identité</span>
+                  <a class="button" href="{% url 'admin:accounts_gerantprofile_changelist' %}">Vérifier</a>
+                </div>
+              {% endif %}
+              {% if vue_ensemble.moderation.ouverts %}
+                <div class="d-flex align-items-center gap-3">
+                  <span class="badge badge--avertissement">🛡️ {{ vue_ensemble.moderation.ouverts }} signalement(s)</span>
+                  <span>en attente d'examen</span>
+                  <a class="button" href="{% url 'admin:moderation_report_changelist' %}">Modérer</a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Applications et Tables Django -->
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+  </div>
+{% endblock %}
+
+{% block sidebar %}
+  <div id="content-related">
+    <div class="module" id="recent-actions-module">
+      <h2>Accès rapides</h2>
+      <ul class="actionlist">
+        <li><a href="{% url 'admin:accounts_gerantprofile_changelist' %}">👥 Gérants à vérifier</a></li>
+        <li><a href="{% url 'admin:listings_listing_changelist' %}">🏠 Toutes les chambres</a></li>
+        <li><a href="{% url 'admin:moderation_report_changelist' %}">🛡️ Signalements & Modération</a></li>
+        {% if vue_ensemble.role == "admin" %}
+          <li><a href="{% url 'admin:audit_auditlog_changelist' %}">📋 Journal d'audit</a></li>
+          <li><a href="{% url 'admin:accounts_user_changelist' %}">👤 Utilisateurs</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}

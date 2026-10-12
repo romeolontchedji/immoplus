@@ -41,8 +41,8 @@ class TestContraste(unittest.TestCase):
             faux = Path(d) / "tokens.css"
             css = original.read_text(encoding="utf-8")
             css = css.replace(
-                "--focus: var(--marque-300);\n  --link: var(--marque-300);\n  --succes-bg: #0F2E24; --succes-text: #A9E1C9;\n  --avertissement-bg: #3A2B00; --avertissement-text: #F5D77A;\n  --danger-bg: #3E1616; --danger-text: #F5B5B5;\n  --information-bg: #14264A; --information-text: #B3CCF7;\n  --scrim: rgb(0 0 0 / 0.7);\n  --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);\n  --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);\n  --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);\n}\n",
-                "--focus: var(--marque-400);\n  --link: var(--marque-300);\n}\n",
+                ':root[data-theme="dark"] {\n  --bg: var(--sable-950);',
+                ':root[data-theme="dark"] {\n  --bg: #123456;',
             )
             faux.write_text(css, encoding="utf-8")
             contraste.TOKENS = faux

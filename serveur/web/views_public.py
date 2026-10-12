@@ -16,7 +16,7 @@ from apps.chat import selectors as chat_selectors
 from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
-from apps.listings.enums import TypeChambre
+from apps.listings.enums import Compteur, Eau, TypeChambre
 from apps.listings.services import alertes, favoris, fil, vues
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
@@ -53,6 +53,47 @@ def _message(erreur: ErreurMetier) -> str:
 
 
 # --------------------------------------------------------------- fil et recherche
+def _libelle_type(valeur: str) -> str:
+    return dict(TYPES).get(valeur, valeur)
+
+
+def _recapitulatif(request, action: str, quartier) -> list:
+    """Filtres actifs, chacun assorti du lien qui le retire (pour les puces effaçables)."""
+    params = {k: v for k, v in request.GET.items() if k not in ("cursor", "page")}
+    quartiers = {d.slug: d.name for d in _quartiers()}
+
+    def lien_sans(cle: str) -> str:
+        reste = {k: v for k, v in params.items() if k != cle}
+        return f"{action}?{urlencode(reste)}" if reste else action
+
+    actifs = []
+    if params.get("q"):
+        actifs.append({"label": f"Recherche : {params['q']}", "url": lien_sans("q")})
+    if quartier is not None:
+        actifs.append(
+            {"label": f"Quartier : {quartier.name}", "url": lien_sans("district"), "fixe": True}
+        )
+    elif params.get("district"):
+        nom = quartiers.get(params["district"], params["district"])
+        actifs.append({"label": f"Quartier : {nom}", "url": lien_sans("district")})
+    if params.get("type"):
+        actifs.append(
+            {"label": f"Type : {_libelle_type(params['type'])}", "url": lien_sans("type")}
+        )
+    if params.get("rent_max"):
+        actifs.append({"label": f"Loyer ≤ {params['rent_max']} FCFA", "url": lien_sans("rent_max")})
+    if params.get("bathroom") == "true":
+        actifs.append({"label": "Douche et WC internes", "url": lien_sans("bathroom")})
+    if params.get("sort"):
+        actifs.append(
+            {
+                "label": f"Tri : {dict(TRIS).get(params['sort'], params['sort'])}",
+                "url": lien_sans("sort"),
+            }
+        )
+    return actifs
+
+
 def _liste(request, *, quartier=None, action="/annonces"):
     params = request.GET.copy()
     if quartier is not None:
@@ -83,6 +124,7 @@ def _liste(request, *, quartier=None, action="/annonces"):
             "resultat": resultat, "params": {**request.GET.dict(), "district": params.get("district", "")},
             "quartiers": _quartiers(), "quartier": quartier, "types": TYPES, "tris": TRIS, "action": action,
             "erreur": erreur, "suite": suite, "requete_alerte": urlencode(critere_alerte),
+            "actifs": _recapitulatif(request, action, quartier),
         },
     )  # fmt: skip
 
@@ -113,10 +155,26 @@ def _fiche_ou_404(slug):
 def _rendre_fiche(request, f, **extra):
     est_client = request.user.is_authenticated and request.user.role == "client"
     favori = bool(est_client and selectors.ids_favoris(request.user.pk, [f["id"]]))
+    criteres_alerte = {"district": f["district"]["slug"], "rent_max": f["rent_amount"]}
+    if f.get("room_type"):
+        criteres_alerte["type"] = f["room_type"]
+    if f.get("has_private_bathroom"):
+        criteres_alerte["bathroom"] = "true"
     contexte = {
-        "f": {**f, "is_favorite": favori},
+        "f": {
+            **f,
+            "is_favorite": favori,
+            "type_label": dict(TypeChambre.choices).get(f["room_type"], f["room_type"]),
+            "eau_label": dict(Eau.choices).get(f["water_source"] or "", ""),
+            "compteur_label": dict(Compteur.choices).get(f["electricity_meter"] or "", ""),
+        },
         "peut_contacter": est_client,
+        "est_proprietaire": request.user.is_authenticated
+        and request.user.pk == f["gerant_user_id"],
+        "alerte_url": f"/compte/alertes?{urlencode(criteres_alerte)}",
         "message_propose": f"Bonjour, la chambre « {f['title']} » est-elle toujours disponible ?",
+        "photos": [m for m in f["media"] if m["kind"] == "photo"],
+        "video": next((m for m in f["media"] if m["kind"] == "video"), None),
         **extra,
     }
     return render(request, "web/public/fiche.html", contexte)
@@ -215,10 +273,22 @@ def mes_alertes(request):
         raise Http404
     message = niveau = None
     if request.method == "POST":
+        action = request.POST.get("action")
         try:
-            if request.POST.get("action") == "supprimer":
+            if action == "supprimer":
                 alertes.supprimer(request.user, request.POST.get("alerte_id"))
                 message = "Alerte supprimée."
+            elif action == "pause":
+                alertes.modifier(request.user, request.POST.get("alerte_id"), {"is_active": False})
+                message = "Alerte mise en pause."
+            elif action == "reactiver":
+                alertes.modifier(request.user, request.POST.get("alerte_id"), {"is_active": True})
+                message = "Alerte réactivée."
+            elif action == "modifier":
+                alertes.modifier(
+                    request.user, request.POST.get("alerte_id"), _donnees_alerte(request.POST)
+                )
+                message = "Alerte modifiée."
             else:
                 alertes.creer(request.user, _donnees_alerte(request.POST))
                 message = "Alerte créée : tu seras prévenu des nouvelles chambres."
@@ -228,11 +298,37 @@ def mes_alertes(request):
         "label": "", "district": request.GET.get("district", ""), "type": request.GET.get("type", ""),
         "rent_max": request.GET.get("rent_max", ""), "bathroom": request.GET.get("bathroom") == "true",
     }  # fmt: skip
+    liste_alertes = selectors.alertes_de(request.user.pk)
+    edition = None
+    identifiant = request.GET.get("modifier")
+    if identifiant:
+        edition = next((a for a in liste_alertes if str(a.pk) == str(identifiant)), None)
+        if edition is not None:
+            proposition = {
+                "label": edition.label or "",
+                "district": str((edition.district_ids or [""])[0]),
+                "type": (edition.room_types or [""])[0],
+                "rent_max": edition.max_rent or "",
+                "bathroom": edition.private_bathroom_required,
+            }
+    quartiers = _quartiers()
+    noms_quartiers = {str(q.id): q.name for q in quartiers}
+    libelles_types = dict(TYPES)
+    alertes_vue = [
+        {
+            "objet": a,
+            "quartiers": [
+                noms_quartiers.get(str(identifiant), "") for identifiant in a.district_ids or []
+            ],
+            "types": [libelles_types.get(t, t) for t in a.room_types or []],
+        }
+        for a in liste_alertes
+    ]
     return render(
         request,
         "web/public/alertes.html",
-        {"alertes": selectors.alertes_de(request.user.pk), "quartiers": _quartiers(), "types": TYPES,
-         "message": message, "niveau": niveau, "proposition": proposition},
+        {"alertes": alertes_vue, "quartiers": quartiers, "types": TYPES,
+         "message": message, "niveau": niveau, "proposition": proposition, "edition": edition},
     )  # fmt: skip
 
 
@@ -288,13 +384,52 @@ def conversation(request, conversation_id):
 
 
 # --------------------------------------------------------------- notifications
+def _lien_notification(n: dict) -> str | None:
+    """Lien profond vers la ressource visée, quand elle existe (conversation d'abord, sinon annonce)."""
+    data = n.get("data") or {}
+    if data.get("conversation_id"):
+        return f"/compte/messages/{data['conversation_id']}"
+    if data.get("slug"):
+        return f"/annonces/{data['slug']}"
+    return None
+
+
+def _groupes_notifications(lignes) -> list[dict]:
+    """Regroupe les notifications identiques (même type, titre, corps et données) en une ligne."""
+    groupes: dict = {}
+    for n in lignes:
+        resume = notifications.resume(n)
+        cle = (resume["kind"], resume["title"], resume["body"], repr(resume["data"]))
+        groupe = groupes.setdefault(cle, {"compte": 0, "non_lues": 0, "ids": [], "derniere": None})
+        groupe["compte"] += 1
+        if resume["read_at"] is None:
+            groupe["non_lues"] += 1
+        groupe["ids"].append(resume["id"])
+        if groupe["derniere"] is None or resume["created_at"] > groupe["derniere"]["created_at"]:
+            groupe["derniere"] = {**resume, "lien": _lien_notification(resume)}
+    return [
+        {"derniere": groupe["derniere"], "compte": groupe["compte"], "non_lues": groupe["non_lues"]}
+        for groupe in groupes.values()
+    ]
+
+
 @connecte_obligatoire
 def mes_notifications(request):
     if request.method == "POST":
+        if request.POST.get("action") == "lire" and request.POST.get("notification_id"):
+            notifications.marquer_lue(request.user.pk, request.POST["notification_id"])
+            return redirect("/compte/notifications")
         notifications.tout_marquer_lu(request.user.pk)
         return redirect("/compte/notifications")
     lignes, _ = notif_selectors.liste(request.user.pk)
-    return render(request, "web/public/notifications.html", {"notifications": lignes})
+    return render(
+        request,
+        "web/public/notifications.html",
+        {
+            "groupes": _groupes_notifications(lignes),
+            "non_lues": notif_selectors.non_lues(request.user.pk),
+        },
+    )
 
 
 # --------------------------------------------------------------- référencement

@@ -1,0 +1,30 @@
+/* Galerie de la fiche : vignettes cliquables et visionneuse plein écran en CSS pur (via :target). */
+.galerie-fiche { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
+.galerie-fiche__vignette {
+  display: block; border-radius: var(--rayon-2); overflow: hidden;
+  border: var(--bordure); background: var(--surface-sunken);
+}
+.galerie-fiche__vignette img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.galerie-fiche__vignette--couverture { grid-column: span 2; grid-row: span 2; }
+
+.visionneuse { display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: var(--sp-4); }
+.visionneuse:target { display: flex; }
+.visionneuse__fond { position: absolute; inset: 0; background: var(--scrim); }
+.visionneuse__contenu {
+  position: relative; margin: 0; max-width: min(90vw, 60rem); max-height: 90vh;
+  background: var(--surface); border-radius: var(--rayon-3); overflow: hidden; box-shadow: var(--ombre-3);
+}
+.visionneuse__contenu img { max-height: 80vh; width: auto; margin-inline: auto; object-fit: contain; }
+.visionneuse__fermer {
+  position: absolute; inset-block-start: var(--sp-3); inset-inline-end: var(--sp-3);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--cible); height: var(--cible); border-radius: var(--rayon-pilule);
+  background: var(--surface-raised); color: var(--text); text-decoration: none; font-size: var(--fs-20); box-shadow: var(--ombre-2);
+}
+
+.lecteur-bloc { display: grid; gap: var(--sp-2); }
+.lecteur-bloc__duree { font-size: var(--fs-14); color: var(--text-muted); }
+
+@media (min-width: 768px) {
+  .galerie-fiche { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+}

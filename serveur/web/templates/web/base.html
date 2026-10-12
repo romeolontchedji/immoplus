@@ -17,7 +17,8 @@
     <div class="page">
       <header class="entete">
         <div class="conteneur entete__barre">
-          <a class="logotype" href="/">Logeo<span class="logotype__point">.</span></a>
+          <a class="logotype"
+             href="/"><span class="logotype__image">🏠</span> Logeo<span class="logotype__point">.</span></a>
           {% block navigation %}
             {% include "web/composants/navigation.html" %}
           {% endblock %}
@@ -27,7 +28,41 @@
         {% block contenu %}{% endblock %}
       </main>
       <footer class="pied">
-        <div class="conteneur">© Logeo — Parakou, Bénin</div>
+        <div class="conteneur">
+          <div class="pied__grille">
+            <div>
+              <p class="pied__titre">Logeo</p>
+              <p class="texte-petit mb-0">Des chambres réelles à Parakou : vidéos vraies, gérants vérifiés, échanges gardés dans l'application.</p>
+            </div>
+            <div>
+              <p class="pied__titre">Découvrir</p>
+              <ul class="pied__liste">
+                <li><a href="/annonces">Toutes les chambres</a></li>
+                <li><a href="/annonces?sort=distance">Proches du campus</a></li>
+                {% if request.user.is_authenticated and request.user.role == "client" %}
+                  <li><a href="/compte/alertes">Mes alertes</a></li>
+                {% endif %}
+              </ul>
+            </div>
+            <div>
+              <p class="pied__titre">Mon compte</p>
+              <ul class="pied__liste">
+                {% if request.user.is_authenticated %}
+                  <li><a href="/compte">Mon compte</a></li>
+                  <li><a href="/compte/messages">Messages</a></li>
+                  <li><a href="/compte/notifications">Notifications</a></li>
+                {% else %}
+                  <li><a href="/connexion">Se connecter</a></li>
+                  <li><a href="/inscription">Créer un compte</a></li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+          <div class="pied__bas">
+            <span>© Logeo — Parakou, Bénin</span>
+            <span>FCFA · Africa/Porto-Novo</span>
+          </div>
+        </div>
       </footer>
     </div>
   </body>

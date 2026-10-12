@@ -1,16 +1,61 @@
-/* Utilitaires : liste volontairement limitée (≈ 40 classes au plus). */
+/* Utilitaires : liste volontairement limitée. */
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .cache { display: none !important; }
 .texte-doux { color: var(--text-muted); }
-.texte-centre { text-align: center; }
+.texte-centre, .text-center { text-align: center; }
 .texte-petit { font-size: var(--fs-14); }
-.gras { font-weight: 700; }
-.mt-0 { margin-top: 0; } .mt-4 { margin-top: var(--sp-4); } .mt-8 { margin-top: var(--sp-8); }
-.mb-0 { margin-bottom: 0; } .mb-4 { margin-bottom: var(--sp-4); } .mb-8 { margin-bottom: var(--sp-8); }
-.p-4 { padding: var(--sp-4); } .p-6 { padding: var(--sp-6); }
-.gap-2 { gap: var(--sp-2); } .gap-4 { gap: var(--sp-4); }
-.flex-1 { flex: 1; }
+.texte-tres-petit { font-size: var(--fs-12); }
+.gras, .fw-bold { font-weight: 700; }
+.color-text { color: var(--text); }
+.fs-16 { font-size: var(--fs-16); } .fs-18 { font-size: var(--fs-18); }
+.fs-20 { font-size: var(--fs-20); } .fs-24 { font-size: var(--fs-24); }
+.fs-32 { font-size: var(--fs-30); }
+
+/* Marges et padding */
+.mt-0 { margin-top: 0; } .mt-2 { margin-top: var(--sp-2); } .mt-3 { margin-top: var(--sp-3); }
+.mt-4 { margin-top: var(--sp-4); } .mt-6 { margin-top: var(--sp-6); } .mt-8 { margin-top: var(--sp-8); }
+.mb-0 { margin-bottom: 0; } .mb-1 { margin-bottom: var(--sp-1); } .mb-2 { margin-bottom: var(--sp-2); }
+.mb-3 { margin-bottom: var(--sp-3); } .mb-4 { margin-bottom: var(--sp-4); } .mb-6 { margin-bottom: var(--sp-6); }
+.mb-8 { margin-bottom: var(--sp-8); }
+.mr-auto { margin-right: auto; } .ml-auto { margin-left: auto; }
+.p-3 { padding: var(--sp-3); } .p-4 { padding: var(--sp-4); } .p-6 { padding: var(--sp-6); }
+.p-8 { padding: var(--sp-8); } .py-2 { padding-block: var(--sp-2); }
+.px-3 { padding-inline: var(--sp-3); } .px-4 { padding-inline: var(--sp-4); }
+
+/* Flex utilities */
+.d-flex { display: flex; } .d-block { display: block; } .d-grid { display: grid; }
+.flex-wrap { flex-wrap: wrap; } .flex-1 { flex: 1; } .flex-column { flex-direction: column; }
+.align-items-center { align-items: center; }
+.align-items-start { align-items: flex-start; }
+.justify-content-between { justify-content: space-between; }
+.justify-content-center { justify-content: center; }
 .justifie-entre { justify-content: space-between; }
+.gap-2 { gap: var(--sp-2); } .gap-3 { gap: var(--sp-3); } .gap-4 { gap: var(--sp-4); }
+.gap-6 { gap: var(--sp-6); }
+.text-decoration-none { text-decoration: none; }
+
+/* Largeur et fond */
 .largeur-pleine { width: 100%; }
+.bg-surface-sunken { background: var(--surface-sunken); }
+.border-primary { border-left: 3px solid var(--primary); }
+.border-top { border-top: var(--bordure); }
+
+/* Responsive */
 @media (max-width: 1023px) { .bureau-seul { display: none !important; } }
 @media (min-width: 1024px) { .mobile-seul { display: none !important; } }
+
+/* Pro layout helpers */
+.pro-principal { min-width: 0; }
+
+/* Panneau générique (état vide ou contenu centré) */
+.panneau {
+  background: var(--surface);
+  border: var(--bordure);
+  border-radius: var(--rayon-3);
+  box-shadow: var(--ombre-1);
+}
+
+/* Arrondis utilitaires */
+.rounded { border-radius: var(--rayon-2); }
+.rounded-lg { border-radius: var(--rayon-4); }
+

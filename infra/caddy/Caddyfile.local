@@ -42,6 +42,7 @@ http://www.localhost {
 
 http://api.localhost {
 	encode zstd gzip
+	import statiques
 	handle /ws/* {
 		reverse_proxy realtime:8001
 	}

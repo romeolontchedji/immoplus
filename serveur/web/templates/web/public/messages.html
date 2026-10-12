@@ -2,19 +2,61 @@
 {% block titre %}Messages — Logeo{% endblock %}
 {% block contenu %}
   <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <h1>Messages</h1>
-      <ul class="liste-lignes">
-        {% for c in conversations %}
-          <li>
-            <a class="ligne {% if c.unread_count %}ligne--non-lue{% endif %}"
-               href="/compte/messages/{{ c.id }}">
-              <span><strong>{{ c.other.name }}</strong> · {{ c.listing.title }}
-                <br>
-                <span class="texte-doux">{{ c.last_message_preview }}</span></span>
-              <span>{% if c.unread_count %}<span class="badge badge--marque">{{ c.unread_count }}</span>{% endif %}{% if c.status != "open" %}<span class="badge">{{ c.status }}</span>{% endif %}</span></a></li>
-{% empty %}<li class="texte-doux">Aucune conversation pour le moment.</li>{% endfor %}
-  </ul>
-  </div>
+    <div class="conteneur conteneur--texte pile">
+      <div class="entete-resultats mb-4">
+        <div>
+          <h1 class="entete-resultats__titre">Messages</h1>
+          <p class="texte-doux mb-0">Vos échanges directs et sécurisés avec les gérants</p>
+        </div>
+      </div>
+      {% if conversations %}
+        <ul class="liste-annonces">
+          {% for c in conversations %}
+            <li>
+              <a class="carte p-4 d-block text-decoration-none {% if c.unread_count %}border-primary{% endif %}"
+                 href="/compte/messages/{{ c.id }}">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-rond">{{ c.other.name|default:"U"|slice:":2"|upper }}</div>
+                    <div>
+                      <div class="d-flex align-items-center gap-2">
+                        <strong class="color-text">{{ c.other.name }}</strong>
+                        {% if c.other.verified %}
+                          <span class="badge badge--succes">✔</span>
+                        {% endif %}
+                      </div>
+                      <p class="texte-doux texte-petit mb-1">🏠 {{ c.listing.title }}</p>
+                      <p class="texte-doux texte-petit mb-0">{{ c.last_message_preview|default:"Nouvelle conversation" }}</p>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    {% if c.last_message_at %}
+                      <span class="texte-doux texte-tres-petit d-block mb-1">{{ c.last_message_at|date:"d/m/Y H:i" }}</span>
+                    {% endif %}
+                    {% if c.unread_count %}
+                      <span class="navigation__compteur">{% if c.unread_count > 99 %}99+{% else %}{{ c.unread_count }}{% endif %}</span>
+                    {% endif %}
+                    {% if c.status != "open" %}
+                      <span class="badge">{{ c.status }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="etat-vide">
+          <span class="etat-vide__symbole" aria-hidden="true">💬</span>
+          <div>
+            <h2 class="etat-vide__titre">Aucun message pour l'instant</h2>
+            <p class="etat-vide__texte">Trouvez une chambre qui vous intéresse dans le catalogue et contactez directement le gérant.</p>
+          </div>
+          <div class="etat-vide__actions">
+            <a class="bouton bouton--primaire bouton--grand" href="/annonces">Explorer les chambres</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
   </section>
 {% endblock %}

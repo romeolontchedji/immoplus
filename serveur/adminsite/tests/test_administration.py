@@ -15,6 +15,7 @@ from apps.accounts.tests.fabriques import (
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
+from apps.listings.tests.fabriques import ListingFactory
 from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
@@ -363,6 +364,41 @@ def test_totp_valide_une_seule_fois():
     _, r1 = se_connecter(u, jeton=jeton)
     _, r2 = se_connecter(u, jeton=jeton)  # même code rejoué
     assert r1.status_code == 302 and r2.status_code == 200
+
+
+class TestTableauDeBord:
+    def test_la_vue_d_ensemble_s_affiche_avec_des_donnees_reelles(self):
+        from apps.core import stats
+        from apps.moderation.models import Report
+
+        admin_ = personnel()
+        c, _ = se_connecter(admin_)
+        annonce = ListingFactory(status="published")
+        Report.objects.create(
+            reporter=ClientFactory(),
+            source="user",
+            target_type="listing",
+            target_id=annonce.pk,
+            listing=annonce,
+            reason_code="fake_listing",
+            details="Fausse annonce",
+        )
+        stats.incrementer("messages", 4)
+        r = c.get("/")
+        assert r.status_code == 200
+        html = r.content.decode()
+        assert "Vue d'ensemble" in html
+        assert "Dossiers de modération ouverts" in html and ">1<" in html
+        assert "Sanctions en cours" in html
+        assert "Gérants en attente de vérification" in html
+        assert ">4<" in html  # compteur messages du jour
+        assert reverse("admin:moderation_report_changelist") in html
+
+    def test_le_moderateur_ne_voit_pas_le_journal_ni_le_lien_admin(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        html = c.get("/").content.decode()
+        assert "Vue d'ensemble" in html
+        assert "Journal d'activité" not in html
 
 
 def test_les_controles_systeme_de_django_sont_sans_erreur():

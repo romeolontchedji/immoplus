@@ -12,3 +12,4 @@ node_modules/
 serveur/web/static/css/dist/
 serveur/var/
 infra/compose/env/*.env
+maquette/

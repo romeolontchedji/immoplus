@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from apps.accounts.services import authentification, compte, inscription, otp
+from apps.accounts.services import appareils, authentification, compte, inscription, otp
 from apps.core.errors import ErreurMetier
 from apps.core.http import ip_client, user_agent
 
@@ -92,7 +92,9 @@ def deconnexion(request):
 
 
 # --------------------------------------------------------------- flux OTP commun (inscription, mot de passe oublié)
-def _etape_telephone(request, objet: str, cle: str, gabarit_titre: str, suivante: str, bouton: str):
+def _etape_telephone(
+    request, objet: str, cle: str, gabarit_titre: str, suivante: str, bouton: str, etapes=None
+):
     form = forms.Telephone(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
@@ -109,11 +111,18 @@ def _etape_telephone(request, objet: str, cle: str, gabarit_titre: str, suivante
     if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
         form.fields["captcha"].initial = "captcha-ok"
     return _page(
-        request, "web/auth/formulaire.html", form, gabarit_titre, bouton=bouton, captcha_requis=True
+        request,
+        "web/auth/formulaire.html",
+        form,
+        gabarit_titre,
+        bouton=bouton,
+        captcha_requis=True,
+        etapes=etapes,
+        etape_actuelle=1,
     )
 
 
-def _etape_code(request, objet: str, cle: str, retour: str, suivante: str, titre: str):
+def _etape_code(request, objet: str, cle: str, retour: str, suivante: str, titre: str, etapes=None):
     flux = request.session.get(cle)
     if not flux:
         return redirect(retour)
@@ -133,13 +142,25 @@ def _etape_code(request, objet: str, cle: str, retour: str, suivante: str, titre
         titre,
         bouton="Vérifier",
         liens=[(retour, "Changer de numéro")],
+        etapes=etapes,
+        etape_actuelle=2,
     )
 
 
 # --------------------------------------------------------------- inscription
+ETAPES_INSCRIPTION = ["Numéro", "Code", "Profil"]
+ETAPES_OUBLI = ["Numéro", "Code", "Nouveau mot de passe"]
+
+
 def inscription_telephone(request):
     return _etape_telephone(
-        request, "signup", "inscription", "Créer un compte", "/inscription/code", "Recevoir un code"
+        request,
+        "signup",
+        "inscription",
+        "Créer un compte",
+        "/inscription/code",
+        "Recevoir un code",
+        etapes=ETAPES_INSCRIPTION,
     )
 
 
@@ -151,6 +172,7 @@ def inscription_code(request):
         "/inscription",
         "/inscription/profil",
         "Saisis le code reçu",
+        etapes=ETAPES_INSCRIPTION,
     )
 
 
@@ -180,6 +202,8 @@ def inscription_profil(request):
         form,
         "Termine ton inscription",
         bouton="Créer mon compte",
+        etapes=ETAPES_INSCRIPTION,
+        etape_actuelle=3,
     )
 
 
@@ -192,6 +216,7 @@ def oubli_telephone(request):
         "Mot de passe oublié",
         "/mot-de-passe-oublie/code",
         "Recevoir un code",
+        etapes=ETAPES_OUBLI,
     )
 
 
@@ -203,6 +228,7 @@ def oubli_code(request):
         "/mot-de-passe-oublie",
         "/mot-de-passe-oublie/nouveau",
         "Saisis le code reçu",
+        etapes=ETAPES_OUBLI,
     )
 
 
@@ -225,7 +251,13 @@ def oubli_nouveau(request):
             request.session.pop("oubli", None)
             return redirect("/connexion?reinitialise=1")
     return _page(
-        request, "web/auth/formulaire.html", form, "Nouveau mot de passe", bouton="Enregistrer"
+        request,
+        "web/auth/formulaire.html",
+        form,
+        "Nouveau mot de passe",
+        bouton="Enregistrer",
+        etapes=ETAPES_OUBLI,
+        etape_actuelle=3,
     )
 
 
@@ -267,6 +299,12 @@ def espace_compte(request):
                 {"nom": nom, "mot-de-passe": mdp, "suppression": suppression}.get(action, nom),
                 erreur,
             )
+    from apps.chat import selectors as chat_selectors
+    from apps.listings import selectors as listing_selectors
+
+    total_favoris = len(listing_selectors.favoris_de(u.pk)) if u.role == "client" else 0
+    total_alertes = len(listing_selectors.alertes_de(u.pk)) if u.role == "client" else 0
+    non_lus = chat_selectors.total_non_lus(u.pk, u.role)
     return render(
         request,
         "web/auth/compte.html",
@@ -277,5 +315,105 @@ def espace_compte(request):
             "suppression": suppression,
             "message": message,
             "titre": "Mon compte",
+            "total_favoris": total_favoris,
+            "total_alertes": total_alertes,
+            "non_lus": non_lus,
         },
+    )
+
+
+@connecte_obligatoire
+def mes_preferences(request):
+    u = request.user
+    form = forms.Preferences(
+        request.POST or None, valeurs=compte.preferences(u)
+    )  # fmt: skip
+    message = None
+    if request.method == "POST" and form.is_valid():
+        try:
+            compte.definir_preferences(u, form.vers_valeurs())
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            message = "Tes préférences de notification sont enregistrées."
+    return render(
+        request,
+        "web/auth/preferences.html",
+        {"form": form, "message": message, "titre": "Préférences de notification"},
+    )
+
+
+@connecte_obligatoire
+def mes_appareils(request):
+    appareils_actifs = appareils.lister(request.user)
+    return render(
+        request,
+        "web/auth/appareils.html",
+        {"appareils": appareils_actifs, "titre": "Appareils connectés"},
+    )
+
+
+@require_POST
+@connecte_obligatoire
+def revoquer_appareil(request, appareil_id):
+    try:
+        appareils.revoquer(request.user, appareil_id)
+    except ErreurMetier:
+        pass  # 404 silencieux : ne révèle pas l'existence d'un appareil d'autrui
+    return redirect("/compte/appareils")
+
+
+# --------------------------------------------------------------- changement de numéro
+@connecte_obligatoire
+def changement_numero_telephone(request):
+    form = forms.ChangementNumero(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            otp.demander(
+                form.cleaned_data["phone"],
+                "change_phone",
+                _contexte_otp(request, form.cleaned_data["captcha"]),
+            )
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            request.session["changement_numero"] = {"phone": form.cleaned_data["phone"]}
+            return redirect("/compte/numero/code")
+    if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
+        form.fields["captcha"].initial = "captcha-ok"
+    return _page(
+        request,
+        "web/auth/formulaire.html",
+        form,
+        "Changer de numéro",
+        bouton="Recevoir un code",
+        captcha_requis=True,
+        etapes=["Nouveau numéro", "Code et mot de passe"],
+        etape_actuelle=1,
+    )
+
+
+def changement_numero_code(request):
+    flux = request.session.get("changement_numero")
+    if not flux or not request.user.is_authenticated:
+        return redirect("/connexion?next=/compte/numero")
+    form = forms.ChangementNumeroCode(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            jeton = otp.verifier(flux["phone"], "change_phone", form.cleaned_data["code"])
+            compte.changer_numero(request.user, form.cleaned_data["password"], jeton)
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            request.session.pop("changement_numero", None)
+            return redirect("/compte?numero_change=1")
+    return _page(
+        request,
+        "web/auth/formulaire.html",
+        form,
+        "Confirme le changement",
+        bouton="Changer mon numéro",
+        liens=[("/compte/numero", "Changer de numéro")],
+        etapes=["Nouveau numéro", "Code et mot de passe"],
+        etape_actuelle=2,
     )

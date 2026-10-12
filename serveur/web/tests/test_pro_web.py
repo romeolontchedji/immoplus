@@ -75,6 +75,32 @@ def test_un_locataire_n_a_pas_d_espace_gerant():
     c = Client()
     c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
     assert c.get("/pro/annonces").status_code == 404
+    assert c.get("/pro/dashboard").status_code == 404
+
+
+def test_tableau_de_bord_affiche_les_indicateurs(session_gerant):
+    c, g = session_gerant
+    ListingFactory(gerant=g, status="published")
+    ListingFactory(gerant=g, status="draft")
+    html = c.get("/pro/dashboard").content.decode()
+    assert "Tableau de bord" in html
+    assert "Publiées" in html and "Brouillons" in html
+
+
+def test_mes_annonces_montre_les_commandes_du_statut(session_gerant):
+    c, g = session_gerant
+    brouillon = ListingFactory(gerant=g, status="draft")
+    publiee = ListingFactory(gerant=g, status="published")
+    html = c.get("/pro/annonces").content.decode()
+    assert f"/pro/annonces/{brouillon.pk}" in html
+    assert "Supprimer" in html and "Confirmer la disponibilité" in html
+    assert publiee.title in html
+
+
+def test_le_dashboard_d_un_autre_gerant_ne_fuit_pas(session_gerant):
+    c, _ = session_gerant
+    ListingFactory(status="published", title="Annonce secrete")
+    assert "Annonce secrete" not in c.get("/pro/dashboard").content.decode()
 
 
 def test_anonyme_redirige_vers_la_connexion():
@@ -86,6 +112,61 @@ def test_l_annonce_d_un_autre_gerant_est_introuvable(session_gerant):
     autre = ListingFactory()
     assert c.get(f"/pro/annonces/{autre.pk}").status_code == 404
     assert c.post(f"/pro/annonces/{autre.pk}", {"action": "masquer"}).status_code == 404
+
+
+def test_gerer_les_medias_couverture_ordre_suppression(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft")
+    medias_prets(a, photos=3, video=False)
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "Définir en couverture" in page and "Monter" in page and "Descendre" in page
+    assert (
+        '<details class="confirmation">' in page and 'name="action" value="media-supprimer"' in page
+    )
+
+    couv = a.media.get(is_cover=True)
+    autre = a.media.filter(is_cover=False).first()
+    c.post(f"/pro/annonces/{a.pk}", {"action": "couvrir", "media_id": str(autre.pk)})
+    couv.refresh_from_db()
+    autre.refresh_from_db()
+    assert autre.is_cover and not couv.is_cover
+
+    premier = a.media.order_by("position").first()
+    c.post(f"/pro/annonces/{a.pk}", {"action": "descendre", "media_id": str(premier.pk)})
+    assert a.media.order_by("position").first().pk != premier.pk
+
+    restant = a.media.exclude(status="deleted").count()
+    c.post(f"/pro/annonces/{a.pk}", {"action": "media-supprimer", "media_id": str(premier.pk)})
+    assert a.media.exclude(status="deleted").count() == restant - 1
+
+
+def test_l_editeur_affiche_l_apercu_de_la_carte(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft", title="Chambre apercu")
+    medias_prets(a, photos=1, video=False)
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "Aperçu" in page and "Chambre apercu" in page and "carte carte--interactive" in page
+
+
+def test_la_suppression_d_un_brouillon_passe_par_une_confirmation(session_gerant):
+    c, g = session_gerant
+    ListingFactory(gerant=g, status="draft")
+    page = c.get("/pro/annonces").content.decode()
+    assert '<details class="confirmation">' in page and 'name="action" value="supprimer"' in page
+
+
+def test_un_media_d_une_autre_annonce_ne_se_supprime_pas(session_gerant):
+    c, g = session_gerant
+    mienne = ListingFactory(gerant=g, status="draft")
+    autre = ListingFactory(status="draft")
+    medias_prets(autre, photos=1, video=False)
+    media = autre.media.first()
+    r = c.post(
+        f"/pro/annonces/{mienne.pk}", {"action": "media-supprimer", "media_id": str(media.pk)}
+    )
+    assert r.status_code == 200
+    media.refresh_from_db()
+    assert media.status != "deleted"
 
 
 def test_la_page_d_edition_charge_le_script_d_envoi_externe(session_gerant):

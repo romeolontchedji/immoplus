@@ -85,6 +85,8 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
       LOGEO_RELOAD: "1"
+      MEDIA_PUBLIC_ROOT: /var/lib/logeo/media_public
+      MEDIA_TMP_ROOT: /var/lib/logeo/media_tmp
     volumes:
       - ../../serveur:/app
       - media_tmp:/var/lib/logeo/media_tmp
@@ -114,6 +116,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.admin_local
       LOGEO_RELOAD: "1"
+      MEDIA_PUBLIC_ROOT: /var/lib/logeo/media_public
     volumes:
       - ../../serveur:/app
       - media_public:/var/lib/logeo/media_public:ro
@@ -139,6 +142,8 @@ services:
     env_file: [env/worker-media.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      MEDIA_PUBLIC_ROOT: /var/lib/logeo/media_public
+      MEDIA_TMP_ROOT: /var/lib/logeo/media_tmp
     volumes:
       - ../../serveur:/app
       - media_tmp:/var/lib/logeo/media_tmp
@@ -161,6 +166,9 @@ services:
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-queue: {condition: service_healthy}
+    volumes:
+      - ../../serveur:/app
+      - beat_data:/var/lib/logeo
     networks: [interne]
 
   backup:
@@ -212,3 +220,4 @@ volumes:
   backups:
   caddy_data:
   caddy_config:
+  beat_data:

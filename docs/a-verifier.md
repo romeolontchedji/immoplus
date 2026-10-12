@@ -5,12 +5,46 @@ Ce fichier liste, par ordre d'importance, ce que **je n'ai pas pu vérifier**, c
 est couvert par un test qui passe (mesure de fin de session : voir « Résultats »).
 
 ## Résultats de la session
-- `pytest` (PostgreSQL 16 et Redis réels, exécution en série) : **816 tests passent, 1 ignoré**, couverture 92 % (seuil 85 %) (WebSocket, voir A1).
+- `pytest` (PostgreSQL 16 et Redis réels, exécution en série) : **835 tests passent, 3 échecs
+  d'environnement, 1 ignoré**, couverture 92 % (seuil 85 %) (WebSocket, voir A1).
   Base de départ : 569 tests.
 - `ruff check`, `ruff format --check`, `djlint --check`, `lint-imports` (10 contrats), `makemigrations --check`,
   `verifier_noms.py`, `verifier_hygiene.py`, `contraste.py` : conformes.
 - `docs/api/openapi.json` régénéré (`--validate --fail-on-warn`) : à jour.
 - **Rien n'a tourné dans Docker**, ni dans un navigateur, ni avec un vrai fournisseur (push, SMS).
+
+## Session web (`docs/plan-action-web.md`) — à revérifier
+- **Phases 0 à 6 entamées** : matrice des parcours (`docs/web-parcours.md`), navigation/composants,
+  catalogue et fiche, identité/espace locataire (préférences, appareils, changement de numéro),
+  tableau de bord gérant (`/pro/dashboard`), refonte de « Mes annonces » et de l'éditeur,
+  conversations/alertes/notifications côté web (repli HTTP).
+- **Administration (Phase 6)** : l'index du site admin (hôte séparé, 2FA) affiche une **Vue d'ensemble**
+  avec des compteurs réels (modération ouverte/hors délai, signalements par motif, sanctions en cours,
+  gérants en attente, annonces publiées, taux de réponse, compteurs du jour, journal du jour réservé
+  aux administrateurs). Gabarits d'`adminsite` prioritaires sur ceux de Django : l'ordre des `DIRS`
+  est réordonné dans `config/settings/admin_base.py`. Piste à revoir : le gabarit d'index vit dans
+  `serveur/adminsite/templates/admin/index.html` (normalement trouvé avant celui de `django.contrib.admin`).
+  Les maquettes ADM (PNG) n'ont **pas** pu être lues (aucun navigateur/visionneuse) : la fidélité visuelle
+  des 4 écrans reste à confirmer.
+- **Médias gérants** : l'éditeur expose désormais la couverture, l'ordre (monter/descendre), la
+  suppression (avec confirmation) et une auto-rafraîchissement pendant le traitement ; l'aperçu de la
+  carte est rendu dans l'éditeur. La **reprise d'envoi** reste via `envoi.js` (TUS minimal) ; pas de
+  glisser-déposer ni de sélection multiple de couverture.
+- **Phase 5 sans temps réel** : le WebSocket dépend d'un ADR sur `daphne` (A1) ; la page de conversation
+  garde un `meta refresh` de 60 s. Alertes : création, suppression, pause/réactivation **et
+  modification** exposés. Notifications : lecture individuelle, « tout lire » **et regroupement
+  visuel des notifications identiques**.
+- **Écart d'environnement, non un bug** : hors Docker, `make test` complet échoue sur 3 tests :
+  `test_readyz_ok_quand_tout_repond` (le disque `/home` est à ~91 %, au-dessus du seuil
+  `MEDIA_DISK_REFUS_POURCENT=85`, et `REDIS_QUEUE_URL` pointe un Redis non joignable hors pile),
+  et `TestClesDeSecurite::test_absente` (les variables `JWT_SIGNING_KEY`/`OTP_HMAC_KEY` sont exportées
+  dans le shell de session). Un `env -u JWT_SIGNING_KEY -u OTP_HMAC_KEY` fait repasser ces deux derniers.
+- **B10/B11 partiellement périmés** : le tableau de bord web `/pro/dashboard` existe ; l'espace gérant web
+  utilise toujours `/compte/messages` (pas de page messages dédiée au gérant), ce qui n'empêche pas les
+  parcours actuels mais mérite un point d'attention selon les maquettes.
+- **Toujours non vérifié** : aucun navigateur réel (Chromium absent), donc contrastes à l'œil,
+  navigation clavier de bout en bout, 360/390 px et CSP réelle restent à contrôler (A1/A3).
+
 
 ## A. À faire en premier (bloquant ou risqué)
 
@@ -76,7 +110,7 @@ sur 30 jours, à confirmer, non lus, taux et délai de réponse). Pas de page we
 
 **B11. Le site web n'a pas de temps réel.** La page de conversation se rafraîchit toutes les 60 s (`meta refresh`) et marque
 comme lu à l'ouverture. Pas de WebSocket côté navigateur, pas de `messagerie.js`. Les URL du CDC pour l'espace compte
-(`/compte/...`) ont été utilisées ; l'espace gérant n'a pas de page messages dédiée (il utilise `/compte/messages`).
+(`/compte/...`) ont été utilisées ; l'espace gérant n'a pas de page messages dédiée au gérant (il utilise `/compte/messages`).
 
 **B12. Données des quartiers (`seed`) : coordonnées approximatives.** Les 12 quartiers de Parakou et leurs points sont
 **inventés à partir de ma mémoire** : ils servent à la distance au campus. **À relever sur le terrain avant toute mise
@@ -98,7 +132,8 @@ en production.** Idem pour `CAMPUS_REFERENCE` (déjà dans le projet, non revu).
 - **Recherche** : pas de suggestion de quartier, pas de tri par pertinence (tri recent/loyer/distance seulement).
 - **Admin Django** : les décisions de modération se prennent par le formulaire d'ajout de « Moderation action » (pas de
   boutons sur la fiche du signalement) ; la lecture de conversation passe par un lien dans l'URL
-  `/moderation/report/<id>/conversation/` — aucun lien cliquable n'a été ajouté dans la liste.
+  `/moderation/report/<id>/conversation/` — aucun lien cliquable n'a été ajouté dans la liste. L'index du site
+  admin affiche une Vue d'ensemble (voir « Session web ») ; la revue visuelle des 4 maquettes ADM n'a pas pu se faire.
 - **Accessibilité et mobile** : pages publiques écrites avec les composants existants, **jamais ouvertes dans un navigateur**.
   Aucun test axe/Lighthouse. Le lecteur vidéo utilise `<video controls>` natif.
 - **SEO** : `robots.txt` et `sitemap.xml` simples ; pas de balises Open Graph ni de données structurées.

@@ -3,7 +3,12 @@ from django.core.cache import cache
 from django.test import Client
 
 from apps.accounts.models import User
-from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
+from apps.accounts.services import compte as service_compte
+from apps.accounts.tests.fabriques import (
+    MOT_DE_PASSE,
+    ClientFactory,
+    DeviceFactory,
+)
 from apps.core.providers.sms import CLE_BOITE_DEV
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
@@ -124,3 +129,71 @@ def test_suppression_du_compte():
     assert (
         r.status_code == 302 and User.objects.get(phone_e164__startswith="del:").status == "deleted"
     )
+
+
+def test_preferences_notifications():
+    u = ClientFactory(phone_e164="+2290197343434")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    assert c.get("/compte/preferences").status_code == 200
+    r = c.post(
+        "/compte/preferences",
+        {"messages_push": "", "messages_apercu": "on", "alertes_push": "on", "rappels_push": "on"},
+    )
+    assert r.status_code == 200 and "enregistr" in r.content.decode()
+    u.refresh_from_db()
+    reglages = service_compte.preferences(u)
+    assert reglages["messages"] == {"push": False, "apercu": True}
+    assert reglages["rappels"]["push"] is True
+
+
+def test_preferences_exigent_la_connexion():
+    assert Client().get("/compte/preferences")["Location"].startswith("/connexion")
+
+
+def test_appareils_listes_et_revoques():
+    u = ClientFactory(phone_e164="+2290197343434")
+    appareil = DeviceFactory(user=u, label="Tecno")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    page = c.get("/compte/appareils").content.decode()
+    assert "Tecno" in page
+    r = c.post(f"/compte/appareils/{appareil.pk}/revoquer")
+    assert r["Location"] == "/compte/appareils"
+    appareil.refresh_from_db()
+    assert appareil.revoked_at is not None
+
+
+def test_revoquer_un_appareil_d_autrui_repond_sans_fuite():
+    ClientFactory(phone_e164="+2290197343434")
+    autre = DeviceFactory()
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    r = c.post(f"/compte/appareils/{autre.pk}/revoquer")
+    assert r.status_code == 302
+    autre.refresh_from_db()
+    assert autre.revoked_at is None
+
+
+def test_changement_de_numero(django_capture_on_commit_callbacks):
+    u = ClientFactory(phone_e164="+2290197343434")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    with django_capture_on_commit_callbacks(execute=True):
+        r = c.post("/compte/numero", {"phone": "97565656", "captcha": "captcha-ok"})
+    assert r.status_code == 302 and r["Location"] == "/compte/numero/code"
+    r = c.post("/compte/numero/code", {"code": "424242", "password": MOT_DE_PASSE})
+    assert r["Location"].startswith("/compte")
+    u.refresh_from_db()
+    assert u.phone_e164 == "+2290197565656"
+    assert c.get("/compte").status_code == 200
+
+
+def test_changement_de_numero_mauvais_mot_de_passe():
+    ClientFactory(phone_e164="+2290197343434")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    c.post("/compte/numero", {"phone": "97565656", "captcha": "captcha-ok"})
+    r = c.post("/compte/numero/code", {"code": "424242", "password": "faux"})
+    assert r.status_code == 200
+    assert User.objects.get(phone_e164="+2290197343434")

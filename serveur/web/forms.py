@@ -93,3 +93,64 @@ class Suppression(_Base):
         strip=False,
         max_length=128,
     )
+
+
+class Preferences(_Base):
+    """Cases à cocher : pour chaque catégorie, recevoir une notification et/ou un aperçu."""
+
+    CATEGORIES = (
+        ("messages", "Messages"),
+        ("alertes", "Alertes"),
+        ("rappels", "Rappels"),
+    )
+
+    def __init__(self, *args, valeurs=None, **kwargs):
+        valeurs = valeurs or {}
+        super().__init__(*args, **kwargs)
+        for categorie, libelle in self.CATEGORIES:
+            reglage = valeurs.get(categorie) or {}
+            for cle, sous_libelle in (
+                ("push", "Recevoir une notification"),
+                ("apercu", "Afficher un aperçu"),
+            ):
+                self.fields[f"{categorie}_{cle}"] = forms.BooleanField(
+                    label=f"{libelle} — {sous_libelle}",
+                    required=False,
+                    initial=bool(reglage.get(cle, True)),
+                )
+
+    def vers_valeurs(self) -> dict:
+        donnees = self.cleaned_data
+        return {
+            categorie: {
+                "push": donnees[f"{categorie}_push"],
+                "apercu": donnees[f"{categorie}_apercu"],
+            }
+            for categorie, _ in self.CATEGORIES
+        }
+
+
+class ChangementNumero(_Base):
+    phone = forms.CharField(
+        label="Nouveau numéro de téléphone",
+        max_length=40,
+        widget=forms.TextInput(
+            attrs={"inputmode": "tel", "autocomplete": "tel", "placeholder": "97 12 34 56"}
+        ),
+    )
+    captcha = forms.CharField(required=False, widget=forms.HiddenInput)
+
+
+class ChangementNumeroCode(_Base):
+    code = forms.CharField(
+        label="Code reçu sur le nouveau numéro",
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "one-time-code"}),
+    )
+    password = forms.CharField(
+        label="Mot de passe actuel",
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        strip=False,
+        max_length=128,
+    )

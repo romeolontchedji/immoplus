@@ -1,37 +1,151 @@
 {% extends "web/base.html" %}
 {% block titre %}Mon compte — Logeo{% endblock %}
 {% block navigation %}
-  <form method="post"
-        action="/deconnexion">{% csrf_token %}<button class="bouton bouton--fantome"
-        type="submit">Se déconnecter</button></form>
+  <form method="post" action="/deconnexion">
+    {% csrf_token %}
+    <button class="bouton bouton--fantome" type="submit">Se déconnecter</button>
+  </form>
 {% endblock %}
 {% block contenu %}
   <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <h1>Mon compte</h1>
-      {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
-      <p class="texte-doux">{{ u.full_name }} · {{ u.phone_e164 }} · {{ u.get_role_display }}</p>
-      <form method="post" class="pile"><h2>Mon nom</h2>{% csrf_token %}<input type="hidden" name="action" value="nom">
-        {% for champ in nom.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Enregistrer</button>
-      </form>
-      <form method="post"
-            class="pile"><h2>Mot de passe</h2>{% csrf_token %}<input type="hidden"
-       name="action"
-       value="mot-de-passe">
-        {% for e in mdp.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
-        {% for champ in mdp.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Changer le mot de passe</button>
-      </form>
-      <form method="post"
-            class="pile"><h2>Supprimer mon compte</h2>{% csrf_token %}<input type="hidden"
-       name="action"
-       value="suppression">
-        <p class="texte-doux">Ton compte sera anonymisé. Cette action est définitive.</p>
-        {% for e in suppression.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
-        {% for champ in suppression.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton bouton--danger" type="submit">Supprimer définitivement</button>
-      </form>
+    <div class="conteneur">
+      <div class="compte-dashboard">
+        <!-- Sidebar Carte Profil Utilisateur -->
+        <aside class="compte-sidebar">
+          <div class="compte-carte-profil mb-6">
+            <div class="compte-carte-profil__avatar">{{ u.full_name|default:"U"|slice:":2"|upper }}</div>
+            <div>
+              <h2 class="compte-carte-profil__nom">{{ u.full_name|default:u.phone_e164 }}</h2>
+              <p class="texte-doux texte-petit mb-2">{{ u.phone_e164 }}</p>
+              {% if u.role == "gerant" %}
+                <span class="badge badge--succes">Gérant certifié</span>
+              {% else %}
+                <span class="badge badge--neutre">Étudiant / Locataire</span>
+              {% endif %}
+            </div>
+            <ul class="compte-menu mt-4">
+              <li>
+                <a class="compte-menu__lien compte-menu__lien--actif" href="/compte">
+                  <span>👤</span> Informations du compte
+                </a>
+              </li>
+              {% if u.role == "client" %}
+                <li>
+                  <a class="compte-menu__lien" href="/compte/favoris">
+                    <span>❤️</span> Mes favoris
+                    {% if total_favoris %}<span class="navigation__compteur ml-auto">{{ total_favoris }}</span>{% endif %}
+                  </a>
+                </li>
+                <li>
+                  <a class="compte-menu__lien" href="/compte/alertes">
+                    <span>🔔</span> Mes alertes
+                    {% if total_alertes %}<span class="navigation__compteur ml-auto">{{ total_alertes }}</span>{% endif %}
+                  </a>
+                </li>
+              {% else %}
+                <li>
+                  <a class="compte-menu__lien" href="/pro/dashboard">
+                    <span>📊</span> Tableau de bord pro
+                  </a>
+                </li>
+              {% endif %}
+              <li>
+                <a class="compte-menu__lien" href="/compte/messages">
+                  <span>💬</span> Messages
+                  {% if non_lus %}<span class="navigation__compteur ml-auto">{{ non_lus }}</span>{% endif %}
+                </a>
+              </li>
+              <li>
+                <a class="compte-menu__lien" href="/compte/preferences">
+                  <span>⚙️</span> Préférences notifications
+                </a>
+              </li>
+              <li>
+                <a class="compte-menu__lien" href="/compte/appareils">
+                  <span>📱</span> Appareils connectés
+                </a>
+              </li>
+              <li>
+                <a class="compte-menu__lien" href="/compte/numero">
+                  <span>📞</span> Changer de numéro
+                </a>
+              </li>
+            </ul>
+          </div>
+        </aside>
+        <!-- Contenu Principal -->
+        <div class="compte-principal">
+          <div class="pro-entete">
+            <div>
+              <h1 class="pro-entete__titre">Mon compte</h1>
+              <p class="texte-doux mb-0">Gérez vos informations personnelles et vos paramètres de sécurité</p>
+            </div>
+          </div>
+          {% if message %}<div class="alerte alerte--succes mb-6" role="status"><p>{{ message }}</p></div>{% endif %}
+          {% if request.GET.numero_change %}
+            <div class="alerte alerte--succes mb-6" role="status">
+              <p>Ton numéro a été changé. Les autres appareils sont déconnectés.</p>
+            </div>
+          {% endif %}
+          <!-- Informations personnelles -->
+          <div class="compte-section-carte">
+            <h2 class="compte-section-carte__titre"><span>✏️</span> Informations personnelles</h2>
+            <form method="post" class="pile">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="nom">
+              {% for champ in nom.visible_fields %}
+                <div class="champ">
+                  <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                  {{ champ }}
+                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                </div>
+              {% endfor %}
+              <div>
+                <button class="bouton bouton--primaire" type="submit">Enregistrer les modifications</button>
+              </div>
+            </form>
+          </div>
+          <!-- Sécurité & Mot de passe -->
+          <div class="compte-section-carte">
+            <h2 class="compte-section-carte__titre"><span>🔒</span> Mot de passe</h2>
+            <form method="post" class="pile">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="mot-de-passe">
+              {% for e in mdp.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+              {% for champ in mdp.visible_fields %}
+                <div class="champ">
+                  <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                  {{ champ }}
+                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                </div>
+              {% endfor %}
+              <div>
+                <button class="bouton bouton--secondaire" type="submit">Changer le mot de passe</button>
+              </div>
+            </form>
+          </div>
+          <!-- Zone Danger / Suppression -->
+          <div class="compte-section-carte">
+            <h2 class="compte-section-carte__titre text-danger"><span>⚠️</span> Zone de danger</h2>
+            <form method="post" class="pile">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="suppression">
+              <p class="texte-doux mb-3">Ton compte sera anonymisé. Cette action est irréversible et clôture toutes les données associées.</p>
+              {% for e in suppression.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+              {% for champ in suppression.visible_fields %}
+                <div class="champ">
+                  <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+                  {{ champ }}
+                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                </div>
+              {% endfor %}
+              <div>
+                <button class="bouton bouton--danger" type="submit">Supprimer définitivement mon compte</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 {% endblock %}

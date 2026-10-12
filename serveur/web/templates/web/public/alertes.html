@@ -1,45 +1,149 @@
 {% extends "web/base.html" %}
+{% load logeo %}
 {% block titre %}Mes alertes — Logeo{% endblock %}
 {% block contenu %}
   <section class="section">
     <div class="conteneur conteneur--texte pile pile--large">
-      <h1>Mes alertes</h1>
-      {% if message %}<div class="alerte alerte--{{ niveau|default:'succes' }}"
-     role="status"><p>{{ message }}</p></div>{% endif %}
-      <ul class="liste-lignes">
-        {% for al in alertes %}
-          <li class="ligne"><span>{{ al.label|default:"Alerte" }}{% if al.max_rent %} · jusqu'à {{ al.max_rent }} FCFA{% endif %}{% if al.private_bathroom_required %} · douche interne{% endif %}{% if not al.is_active %} · <em>en pause</em>{% endif %}</span>
-            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="supprimer"><input type="hidden" name="alerte_id" value="{{ al.id }}"><button class="bouton bouton--fantome" type="submit">Supprimer</button></form></li>
-{% empty %}<li class="texte-doux">Aucune alerte. Crée-en une pour être prévenu des nouvelles chambres.</li>{% endfor %}
-  </ul>
-  <form method="post"
-        class="pile"><h2>Nouvelle alerte</h2>{% csrf_token %}<input type="hidden"
-       name="action"
-       value="creer">
-    <div class="champ">
-      <label class="champ__etiquette"
-             for="label">Nom</label><input id="label"
-       name="label"
-       maxlength="80"
-       value="{{ proposition.label }}">
+      <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a href="/compte">Mon compte</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Alertes</span>
+      </nav>
+      <div>
+        <h1 class="mb-2">Mes alertes</h1>
+        <p class="texte-doux">Soyez notifié dès qu'une nouvelle chambre correspond à vos critères de recherche.</p>
+      </div>
+      {% if message %}
+        <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
+      <!-- Liste des alertes existantes -->
+      {% if alertes %}
+        <div class="pile">
+          <h2 class="fs-18 fw-bold mb-0">Alertes actives ({{ alertes|length }})</h2>
+          <ul class="liste-annonces">
+            {% for ligne in alertes %}
+              <li class="carte p-4">
+                <div class="d-flex justify-content-between align-items-start gap-4 flex-wrap">
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <strong class="fs-16">{{ ligne.objet.label|default:"Alerte logement" }}</strong>
+                      {% if ligne.objet.is_active %}
+                        <span class="badge badge--succes">Active</span>
+                      {% else %}
+                        <span class="badge badge--avertissement">En pause</span>
+                      {% endif %}
+                    </div>
+                    <p class="texte-doux texte-petit mb-2">
+                      📍 {% if ligne.quartiers %}{{ ligne.quartiers|join:", " }}{% else %}Tous quartiers{% endif %}
+                      {% if ligne.types %}· 🏠 {{ ligne.types|join:", " }}{% endif %}
+                      {% if ligne.objet.max_rent %}· 💰 Max {{ ligne.objet.max_rent|fcfa }} FCFA{% endif %}
+                      {% if ligne.objet.private_bathroom_required %}· 🚿 Douche interne{% endif %}
+                    </p>
+                  </div>
+                  <div class="rangee">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="alerte_id" value="{{ ligne.objet.id }}">
+                      {% if ligne.objet.is_active %}
+                        <input type="hidden" name="action" value="pause">
+                        <button class="bouton bouton--petit bouton--secondaire" type="submit">Mettre en pause</button>
+                      {% else %}
+                        <input type="hidden" name="action" value="reactiver">
+                        <button class="bouton bouton--petit bouton--primaire" type="submit">Réactiver</button>
+                      {% endif %}
+                    </form>
+                    <a class="bouton bouton--petit bouton--secondaire"
+                       href="/annonces?{% if ligne.objet.district_ids %}district={{ ligne.objet.district_ids.0 }}{% endif %}{% if ligne.objet.max_rent %}&rent_max={{ ligne.objet.max_rent }}{% endif %}">
+                      Voir les chambres
+                    </a>
+                    <a class="bouton bouton--petit bouton--fantome"
+                       href="/compte/alertes?modifier={{ ligne.objet.id }}">Modifier</a>
+                    {% include "web/composants/confirmation.html" with action="supprimer" question="Supprimer définitivement cette alerte ?" alerte_id=ligne.objet.id %}
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <div class="panneau text-center p-8">
+          <div class="fs-32 mb-2">🔔</div>
+          <h2 class="fs-18 fw-bold mb-2">Aucune alerte enregistrée</h2>
+          <p class="texte-doux mb-0">Créez votre première alerte ci-dessous pour ne rater aucune chambre correspondant à vos attentes.</p>
+        </div>
+      {% endif %}
+      <!-- Formulaire d'alerte -->
+      <div class="carte p-6">
+        <h2 class="fs-20 fw-bold mb-4">{% if edition %}Modifier l'alerte{% else %}Créer une nouvelle alerte{% endif %}</h2>
+        <form method="post" class="pile" novalidate>
+          {% csrf_token %}
+          {% if edition %}
+            <input type="hidden" name="action" value="modifier">
+            <input type="hidden" name="alerte_id" value="{{ edition.id }}">
+          {% else %}
+            <input type="hidden" name="action" value="creer">
+          {% endif %}
+          <div class="champ">
+            <label class="champ__etiquette" for="label">Nom de l'alerte (optionnel)</label>
+            <input class="champ__saisie"
+                   id="label"
+                   name="label"
+                   placeholder="Ex : Chambre Zongo ou Albarika"
+                   maxlength="80"
+                   value="{{ proposition.label }}">
+          </div>
+          <div class="grille grille--2">
+            <div class="champ">
+              <label class="champ__etiquette" for="district_ids">Quartier recherché</label>
+              <select class="champ__saisie" id="district_ids" name="district_ids">
+                <option value="">Tous les quartiers de Parakou</option>
+                {% for d in quartiers %}
+                  <option value="{{ d.id }}"
+                          {% if d.id|stringformat:"s" == proposition.district or d.slug == proposition.district %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="champ">
+              <label class="champ__etiquette" for="room_types">Type de chambre</label>
+              <select class="champ__saisie" id="room_types" name="room_types">
+                <option value="">Tous les types</option>
+                {% for v, l in types %}
+                  <option value="{{ v }}" {% if v == proposition.type %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="champ">
+            <label class="champ__etiquette" for="max_rent">Loyer maximum par mois (FCFA)</label>
+            <input class="champ__saisie"
+                   id="max_rent"
+                   name="max_rent"
+                   type="number"
+                   min="1"
+                   step="1000"
+                   placeholder="Ex : 25 000"
+                   value="{{ proposition.rent_max }}">
+          </div>
+          <div class="champ champ--case">
+            <input type="checkbox"
+                   id="private_bathroom_required"
+                   name="private_bathroom_required"
+                   value="1"
+                   {% if proposition.bathroom %}checked{% endif %}>
+            <label class="champ__etiquette" for="private_bathroom_required">Douche et WC internes indispensables</label>
+          </div>
+          <div class="d-flex gap-3 align-items-center mt-3">
+            <button class="bouton bouton--primaire bouton--grand" type="submit">
+              {% if edition %}Enregistrer les modifications{% else %}Créer mon alerte{% endif %}
+            </button>
+            {% if edition %}
+              <a class="bouton bouton--fantome" href="/compte/alertes">Annuler</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
     </div>
-    <div class="champ"><label class="champ__etiquette" for="district_ids">Quartier</label><select id="district_ids" name="district_ids"><option value="">Tous</option>{% for d in quartiers %}<option value="{{ d.id }}"
-        {% if d.slug == proposition.district %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
-    <div class="champ"><label class="champ__etiquette" for="room_types">Type</label><select id="room_types" name="room_types"><option value="">Tous</option>{% for v, l in types %}<option value="{{ v }}" {% if v == proposition.type %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-    <div class="champ">
-      <label class="champ__etiquette" for="max_rent">Loyer maximum (FCFA)</label><input id="max_rent"
-       name="max_rent"
-       type="number"
-       min="1"
-       step="1000"
-       value="{{ proposition.rent_max }}">
-    </div>
-    <div class="champ"><label><input type="checkbox"
-       name="private_bathroom_required"
-       value="1"
-       {% if proposition.bathroom %}checked{% endif %}> Douche et WC internes obligatoires</label></div>
-    <button class="bouton" type="submit">Créer l'alerte</button>
-  </form>
-  </div>
   </section>
 {% endblock %}

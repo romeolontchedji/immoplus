@@ -10,7 +10,18 @@
             {% include "web/composants/carte.html" %}
           {% endfor %}
         </div>
-{% else %}<p class="texte-doux">Tu n'as encore aucun favori. <a href="/annonces">Parcourir les chambres</a>.</p>{% endif %}
-  </div>
+      {% else %}
+        <div class="etat-vide">
+          <span class="etat-vide__symbole" aria-hidden="true">?</span>
+          <div>
+            <h2 class="etat-vide__titre">Aucun favori</h2>
+            <p class="etat-vide__texte">Ajoute des chambres en favori depuis leur fiche pour les retrouver ici.</p>
+          </div>
+          <div class="etat-vide__actions">
+            <a class="bouton bouton--primaire" href="/annonces">Parcourir les chambres</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
   </section>
 {% endblock %}

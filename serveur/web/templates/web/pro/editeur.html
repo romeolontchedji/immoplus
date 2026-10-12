@@ -1,58 +1,218 @@
 {% extends "web/base.html" %}
 {% load static %}
-{% block titre %}{{ titre }} — Logeo{% endblock %}
-{% block navigation %}<a class="bouton bouton--fantome bouton--petit"
-   href="/pro/annonces">Mes annonces</a>{% endblock %}
-{% block contenu %}
-  <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <h1>{{ titre }}</h1>
-      {% if annonce %}<p><span class="badge badge--marque">{{ annonce.get_status_display }}</span></p>{% endif %}
-      {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
-      {% if manques %}<div class="alerte alerte--avertissement" role="alert"><div><p class="alerte__titre">Il manque :</p><ul>{% for m in manques %}<li>{{ m }}</li>{% endfor %}</ul></div></div>{% endif %}
-      {% if form.non_field_errors %}<div class="alerte alerte--danger" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
-      <form method="post" class="pile" novalidate>
-        {% csrf_token %}
-        <input type="hidden" name="action" value="enregistrer">
-        {% for champ in form.visible_fields %}
-          <div class="champ">
-            <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
-            {{ champ }}
-            {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
-          </div>
-        {% endfor %}
-        <button class="bouton bouton--primaire" type="submit">Enregistrer</button>
-      </form>
-      {% if annonce %}
-        <h2>Médias</h2>
-        <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="champ">
-          <label class="champ__etiquette" for="envoi-fichiers">Ajouter une vidéo (10 à 60 s) ou des photos</label>
-          <input class="champ__saisie"
-                 id="envoi-fichiers"
-                 type="file"
-                 accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
-                 multiple>
-          <p class="champ__aide" id="envoi-etat" role="status"></p>
-        </div>
-        <script src="{% static 'js/envoi.js' %}" defer></script>
-        <ul>{% for m in medias %}<li>{{ m.get_kind_display }} — {{ m.get_status_display }}{% if m.error_detail %} : {{ m.error_detail }}{% endif %}</li>{% empty %}<li class="texte-doux">Aucun média envoyé.</li>{% endfor %}</ul>
-        <h2>Actions</h2>
-        <form method="post" class="rangee">
-          {% csrf_token %}
-          <button class="bouton bouton--primaire"
-                  name="action"
-                  value="publier"
-                  type="submit">Publier</button>
-          <button class="bouton" name="action" value="confirmer" type="submit">Confirmer la disponibilité</button>
-          <button class="bouton" name="action" value="masquer" type="submit">Masquer</button>
-          <button class="bouton" name="action" value="louee" type="submit">Marquer louée</button>
-          <button class="bouton" name="action" value="annuler-louee" type="submit">Annuler « louée »</button>
-          <button class="bouton bouton--danger"
-                  name="action"
-                  value="supprimer"
-                  type="submit">Supprimer le brouillon</button>
-        </form>
-      {% endif %}
-    </div>
-  </section>
+{% block titre %}
+  {{ titre }} — Logeo
 {% endblock %}
+{% block tete %}
+  {% if medias_en_cours %}<meta http-equiv="refresh" content="8">{% endif %}
+  {% block contenu %}
+    <section class="section">
+      <div class="conteneur pile pile--large">
+        <p class="fil-ariane">
+          <a href="/pro/dashboard">Tableau de bord</a> <span aria-hidden="true">›</span>
+          <a href="/pro/annonces">Mes annonces</a> <span aria-hidden="true">›</span>
+          <span aria-current="page">{{ titre }}</span>
+        </p>
+        <h1>{{ titre }}</h1>
+        <ol class="barre-etapes">
+          <li class="barre-etapes__etape barre-etapes__etape--active">
+            <span class="barre-etapes__numero" aria-current="step">1</span>Informations
+          </li>
+          <li class="barre-etapes__etape"><span class="barre-etapes__numero">2</span>Localisation</li>
+          <li class="barre-etapes__etape"><span class="barre-etapes__numero">3</span>Loyer et équipements</li>
+          <li class="barre-etapes__etape"><span class="barre-etapes__numero">4</span>Médias et publication</li>
+        </ol>
+        {% if annonce %}
+          <p>
+            <span class="badge badge--marque">{{ annonce.get_status_display }}</span>
+            <a class="texte-petit" href="/annonces/{{ annonce.slug }}">Voir la fiche publique</a>
+          </p>
+        {% endif %}
+        {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
+        {% if erreur_media %}
+          <div class="alerte alerte--danger" role="alert">
+            <p>{{ erreur_media }}</p>
+          </div>
+        {% endif %}
+        {% if manques %}
+          <div class="alerte alerte--avertissement" role="alert">
+            <div>
+              <p class="alerte__titre">Il manque :</p>
+              <ul>
+                {% for m in manques %}<li>{{ m }}</li>{% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+        {% if form.non_field_errors %}
+          <div class="alerte alerte--danger" role="alert">
+            {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+        <form method="post" class="pile pile--large" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="enregistrer">
+          <fieldset class="champ__groupe-bloc pile">
+            <legend>1. Informations</legend>
+            {% with champ=form.title %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.room_type %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.description_md %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+          </fieldset>
+          <fieldset class="champ__groupe-bloc pile">
+            <legend>2. Localisation</legend>
+            {% with champ=form.district %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.landmark_text %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.address_private %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            <div class="grille grille--2">
+              {% with champ=form.latitude %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.longitude %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+          </fieldset>
+          <fieldset class="champ__groupe-bloc pile">
+            <legend>3. Loyer et équipements</legend>
+            <div class="grille grille--3">
+              {% with champ=form.rent_amount %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.deposit_months %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.advance_months %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+            <div class="grille grille--2">
+              {% with champ=form.agent_fee_amount %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.available_from %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+            {% with champ=form.has_private_bathroom %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.is_fenced %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            <div class="grille grille--2">
+              {% with champ=form.water_source %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.electricity_meter %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+          </fieldset>
+          <button class="bouton bouton--primaire bouton--grand" type="submit">Enregistrer le brouillon</button>
+        </form>
+        {% if annonce %}
+          <fieldset class="champ__groupe-bloc pile" id="medias">
+            <legend>4. Médias</legend>
+            <p class="texte-doux">
+              Ajoute une vidéo (10 à 60 s) et jusqu'à 10 photos. La première photo peut servir de couverture.
+            </p>
+            <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="champ">
+              <label class="champ__etiquette" for="envoi-fichiers">Ajouter une vidéo (10 à 60 s) ou des photos</label>
+              <input class="champ__saisie"
+                     id="envoi-fichiers"
+                     type="file"
+                     accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
+                     multiple>
+              <p class="champ__aide" id="envoi-etat" role="status"></p>
+            </div>
+            <script src="{% static 'js/envoi.js' %}" defer></script>
+            <ul class="liste-lignes">
+              {% for m in medias %}
+                <li class="ligne ligne--media">
+                  <div class="media-entete">
+                    {% if m.apercu %}
+                      <img class="vignette-media"
+                           src="{{ m.apercu }}"
+                           alt="Aperçu du média {{ m.kind_display }}"
+                           loading="lazy"
+                           width="96"
+                           height="72">
+                    {% endif %}
+                    <span>
+                      {{ m.kind_display }} — {{ m.status_display }}
+                      {% if m.is_cover %}<span class="badge badge--marque">Couverture</span>{% endif %}
+                      {% if m.error_detail %}: {{ m.error_detail }}{% endif %}
+                    </span>
+                  </div>
+                  <div class="media-actions">
+                    {% if m.est_photo and not m.is_cover %}
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="couvrir">
+                        <input type="hidden" name="media_id" value="{{ m.id }}">
+                        <button class="bouton bouton--fantome bouton--petit"
+                                type="submit">Définir en couverture</button>
+                      </form>
+                    {% endif %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="monter">
+                      <input type="hidden" name="media_id" value="{{ m.id }}">
+                      <button class="bouton bouton--fantome bouton--petit" type="submit">Monter</button>
+                    </form>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="descendre">
+                      <input type="hidden" name="media_id" value="{{ m.id }}">
+                      <button class="bouton bouton--fantome bouton--petit" type="submit">Descendre</button>
+                    </form>
+                    {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
+                  </div>
+                </li>
+              {% empty %}
+                <li class="texte-doux">Aucun média envoyé.</li>
+              {% endfor %}
+            </ul>
+          </fieldset>
+          {% if apercu %}
+            <fieldset class="champ__groupe-bloc pile">
+              <legend>Aperçu</legend>
+              <p class="texte-doux texte-petit">
+                Voici comment ta chambre apparaîtra dans le catalogue (dernier enregistrement). Le lien
+                vers la fiche publique ne sera actif qu'après publication.
+              </p>
+              <div class="apercu-carte">{% include "web/composants/carte.html" with a=apercu %}</div>
+            </fieldset>
+          {% endif %}
+          {% if commandes %}
+            <fieldset class="champ__groupe-bloc pile">
+              <legend>Publication</legend>
+              <div class="rangee">
+                {% for c in commandes %}
+                  <form method="post">
+                    {% csrf_token %}
+                    <button class="bouton{% if c.primaire %} bouton--primaire{% endif %}{% if c.danger %} bouton--danger{% endif %}"
+                            name="action"
+                            value="{{ c.action }}"
+                            type="submit">{{ c.libelle }}</button>
+                  </form>
+                {% endfor %}
+              </div>
+            </fieldset>
+          {% endif %}
+        {% endif %}
+      </div>
+    </section>
+  {% endblock %}

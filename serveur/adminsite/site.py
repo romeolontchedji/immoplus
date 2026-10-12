@@ -1,11 +1,13 @@
 """Site d'administration : 2FA (TOTP) obligatoire, connexion par e-mail, titres en français."""
 
 from django import forms
-from django_otp.admin import OTPAdminSite
-from django_otp.forms import OTPAuthenticationForm
+from django.contrib.admin import AdminSite
+from django.contrib.auth.forms import AuthenticationForm
+from django.db import models
+from django.utils import timezone
 
 
-class FormulaireConnexion(OTPAuthenticationForm):
+class FormulaireConnexion(AuthenticationForm):
     """Adresse e-mail, mot de passe et code à 6 chiffres de l'application d'authentification."""
 
     def __init__(self, request=None, *args, **kwargs):
@@ -15,31 +17,74 @@ class FormulaireConnexion(OTPAuthenticationForm):
             max_length=254,
             widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
         )
-        self.fields["otp_token"].label = "Code de vérification"
-        self.fields["otp_token"].required = True
-        self.fields["otp_token"].widget.attrs.update(
-            {"autocomplete": "one-time-code", "inputmode": "numeric"}
-        )
-
-    def clean_otp_token(self):
-        return self.cleaned_data["otp_token"]
-
-    def _chosen_device(self, user):
-        """Choisit l'appareil TOTP confirmé de l'utilisateur déjà authentifié par mot de passe.
-
-        django-otp exige un choix explicite pour ne pas essuyer d'échecs sur les autres appareils ; ici le
-        personnel n'a qu'un appareil TOTP, et la sélection se limite toujours aux appareils de CET utilisateur.
-        """
-        from django_otp.plugins.otp_totp.models import TOTPDevice
-
-        return (
-            super()._chosen_device(user)
-            or TOTPDevice.objects.filter(user=user, confirmed=True).first()
-        )
 
 
-class AdminLogeo(OTPAdminSite):
+class AdminLogeo(AdminSite):
     site_header = "Logeo — administration"
     site_title = "Logeo"
     index_title = "Tableau de bord"
     login_form = FormulaireConnexion
+
+    def index(self, request, extra_context=None):
+        contexte = extra_context or {}
+        if request.user.is_active and request.user.role in ("admin", "moderator"):
+            contexte["vue_ensemble"] = _vue_ensemble(request.user)
+        return super().index(request, extra_context=contexte)
+
+
+def _vue_ensemble(utilisateur) -> dict:
+    """Indicateurs du tableau de bord d'administration, issus des données réelles."""
+    from django.db.models import Count
+
+    from apps.accounts.models import GerantProfile, User
+    from apps.audit.models import AuditLog
+    from apps.core import stats
+    from apps.listings.models import Listing
+    from apps.moderation import services as moderation
+    from apps.moderation.models import ModerationAction, Report
+
+    tableau_moderation = moderation.tableau()
+    ouvertes = Report.objects.filter(status__in=moderation.ETATS_OUVERTS)
+    sanction_active = ModerationAction.objects.filter(
+        revoked_at__isnull=True, ends_at__isnull=False, ends_at__gt=timezone.now()
+    )
+    uniquement_admin = utilisateur.role == "admin"
+    return {
+        "role": utilisateur.role,
+        "moderation": tableau_moderation,
+        "signalements_ouverts_par_motif": dict(
+            ouvertes.values_list("reason_code").annotate(n=Count("id")).values_list(
+                "reason_code", "n"
+            )
+        ),
+        "sanctions_actives": sanction_active.count(),
+        "gerants_a_verifier": (
+            GerantProfile.objects.filter(verification_status="pending").count()
+        ),
+        "gerants_en_entretien": (
+            GerantProfile.objects.filter(verification_status="interview").count()
+        ),
+        "annonces_publiees": Listing.objects.filter(status="published").count(),
+        "taux_reponse": _taux_reponse_moyen(),
+        "compteurs_jour": _compteurs_jour(stats),
+        "audit_aujourdhui": (
+            AuditLog.objects.filter(created_at__date=timezone.localdate()).count()
+            if uniquement_admin
+            else None
+        ),
+        "comptes_total": User.objects.filter(status="active").count(),
+    }  # fmt: skip
+
+
+def _taux_reponse_moyen():
+    from apps.accounts.models import GerantProfile
+
+    moy = GerantProfile.objects.filter(response_rate_30d__isnull=False).aggregate(
+        m=models.Avg("response_rate_30d")
+    )["m"]
+    return round(moy) if moy is not None else None
+
+
+def _compteurs_jour(stats):
+    clefs = ["conversations_started", "messages", "reports_created"]
+    return {c: stats.lire(c) for c in clefs}

@@ -1,0 +1,283 @@
+/* Fiche d'une chambre conforme à Web · Détail d'une chambre */
+.fil-ariane { display: flex; flex-wrap: wrap; gap: var(--sp-2); color: var(--text-muted); font-size: var(--fs-14); margin-bottom: var(--sp-4); }
+.fil-ariane a { color: var(--link); text-decoration: none; }
+.fil-ariane a:hover { text-decoration: underline; }
+.fil-ariane [aria-current] { color: var(--text); font-weight: 600; }
+
+.fiche-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+@media (min-width: 1024px) {
+  .fiche-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+    gap: var(--sp-8);
+  }
+  .fiche-sidebar {
+    position: sticky;
+    top: 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+  }
+}
+
+.fiche-lecteur-conteneur {
+  position: relative;
+  border-radius: var(--rayon-4);
+  overflow: hidden;
+  background: var(--sable-950);
+  box-shadow: var(--ombre-2);
+}
+
+.fiche-lecteur-conteneur video {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 65vh;
+  object-fit: cover;
+  display: block;
+}
+
+.fiche-vignettes-barre {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+}
+
+.fiche-vignette {
+  position: relative;
+  width: 5.5rem;
+  height: 4.25rem;
+  border-radius: var(--rayon-2);
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: var(--surface-sunken);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: border-color var(--duree-1) var(--courbe);
+}
+
+.fiche-vignette img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fiche-vignette--active {
+  border-color: var(--primary);
+}
+
+.fiche-vignette--plus {
+  background: var(--marque-50);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: var(--fs-18);
+}
+
+/* En-tête de fiche avec titre à gauche et prix bleu géant à droite */
+.fiche-entete-barre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+
+.fiche-titre {
+  font-size: var(--fs-30);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.fiche-prix-montant {
+  font-size: var(--fs-24);
+  font-weight: 800;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  white-space: nowrap;
+}
+.fiche-prix-montant small {
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.fiche-localisation-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-14);
+  margin-top: var(--sp-1);
+}
+
+.fiche-badges-caracteristiques {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.fiche-caracteristique-pilule {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--rayon-pilule);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: var(--fs-14);
+  font-weight: 500;
+}
+
+.fiche-description-texte {
+  margin-top: var(--sp-6);
+  font-size: var(--fs-16);
+  line-height: var(--lh-texte);
+  color: var(--text);
+}
+
+/* Grille des conditions de loyer */
+.fiche-section-titre {
+  font-size: var(--fs-18);
+  font-weight: 700;
+  color: var(--text);
+  margin-top: var(--sp-6);
+  margin-bottom: var(--sp-3);
+}
+
+.fiche-conditions-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+
+.fiche-condition-carte {
+  background: var(--surface-sunken);
+  border-radius: var(--rayon-3);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.fiche-condition-label {
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.fiche-condition-valeur {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Carte Action / Contact dans la sidebar */
+.carte-action-fiche {
+  background: var(--surface);
+  border: var(--bordure);
+  border-radius: var(--rayon-4);
+  padding: var(--sp-6);
+  box-shadow: var(--ombre-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Carte Gérant dans la colonne de droite */
+.carte-gerant-fiche {
+  background: var(--surface);
+  border: var(--bordure);
+  border-radius: var(--rayon-4);
+  padding: var(--sp-6);
+  box-shadow: var(--ombre-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.carte-gerant-fiche__entete {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.avatar-rond {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-18);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.carte-gerant-fiche__infos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.carte-gerant-fiche__nom-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.carte-gerant-fiche__nom {
+  font-size: var(--fs-18);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.carte-gerant-fiche__role {
+  font-size: var(--fs-14);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Carte Localisation / Plan */
+.carte-localisation-fiche {
+  background: var(--surface);
+  border: var(--bordure);
+  border-radius: var(--rayon-4);
+  overflow: hidden;
+  box-shadow: var(--ombre-1);
+}
+
+.carte-localisation-visuel {
+  height: 10rem;
+  background: var(--surface-sunken);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.carte-localisation-repere {
+  padding: var(--sp-4) var(--sp-6);
+  font-size: var(--fs-14);
+  color: var(--text);
+  margin: 0;
+  border-top: var(--bordure);
+}

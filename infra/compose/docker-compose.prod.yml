@@ -39,7 +39,8 @@ services:
   beat:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
-    volumes: !override []
+    volumes: !override
+      - beat_data:/var/lib/logeo
   caddy:
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     ports: !override

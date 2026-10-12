@@ -21,9 +21,13 @@ urlpatterns = [
 ]
 
 if getattr(settings, "SCHEMA_ENABLED", False):
-    from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+    from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerSplitView
 
     urlpatterns += [
         path("schema/", SpectacularAPIView.as_view(), name="schema"),
-        path("schema/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="schema-docs"),
+        path(
+            "schema/docs/",
+            SpectacularSwaggerSplitView.as_view(url_name="schema"),
+            name="schema-docs",
+        ),
     ]

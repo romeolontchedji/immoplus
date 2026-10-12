@@ -1,0 +1,8 @@
+/* Liste des appareils connectés (espace compte). */
+.liste-appareils { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.liste-appareils__item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;
+  padding: var(--sp-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--rayon-2);
+}
+.liste-appareils__nom { margin: 0; font-weight: 600; }
+.liste-appareils__item p { margin: 0; }

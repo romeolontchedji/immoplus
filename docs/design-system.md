@@ -9,8 +9,8 @@ Cible tactile : 44 px au minimum (48 px pour l'action principale). Mouvement ré
 
 Tout est défini dans `serveur/web/static/css/tokens.css` :
 
-- **Marque** émeraude (`--marque-50` à `-900`), **accent** terre cuite (`--accent-…`), **neutres** sable (`--sable-0` à `-950`).
-- **Sémantiques** : `--succes`, `--avertissement`, `--danger`, `--information`, avec fond et texte associés.
+- **Marque** bleu cobalt (`--marque-50` à `-900`), **accent** terre cuite / ambre (`--accent-…`), **neutres** ardoise / slate (`--sable-0` à `-950`).
+- **Sémantiques** : `--succes` (vert émeraude vérifié), `--avertissement`, `--danger`, `--information`, avec fond et texte associés.
 - **Rôles** (changent avec le thème) : `--bg`, `--surface`, `--text`, `--text-muted`, `--primary`, `--focus`, `--link`, etc.
 - Typographie (`--fs-12` à `--fs-60`), espacement sur 4 px (`--sp-1` à `--sp-20`), rayons, ombres, durées (150, 200, 250 ms).
 

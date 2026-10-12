@@ -159,6 +159,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API REST de Logeo (additive uniquement, versionnée sous /v1).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "/static/vendor/swagger-ui",
+    "SWAGGER_UI_FAVICON_HREF": "/static/vendor/swagger-ui/favicon-32x32.png",
 }
 
 # --- Fournisseurs (interfaces dans apps.core.providers) ---

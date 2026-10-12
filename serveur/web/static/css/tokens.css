@@ -4,32 +4,32 @@
 :root {
   color-scheme: light dark;
 
-  /* Marque émeraude */
-  --marque-50: #ECF8F3; --marque-100: #D3F0E3; --marque-200: #A9E1C9; --marque-300: #76CCA9;
-  --marque-400: #43B287; --marque-500: #1F9669; --marque-600: #117853; --marque-700: #0E6045;
-  --marque-800: #0D4C38; --marque-900: #0A3D2E;
+  /* Marque bleu cobalt des maquettes */
+  --marque-50: #EFF6FF; --marque-100: #DBEAFE; --marque-200: #BFDBFE; --marque-300: #93C5FD;
+  --marque-400: #60A5FA; --marque-500: #3B82F6; --marque-600: #1D4ED8; --marque-700: #1E40AF;
+  --marque-800: #1E3A8A; --marque-900: #172554;
 
-  /* Accent terre cuite */
+  /* Accent terre cuite / ambre */
   --accent-50: #FEF3EE; --accent-100: #FDE1D3; --accent-200: #FAC0A3; --accent-300: #F69771;
   --accent-400: #EE7143; --accent-500: #E4572E; --accent-600: #C9421F; --accent-700: #A5341A;
   --accent-800: #852D1B; --accent-900: #6D281A;
 
-  /* Neutres « sable » */
-  --sable-0: #FFFFFF; --sable-25: #FCFAF6; --sable-50: #F8F4EC; --sable-100: #F0EADF;
-  --sable-200: #E3DACA; --sable-300: #CFC3AE; --sable-400: #A89B84; --sable-500: #81755F;
-  --sable-600: #625845; --sable-700: #4A4234; --sable-800: #342E24; --sable-900: #211D16;
-  --sable-950: #14110C;
+  /* Neutres ardoise / slate */
+  --sable-0: #FFFFFF; --sable-25: #F8FAFC; --sable-50: #F1F5F9; --sable-100: #E2E8F0;
+  --sable-200: #CBD5E1; --sable-300: #94A3B8; --sable-400: #64748B; --sable-500: #475569;
+  --sable-600: #334155; --sable-700: #1E293B; --sable-800: #0F172A; --sable-900: #0B132B;
+  --sable-950: #030712;
 
   /* Sémantiques (valeur pleine, teinte de fond, teinte de texte) */
-  --succes: #1F9669; --avertissement: #D99A00; --danger: #D13B3B; --information: #2F6FDE;
+  --succes: #10B981; --avertissement: #D97706; --danger: #DC2626; --information: #2563EB;
 
   /* Jetons sémantiques — thème clair */
   --bg: var(--sable-25);
   --surface: var(--sable-0);
   --surface-raised: var(--sable-0);
   --surface-sunken: var(--sable-50);
-  --border: var(--sable-200);
-  --border-strong: var(--sable-300);
+  --border: var(--sable-100);
+  --border-strong: var(--sable-200);
   --text: var(--sable-900);
   --text-muted: var(--sable-600);
   --primary: var(--marque-600);
@@ -40,17 +40,31 @@
   --accent: var(--accent-600);
   --accent-soft: var(--accent-50);
   --on-accent-soft: var(--accent-800);
-  --focus: var(--marque-500);
-  --link: var(--marque-700);
-  --succes-bg: #E6F5EE; --succes-text: #0D4C38;
-  --avertissement-bg: #FFF6DB; --avertissement-text: #6B4A00;
-  --danger-bg: #FDECEC; --danger-text: #8A1F1F;
-  --information-bg: #E8F0FD; --information-text: #17418F;
-  --scrim: rgb(20 17 12 / 0.55);
+  --focus: var(--marque-600);
+  --link: var(--marque-600);
+  --succes-bg: #ECFDF5; --succes-text: #065F46;
+  --avertissement-bg: #FFFBEB; --avertissement-text: #92400E;
+  --danger-bg: #FEF2F2; --danger-text: #991B1B;
+  --information-bg: #EFF6FF; --information-text: #1E40AF;
+  --scrim: rgb(11 19 43 / 0.55);
+  --play-btn-bg: rgb(255 255 255 / 0.9);
+  --play-btn-bg-hover: var(--sable-0);
+  --play-btn-fg: var(--sable-950);
+  --media-overlay-bg: rgb(3 7 18 / 0.7);
+  --media-overlay-fg: var(--sable-0);
+  --admin-sidebar-bg: #0B132B;
+  --admin-sidebar-fg: #F8FAFC;
+  --admin-sidebar-text: #CBD5E1;
+  --admin-sidebar-hover: rgb(255 255 255 / 0.08);
+  --admin-sidebar-active: #1D4ED8;
+  --admin-main-bg: var(--bg);
+  --admin-border: var(--border);
+  --border-subtle: var(--border);
 
   /* Typographie */
-  --police-texte: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --police-texte: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --police-titre: var(--police-texte);
+  --police-corps: var(--police-texte);
   --fs-12: 0.75rem; --fs-14: 0.875rem; --fs-16: 1rem; --fs-18: 1.125rem; --fs-20: 1.25rem;
   --fs-24: 1.5rem; --fs-30: 1.875rem; --fs-36: 2.25rem; --fs-48: 3rem; --fs-60: 3.75rem;
   --lh-texte: 1.5; --lh-titre: 1.2; --lh-titre-serre: 1.15;
@@ -64,9 +78,9 @@
   /* Formes */
   --rayon-1: 0.5rem; --rayon-2: 0.75rem; --rayon-3: 1rem; --rayon-4: 1.5rem; --rayon-pilule: 999px;
   --bordure: 1px solid var(--border);
-  --ombre-1: 0 1px 2px rgb(52 46 36 / 0.06), 0 1px 3px rgb(52 46 36 / 0.08);
-  --ombre-2: 0 2px 4px rgb(52 46 36 / 0.06), 0 6px 16px rgb(52 46 36 / 0.1);
-  --ombre-3: 0 4px 8px rgb(52 46 36 / 0.08), 0 16px 40px rgb(52 46 36 / 0.16);
+  --ombre-1: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.08);
+  --ombre-2: 0 2px 4px rgb(15 23 42 / 0.05), 0 6px 16px rgb(15 23 42 / 0.08);
+  --ombre-3: 0 4px 8px rgb(15 23 42 / 0.06), 0 16px 36px rgb(15 23 42 / 0.12);
   --anneau-focus: 0 0 0 2px var(--bg), 0 0 0 5px var(--focus);
   --cible: 2.75rem;
   --cible-principale: 3rem;
@@ -76,8 +90,8 @@
   --courbe: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Gabarits */
-  --largeur-page: 72rem;
-  --largeur-texte: 44rem;
+  --largeur-page: 76rem;
+  --largeur-texte: 46rem;
 }
 
 /* Thème sombre : préférence du système (sauf si le thème clair est forcé)… */
@@ -86,7 +100,7 @@
     --bg: var(--sable-950);
     --surface: var(--sable-900);
     --surface-raised: var(--sable-800);
-    --surface-sunken: #0E0C08;
+    --surface-sunken: #02040A;
     --border: var(--sable-700);
     --border-strong: var(--sable-600);
     --text: var(--sable-50);
@@ -94,18 +108,31 @@
     --primary: var(--marque-400);
     --primary-hover: var(--marque-300);
     --on-primary: var(--sable-950);
-    --primary-soft: #0F2E24;
+    --primary-soft: #172554;
     --on-primary-soft: var(--marque-200);
     --accent: var(--accent-400);
     --accent-soft: #3A1B12;
     --on-accent-soft: var(--accent-200);
     --focus: var(--marque-300);
     --link: var(--marque-300);
-    --succes-bg: #0F2E24; --succes-text: #A9E1C9;
-    --avertissement-bg: #3A2B00; --avertissement-text: #F5D77A;
-    --danger-bg: #3E1616; --danger-text: #F5B5B5;
-    --information-bg: #14264A; --information-text: #B3CCF7;
+    --succes-bg: #064E3B; --succes-text: #A7F3D0;
+    --avertissement-bg: #78350F; --avertissement-text: #FDE68A;
+    --danger-bg: #7F1D1D; --danger-text: #FECACA;
+    --information-bg: #1E3A8A; --information-text: #BFDBFE;
     --scrim: rgb(0 0 0 / 0.7);
+    --play-btn-bg: rgb(255 255 255 / 0.9);
+    --play-btn-bg-hover: var(--sable-0);
+    --play-btn-fg: var(--sable-950);
+    --media-overlay-bg: rgb(3 7 18 / 0.7);
+    --media-overlay-fg: var(--sable-0);
+    --admin-sidebar-bg: #0B132B;
+    --admin-sidebar-fg: #F8FAFC;
+    --admin-sidebar-text: #CBD5E1;
+    --admin-sidebar-hover: rgb(255 255 255 / 0.08);
+    --admin-sidebar-active: #1D4ED8;
+    --admin-main-bg: var(--bg);
+    --admin-border: var(--border);
+    --border-subtle: var(--border);
     --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
     --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);
@@ -117,7 +144,7 @@
   --bg: var(--sable-950);
   --surface: var(--sable-900);
   --surface-raised: var(--sable-800);
-  --surface-sunken: #0E0C08;
+  --surface-sunken: #02040A;
   --border: var(--sable-700);
   --border-strong: var(--sable-600);
   --text: var(--sable-50);
@@ -125,18 +152,31 @@
   --primary: var(--marque-400);
   --primary-hover: var(--marque-300);
   --on-primary: var(--sable-950);
-  --primary-soft: #0F2E24;
+  --primary-soft: #172554;
   --on-primary-soft: var(--marque-200);
   --accent: var(--accent-400);
   --accent-soft: #3A1B12;
   --on-accent-soft: var(--accent-200);
   --focus: var(--marque-300);
   --link: var(--marque-300);
-  --succes-bg: #0F2E24; --succes-text: #A9E1C9;
-  --avertissement-bg: #3A2B00; --avertissement-text: #F5D77A;
-  --danger-bg: #3E1616; --danger-text: #F5B5B5;
-  --information-bg: #14264A; --information-text: #B3CCF7;
+  --succes-bg: #064E3B; --succes-text: #A7F3D0;
+  --avertissement-bg: #78350F; --avertissement-text: #FDE68A;
+  --danger-bg: #7F1D1D; --danger-text: #FECACA;
+  --information-bg: #1E3A8A; --information-text: #BFDBFE;
   --scrim: rgb(0 0 0 / 0.7);
+  --play-btn-bg: rgb(255 255 255 / 0.9);
+  --play-btn-bg-hover: var(--sable-0);
+  --play-btn-fg: var(--sable-950);
+  --media-overlay-bg: rgb(3 7 18 / 0.7);
+  --media-overlay-fg: var(--sable-0);
+  --admin-sidebar-bg: #0B132B;
+  --admin-sidebar-fg: #F8FAFC;
+  --admin-sidebar-text: #CBD5E1;
+  --admin-sidebar-hover: rgb(255 255 255 / 0.08);
+  --admin-sidebar-active: #1D4ED8;
+  --admin-main-bg: var(--bg);
+  --admin-border: var(--border);
+  --border-subtle: var(--border);
   --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
   --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);

@@ -5,7 +5,7 @@ PYTHON := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 PYTEST := cd serveur && ../$(PYTHON) -m pytest
 
 .PHONY: aide installer env hooks up down migrate seed css vendor shell \
-        test test-unitaires test-integration test-e2e test-securite test-lent couverture \
+        test test-unitaires test-integration test-securite couverture \
         lint verifier openapi docs fumee diagnostic nettoyer test-outils tester-hooks
 
 aide: ## Liste les cibles
@@ -28,6 +28,9 @@ up: hooks env ## Démarre la pile locale (Docker Compose, profil dev)
 down: ## Arrête la pile
 	$(COMPOSE) down
 
+build: ## Reconstruit les images Docker
+	$(COMPOSE) build
+
 migrate: ## Applique les migrations (rôle PostgreSQL `migrate`)
 	$(COMPOSE) run --rm migrer
 
@@ -43,8 +46,8 @@ vendor: ## Télécharge htmx, Alpine.js (build CSP), hls.js et tus-js-client en 
 shell: ## Ouvre un shell Django dans le conteneur web-api
 	$(COMPOSE) exec web-api python manage.py shell
 
-test: ## Tous les tests sauf `lent` et `e2e`
-	$(PYTEST) -q -m "not lent and not e2e"
+test: ## Tous les tests
+	$(PYTEST) -q
 
 test-unitaires: ## Tests unitaires
 	$(PYTEST) -q -m unitaire
@@ -52,17 +55,11 @@ test-unitaires: ## Tests unitaires
 test-integration: ## Tests d'intégration (PostgreSQL réel)
 	$(PYTEST) -q -m integration
 
-test-e2e: ## Tests de bout en bout du site (Playwright + axe ; à partir de la phase 4)
-	$(PYTEST) -q -m e2e; code=$$?; [ $$code -eq 5 ] && echo "Aucun test e2e avant la phase 4." && exit 0; exit $$code
-
 test-securite: ## Tests de sécurité
 	$(PYTEST) -q -m securite
 
-test-lent: ## Tests de charge et de performance
-	$(PYTEST) -q -m lent; code=$$?; [ $$code -eq 5 ] && echo "Aucun test lent avant la phase 9." && exit 0; exit $$code
-
 couverture: ## Couverture (rapport HTML dans serveur/htmlcov, seuil 85 %)
-	$(PYTEST) -q -m "not lent and not e2e" --cov=apps --cov=web --cov=config --cov-report=term-missing:skip-covered --cov-report=html --cov-fail-under=85
+	$(PYTEST) -q --cov=apps --cov=web --cov=config --cov-report=term-missing:skip-covered --cov-report=html --cov-fail-under=85
 
 lint: ## ruff (contrôle et format)
 	$(PYTHON) -m ruff check serveur

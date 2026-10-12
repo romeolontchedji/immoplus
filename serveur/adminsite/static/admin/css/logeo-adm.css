@@ -1,0 +1,276 @@
+/* Feuille de style de l'administration Logeo — Conforme aux maquettes Admin */
+
+/* En-tête et Marque */
+#header {
+  background: var(--admin-sidebar-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--sp-3) var(--sp-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logeo-admin-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--sable-0);
+  font-size: var(--fs-18);
+  font-weight: 700;
+  letter-spacing: var(--crenage-titre);
+}
+
+.logeo-admin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary);
+  border-radius: var(--rayon-2);
+  font-size: var(--fs-14);
+}
+
+.logeo-admin-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: var(--fs-12);
+  font-weight: 700;
+  background: var(--primary-soft);
+  color: var(--on-primary-soft);
+  border-radius: var(--rayon-pilule);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: var(--sp-2);
+}
+
+#user-tools {
+  color: var(--admin-sidebar-text);
+  font-size: var(--fs-14);
+}
+#user-tools a {
+  color: var(--sable-100);
+  text-decoration: none;
+  font-weight: 600;
+}
+#user-tools a:hover {
+  text-decoration: underline;
+}
+
+/* Barre latérale (Sidebar) */
+#nav-sidebar {
+  background: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--border-subtle);
+  padding: var(--sp-4) var(--sp-2);
+}
+
+#nav-sidebar .module th {
+  background: transparent;
+  color: var(--admin-sidebar-text);
+  font-size: var(--fs-12);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+}
+
+#nav-sidebar a {
+  color: var(--admin-sidebar-text);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--rayon-2);
+  display: block;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all var(--duree-1) var(--courbe);
+}
+
+#nav-sidebar a:hover {
+  background: var(--surface-sunken);
+  color: var(--sable-0);
+}
+
+#nav-sidebar .current-app a,
+#nav-sidebar .current-model a {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
+}
+
+/* Zone principale */
+body {
+  background: var(--admin-main-bg);
+  color: var(--text);
+  font-family: var(--police-corps);
+}
+
+#content {
+  padding: var(--sp-6);
+  background: var(--admin-main-bg);
+}
+
+/* Titres de page */
+#content h1 {
+  font-size: var(--fs-24);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: var(--sp-4);
+}
+
+/* Cartes et Métriques du tableau de bord */
+.lg-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+
+.lg-carte {
+  background: var(--surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--rayon-3);
+  padding: var(--sp-5);
+  box-shadow: var(--ombre-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.lg-valeur {
+  font-size: var(--fs-36);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.lg-valeur--bleu { color: var(--primary); }
+.lg-valeur--vert { color: var(--succes); }
+.lg-valeur--ambre { color: var(--avertissement); }
+
+.lg-etiquette {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--fs-14);
+  color: var(--text-muted);
+}
+
+.lg-carte .help {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+}
+
+.lg-liste {
+  margin: var(--sp-2) 0 0;
+  padding-left: var(--sp-4);
+  font-size: var(--fs-14);
+  color: var(--text);
+}
+
+/* Modules Django Admin */
+.module {
+  background: var(--surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--rayon-3);
+  box-shadow: var(--ombre-1);
+  margin-bottom: var(--sp-6);
+  overflow: hidden;
+}
+
+.module h2,
+.module caption {
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: var(--fs-16);
+  font-weight: 700;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--admin-border);
+  text-align: start;
+}
+
+/* Tableaux */
+#changelist table,
+.module table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#changelist table thead th,
+.module table thead th {
+  font-size: var(--fs-12);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--admin-border);
+  text-align: start;
+}
+
+#changelist table tbody td,
+.module table tbody td {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--admin-border);
+  vertical-align: middle;
+}
+
+#changelist table tbody tr:hover,
+.module table tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+/* Boutons d'action */
+.button,
+input[type="submit"],
+.submit-row input {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--rayon-2);
+  padding: var(--sp-2) var(--sp-4);
+  font-weight: 600;
+  font-size: var(--fs-14);
+  cursor: pointer;
+  transition: background-color var(--duree-1) var(--courbe);
+}
+
+.button:hover,
+input[type="submit"]:hover,
+.submit-row input:hover {
+  background: var(--primary-hover);
+}
+
+.button.default,
+input[type="submit"].default {
+  background: var(--primary);
+}
+
+.deletelink {
+  color: var(--danger);
+  font-weight: 600;
+  text-decoration: none;
+}
+.deletelink:hover {
+  text-decoration: underline;
+}
+
+/* Badges de statut */
+.badge--succes {
+  background: var(--succes-bg);
+  color: var(--succes-text);
+  border-radius: var(--rayon-pilule);
+  padding: 0.2rem 0.65rem;
+  font-weight: 600;
+  font-size: var(--fs-12);
+}
+
+.badge--avertissement {
+  background: var(--avertissement-bg);
+  color: var(--avertissement-text);
+  border-radius: var(--rayon-pilule);
+  padding: 0.2rem 0.65rem;
+  font-weight: 600;
+  font-size: var(--fs-12);
+}

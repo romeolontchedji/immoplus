@@ -41,6 +41,8 @@ AUTHENTICATION_BACKENDS_ADMIN = [
 AUTHENTICATION_BACKENDS = AUTHENTICATION_BACKENDS_ADMIN
 
 TEMPLATES = copy.deepcopy(_TEMPLATES)
+# Les gabarits d'`adminsite` priment (index « Vue d'ensemble »), puis ceux du site, puis les apps.
+TEMPLATES[0]["DIRS"] = [BASE_DIR / "adminsite" / "templates", *TEMPLATES[0]["DIRS"]]  # noqa: F405
 TEMPLATES[0]["OPTIONS"]["context_processors"].append(
     "django.contrib.messages.context_processors.messages"
 )

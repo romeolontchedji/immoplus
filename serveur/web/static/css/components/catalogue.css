@@ -1,0 +1,191 @@
+.section--catalogue { padding-block: var(--sp-6) var(--sp-12); }
+
+/* Layout 2 colonnes inspiré de la maquette Web · Chambres */
+.catalogue-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+@media (min-width: 1024px) {
+  .catalogue-layout {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    align-items: start;
+    gap: var(--sp-8);
+  }
+  .catalogue-sidebar {
+    position: sticky;
+    top: 5rem;
+  }
+}
+
+.catalogue-sidebar-carte {
+  background: var(--surface);
+  border: var(--bordure);
+  border-radius: var(--rayon-4);
+  padding: var(--sp-6);
+  box-shadow: var(--ombre-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.catalogue-sidebar-carte__titre {
+  font-size: var(--fs-20);
+  font-weight: 800;
+  margin: 0;
+  color: var(--text);
+}
+
+.filtre-groupe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.filtre-groupe__titre {
+  font-size: var(--fs-12);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.filtre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.filtre-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--rayon-pilule);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--duree-1) var(--courbe), color var(--duree-1) var(--courbe), border-color var(--duree-1) var(--courbe);
+}
+.filtre-chip:hover {
+  background: var(--surface-sunken);
+}
+.filtre-chip--actif {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+
+.filtre-slider {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.filtre-slider-valeur {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Ligne avec switch toggle */
+.filtre-ligne-switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: var(--bordure);
+}
+.filtre-ligne-switch__label {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Interrupteur iOS-like sans couleur en dur */
+.interrupteur {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.interrupteur input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.interrupteur__piste {
+  position: relative;
+  display: inline-block;
+  width: 2.75rem;
+  height: 1.5rem;
+  background: var(--border-strong);
+  border-radius: var(--rayon-pilule);
+  transition: background-color var(--duree-2) var(--courbe);
+}
+.interrupteur__curseur {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--surface);
+  border-radius: 50%;
+  box-shadow: var(--ombre-1);
+  transition: transform var(--duree-2) var(--courbe);
+}
+.interrupteur input[type="checkbox"]:checked + .interrupteur__piste {
+  background: var(--succes);
+}
+.interrupteur input[type="checkbox"]:checked + .interrupteur__piste .interrupteur__curseur {
+  transform: translateX(1.25rem);
+}
+.interrupteur input[type="checkbox"]:focus-visible + .interrupteur__piste {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* En-tête des résultats du catalogue */
+.catalogue-entete-barre {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+.catalogue-titre-principal {
+  font-size: var(--fs-24);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+.catalogue-tri-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-14);
+  color: var(--text-muted);
+}
+.catalogue-tri-select select {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: var(--rayon-2);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
