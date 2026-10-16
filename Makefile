@@ -40,6 +40,12 @@ seed: ## Paramètres et quartiers de Parakou ; ajouter DEMO=1 pour des annonces 
 css: ## Assemble, minifie et empreinte le CSS
 	$(PYTHON) outils/construire_css.py
 
+deployer-css: css ## Construit le CSS et le déploie dans le volume statique Docker (Caddy)
+	$(COMPOSE) run --rm \
+		-e DJANGO_SETTINGS_MODULE=config.settings.migrer \
+		-e STATIC_ROOT=/var/lib/logeo/static \
+		migrer python manage.py collectstatic --clear --noinput
+
 vendor: ## Télécharge htmx, Alpine.js (build CSP), hls.js et tus-js-client en fichiers figés
 	@echo "Non disponible : outils/telecharger_vendor.py arrive en phase 4 (voir docs/avancement.md)."; exit 1
 
