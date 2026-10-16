@@ -4,10 +4,15 @@
 {% block contenu %}
   <section class="section">
     <div class="conteneur conteneur--texte pile">
+      <nav class="fil-ariane mb-2" aria-label="Fil d'Ariane">
+        <a href="/compte">Mon compte</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Notifications</span>
+      </nav>
       <div class="entete-resultats mb-4">
         <div>
           <h1 class="entete-resultats__titre">Notifications</h1>
-          <p class="texte-doux mb-0">Restez informé de vos annonces, messages et alertes</p>
+          <p class="texte-doux mb-0">Reste informé de tes annonces, nouveaux messages et alertes de chambres</p>
         </div>
         {% if non_lues %}
           <form method="post">
@@ -23,7 +28,19 @@
             <div class="carte p-4 {% if g.non_lues %}border-primary bg-surface{% else %}bg-surface-sunken{% endif %}">
               <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                 <div class="d-flex align-items-start gap-3">
-                  <div class="avatar-rond fs-18">🔔</div>
+                  <div class="avatar-rond" aria-hidden="true">
+                    <svg width="18"
+                         height="18"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                  </div>
                   <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
                       <strong class="color-text">{{ g.derniere.title }}</strong>
@@ -48,7 +65,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="lire">
                       <input type="hidden" name="notification_id" value="{{ g.derniere.id }}">
-                      <button class="bouton bouton--petit bouton--secondaire" type="submit">Marquer lu</button>
+                      <button class="bouton bouton--petit bouton--secondaire" type="submit">Marquer lue</button>
                     </form>
                   {% endif %}
                 </div>
@@ -57,9 +74,27 @@
           </li>
         {% empty %}
           <li class="panneau text-center p-8">
-            <div class="fs-32 mb-2">🔕</div>
-            <h2 class="fs-18 fw-bold mb-1">Aucune notification</h2>
-            <p class="texte-doux mb-0">Vous êtes à jour ! Vos notifications futures apparaîtront ici.</p>
+            <div class="etat-vide">
+              <div class="etat-vide__symbole">
+                <svg width="32"
+                     height="32"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.75"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  <path d="M18.63 13A17.89 17.89 0 0 1 18 8" />
+                  <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14" />
+                  <path d="M18 8a6 6 0 0 0-9.33-5" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </div>
+              <h2 class="etat-vide__titre">Rien de nouveau.</h2>
+              <p class="etat-vide__texte">Tes alertes et les réponses des gérants apparaîtront ici.</p>
+            </div>
           </li>
         {% endfor %}
       </ul>

@@ -1,183 +1,285 @@
 /* Jetons de design Logeo — SEUL fichier où une couleur, une taille ou une ombre s'écrit en dur.
-   Points de rupture (non utilisables dans @media, rappel) : 360 (base), 640, 768, 1024, 1280. */
+   Source de vérité : docs/design/DESIGN.md section 3.
+   Points de rupture : 360 (base), 640, 768, 1024, 1280. */
 
 :root {
-  color-scheme: light dark;
-
-  /* Marque bleu cobalt des maquettes */
-  --marque-50: #EFF6FF; --marque-100: #DBEAFE; --marque-200: #BFDBFE; --marque-300: #93C5FD;
-  --marque-400: #60A5FA; --marque-500: #3B82F6; --marque-600: #1D4ED8; --marque-700: #1E40AF;
-  --marque-800: #1E3A8A; --marque-900: #172554;
-
-  /* Accent terre cuite / ambre */
-  --accent-50: #FEF3EE; --accent-100: #FDE1D3; --accent-200: #FAC0A3; --accent-300: #F69771;
-  --accent-400: #EE7143; --accent-500: #E4572E; --accent-600: #C9421F; --accent-700: #A5341A;
-  --accent-800: #852D1B; --accent-900: #6D281A;
-
-  /* Neutres ardoise / slate */
-  --sable-0: #FFFFFF; --sable-25: #F8FAFC; --sable-50: #F1F5F9; --sable-100: #E2E8F0;
-  --sable-200: #CBD5E1; --sable-300: #94A3B8; --sable-400: #64748B; --sable-500: #475569;
-  --sable-600: #334155; --sable-700: #1E293B; --sable-800: #0F172A; --sable-900: #0B132B;
-  --sable-950: #030712;
-
-  /* Sémantiques (valeur pleine, teinte de fond, teinte de texte) */
-  --succes: #10B981; --avertissement: #D97706; --danger: #DC2626; --information: #2563EB;
-
-  /* Jetons sémantiques — thème clair */
-  --bg: var(--sable-25);
-  --surface: var(--sable-0);
-  --surface-raised: var(--sable-0);
-  --surface-sunken: var(--sable-50);
-  --border: var(--sable-100);
-  --border-strong: var(--sable-200);
-  --text: var(--sable-900);
+  /* Palette principale (DESIGN.md §3) */
+  --blue:       #1B44D6;
+  --blue-soft:  #EAF0FF;
+  --sun:        #FFB429;
+  --night:      #0F1B3D;
+  --sable-300: #94A3B8;
+  --sable-600: #4A5373;
+  --sable-950: #0B132B;
   --text-muted: var(--sable-600);
-  --primary: var(--marque-600);
-  --primary-hover: var(--marque-700);
-  --on-primary: var(--sable-0);
-  --primary-soft: var(--marque-50);
-  --on-primary-soft: var(--marque-800);
-  --accent: var(--accent-600);
-  --accent-soft: var(--accent-50);
-  --on-accent-soft: var(--accent-800);
-  --focus: var(--marque-600);
-  --link: var(--marque-600);
-  --succes-bg: #ECFDF5; --succes-text: #065F46;
-  --avertissement-bg: #FFFBEB; --avertissement-text: #92400E;
-  --danger-bg: #FEF2F2; --danger-text: #991B1B;
-  --information-bg: #EFF6FF; --information-text: #1E40AF;
-  --scrim: rgb(11 19 43 / 0.55);
-  --play-btn-bg: rgb(255 255 255 / 0.9);
-  --play-btn-bg-hover: var(--sable-0);
-  --play-btn-fg: var(--sable-950);
-  --media-overlay-bg: rgb(3 7 18 / 0.7);
-  --media-overlay-fg: var(--sable-0);
-  --admin-sidebar-bg: #0B132B;
-  --admin-sidebar-fg: #F8FAFC;
-  --admin-sidebar-text: #CBD5E1;
-  --admin-sidebar-hover: rgb(255 255 255 / 0.08);
-  --admin-sidebar-active: #1D4ED8;
-  --admin-main-bg: var(--bg);
-  --admin-border: var(--border);
-  --border-subtle: var(--border);
+  --bg:         #F5F6FA;
+  --surface:    #FFFFFF;
+  --border:     #D5DAEA;
+  --divider:    #EDEFF6;
+  --success:    #0C6B4A;
+  --success-bg: #DDF3EA;
+  --warning:    #8A5300;
+  --warning-bg: #FFF0D2;
+  --danger:     #A32218;
+  --danger-bg:  #FBE1DE;
 
-  /* Typographie */
-  --police-texte: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --police-titre: var(--police-texte);
-  --police-corps: var(--police-texte);
-  --fs-12: 0.75rem; --fs-14: 0.875rem; --fs-16: 1rem; --fs-18: 1.125rem; --fs-20: 1.25rem;
-  --fs-24: 1.5rem; --fs-30: 1.875rem; --fs-36: 2.25rem; --fs-48: 3rem; --fs-60: 3.75rem;
-  --lh-texte: 1.5; --lh-titre: 1.2; --lh-titre-serre: 1.15;
-  --crenage-titre: -0.02em;
+  /* Teintes et nuances dérivées */
+  --white:      #FFFFFF;
+  --sun-hover:  #E8A320;
+  --blue-hover: #1538B8;
+  --blue-soft-hover: #D4E3FF;
+  --danger-hover: #F5CBC8;
+  --switch-off: #C5CAD9;
+
+  /* Dégradés du hero et bannière */
+  --hero-blue-1: #1a2a6c;
+  --hero-blue-2: #2a3f8f;
+  /* Voiles des bannières (image d'arrière-plan, DESIGN.md) */
+  --voile-accueil: linear-gradient(100deg, rgba(15, 27, 61, 0.88) 30%, rgba(15, 27, 61, 0.05));
+  --voile-catalogue: linear-gradient(180deg, rgba(15, 27, 61, 0.55), rgba(15, 27, 61, 0.85));
+  --voile-auth: linear-gradient(180deg, rgba(15, 27, 61, 0.35), rgba(15, 27, 61, 0.90));
+
+  /* Transparences blanches */
+  --white-12: rgba(255, 255, 255, 0.12);
+  --white-25: rgba(255, 255, 255, 0.25);
+  --white-35: rgba(255, 255, 255, 0.35);
+  --white-45: rgba(255, 255, 255, 0.45);
+  --white-50: rgba(255, 255, 255, 0.50);
+  --white-55: rgba(255, 255, 255, 0.55);
+  --white-60: rgba(255, 255, 255, 0.60);
+  --white-65: rgba(255, 255, 255, 0.65);
+  --white-70: rgba(255, 255, 255, 0.70);
+  --white-75: rgba(255, 255, 255, 0.75);
+  --white-80: rgba(255, 255, 255, 0.80);
+  --white-85: rgba(255, 255, 255, 0.85);
+  --white-90: rgba(255, 255, 255, 0.90);
+  --white-92: rgba(255, 255, 255, 0.92);
+
+  /* Transparences sombres */
+  --black-alpha-05: rgba(15, 27, 61, 0.05);
+  --black-alpha-06: rgba(15, 27, 61, 0.06);
+  --black-alpha-08: rgba(15, 27, 61, 0.08);
+  --black-alpha-15: rgba(15, 27, 61, 0.15);
+  --black-alpha-18: rgba(15, 27, 61, 0.18);
+  --black-alpha-70: rgba(15, 27, 61, 0.70);
+  --black-alpha-75: rgba(15, 27, 61, 0.75);
+  --warning-border: rgba(138, 83, 0, 0.20);
+  --danger-border:  rgba(163, 34, 24, 0.15);
+  --success-border: rgba(12, 107, 74, 0.20);
+  --info-border:    rgba(27, 68, 214, 0.15);
+  --focus-ring:     rgba(27, 68, 214, 0.12);
+  --blue-focus-ring: rgba(27, 68, 214, 0.18);
+  --danger-soft:    #FDEDED;
+
+  /* Alias sémantiques pour les composants existants */
+  --primary:          var(--blue);
+  --primary-hover:    var(--blue-hover);
+  --on-primary:       var(--white);
+  --primary-soft:     var(--blue-soft);
+  --on-primary-soft:  var(--blue);
+  --accent:           var(--sun);
+  --accent-soft:      #FFF7E6;
+  --on-accent-soft:   var(--night);
+  --link:             var(--blue);
+  --focus:            var(--blue);
+  --text:             var(--night);
+  --surface-raised:   var(--surface);
+  --surface-sunken:   var(--bg);
+  --border-strong:    #B8C4D9;
+  --border-subtle:    var(--divider);
+  --succes-bg:        #DDF3EA;
+  --succes-text:      #0C6B4A;
+  --avertissement-bg: #FFF0D2;
+  --avertissement-text: #8A5300;
+  --danger-bg:        #FBE1DE;
+  --danger-text:      #A32218;
+  --information-bg:   #EAF0FF;
+  --information-text: #1B44D6;
+  --scrim:            var(--black-alpha-75);
+  --play-btn-bg:      var(--white-90);
+  --play-btn-bg-hover: var(--white);
+  --play-btn-fg:      var(--night);
+  --media-overlay-bg: var(--black-alpha-70);
+  --media-overlay-fg: var(--white);
+
+  /* Nuanciers du styleguide (dérivés de la palette) */
+  --marque-50:  #EAF0FF; --marque-100: #D4E3FF; --marque-200: #A9C6FF;
+  --marque-300: #7EA9FF; --marque-400: #4F86ED; --marque-500: var(--blue);
+  --marque-600: #1538B8; --marque-700: #102C96; --marque-800: #0C2174;
+  --marque-900: #081552;
+  --accent-50:  #FFF7E6; --accent-100: #FFEFCC; --accent-200: #FFDE99;
+  --accent-300: #FFCD66; --accent-400: #FFC047; --accent-500: var(--sun);
+  --accent-600: #E8A320; --accent-700: #C4880F; --accent-800: #9E6C08;
+  --accent-900: #7A5205;
+  --sable-25:  #FAFBFD; --sable-50: #F5F6FA; --sable-100: #E2E8F0;
+  --sable-200: #C9D1E0; --sable-400: #7A88A3; --sable-500: #5F6B85;
+  --sable-700: #3A4260; --sable-800: #2A3049; --sable-900: #1A1F33;
+  --succes: var(--success); --avertissement: var(--warning); --information: var(--blue);
+
+  /* Admin sidebar & header */
+  --admin-sidebar-bg:     var(--night);
+  --admin-sidebar-fg:     #F8FAFC;
+  --admin-sidebar-text:   #CBD5E1;
+  --admin-sidebar-hover:  rgba(255,255,255,0.08);
+  --admin-sidebar-active: var(--blue);
+  --admin-main-bg:        var(--bg);
+  --admin-border:         var(--border);
+  --admin-header-color:   #C9D1F2;
+  --sable-0:              #FFFFFF;
+  --sable-100:            #E2E8F0;
+
+  /* Typographie (Plus Jakarta Sans) */
+  --police-texte:  "Plus Jakarta Sans", system-ui, sans-serif;
+  --police-titre:  "Plus Jakarta Sans", system-ui, sans-serif;
+  --police-corps:  "Plus Jakarta Sans", system-ui, sans-serif;
+  --fs-12: 0.75rem;  --fs-13: 0.8125rem; --fs-14: 0.875rem; --fs-15: 0.9375rem;
+  --fs-16: 1rem;     --fs-17: 1.0625rem; --fs-18: 1.125rem; --fs-20: 1.25rem;
+  --fs-24: 1.5rem;   --fs-28: 1.75rem;   --fs-30: 1.875rem; --fs-36: 2.25rem;
+  --fs-40: 2.5rem;   --fs-48: 3rem;      --fs-60: 3.75rem;
+  --lh-texte: 1.55;
+  --lh-titre: 1.2;
+  --lh-titre-serre: 1.05;
+  --crenage-titre: -0.03em;
+  --crenage-hero:  -0.035em;
   --mesure: 70ch;
 
-  /* Espacement (grille de 4 px) */
-  --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem; --sp-5: 1.25rem; --sp-6: 1.5rem;
-  --sp-8: 2rem; --sp-10: 2.5rem; --sp-12: 3rem; --sp-16: 4rem; --sp-20: 5rem;
+  /* Espacement (grille 4 px) */
+  --sp-1: 0.25rem;  --sp-2: 0.5rem;  --sp-3: 0.75rem; --sp-4: 1rem;
+  --sp-5: 1.25rem;  --sp-6: 1.5rem;  --sp-8: 2rem;    --sp-10: 2.5rem;
+  --sp-12: 3rem;    --sp-14: 3.5rem; --sp-16: 4rem;   --sp-20: 5rem;
 
-  /* Formes */
-  --rayon-1: 0.5rem; --rayon-2: 0.75rem; --rayon-3: 1rem; --rayon-4: 1.5rem; --rayon-pilule: 999px;
+  /* Formes (DESIGN.md §3 : rayons) */
+  --r-field:  14px;   /* champs, boutons */
+  --r-card:   20px;   /* cartes */
+  --r-card-l: 24px;   /* grandes cartes */
+  --r-pill:   999px;  /* pastilles */
+  --r-sheet:  28px;   /* feuilles modales */
+
+  /* Alias compatibilité */
+  --rayon-1: 0.5rem;   --rayon-2: 0.875rem;  --rayon-3: 1rem;
+  --rayon-4: 1.5rem;   --rayon-pilule: var(--r-pill);
+
+  /* Ombres (DESIGN.md §3) */
+  --shadow-card: 0 4px 16px rgba(15,27,61,.06);
+  --shadow-pop:  0 12px 40px rgba(15,27,61,.18);
+  --shadow-btn:  0 2px 8px rgba(27,68,214,.25);
+  --shadow-knob: 0 1px 4px rgba(0,0,0,.20);
+  /* Alias compatibilité */
+  --ombre-1: var(--shadow-card);
+  --ombre-2: 0 2px 4px rgba(15,27,61,.05), 0 6px 16px rgba(15,27,61,.08);
+  --ombre-3: var(--shadow-pop);
+
+  /* Focus */
   --bordure: 1px solid var(--border);
-  --ombre-1: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.08);
-  --ombre-2: 0 2px 4px rgb(15 23 42 / 0.05), 0 6px 16px rgb(15 23 42 / 0.08);
-  --ombre-3: 0 4px 8px rgb(15 23 42 / 0.06), 0 16px 36px rgb(15 23 42 / 0.12);
   --anneau-focus: 0 0 0 2px var(--bg), 0 0 0 5px var(--focus);
-  --cible: 2.75rem;
-  --cible-principale: 3rem;
+  --cible:          2.75rem;  /* 44px */
+  --cible-principale: 3.5rem; /* 56px mobile / 46–52px web */
 
   /* Mouvement */
   --duree-1: 150ms; --duree-2: 200ms; --duree-3: 250ms;
   --courbe: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Gabarits */
-  --largeur-page: 76rem;
+  --largeur-page:  72.5rem;   /* 1160px */
   --largeur-texte: 46rem;
 }
 
-/* Thème sombre : préférence du système (sauf si le thème clair est forcé)… */
+/* ── Thème sombre système … ───────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: var(--sable-950);
-    --surface: var(--sable-900);
-    --surface-raised: var(--sable-800);
-    --surface-sunken: #02040A;
-    --border: var(--sable-700);
-    --border-strong: var(--sable-600);
-    --text: var(--sable-50);
-    --text-muted: var(--sable-300);
-    --primary: var(--marque-400);
-    --primary-hover: var(--marque-300);
-    --on-primary: var(--sable-950);
+    --surface: #0F1B3D;
+    --surface-raised: #1A264F;
+    --surface-sunken: #060B1A;
+    --border: #2D3A63;
+    --border-strong: #4A5B8C;
+    --divider: #1E2B52;
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --primary: #3B82F6;
+    --primary-hover: #60A5FA;
+    --on-primary: #0B132B;
     --primary-soft: #172554;
-    --on-primary-soft: var(--marque-200);
-    --accent: var(--accent-400);
-    --accent-soft: #3A1B12;
-    --on-accent-soft: var(--accent-200);
-    --focus: var(--marque-300);
-    --link: var(--marque-300);
+    --on-primary-soft: #93C5FD;
+    --accent: #FFB429;
+    --accent-soft: #3A2600;
+    --on-accent-soft: #FFD580;
+    --focus: #60A5FA;
+    --link: #60A5FA;
     --succes-bg: #064E3B; --succes-text: #A7F3D0;
     --avertissement-bg: #78350F; --avertissement-text: #FDE68A;
     --danger-bg: #7F1D1D; --danger-text: #FECACA;
     --information-bg: #1E3A8A; --information-text: #BFDBFE;
-    --scrim: rgb(0 0 0 / 0.7);
-    --play-btn-bg: rgb(255 255 255 / 0.9);
-    --play-btn-bg-hover: var(--sable-0);
-    --play-btn-fg: var(--sable-950);
-    --media-overlay-bg: rgb(3 7 18 / 0.7);
-    --media-overlay-fg: var(--sable-0);
+    --scrim: rgba(0, 0, 0, 0.7);
+    --play-btn-bg: rgba(255, 255, 255, 0.9);
+    --play-btn-bg-hover: #FFFFFF;
+    --play-btn-fg: #0B132B;
+    --media-overlay-bg: rgba(3, 7, 18, 0.7);
+    --media-overlay-fg: #FFFFFF;
     --admin-sidebar-bg: #0B132B;
     --admin-sidebar-fg: #F8FAFC;
     --admin-sidebar-text: #CBD5E1;
-    --admin-sidebar-hover: rgb(255 255 255 / 0.08);
+    --admin-sidebar-hover: rgba(255, 255, 255, 0.08);
     --admin-sidebar-active: #1D4ED8;
     --admin-main-bg: var(--bg);
     --admin-border: var(--border);
+    --admin-header-color: #C9D1F2;
+    --sable-0: #FFFFFF;
+    --sable-100: #E2E8F0;
     --border-subtle: var(--border);
-    --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
-    --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
-    --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.6);
+    --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --ombre-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
+    --ombre-3: 0 4px 8px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
   }
 }
 
-/* … ou thème sombre forcé par l'attribut data-theme (mêmes valeurs : vérifié par un test). */
+/* … ou thème sombre forcé par l'attribut data-theme ────────────────────────── */
 :root[data-theme="dark"] {
   --bg: var(--sable-950);
-  --surface: var(--sable-900);
-  --surface-raised: var(--sable-800);
-  --surface-sunken: #02040A;
-  --border: var(--sable-700);
-  --border-strong: var(--sable-600);
-  --text: var(--sable-50);
-  --text-muted: var(--sable-300);
-  --primary: var(--marque-400);
-  --primary-hover: var(--marque-300);
-  --on-primary: var(--sable-950);
+  --surface: #0F1B3D;
+  --surface-raised: #1A264F;
+  --surface-sunken: #060B1A;
+  --border: #2D3A63;
+  --border-strong: #4A5B8C;
+  --divider: #1E2B52;
+  --text: #F1F5F9;
+  --text-muted: #94A3B8;
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --on-primary: #0B132B;
   --primary-soft: #172554;
-  --on-primary-soft: var(--marque-200);
-  --accent: var(--accent-400);
-  --accent-soft: #3A1B12;
-  --on-accent-soft: var(--accent-200);
-  --focus: var(--marque-300);
-  --link: var(--marque-300);
+  --on-primary-soft: #93C5FD;
+  --accent: #FFB429;
+  --accent-soft: #3A2600;
+  --on-accent-soft: #FFD580;
+  --focus: #60A5FA;
+  --link: #60A5FA;
   --succes-bg: #064E3B; --succes-text: #A7F3D0;
   --avertissement-bg: #78350F; --avertissement-text: #FDE68A;
   --danger-bg: #7F1D1D; --danger-text: #FECACA;
   --information-bg: #1E3A8A; --information-text: #BFDBFE;
-  --scrim: rgb(0 0 0 / 0.7);
-  --play-btn-bg: rgb(255 255 255 / 0.9);
-  --play-btn-bg-hover: var(--sable-0);
-  --play-btn-fg: var(--sable-950);
-  --media-overlay-bg: rgb(3 7 18 / 0.7);
-  --media-overlay-fg: var(--sable-0);
+  --scrim: rgba(0, 0, 0, 0.7);
+  --play-btn-bg: rgba(255, 255, 255, 0.9);
+  --play-btn-bg-hover: #FFFFFF;
+  --play-btn-fg: #0B132B;
+  --media-overlay-bg: rgba(3, 7, 18, 0.7);
+  --media-overlay-fg: #FFFFFF;
   --admin-sidebar-bg: #0B132B;
   --admin-sidebar-fg: #F8FAFC;
   --admin-sidebar-text: #CBD5E1;
-  --admin-sidebar-hover: rgb(255 255 255 / 0.08);
+  --admin-sidebar-hover: rgba(255, 255, 255, 0.08);
   --admin-sidebar-active: #1D4ED8;
   --admin-main-bg: var(--bg);
   --admin-border: var(--border);
+  --admin-header-color: #C9D1F2;
+  --sable-0: #FFFFFF;
+  --sable-100: #E2E8F0;
   --border-subtle: var(--border);
-  --ombre-1: 0 1px 2px rgb(0 0 0 / 0.4);
-  --ombre-2: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.4);
-  --ombre-3: 0 4px 8px rgb(0 0 0 / 0.5), 0 16px 40px rgb(0 0 0 / 0.5);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ombre-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
+  --ombre-3: 0 4px 8px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
 }

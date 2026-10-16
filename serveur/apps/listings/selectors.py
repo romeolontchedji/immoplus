@@ -405,14 +405,28 @@ def annonce_pour_messagerie(annonce_id) -> dict | None:
 
 
 def annonces_pour_messagerie(ids) -> dict:
-    return {
-        a.pk: {
-            "id": a.pk, "slug": a.slug, "title": a.title, "status": a.status,
-            "rented_at": a.rented_at, "gerant_user_id": a.gerant_id,
-            "district_name": a.district.name, "rent_amount": a.rent_amount,
+    medias = _medias_prets(ids)
+    res = {}
+    for a in Listing.objects.filter(pk__in=list(ids)).select_related("district"):
+        m_list = medias.get(a.pk, [])
+        photos = [m for m in m_list if m.kind == TypeMedia.PHOTO]
+        video = next((m for m in m_list if m.kind == TypeMedia.VIDEO), None)
+        couverture = next((m for m in photos if m.is_cover), photos[0] if photos else None)
+        poster = _url_variante(couverture, "480") if couverture else None
+        if not poster and video and video.poster_path:
+            poster = stockage.url_publique(video.poster_path)
+        res[a.pk] = {
+            "id": a.pk,
+            "slug": a.slug,
+            "title": a.title,
+            "status": a.status,
+            "rented_at": a.rented_at,
+            "gerant_user_id": a.gerant_id,
+            "district_name": a.district.name,
+            "rent_amount": a.rent_amount,
+            "cover_url": poster,
         }
-        for a in Listing.objects.filter(pk__in=list(ids)).select_related("district")
-    }  # fmt: skip
+    return res
 
 
 def adresse_privee(annonce_id) -> str:

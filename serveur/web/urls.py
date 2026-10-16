@@ -9,7 +9,7 @@ from . import views_pro as p
 from . import views_public as pub
 
 urlpatterns = [
-    path("", pub.accueil, name="accueil"),
+    path("", views.accueil, name="accueil"),
     path("annonces", pub.annonces, name="annonces"),
     path("annonces/<slug:slug>", pub.fiche, name="fiche"),
     path("annonces/<slug:slug>/contacter", pub.contacter, name="contacter"),

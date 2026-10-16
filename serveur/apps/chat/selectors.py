@@ -99,11 +99,16 @@ def decrire(conversations: list[Conversation], utilisateur_id) -> list[dict]:
 
     maintenant = timezone.now()
     fiches = annonces.annonces_pour_messagerie({c.listing_id for c in conversations})
-    noms = comptes.noms_utilisateurs({autre_participant(c, utilisateur_id) for c in conversations})
+    autres = {autre_participant(c, utilisateur_id) for c in conversations}
+    noms = comptes.noms_utilisateurs(autres)
+    gerants = comptes.gerants_publics(autres)
     sortie = []
     for c in conversations:
         autre = autre_participant(c, utilisateur_id)
         annonce = fiches.get(c.listing_id, {})
+        g = gerants.get(autre, {})
+        nom = g.get("name") or noms.get(autre)
+        verified = g.get("verified", False)
         sortie.append(
             {
                 "id": c.pk,
@@ -112,8 +117,11 @@ def decrire(conversations: list[Conversation], utilisateur_id) -> list[dict]:
                     "slug": annonce.get("slug"),
                     "title": annonce.get("title"),
                     "status": annonce.get("status"),
+                    "district_name": annonce.get("district_name"),
+                    "rent_amount": annonce.get("rent_amount"),
+                    "cover_url": annonce.get("cover_url"),
                 },
-                "other": {"id": autre, "name": noms.get(autre)},
+                "other": {"id": autre, "name": nom, "verified": verified},
                 "status": c.status,
                 "blocked_by_me": c.blocked_by_id == utilisateur_id,
                 "last_message_preview": c.last_message_preview,

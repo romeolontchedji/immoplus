@@ -1,0 +1,138 @@
+{% load static %}
+<aside class="pro-sidebar">
+  {# Logo #}
+  <a class="logotype pro-sidebar__logo" href="/">
+    <img src="{% static 'design/logo.svg' %}"
+         alt=""
+         width="32"
+         height="32"
+         class="logotype__icone">
+    Logeo<span class="logotype__point">.</span>
+  </a>
+  {% if profil.verification_status == "verified" or request.user.gerant_profile.verification_status == "verified" %}
+    <span class="pro-sidebar__verifie">
+      <svg width="14"
+           height="14"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="2.5"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           aria-hidden="true">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+      GÉRANT VÉRIFIÉ
+    </span>
+  {% endif %}
+  {# Navigation #}
+  <nav class="pro-nav" aria-label="Navigation gérant">
+    <ul class="pro-nav__liste">
+      <li>
+        <a class="pro-nav__lien {% if active_onglet == 'dashboard' %}pro-nav__lien--actif{% endif %}"
+           href="/pro/dashboard">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+          </svg>
+          Tableau de bord
+        </a>
+      </li>
+      <li>
+        <a class="pro-nav__lien {% if active_onglet == 'annonces' %}pro-nav__lien--actif{% endif %}"
+           href="/pro/annonces">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          Mes annonces
+          {% if total_annonces %}
+            <span class="navigation__compteur ml-auto">{{ total_annonces }}</span>
+          {% endif %}
+        </a>
+      </li>
+      <li>
+        <a class="pro-nav__lien {% if active_onglet == 'messages' %}pro-nav__lien--actif{% endif %}"
+           href="/compte/messages">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          Messages
+          {% if non_lus %}
+            <span class="navigation__compteur ml-auto">{{ non_lus }}</span>
+          {% endif %}
+        </a>
+      </li>
+      <li>
+        <a class="pro-nav__lien {% if active_onglet == 'notifications' %}pro-nav__lien--actif{% endif %}"
+           href="/compte/notifications">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          Notifications
+        </a>
+      </li>
+      <li>
+        <a class="pro-nav__lien {% if active_onglet == 'profil' %}pro-nav__lien--actif{% endif %}"
+           href="/compte">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          Mon profil
+        </a>
+      </li>
+    </ul>
+  </nav>
+  {# Avatar & Identité en bas #}
+  <div class="pro-sidebar__profil">
+    <div class="navigation__avatar pro-sidebar__avatar" aria-hidden="true">
+      {{ profil.user.full_name|default:request.user.full_name|default:request.user.phone_e164|slice:":2"|upper }}
+    </div>
+    <div class="pro-sidebar__infos">
+      <span class="pro-sidebar__nom">{{ profil.user.full_name|default:request.user.full_name|default:request.user.phone_e164 }}</span>
+      <span class="texte-doux texte-tres-petit d-block">Espace Gérant</span>
+    </div>
+  </div>
+</aside>

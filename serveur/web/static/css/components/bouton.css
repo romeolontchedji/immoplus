@@ -1,22 +1,66 @@
+/* Boutons — DESIGN.md §5 : hauteur 46–52 web, rayon 14–16px, texte 15–16/800 */
 .bouton {
-  --bouton-bg: var(--surface); --bouton-fg: var(--text); --bouton-bord: var(--border-strong);
+  --bouton-bg: var(--surface); --bouton-fg: var(--night); --bouton-bord: var(--border);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  min-height: var(--cible); padding: 0 var(--sp-5); border-radius: var(--rayon-pilule);
-  border: 1px solid var(--bouton-bord); background: var(--bouton-bg); color: var(--bouton-fg);
-  font-weight: 600; font-size: var(--fs-16); line-height: 1; text-decoration: none; cursor: pointer;
+  min-height: var(--cible); padding: 0 var(--sp-5);
+  border-radius: var(--r-field);
+  border: 1.5px solid var(--bouton-bord); background: var(--bouton-bg); color: var(--bouton-fg);
+  font-weight: 800; font-size: var(--fs-15); line-height: 1; text-decoration: none; cursor: pointer;
   transition: background-color var(--duree-1) var(--courbe), transform var(--duree-1) var(--courbe), box-shadow var(--duree-1) var(--courbe);
 }
-.bouton:hover { background: var(--surface-sunken); }
+.bouton:hover { text-decoration: none; }
 .bouton:active { transform: translateY(1px); }
-.bouton--primaire { --bouton-bg: var(--primary); --bouton-fg: var(--on-primary); --bouton-bord: var(--primary); box-shadow: var(--ombre-1); }
-.bouton--primaire:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+/* Primaire : fond --blue, texte blanc */
+.bouton--primaire {
+  --bouton-bg: var(--blue); --bouton-fg: var(--white); --bouton-bord: var(--blue);
+  box-shadow: 0 2px 8px var(--blue-focus-ring);
+}
+.bouton--primaire:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: var(--white); }
+
+/* Accent : fond --sun, texte --night (CTA sur fond sombre) */
+.bouton--accent {
+  --bouton-bg: var(--sun); --bouton-fg: var(--night); --bouton-bord: var(--sun);
+}
+.bouton--accent:hover { background: var(--sun-hover); border-color: var(--sun-hover); color: var(--night); }
+
+/* Secondaire : fond --blue-soft, texte --blue */
+.bouton--secondaire {
+  --bouton-bg: var(--blue-soft); --bouton-fg: var(--blue); --bouton-bord: var(--blue-soft);
+}
+.bouton--secondaire:hover { background: var(--blue-soft-hover); border-color: var(--blue-soft-hover); color: var(--blue); }
+
+/* Contour : bordure --border */
+.bouton--contour {
+  --bouton-bg: transparent; --bouton-fg: var(--night); --bouton-bord: var(--border);
+}
+.bouton--contour:hover { background: var(--bg); }
+
+/* Contour clair : pour les fonds sombres (héro) */
+.bouton--contour-clair {
+  --bouton-bg: transparent; --bouton-fg: var(--white); --bouton-bord: var(--white-45);
+}
+.bouton--contour-clair:hover { background: var(--white-12); border-color: var(--white-70); color: var(--white); }
+
+/* Fantôme : sans bordure ni fond */
 .bouton--fantome { --bouton-bg: transparent; --bouton-bord: transparent; }
-.bouton--fantome:hover { background: var(--primary-soft); }
-.bouton--danger { --bouton-bg: var(--danger); --bouton-fg: var(--sable-0); --bouton-bord: var(--danger); }
-.bouton--danger:hover { background: var(--danger-text); border-color: var(--danger-text); }
-.bouton--grand { min-height: var(--cible-principale); padding-inline: var(--sp-8); font-size: var(--fs-18); }
-.bouton--petit { min-height: 2rem; padding-inline: var(--sp-3); font-size: var(--fs-14); }
-.bouton[disabled], .bouton[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.bouton--fantome:hover { background: var(--blue-soft); color: var(--blue); }
+
+/* Danger */
+.bouton--danger {
+  --bouton-bg: var(--danger-bg); --bouton-fg: var(--danger); --bouton-bord: var(--danger-bg);
+}
+.bouton--danger:hover { background: var(--danger-hover); border-color: var(--danger-hover); }
+
+/* Tailles */
+.bouton--grand { min-height: var(--cible-principale); padding-inline: var(--sp-8); font-size: var(--fs-16); }
+.bouton--petit { min-height: 2.25rem; padding-inline: var(--sp-4); font-size: var(--fs-13); }
+
+/* Largeur */
+.bouton.largeur-pleine, .bouton--plein { width: 100%; }
+
+/* États */
+.bouton[disabled], .bouton[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; transform: none; pointer-events: none; }
 .bouton[aria-busy="true"]::before {
   content: ""; width: 1em; height: 1em; border-radius: 50%;
   border: 2px solid currentColor; border-top-color: transparent; animation: tourne 0.7s linear infinite;

@@ -3,9 +3,11 @@ from django.core.cache import cache
 from django.test import Client
 
 from apps.accounts.models import User
+from apps.accounts.services import administration as service_administration
 from apps.accounts.services import compte as service_compte
 from apps.accounts.tests.fabriques import (
     MOT_DE_PASSE,
+    AdminFactory,
     ClientFactory,
     DeviceFactory,
 )
@@ -197,3 +199,27 @@ def test_changement_de_numero_mauvais_mot_de_passe():
     r = c.post("/compte/numero/code", {"code": "424242", "password": "faux"})
     assert r.status_code == 200
     assert User.objects.get(phone_e164="+2290197343434")
+
+
+def test_gerant_cree_par_l_administration_se_connecte_puis_change_de_mot_de_passe():
+    service_administration.creer_gerant(
+        acteur=AdminFactory(),
+        telephone="97565656",
+        nom="Idris Adam",
+        zone="Banikanni",
+        mot_de_passe=FORT,
+    )
+    c = Client()
+    assert c.post("/connexion", {"phone": "97565656", "password": FORT}).status_code == 302
+    assert c.get("/pro/dashboard").status_code == 200
+    r = c.post(
+        "/compte",
+        {"action": "mot-de-passe", "current_password": FORT, "new_password": "un-Autre-solide-99"},
+    )
+    assert r.status_code == 200 and "mot de passe a été changé" in r.content.decode()
+    c2 = Client()
+    assert (
+        c2.post("/connexion", {"phone": "97565656", "password": "un-Autre-solide-99"}).status_code
+        == 302
+    )
+    assert c2.get("/pro/dashboard").status_code == 200

@@ -37,10 +37,10 @@ def html(reponse) -> str:
 
 
 class TestFilEtFiche:
-    def test_accueil_liste_les_annonces_publiees(self):
+    def test_catalogue_liste_les_annonces_publiees(self):
         a = ListingFactory(title="Chambre lumineuse à Banikanni")
         ListingFactory(title="Annonce masquée", status="hidden")
-        page = html(Client().get("/"))
+        page = html(Client().get("/annonces"))
         assert "Chambre lumineuse à Banikanni" in page and "Annonce masquée" not in page
         assert f"/annonces/{a.slug}" in page
 
@@ -50,7 +50,7 @@ class TestFilEtFiche:
         page = html(Client().get("/annonces?rent_max=20000"))
         assert "Chambre simple" in page and "Studio moderne" not in page
         vide = html(Client().get("/annonces?q=introuvable&rent_max=1000"))
-        assert "Aucune chambre" in vide and "Crée une alerte" in vide
+        assert "Aucune chambre" in vide and "Créer une alerte pour cette recherche" in vide
 
     def test_parametre_invalide_affiche_une_erreur_sans_planter(self):
         r = Client().get("/annonces?sort=nimporte")

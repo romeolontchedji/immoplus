@@ -103,6 +103,21 @@ class User(AbstractBaseUser):
         return self.role == Role.ADMIN and self.is_active
 
     @property
+    def initiales(self) -> str:
+        if self.full_name:
+            parties = self.full_name.strip().split()
+            if len(parties) >= 2:
+                return f"{parties[0][0]}{parties[1][0]}".upper()
+            return parties[0][:2].upper()
+        return "U"
+
+    @property
+    def prenom(self) -> str:
+        if self.full_name:
+            return self.full_name.strip().split()[0]
+        return ""
+
+    @property
     def est_personnel(self) -> bool:
         return self.role in ROLES_PERSONNEL
 

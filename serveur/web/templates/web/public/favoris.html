@@ -12,7 +12,7 @@
         </div>
       {% else %}
         <div class="etat-vide">
-          <span class="etat-vide__symbole" aria-hidden="true">?</span>
+          <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="heart" taille=32 %}</span>
           <div>
             <h2 class="etat-vide__titre">Aucun favori</h2>
             <p class="etat-vide__texte">Ajoute des chambres en favori depuis leur fiche pour les retrouver ici.</p>

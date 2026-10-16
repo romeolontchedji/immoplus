@@ -21,7 +21,7 @@
         </ul>
       {% else %}
         <div class="etat-vide">
-          <span class="etat-vide__symbole" aria-hidden="true">?</span>
+          <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="smartphone" taille=32 %}</span>
           <div>
             <h2 class="etat-vide__titre">Aucun appareil connecté</h2>
             <p class="etat-vide__texte">Les appareils apparaissent ici après une connexion depuis l'application.</p>

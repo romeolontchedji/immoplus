@@ -16,7 +16,8 @@ def test_accueil():
     assert reponse.status_code == 200
     html = reponse.content.decode()
     assert '<html lang="fr">' in html
-    assert "Trouve ta chambre à Parakou" in html
+    assert "Vois ta chambre avant de te déplacer." in html
+    assert 'class="accueil-hero"' in html and "Comment ça marche" in html
     assert re.search(r'href="/static/css/dist/logeo\.[0-9a-f]{10}\.css"', html)
 
 

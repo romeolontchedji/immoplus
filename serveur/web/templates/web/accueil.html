@@ -1,10 +1,427 @@
 {% extends "web/base.html" %}
+{% load static logeo %}
+{% block titre %}Chambres à louer à Parakou, visite en vidéo — Logeo{% endblock %}
+{% block description %}Cherche une chambre, un entrée-coucher ou un studio à Parakou. Regarde la visite en vidéo, contacte un gérant vérifié, crée une alerte. Visite d'abord, paie ensuite.{% endblock %}
 {% block contenu %}
-  <section class="section">
-    <div class="conteneur conteneur--texte pile">
-      <h1>Trouve ta chambre à Parakou</h1>
-      <p class="texte-doux">Des vidéos réelles, des gérants vérifiés, et une messagerie qui te protège des arnaques.</p>
-      <p><span class="badge badge--marque">Bientôt disponible</span></p>
+  {# ═══════════════════════════════════════════════════════ BANNIÈRE HÉRO ═══ #}
+  <section class="accueil-hero" aria-labelledby="hero-titre">
+    <div class="conteneur accueil-hero__conteneur">
+      <div class="accueil-hero__texte">
+        <span class="accueil-hero__capsule">Chambres à Parakou, près de l'UP et partout en ville</span>
+        <h1 class="accueil-hero__titre" id="hero-titre">Vois ta chambre avant de te déplacer.</h1>
+        <p class="accueil-hero__accroche">
+          Visite en vidéo, gérants vérifiés par notre équipe, alertes dès qu'une chambre se libère.
+        </p>
+        {# Barre de recherche rapide #}
+        <div class="accueil-recherche" role="search">
+          <div class="accueil-recherche__onglets"
+               role="tablist"
+               aria-label="Type de logement">
+            <button class="accueil-recherche__onglet accueil-recherche__onglet--actif"
+                    role="tab"
+                    aria-selected="true"
+                    data-type="">Toutes</button>
+            <button class="accueil-recherche__onglet"
+                    role="tab"
+                    aria-selected="false"
+                    data-type="entree_coucher">Entrée-coucher</button>
+            <button class="accueil-recherche__onglet"
+                    role="tab"
+                    aria-selected="false"
+                    data-type="chambre_salon">Chambre-salon</button>
+            <button class="accueil-recherche__onglet"
+                    role="tab"
+                    aria-selected="false"
+                    data-type="studio">Studio</button>
+          </div>
+          <form class="accueil-recherche__barre"
+                method="get"
+                action="/annonces"
+                id="form-recherche-hero">
+            <input type="hidden" name="type" id="input-type-hero" value="">
+            <div class="accueil-recherche__champ">
+              <label class="accueil-recherche__label" for="quartier-hero">QUARTIER</label>
+              <input class="accueil-recherche__saisie"
+                     id="quartier-hero"
+                     name="q"
+                     type="text"
+                     placeholder="Banikanni, Guéma…"
+                     autocomplete="off">
+            </div>
+            <div class="accueil-recherche__separateur" aria-hidden="true"></div>
+            <div class="accueil-recherche__champ">
+              <label class="accueil-recherche__label" for="budget-hero">BUDGET MAX</label>
+              <input class="accueil-recherche__saisie"
+                     id="budget-hero"
+                     name="rent_max"
+                     type="number"
+                     min="0"
+                     step="1000"
+                     placeholder="Ton budget en F">
+            </div>
+            <button class="accueil-recherche__bouton" type="submit">Voir les chambres</button>
+          </form>
+        </div>
+        {# Appels à l'action #}
+        <div class="accueil-hero__actions">
+          <a class="bouton bouton--accent bouton--grand" href="/annonces">Voir les chambres</a>
+          <a class="bouton bouton--contour-clair bouton--grand"
+             href="/compte/alertes">Créer une alerte</a>
+        </div>
+        <p class="accueil-hero__lien-discret">
+          <a href="#comment-ca-marche">Tu loues des chambres&nbsp;? Découvre comment publier</a>
+        </p>
+        {# Promesses #}
+        <ul class="accueil-hero__promesses" aria-label="Nos engagements">
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Gérants vérifiés
+          </li>
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Visite en vidéo
+          </li>
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Contact direct
+          </li>
+        </ul>
+      </div>
     </div>
   </section>
+  {# ═══════════════════════════════════════════════════ POURQUOI LOGEO ══════ #}
+  <section class="section accueil-piliers" aria-labelledby="piliers-titre">
+    <div class="conteneur">
+      <div class="accueil-section-entete">
+        <h2 id="piliers-titre">Pourquoi Logeo&nbsp;?</h2>
+        <p class="accueil-section-sous-titre">Des réponses concrètes aux pièges du logement à Parakou.</p>
+      </div>
+      <div class="accueil-piliers__grille">
+        <article class="accueil-pilier">
+          <span class="accueil-pilier__icone" aria-hidden="true">
+            <svg width="22"
+                 height="22"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 8-10 5L2 8" />
+            </svg>
+          </span>
+          <h3 class="accueil-pilier__titre">Tu ne paies pas pour une chambre que tu n'as pas vue.</h3>
+          <p class="accueil-pilier__texte">Regarde la visite en vidéo, vérifie le gérant, puis seulement après, vas-y.</p>
+        </article>
+        <article class="accueil-pilier">
+          <span class="accueil-pilier__icone" aria-hidden="true">
+            <svg width="22"
+                 height="22"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          </span>
+          <h3 class="accueil-pilier__titre">Un gérant vérifié, pas un inconnu.</h3>
+          <p class="accueil-pilier__texte">
+            Avant de publier, chaque gérant fournit ses pièces et passe un entretien avec notre équipe.
+          </p>
+        </article>
+        <article class="accueil-pilier">
+          <span class="accueil-pilier__icone" aria-hidden="true">
+            <svg width="22"
+                 height="22"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </span>
+          <h3 class="accueil-pilier__titre">Tu n'as plus besoin d'être dans le bon groupe.</h3>
+          <p class="accueil-pilier__texte">
+            Toutes les chambres au même endroit. Crée une alerte&nbsp;: si une chambre correspond, tu le sais.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+  {# ════════════════════════════════════════════════ COMMENT ÇA MARCHE ══════ #}
+  <section class="section accueil-comment"
+           id="comment-ca-marche"
+           aria-labelledby="comment-titre">
+    <div class="conteneur">
+      <div class="accueil-section-entete">
+        <h2 id="comment-titre">Trouver ou louer, en 3 étapes</h2>
+        <p class="accueil-section-sous-titre">Trois étapes, que tu cherches ou que tu loues.</p>
+      </div>
+      <div class="accueil-comment__grille">
+        {# Locataire #}
+        <div class="accueil-comment__carte">
+          <p class="accueil-comment__role">Je cherche une chambre</p>
+          <ol class="accueil-comment__etapes" aria-label="Parcours locataire">
+            <li class="accueil-comment__etape">
+              <span class="accueil-comment__numero" aria-hidden="true">1</span>
+              <div>
+                <strong>Filtre à ta façon</strong>
+                <span>Quartier, budget, type. Tu gardes seulement ce qui t'intéresse.</span>
+              </div>
+            </li>
+            <li class="accueil-comment__etape">
+              <span class="accueil-comment__numero" aria-hidden="true">2</span>
+              <div>
+                <strong>Regarde la visite</strong>
+                <span>Une vidéo de la chambre, avant de te déplacer.</span>
+              </div>
+            </li>
+            <li class="accueil-comment__etape">
+              <span class="accueil-comment__numero" aria-hidden="true">3</span>
+              <div>
+                <strong>Contacte le gérant</strong>
+                <span>Discute dans l'app, fixe la visite, puis décide.</span>
+              </div>
+            </li>
+          </ol>
+          <a class="bouton accueil-comment__cta" href="/annonces">Voir les chambres</a>
+        </div>
+        {# Gérant #}
+        <div class="accueil-comment__carte accueil-comment__carte--sombre">
+          <p class="accueil-comment__role accueil-comment__role--clair">Je loue des chambres</p>
+          <ol class="accueil-comment__etapes" aria-label="Parcours gérant">
+            <li class="accueil-comment__etape accueil-comment__etape--clair">
+              <span class="accueil-comment__numero accueil-comment__numero--soleil"
+                    aria-hidden="true">1</span>
+              <div>
+                <strong>Contacte l'équipe Logeo</strong>
+                <span>Par WhatsApp ou appel, avec tes pièces.</span>
+              </div>
+            </li>
+            <li class="accueil-comment__etape accueil-comment__etape--clair">
+              <span class="accueil-comment__numero accueil-comment__numero--soleil"
+                    aria-hidden="true">2</span>
+              <div>
+                <strong>On vérifie, puis on crée ton compte</strong>
+                <span>Pièce d'identité, justificatif, court entretien.</span>
+              </div>
+            </li>
+            <li class="accueil-comment__etape accueil-comment__etape--clair">
+              <span class="accueil-comment__numero accueil-comment__numero--soleil"
+                    aria-hidden="true">3</span>
+              <div>
+                <strong>Publie et reçois des demandes</strong>
+                <span>Une vidéo, des photos, et tu vois qui regarde ta chambre.</span>
+              </div>
+            </li>
+          </ol>
+          <a class="bouton accueil-comment__cta accueil-comment__cta--accent"
+             href="tel:+22901562014000">Contacter l'équipe · +229 01 56 20 14 00</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {# ══════════════════════════════════════════════════════ PRÉVENTION ══════ #}
+  <section class="section accueil-prevention" aria-labelledby="prevention-titre">
+    <div class="conteneur">
+      <div class="accueil-prevention__encart">
+        <div class="accueil-prevention__entete">
+          <span class="accueil-prevention__icone" aria-hidden="true">
+            <svg width="22"
+                 height="22"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </span>
+          <h2 class="accueil-prevention__titre" id="prevention-titre">
+            Une vraie chambre n'a pas besoin que tu paies avant de la voir.
+          </h2>
+        </div>
+        <p class="accueil-prevention__texte">
+          Quand on te presse de payer parce qu'«&nbsp;un autre client a déjà versé&nbsp;», c'est le moment de t'arrêter.
+        </p>
+        <ul class="accueil-prevention__reflexes">
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Visite d'abord
+          </li>
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Demande un reçu écrit pour chaque somme
+          </li>
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Paie le gérant, pas un intermédiaire inconnu
+          </li>
+          <li>
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Un doute&nbsp;? Signale le message dans l'app
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  {# ══════════════════════════════════════════════════════════ ALERTE ══════ #}
+  <section class="section accueil-alerte">
+    <div class="conteneur">
+      <div class="bandeau-alerte">
+        <div>
+          <strong>Ne cours plus après les annonces.</strong>
+          <p class="texte-doux mb-0">Dis-nous ton quartier et ton budget. On te prévient dès qu'une chambre correspond.</p>
+        </div>
+        <a class="bouton bouton--primaire" href="/compte/alertes">Créer mon alerte</a>
+      </div>
+    </div>
+  </section>
+  {# ══════════════════════════════════════════════════════════════ FAQ ══════ #}
+  <section class="section accueil-faq" id="faq" aria-labelledby="faq-titre">
+    <div class="conteneur conteneur--texte">
+      <h2 class="accueil-section-entete__titre" id="faq-titre">Questions fréquentes</h2>
+      <div class="faq">
+        <details class="faq__item">
+          <summary class="faq__question">Logeo est-il gratuit pour moi&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Je ne suis pas étudiant, puis-je l'utiliser&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Oui. Logeo est ouvert à tous ceux qui cherchent une chambre à Parakou&nbsp;: étudiants, stagiaires, travailleurs, familles.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Comment savoir que la chambre existe vraiment&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Regarde la visite en vidéo et le badge Vérifié du gérant. Ensuite, visite avant tout paiement.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Dois-je payer pour réserver&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Ne paie jamais avant d'avoir visité, et exige un reçu écrit pour chaque somme versée.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">On me demande de l'argent avant la visite. Que faire&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Ne paie pas. Arrête la discussion et signale le message depuis la conversation&nbsp;: notre équipe regarde.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Que veut dire «&nbsp;Vérifié&nbsp;»&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Le gérant a fourni sa pièce d'identité et un justificatif, et a passé un entretien avec notre équipe.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Comment devient-on gérant&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>On ne s'inscrit pas seul&nbsp;: contacte l'équipe Logeo, fournis tes pièces, passe un court entretien. Ensuite, on crée ton compte.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Pourquoi je ne peux pas créer un compte gérant moi-même&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Pour protéger les locataires. Chaque gérant est connu de notre équipe avant de publier.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Combien coûte la publication&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Contacte l'équipe Logeo au +229 01 56 20 14 00&nbsp;: elle t'explique l'abonnement en vigueur.</p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__question">Comment fonctionnent les alertes&nbsp;?</summary>
+          <div class="faq__reponse">
+            <p>Tu choisis un quartier, un budget et un type. Dès qu'une chambre correspond, tu reçois une notification.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+  <script src="{% static 'js/accueil.js' %}" defer></script>
 {% endblock %}

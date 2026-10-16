@@ -1,0 +1,59 @@
+/* ─── Page Mon compte ─────────────────────────────────────────────────────── */
+.compte-dashboard {
+  display: flex; flex-direction: column; gap: var(--sp-6);
+}
+.compte-sidebar {
+  display: flex; flex-direction: column; gap: var(--sp-5);
+}
+.compte-carte-profil {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding-bottom: var(--sp-5); border-bottom: 1px solid var(--divider);
+}
+.compte-carte-profil__nom {
+  font-size: var(--fs-17); font-weight: 800; color: var(--night); margin: 0 0 var(--sp-1);
+}
+.compte-menu {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: var(--sp-1);
+}
+.compte-menu__lien {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3); border-radius: 10px;
+  color: var(--text-muted); text-decoration: none;
+  font-size: var(--fs-15); font-weight: 700;
+  transition: color var(--duree-1), background var(--duree-1);
+}
+.compte-menu__lien svg { flex-shrink: 0; }
+.compte-menu__lien:hover { color: var(--night); background: var(--bg); text-decoration: none; }
+.compte-menu__lien--actif { color: var(--blue); background: var(--blue-soft); }
+.compte-menu__lien--actif svg { color: var(--blue); }
+
+.compte-principal {
+  flex: 1; display: flex; flex-direction: column; gap: var(--sp-6);
+}
+
+/* Section en carte */
+.compte-section-carte {
+  background: var(--surface); border: 1px solid var(--divider);
+  border-radius: var(--r-card); padding: var(--sp-6) var(--sp-8);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: var(--sp-5);
+}
+.compte-section-carte--danger {
+  border-color: var(--danger-border);
+}
+.compte-section-carte__titre {
+  font-size: var(--fs-17); font-weight: 800; color: var(--night); margin: 0;
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+
+@media (min-width: 768px) {
+  .compte-dashboard {
+    display: grid; grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start; gap: var(--sp-8);
+  }
+  .compte-sidebar { position: sticky; top: 5rem; }
+}
+@media (max-width: 767px) {
+  .compte-section-carte { padding: var(--sp-5); }
+}

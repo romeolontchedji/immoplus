@@ -1,283 +1,206 @@
-/* Fiche d'une chambre conforme à Web · Détail d'une chambre */
-.fil-ariane { display: flex; flex-wrap: wrap; gap: var(--sp-2); color: var(--text-muted); font-size: var(--fs-14); margin-bottom: var(--sp-4); }
-.fil-ariane a { color: var(--link); text-decoration: none; }
-.fil-ariane a:hover { text-decoration: underline; }
-.fil-ariane [aria-current] { color: var(--text); font-weight: 600; }
+/* Fiche d'une chambre — alignée sur Web · Détail d'une chambre@1x.png */
 
-.fiche-layout {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-8);
+/* Fil d'ariane */
+.fil-ariane {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center;
+  color: var(--text-muted); font-size: var(--fs-14); margin-bottom: var(--sp-5);
 }
+.fil-ariane a { color: var(--blue); text-decoration: none; font-weight: 600; }
+.fil-ariane a:hover { text-decoration: underline; }
+.fil-ariane [aria-current] { color: var(--night); font-weight: 700; }
+
+/* Layout 2 colonnes */
+.fiche-layout { display: flex; flex-direction: column; gap: var(--sp-8); }
+.fiche-principale { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-6); }
 
 @media (min-width: 1024px) {
   .fiche-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 22rem;
-    align-items: start;
-    gap: var(--sp-8);
+    display: grid; grid-template-columns: minmax(0, 1fr) 21.5rem;
+    align-items: start; gap: var(--sp-8);
   }
-  .fiche-sidebar {
-    position: sticky;
-    top: 5rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-6);
-  }
+  .fiche-sidebar { position: sticky; top: 5rem; display: flex; flex-direction: column; gap: var(--sp-4); }
 }
 
+/* Lecteur vidéo */
 .fiche-lecteur-conteneur {
-  position: relative;
-  border-radius: var(--rayon-4);
-  overflow: hidden;
-  background: var(--sable-950);
-  box-shadow: var(--ombre-2);
+  position: relative; border-radius: var(--r-card-l);
+  overflow: hidden; background: var(--hero-blue-1); box-shadow: var(--shadow-card);
+  aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center;
 }
-
 .fiche-lecteur-conteneur video {
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  max-height: 65vh;
-  object-fit: cover;
-  display: block;
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.fiche-video-play-center {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 4rem; height: 4rem; border-radius: var(--r-pill);
+  background: var(--white); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-pop); pointer-events: none;
+  transition: transform var(--duree-1);
+}
+.fiche-lecteur-conteneur:hover .fiche-video-play-center {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+.fiche-video-badge-top {
+  position: absolute; top: var(--sp-4); left: var(--sp-4); z-index: 2;
+}
+.fiche-video-info-bottom {
+  position: absolute; bottom: var(--sp-4); left: var(--sp-4); z-index: 2;
+  color: var(--white); font-size: var(--fs-14); font-weight: 700;
+  text-shadow: 0 1px 3px var(--black-alpha-70);
 }
 
-.fiche-vignettes-barre {
-  display: flex;
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
-  overflow-x: auto;
-  padding-bottom: var(--sp-2);
-}
-
-.fiche-vignette {
-  position: relative;
-  width: 5.5rem;
-  height: 4.25rem;
-  border-radius: var(--rayon-2);
-  overflow: hidden;
-  border: 2px solid transparent;
-  background: var(--surface-sunken);
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: border-color var(--duree-1) var(--courbe);
-}
-
-.fiche-vignette img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.fiche-vignette--active {
-  border-color: var(--primary);
-}
-
-.fiche-vignette--plus {
-  background: var(--marque-50);
-  color: var(--primary);
-  font-weight: 700;
-  font-size: var(--fs-18);
-}
-
-/* En-tête de fiche avec titre à gauche et prix bleu géant à droite */
+/* En-tête titre & prix */
 .fiche-entete-barre {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--sp-4);
-  margin-top: var(--sp-6);
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-2);
 }
-
 .fiche-titre {
-  font-size: var(--fs-30);
-  font-weight: 800;
-  color: var(--text);
-  margin: 0;
+  font-size: clamp(1.5rem, 3.5vw, 2.125rem); font-weight: 800; letter-spacing: -0.03em;
+  color: var(--night); margin: 0 0 var(--sp-2); line-height: 1.15;
 }
-
+.fiche-soustitre {
+  font-size: var(--fs-15); color: var(--text-muted); margin: 0; font-weight: 500;
+}
+.fiche-prix-colonne {
+  text-align: right; flex-shrink: 0;
+}
 .fiche-prix-montant {
-  font-size: var(--fs-24);
-  font-weight: 800;
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-  margin: 0;
-  white-space: nowrap;
+  font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; color: var(--blue);
+  font-variant-numeric: tabular-nums; margin: 0; line-height: 1;
 }
-.fiche-prix-montant small {
-  font-size: var(--fs-14);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.fiche-localisation-ligne {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--text-muted);
-  font-size: var(--fs-14);
+.fiche-prix-caution {
+  display: block; font-size: var(--fs-13); font-weight: 500; color: var(--text-muted);
   margin-top: var(--sp-1);
 }
 
+/* Pastilles caractéristiques bleues pleines (exact maquette) */
 .fiche-badges-caracteristiques {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
+  display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2);
+}
+.badge-carac-bleu {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
+  background: var(--blue); color: var(--white);
+  font-size: var(--fs-14); font-weight: 700; line-height: 1.2;
 }
 
-.fiche-caracteristique-pilule {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.85rem;
-  border-radius: var(--rayon-pilule);
-  background: var(--surface-sunken);
-  color: var(--text);
-  font-size: var(--fs-14);
-  font-weight: 500;
-}
-
+/* Description */
 .fiche-description-texte {
-  margin-top: var(--sp-6);
-  font-size: var(--fs-16);
-  line-height: var(--lh-texte);
-  color: var(--text);
+  margin-top: var(--sp-2); font-size: var(--fs-16); line-height: 1.65; color: var(--night);
 }
 
-/* Grille des conditions de loyer */
-.fiche-section-titre {
-  font-size: var(--fs-18);
-  font-weight: 700;
-  color: var(--text);
-  margin-top: var(--sp-6);
-  margin-bottom: var(--sp-3);
+/* Chambres similaires */
+.fiche-similaires { margin-top: var(--sp-8); }
+.fiche-similaires-titre {
+  font-size: var(--fs-22); font-weight: 800; color: var(--night); margin-bottom: var(--sp-5);
+}
+.fiche-similaires-grille {
+  display: grid; grid-template-columns: 1fr; gap: var(--sp-4);
+}
+@media (min-width: 640px) {
+  .fiche-similaires-grille { grid-template-columns: repeat(3, 1fr); }
+}
+.fiche-similaire-carte {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r-card); padding: var(--sp-5);
+  box-shadow: var(--shadow-card); text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  transition: transform var(--duree-1), box-shadow var(--duree-1), border-color var(--duree-1);
+}
+.fiche-similaire-carte:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-pop); border-color: var(--blue);
+}
+.fiche-similaire-carte__titre {
+  font-size: var(--fs-15); font-weight: 800; color: var(--night);
+}
+.fiche-similaire-carte__distance {
+  font-size: var(--fs-13); color: var(--text-muted);
+}
+.fiche-similaire-carte__prix {
+  font-size: var(--fs-16); font-weight: 800; color: var(--blue); margin-top: auto;
 }
 
-.fiche-conditions-grille {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-6);
+/* ── Carte latérale gérant & actions (exact maquette) ────────────────────── */
+.fiche-carte-principale {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-card-l); padding: var(--sp-6);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+}
+.fiche-gerant-entete {
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.fiche-gerant-avatar {
+  width: 3rem; height: 3rem; border-radius: var(--r-pill);
+  background: var(--blue-soft); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-16); font-weight: 800; flex-shrink: 0;
+}
+.fiche-gerant-meta { display: flex; flex-direction: column; gap: 2px; }
+.fiche-gerant-ligne { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.fiche-gerant-nom { font-size: var(--fs-16); font-weight: 800; color: var(--night); margin: 0; }
+.fiche-gerant-delai { font-size: var(--fs-13); color: var(--text-muted); margin: 0; }
+
+/* Boutons d'action pilule */
+.bouton--pilule {
+  border-radius: var(--r-pill); font-weight: 800; min-height: 2.875rem;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  text-decoration: none; font-size: var(--fs-15);
+}
+.bouton--pilule-doux {
+  border-radius: var(--r-pill); font-weight: 800; min-height: 2.875rem;
+  background: var(--blue-soft); color: var(--blue); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  text-decoration: none; font-size: var(--fs-15);
+  transition: background var(--duree-1), transform var(--duree-1);
+}
+.bouton--pilule-doux:hover { background: var(--blue-soft-hover); transform: translateY(-1px); }
+
+/* Visuel carte quartier */
+.fiche-carte-visuel {
+  height: 6.5rem; background: var(--blue-soft); border-radius: var(--r-card);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--blue); font-size: var(--fs-15); font-weight: 800;
+  text-align: center; padding: var(--sp-3);
+}
+.fiche-repere-texte {
+  font-size: var(--fs-14); color: var(--text-muted); margin: 0; line-height: 1.4;
 }
 
-.fiche-condition-carte {
-  background: var(--surface-sunken);
-  border-radius: var(--rayon-3);
-  padding: var(--sp-3) var(--sp-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
+/* Encart de sécurité jaune */
+.fiche-securite-encart {
+  background: var(--warning-bg); color: var(--warning);
+  border: 1px solid var(--warning-border); border-radius: var(--r-field);
+  padding: var(--sp-4); font-size: var(--fs-13); font-weight: 700;
+}
+.fiche-securite-encart__titre { display: block; margin-bottom: var(--sp-2); }
+.fiche-securite-encart__liste {
+  margin: 0; padding-left: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  font-weight: 600; line-height: 1.4;
 }
 
-.fiche-condition-label {
-  font-size: var(--fs-12);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+/* Formulaire dépliant de contact direct */
+.fiche-form-contact {
+  background: var(--bg); border-radius: var(--r-card);
+  padding: var(--sp-4); border: 1px solid var(--divider);
+  display: flex; flex-direction: column; gap: var(--sp-3);
 }
+.fiche-form-contact summary {
+  cursor: pointer; list-style: none;
+}
+.fiche-form-contact summary::-webkit-details-marker { display: none; }
+.fiche-form-contact[open] summary { margin-bottom: var(--sp-3); }
 
-.fiche-condition-valeur {
-  font-size: var(--fs-16);
-  font-weight: 700;
-  color: var(--text);
+/* Liens secondaires en bas de carte */
+.fiche-sidebar-pied {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px solid var(--divider);
+  font-size: var(--fs-13);
 }
+.fiche-lien-subtil { color: var(--text-muted); text-decoration: none; font-weight: 600; }
+.fiche-lien-subtil:hover { color: var(--blue); }
+.fiche-lien-danger { color: var(--danger); text-decoration: none; font-weight: 600; }
+.fiche-lien-danger:hover { text-decoration: underline; }
 
-/* Carte Action / Contact dans la sidebar */
-.carte-action-fiche {
-  background: var(--surface);
-  border: var(--bordure);
-  border-radius: var(--rayon-4);
-  padding: var(--sp-6);
-  box-shadow: var(--ombre-1);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-/* Carte Gérant dans la colonne de droite */
-.carte-gerant-fiche {
-  background: var(--surface);
-  border: var(--bordure);
-  border-radius: var(--rayon-4);
-  padding: var(--sp-6);
-  box-shadow: var(--ombre-1);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-.carte-gerant-fiche__entete {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-}
-
-.avatar-rond {
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 50%;
-  background: var(--primary-soft);
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-18);
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.carte-gerant-fiche__infos {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.carte-gerant-fiche__nom-ligne {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.carte-gerant-fiche__nom {
-  font-size: var(--fs-18);
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.carte-gerant-fiche__role {
-  font-size: var(--fs-14);
-  color: var(--text-muted);
-  margin: 0;
-}
-
-/* Carte Localisation / Plan */
-.carte-localisation-fiche {
-  background: var(--surface);
-  border: var(--bordure);
-  border-radius: var(--rayon-4);
-  overflow: hidden;
-  box-shadow: var(--ombre-1);
-}
-
-.carte-localisation-visuel {
-  height: 10rem;
-  background: var(--surface-sunken);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-}
-
-.carte-localisation-repere {
-  padding: var(--sp-4) var(--sp-6);
-  font-size: var(--fs-14);
-  color: var(--text);
-  margin: 0;
-  border-top: var(--bordure);
-}

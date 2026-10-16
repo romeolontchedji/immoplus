@@ -1,14 +1,14 @@
 {% extends "web/base.html" %}
 {% load logeo %}
 {% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Logeo{% endblock %}
-{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount|fcfa }} FCFA par mois.{% endblock %}
+{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount|fcfa }} F par mois.{% endblock %}
 {% block contenu %}
   <section class="section">
     <div class="conteneur">
       <nav class="fil-ariane" aria-label="Fil d'Ariane">
         <a href="/annonces">← Retour aux chambres</a>
         <span aria-hidden="true">/</span>
-        <a href="/quartiers/{{ f.district.slug }}">{{ f.district.name }}</a>
+        <a href="/annonces?district={{ f.district.slug }}">{{ f.district.name }}</a>
         <span aria-hidden="true">/</span>
         <span aria-current="page">{{ f.title }}</span>
       </nav>
@@ -23,11 +23,11 @@
         </div>
       {% endif %}
       <div class="fiche-layout">
-        <!-- Colonne Principale (Gauche) -->
+        {# ── Colonne Principale (Gauche) ── #}
         <div class="fiche-principale">
-          <!-- Lecteur Vidéo Principal -->
-          {% if video %}
-            <div class="fiche-lecteur-conteneur">
+          {# Lecteur Vidéo Principal #}
+          <div class="fiche-lecteur-conteneur">
+            {% if video %}
               <video class="lecteur"
                      controls
                      preload="metadata"
@@ -35,19 +35,38 @@
                      poster="{{ video.poster_url }}">
                 <source src="{{ video.playback_url }}" type="video/mp4">
               </video>
-              <div class="carte-media__overlay-badges">
-                <span class="badge badge--video">🎥 Visite certifiée</span>
-                {% if video.duration_s %}
-                  <span class="badge badge--duree">{{ video.duration_s|duree_video }}</span>
-                {% endif %}
+            {% else %}
+              <div class="fiche-video-play-center" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
               </div>
+            {% endif %}
+            <div class="fiche-video-badge-top">
+              <span class="badge-verifie-pill">
+                <svg width="12"
+                     height="12"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="3"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Vérifié</span>
+              </span>
             </div>
-          {% endif %}
-          <!-- Galerie de vignettes sous la vidéo -->
+            <div class="fiche-video-info-bottom">
+              Visite vidéo{% if video and video.duration_s %} · {{ video.duration_s|duree_video }}{% endif %}
+            </div>
+          </div>
+          {# Galerie de 4 vignettes #}
           {% if photos %}
-            <div class="fiche-vignettes-barre" id="galerie">
-              {% for m in photos %}
-                <a class="fiche-vignette {% if m.is_cover %}fiche-vignette--active{% endif %}"
+            <div class="galerie-fiche" id="galerie">
+              {% for m in photos|slice:":4" %}
+                <a class="galerie-fiche__vignette{% if forloop.first %} galerie-fiche__vignette--couverture{% endif %}"
                    href="#photo-{{ m.id }}"
                    aria-label="Agrandir la photo {{ forloop.counter }} de {{ f.title }}">
                   <img src="{{ m.thumb_url }}"
@@ -56,8 +75,8 @@
                 </a>
               {% endfor %}
             </div>
-            <!-- Modales pour les photos agrandies (accessibles sans JS) -->
-            {% for m in photos %}
+            {# Modales pour les photos agrandies #}
+            {% for m in photos|slice:":4" %}
               <div class="visionneuse"
                    id="photo-{{ m.id }}"
                    tabindex="-1"
@@ -68,184 +87,171 @@
                    href="#galerie"
                    aria-label="Fermer la photo"></a>
                 <figure class="visionneuse__contenu">
-                  <a class="visionneuse__fermer" href="#galerie" aria-label="Fermer">×</a>
+                  <a class="visionneuse__fermer" href="#galerie" aria-label="Fermer">
+                    {% include "web/composants/icone.html" with nom="x" taille=20 %}
+                  </a>
                   <img src="{{ m.url }}" alt="Photo {{ forloop.counter }} de {{ f.title }}">
                 </figure>
               </div>
             {% endfor %}
           {% endif %}
-          <!-- Titre, Localisation et Prix -->
+          {# En-tête titre & prix #}
           <div class="fiche-entete-barre">
             <div>
               <h1 class="fiche-titre">{{ f.title }}</h1>
-              <p class="fiche-localisation-ligne">
-                <span>📍 {{ f.district.name }}, Parakou</span>
-                <span>·</span>
-                <span>À {{ f.distance_m }} m du campus</span>
-                <span>·</span>
-                <span>Réf : #{{ f.slug }}</span>
+              <p class="fiche-soustitre">
+                À {{ f.distance_m }} m de l'Université de Parakou · {% if f.status == "published" %}Disponible maintenant{% else %}Déjà louée{% endif %}
               </p>
             </div>
-            <p class="fiche-prix-montant">
-              {{ f.rent_amount|fcfa }} <small>FCFA / mois</small>
-            </p>
+            <div class="fiche-prix-colonne">
+              <p class="fiche-prix-montant">{{ f.rent_amount|fcfa }} F</p>
+              <span class="fiche-prix-caution">/ mois · caution {{ f.deposit_months }} mois</span>
+            </div>
           </div>
-          <!-- Badges de caractéristiques -->
+          {# Badges caractéristiques bleus pleins (exact maquette) #}
           <div class="fiche-badges-caracteristiques">
-            <span class="fiche-caracteristique-pilule">🏠 {{ f.type_label }}</span>
             {% if f.has_private_bathroom %}
-              <span class="fiche-caracteristique-pilule">🚿 Douche interne</span>
+              <span class="badge-carac-bleu">Douche interne</span>
             {% else %}
-              <span class="fiche-caracteristique-pilule">🚿 Sanitaires partagés</span>
+              <span class="badge-carac-bleu">Sanitaires partagés</span>
             {% endif %}
-            {% if f.compteur_label %}
-              <span class="fiche-caracteristique-pilule">⚡ Compteur {{ f.compteur_label|lower }}</span>
-            {% endif %}
-            {% if f.eau_label %}
-              <span class="fiche-caracteristique-pilule">💧 {{ f.eau_label }}</span>
+            {% if f.eau_label and f.compteur_label %}
+              <span class="badge-carac-bleu">{{ f.eau_label }} + {{ f.compteur_label|lower }}</span>
+            {% elif f.eau_label %}
+              <span class="badge-carac-bleu">{{ f.eau_label }}</span>
+            {% elif f.compteur_label %}
+              <span class="badge-carac-bleu">Compteur {{ f.compteur_label|lower }}</span>
             {% endif %}
             {% if f.is_fenced %}
-              <span class="fiche-caracteristique-pilule">🔒 Clôturée</span>
+              <span class="badge-carac-bleu">Cour clôturée</span>
             {% endif %}
+            <span class="badge-carac-bleu">{{ f.type_label }}</span>
           </div>
-          <!-- Conditions du loyer -->
-          <h2 class="fiche-section-titre">Conditions du loyer</h2>
-          <div class="fiche-conditions-grille">
-            <div class="fiche-condition-carte">
-              <span class="fiche-condition-label">Loyer mensuel</span>
-              <strong class="fiche-condition-valeur">{{ f.rent_amount|fcfa }} F</strong>
-            </div>
-            <div class="fiche-condition-carte">
-              <span class="fiche-condition-label">Caution</span>
-              <strong class="fiche-condition-valeur">{{ f.deposit_months }} mois</strong>
-            </div>
-            <div class="fiche-condition-carte">
-              <span class="fiche-condition-label">Avance</span>
-              <strong class="fiche-condition-valeur">{{ f.advance_months }} mois</strong>
-            </div>
-            <div class="fiche-condition-carte">
-              <span class="fiche-condition-label">Frais d'agence</span>
-              <strong class="fiche-condition-valeur">{% if f.agent_fee_amount %}{{ f.agent_fee_amount|fcfa }} F{% else %}0 F{% endif %}</strong>
-            </div>
-            <div class="fiche-condition-carte">
-              <span class="fiche-condition-label">Disponibilité</span>
-              <strong class="fiche-condition-valeur">{{ f.available_from|date:"d/m/Y" }}</strong>
-            </div>
-          </div>
-          <!-- Description -->
-          {% if f.description_html %}
-            <h2 class="fiche-section-titre">Description du gérant</h2>
-            <div class="fiche-description-texte">{{ f.description_html|safe }}</div>
+          {# Description #}
+          <div class="fiche-description-texte">{{ description_html|safe }}</div>
+          {# Chambres similaires (exact maquette) #}
+          {% if similaires %}
+            <section class="fiche-similaires" aria-labelledby="titre-similaires">
+              <h2 class="fiche-similaires-titre" id="titre-similaires">Chambres similaires</h2>
+              <div class="fiche-similaires-grille">
+                {% for s in similaires %}
+                  <a class="fiche-similaire-carte" href="/annonces/{{ s.slug }}">
+                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
+                    <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
+                    <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
+                  </a>
+                {% endfor %}
+              </div>
+            </section>
           {% endif %}
         </div>
-        <!-- Colonne Latérale / Sidebar (Droite) -->
+        {# ── Colonne Latérale (Droite — exact maquette) ── #}
         <aside class="fiche-sidebar">
-          <!-- Carte Action & Contact -->
-          <div class="carte-action-fiche">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span class="texte-doux texte-petit">Loyer mensuel</span>
-                <p class="fiche-prix-montant mb-0">{{ f.rent_amount|fcfa }} <small>FCFA</small></p>
-              </div>
-              {% if f.status == "published" %}
-                <span class="badge badge--succes">Disponible</span>
-              {% else %}
-                <span class="badge badge--avertissement">Déjà louée</span>
-              {% endif %}
-            </div>
-            {% if est_proprietaire %}
-              <a class="bouton bouton--primaire largeur-pleine"
-                 href="/pro/annonces/{{ f.id }}">Gérer cette annonce</a>
-            {% elif f.status == "published" and peut_contacter %}
-              <form method="post" action="/annonces/{{ f.slug }}/contacter" class="pile">
-                {% csrf_token %}
-                <div class="champ">
-                  <label class="champ__etiquette" for="body">Message au gérant</label>
-                  <textarea id="body" name="body" rows="3" maxlength="2000" required>{{ message_propose }}</textarea>
-                  <p class="champ__aide">Garde les échanges dans Logeo : aucun contact hors plateforme.</p>
-                </div>
-                <button class="bouton bouton--primaire bouton--grand largeur-pleine"
-                        type="submit">💬 Contacter le gérant</button>
-              </form>
-            {% elif f.status == "published" and not request.user.is_authenticated %}
-              <a class="bouton bouton--primaire bouton--grand largeur-pleine"
-                 href="/connexion?next=/annonces/{{ f.slug }}">💬 Contacter le gérant</a>
-              <p class="texte-doux texte-petit text-center mb-0">Connecte-toi pour échanger directement et en sécurité.</p>
-            {% endif %}
-            <div class="d-flex gap-2">
-              {% if request.user.is_authenticated and request.user.role == "client" %}
-                <form method="post" action="/annonces/{{ f.slug }}/favori" class="flex-1">
-                  {% csrf_token %}
-                  <button class="bouton bouton--secondaire largeur-pleine" type="submit">
-                    {% if f.is_favorite %}❤️ Retirer{% else %}🤍 Favori{% endif %}
-                  </button>
-                </form>
-              {% endif %}
-              <a class="bouton bouton--secondaire flex-1 text-center"
-                 href="{{ alerte_url }}">🔔 Alerte proche</a>
-            </div>
-          </div>
-          <!-- Carte Profil du Gérant -->
-          <div class="carte-gerant-fiche">
-            <div class="carte-gerant-fiche__entete">
-              <div class="avatar-rond">{{ f.gerant.name|default:"G"|slice:":2"|upper }}</div>
-              <div class="carte-gerant-fiche__infos">
-                <div class="carte-gerant-fiche__nom-ligne">
-                  <h3 class="carte-gerant-fiche__nom">{{ f.gerant.name|default:"Gérant Logeo" }}</h3>
+          <div class="fiche-carte-principale">
+            {# En-tête Gérant #}
+            <div class="fiche-gerant-entete">
+              <div class="fiche-gerant-avatar" aria-hidden="true">{{ f.gerant.name|default:"G"|slice:":2"|upper }}</div>
+              <div class="fiche-gerant-meta">
+                <div class="fiche-gerant-ligne">
+                  <h2 class="fiche-gerant-nom">{{ f.gerant.name|default:"Gérant Logeo" }}</h2>
                   {% if f.gerant.verified %}
-                    <span class="badge badge--succes">✔ Vérifié</span>
+                    <span class="badge-verifie-pill badge-verifie-pill--petit" title="Vérifié">
+                      <svg width="10"
+                           height="10"
+                           viewBox="0 0 24 24"
+                           fill="none"
+                           stroke="currentColor"
+                           stroke-width="3"
+                           stroke-linecap="round"
+                           stroke-linejoin="round"
+                           aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>Vérifié</span>
+                    </span>
                   {% endif %}
                 </div>
-                <p class="carte-gerant-fiche__role">Gérant certifié Logeo</p>
+                <p class="fiche-gerant-delai">
+                  Gérant · {{ f.district.name }}{% if f.gerant.median_response_min %} · répond en moins de {{ f.gerant.median_response_min }} min{% endif %}
+                </p>
               </div>
             </div>
-            {% if f.gerant.median_response_min %}
-              <p class="texte-doux texte-petit mb-0">⚡ Répond en général en <strong>{{ f.gerant.median_response_min }} min</strong></p>
+            {# Boutons d'action #}
+            {% if est_proprietaire %}
+              <a class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                 href="/pro/annonces/{{ f.id }}">Gérer cette annonce</a>
+            {% elif f.status == "published" and peut_contacter %}
+              <details class="fiche-form-contact">
+                <summary class="bouton bouton--primaire bouton--pilule largeur-pleine">Contacter le gérant</summary>
+                <form method="post" action="/annonces/{{ f.slug }}/contacter" class="pile">
+                  {% csrf_token %}
+                  <div class="champ">
+                    <label class="champ__etiquette" for="body">Ton message</label>
+                    <textarea id="body"
+                              name="body"
+                              rows="3"
+                              maxlength="2000"
+                              class="champ__saisie"
+                              required>{{ message_propose }}</textarea>
+                  </div>
+                  <button class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                          type="submit">Envoyer le message</button>
+                </form>
+              </details>
+              <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Me prévenir si ça change</a>
+            {% elif f.status == "published" and not request.user.is_authenticated %}
+              <a class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                 href="/connexion?next=/annonces/{{ f.slug }}">Contacter le gérant</a>
+              <p class="texte-doux texte-micro">Connecte-toi pour écrire au gérant.</p>
+              <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Me prévenir si ça change</a>
+            {% else %}
+              <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Me prévenir si ça change</a>
             {% endif %}
-            {% if f.last_confirmed_at %}
-              <p class="texte-doux texte-petit mb-0">Disponibilité confirmée le {{ f.last_confirmed_at|date:"d/m/Y" }}.</p>
-            {% endif %}
-            <div class="p-3 bg-surface-sunken rounded text-muted texte-petit">
-              🔒 Aucun contact hors plateforme. Vos échanges et visites sont encadrés par Logeo.
+            {# Visuel Carte #}
+            <div class="fiche-carte-visuel" aria-hidden="true">Carte · {{ f.district.name }}</div>
+            {# Repère #}
+            <p class="fiche-repere-texte">{{ f.landmark_text|default:"Près de la pharmacie du carrefour." }}</p>
+            {# Encart de sécurité #}
+            <div class="fiche-securite-encart" role="note">
+              <strong class="fiche-securite-encart__titre">Avant de payer</strong>
+              <ol class="fiche-securite-encart__liste">
+                <li>Visite la chambre.</li>
+                <li>Demande un reçu écrit pour chaque somme.</li>
+                <li>Ne paie que le gérant, pas un intermédiaire inconnu.</li>
+              </ol>
+            </div>
+            {# Actions secondaires discrètes #}
+            <div class="fiche-sidebar-pied">
+              {% if request.user.is_authenticated and request.user.role == "client" %}
+                <form method="post" action="/annonces/{{ f.slug }}/favori">
+                  {% csrf_token %}
+                  <button type="submit" class="bouton-lien fiche-lien-subtil">
+                    {% include "web/composants/icone.html" with nom="heart" taille=16 %}
+                    {% if f.is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}
+                  </button>
+                </form>
+                <details class="signalement">
+                  <summary class="fiche-lien-danger">Signaler</summary>
+                  <form method="post"
+                        action="/annonces/{{ f.slug }}/signaler"
+                        class="pile mt-2">
+                    {% csrf_token %}
+                    <select class="champ__saisie" name="reason_code">
+                      <option value="already_rented">Déjà louée</option>
+                      <option value="fake_listing">Fausse annonce</option>
+                      <option value="scam">Arnaque</option>
+                      <option value="other">Autre</option>
+                    </select>
+                    <button class="bouton bouton--danger bouton--petit largeur-pleine"
+                            type="submit">Confirmer le signalement</button>
+                  </form>
+                </details>
+              {% else %}
+                <a href="{{ alerte_url }}" class="fiche-lien-subtil">Créer une alerte</a>
+                <span class="texte-doux texte-micro">Visite d'abord, paie ensuite.</span>
+              {% endif %}
             </div>
           </div>
-          <!-- Carte Localisation et Repère -->
-          <div class="carte-localisation-fiche">
-            <div class="carte-localisation-visuel">
-              <div class="text-center p-4">
-                <div class="fs-24 mb-1">📍</div>
-                <strong>Quartier {{ f.district.name }}</strong>
-                <p class="texte-doux texte-petit mb-0">À {{ f.distance_m }} m du campus de Parakou</p>
-              </div>
-            </div>
-            {% if f.landmark_text %}
-              <p class="carte-localisation-repere">
-                <strong>Repère :</strong> {{ f.landmark_text }}
-              </p>
-            {% endif %}
-          </div>
-          <!-- Signalement -->
-          {% if request.user.is_authenticated and request.user.role == "client" %}
-            <details class="signalement">
-              <summary class="signalement__declencheur">Signaler cette annonce</summary>
-              <form method="post"
-                    action="/annonces/{{ f.slug }}/signaler"
-                    class="pile mt-3">
-                {% csrf_token %}
-                <div class="champ">
-                  <label class="champ__etiquette" for="reason">Motif du signalement</label>
-                  <select class="champ__saisie" id="reason" name="reason_code">
-                    <option value="already_rented">Déjà louée</option>
-                    <option value="fake_listing">Fausse annonce</option>
-                    <option value="price_mismatch">Prix différent</option>
-                    <option value="scam">Arnaque</option>
-                    <option value="other">Autre</option>
-                  </select>
-                </div>
-                <button class="bouton bouton--danger largeur-pleine" type="submit">Envoyer le signalement</button>
-              </form>
-            </details>
-          {% endif %}
         </aside>
       </div>
     </div>

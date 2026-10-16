@@ -1,27 +1,111 @@
 {% extends "web/base.html" %}
+{% load static logeo %}
 {% block titre %}{{ titre }} — Logeo{% endblock %}
+{% block navigation %}{% endblock %}
+{# Pas de navbar sur ces pages #}
 {% block contenu %}
-  <section class="section">
-    <div class="conteneur conteneur--texte">
-      <div class="carte p-6 shadow-sm">
-        <div class="text-center mb-6">
-          <div class="fs-32 mb-2">🏠</div>
-          <h1 class="fs-24 fw-bold mb-1">{{ titre }}</h1>
-          <p class="texte-doux texte-petit mb-0">Accédez à votre espace sécurisé sur Logeo</p>
-        </div>
-        {% if etapes %}
-          <div class="mb-6">{% include "web/composants/etapes.html" %}</div>
+  <div class="auth-layout">
+    {# ── Panneau gauche illustré ──────────────────────────────────────────── #}
+    <aside class="auth-lateral" aria-hidden="true">
+      <a class="logotype auth-lateral__logo" href="/" tabindex="-1">
+        <img src="{% static 'design/logo.svg' %}"
+             alt=""
+             width="36"
+             height="36"
+             class="logotype__icone">
+        Logeo<span class="logotype__point">.</span>
+      </a>
+      <div class="auth-lateral__contenu">
+        <h2 class="auth-lateral__titre">{{ accroche|default:"Retrouve tes alertes, tes favoris et tes messages." }}</h2>
+        <p class="auth-lateral__sous-titre">{{ sous_accroche|default:"Ta chambre à Parakou t'attend." }}</p>
+        {% if promesses %}
+          <ul class="auth-lateral__promesses">
+            {% for p in promesses %}
+              <li>
+                <svg width="16"
+                     height="16"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2.5"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {{ p }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <ul class="auth-lateral__promesses">
+            <li>
+              <svg width="16"
+                   height="16"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2.5"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Alertes dès qu'une chambre se libère
+            </li>
+            <li>
+              <svg width="16"
+                   height="16"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2.5"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Messages directs avec les gérants vérifiés
+            </li>
+            <li>
+              <svg width="16"
+                   height="16"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2.5"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Favoris et recherches enregistrés
+            </li>
+          </ul>
         {% endif %}
-        {% if request.GET.reinitialise %}
-          <div class="alerte alerte--succes mb-4" role="status">
-            <p>Mot de passe changé avec succès. Vous pouvez maintenant vous connecter.</p>
-          </div>
+      </div>
+    </aside>
+    {# ── Panneau droit : formulaire ───────────────────────────────────────── #}
+    <main id="contenu" class="auth-formulaire">
+      <div class="auth-formulaire__inner">
+        {% if etapes %}
+          <div class="auth-etapes" aria-label="Étapes de la démarche">{% include "web/composants/etapes.html" %}</div>
+        {% endif %}
+        <h1 class="auth-formulaire__titre">{{ titre }}</h1>
+        {% if sous_titre %}
+          <p class="auth-formulaire__sous-titre">{{ sous_titre }}</p>
+        {% endif %}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alerte alerte--{% if m.tags == 'error' %}danger{% elif m.tags == 'success' %}succes{% else %}information{% endif %}"
+                 role="{% if m.tags == 'error' %}alert{% else %}status{% endif %}">
+              <p>{{ m }}</p>
+            </div>
+          {% endfor %}
         {% endif %}
         {% if form.non_field_errors %}
-          <div class="alerte alerte--danger mb-4" role="alert">
-            {% for e in form.non_field_errors %}
-              <p>{{ e }}</p>
-            {% endfor %}
+          <div class="alerte alerte--danger" role="alert">
+            {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
           </div>
         {% endif %}
         <form method="post" class="pile" novalidate>
@@ -34,13 +118,11 @@
               <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
               {{ champ }}
               {% for e in champ.errors %}
-                <p class="champ__erreur">{{ e }}</p>
+                <p class="champ__erreur" role="alert">{{ e }}</p>
               {% endfor %}
             </div>
           {% endfor %}
-          {% for champ in form.hidden_fields %}
-            {{ champ }}
-          {% endfor %}
+          {% for champ in form.hidden_fields %}{{ champ }}{% endfor %}
           {% if captcha_requis and not captcha_fictif and site_key %}
             <div class="cf-turnstile"
                  data-sitekey="{{ site_key }}"
@@ -53,13 +135,17 @@
                   type="submit">{{ bouton }}</button>
         </form>
         {% if liens %}
-          <div class="mt-6 pt-4 border-top text-center pile pile--serree">
+          <div class="auth-formulaire__liens">
             {% for lien, texte in liens %}
-              <p class="texte-petit mb-0"><a href="{{ lien }}">{{ texte }}</a></p>
+              {% if lien %}
+                <p><a href="{{ lien }}">{{ texte }}</a></p>
+              {% else %}
+                <p class="auth-formulaire__note">{{ texte }}</p>
+              {% endif %}
             {% endfor %}
           </div>
         {% endif %}
       </div>
-    </div>
-  </section>
+    </main>
+  </div>
 {% endblock %}

@@ -1,14 +1,14 @@
-{% load i18n logeo %}
+{% load i18n logeo static %}
 <!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="color-scheme" content="light dark">
-    <title>{% block titre %}Logeo — Trouve ta chambre à Parakou{% endblock %}</title>
+    <meta name="color-scheme" content="light">
+    <title>{% block titre %}Logeo — Chambres à Parakou, visite en vidéo{% endblock %}</title>
     <meta name="description"
-          content="{% block description %}Trouve ta chambre à Parakou : vidéos réelles, gérants vérifiés, messagerie sûre.{% endblock %}">
+          content="{% block description %}Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct. Visite d'abord, paie ensuite.{% endblock %}">
     <link rel="stylesheet" href="{% css_logeo %}">
     {% block tete %}{% endblock %}
   </head>
@@ -17,8 +17,15 @@
     <div class="page">
       <header class="entete">
         <div class="conteneur entete__barre">
-          <a class="logotype"
-             href="/"><span class="logotype__image">🏠</span> Logeo<span class="logotype__point">.</span></a>
+          <a class="logotype" href="/" aria-label="Logeo — Accueil">
+            <img class="logotype__icone"
+                 src="{% static 'design/logo.svg' %}"
+                 alt=""
+                 aria-hidden="true"
+                 width="36"
+                 height="36">
+            Logeo<span class="logotype__point">.</span>
+          </a>
           {% block navigation %}
             {% include "web/composants/navigation.html" %}
           {% endblock %}
@@ -27,43 +34,53 @@
       <main id="contenu" class="page__contenu">
         {% block contenu %}{% endblock %}
       </main>
-      <footer class="pied">
-        <div class="conteneur">
-          <div class="pied__grille">
-            <div>
-              <p class="pied__titre">Logeo</p>
-              <p class="texte-petit mb-0">Des chambres réelles à Parakou : vidéos vraies, gérants vérifiés, échanges gardés dans l'application.</p>
+      {% block pied %}
+        <footer class="pied">
+          <div class="conteneur">
+            <div class="pied__grille">
+              <div class="pied__logo-colonne">
+                <a class="logotype pied__logo" href="/" aria-label="Logeo">
+                  Logeo<span class="logotype__point">.</span>
+                </a>
+                <p class="pied__slogan">Le logement à Parakou, vu avant d'y aller.</p>
+              </div>
+              <div>
+                <p class="pied__titre">Raccourcis</p>
+                <ul class="pied__liste">
+                  <li><a href="/annonces">Chambres</a></li>
+                  <li><a href="/#comment-ca-marche">Comment ça marche</a></li>
+                  <li><a href="/#faq">FAQ</a></li>
+                  {% if request.user.is_authenticated and request.user.role == "client" %}
+                    <li><a href="/compte/alertes">Mes alertes</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+              <div>
+                <p class="pied__titre">Quartiers</p>
+                <ul class="pied__liste">
+                  <li><a href="/annonces?district=banikanni">Banikanni</a></li>
+                  <li><a href="/annonces?district=guema">Guéma</a></li>
+                  <li><a href="/annonces?district=albarika">Albarika</a></li>
+                  <li><a href="/annonces?district=titirou">Titirou</a></li>
+                </ul>
+              </div>
+              <div>
+                <p class="pied__titre">Contact</p>
+                <ul class="pied__liste">
+                  <li><a href="tel:+22901562014000">+229 01 56 20 14 00</a></li>
+                  <li><a href="https://wa.me/22901562014000" rel="noopener">WhatsApp · Appel</a></li>
+                  <li><a href="/conditions">Conditions</a></li>
+                  <li><a href="/confidentialite">Confidentialité</a></li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <p class="pied__titre">Découvrir</p>
-              <ul class="pied__liste">
-                <li><a href="/annonces">Toutes les chambres</a></li>
-                <li><a href="/annonces?sort=distance">Proches du campus</a></li>
-                {% if request.user.is_authenticated and request.user.role == "client" %}
-                  <li><a href="/compte/alertes">Mes alertes</a></li>
-                {% endif %}
-              </ul>
-            </div>
-            <div>
-              <p class="pied__titre">Mon compte</p>
-              <ul class="pied__liste">
-                {% if request.user.is_authenticated %}
-                  <li><a href="/compte">Mon compte</a></li>
-                  <li><a href="/compte/messages">Messages</a></li>
-                  <li><a href="/compte/notifications">Notifications</a></li>
-                {% else %}
-                  <li><a href="/connexion">Se connecter</a></li>
-                  <li><a href="/inscription">Créer un compte</a></li>
-                {% endif %}
-              </ul>
+            <div class="pied__bas">
+              <span>© Logeo · Parakou, Bénin</span>
+              <span>FCFA · Africa/Porto-Novo</span>
             </div>
           </div>
-          <div class="pied__bas">
-            <span>© Logeo — Parakou, Bénin</span>
-            <span>FCFA · Africa/Porto-Novo</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      {% endblock pied %}
     </div>
   </body>
 </html>

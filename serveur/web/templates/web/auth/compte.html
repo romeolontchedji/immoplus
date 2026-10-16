@@ -1,95 +1,212 @@
 {% extends "web/base.html" %}
+{% load logeo %}
 {% block titre %}Mon compte — Logeo{% endblock %}
-{% block navigation %}
-  <form method="post" action="/deconnexion">
-    {% csrf_token %}
-    <button class="bouton bouton--fantome" type="submit">Se déconnecter</button>
-  </form>
-{% endblock %}
 {% block contenu %}
   <section class="section">
     <div class="conteneur">
       <div class="compte-dashboard">
-        <!-- Sidebar Carte Profil Utilisateur -->
+        {# ── Sidebar profil ─────────────────────────────────────────────────── #}
         <aside class="compte-sidebar">
-          <div class="compte-carte-profil mb-6">
-            <div class="compte-carte-profil__avatar">{{ u.full_name|default:"U"|slice:":2"|upper }}</div>
+          <div class="compte-carte-profil">
+            <div class="navigation__avatar navigation__avatar--grand"
+                 aria-hidden="true">{{ u.full_name|default:"U"|slice:":2"|upper }}</div>
             <div>
               <h2 class="compte-carte-profil__nom">{{ u.full_name|default:u.phone_e164 }}</h2>
               <p class="texte-doux texte-petit mb-2">{{ u.phone_e164 }}</p>
               {% if u.role == "gerant" %}
-                <span class="badge badge--succes">Gérant certifié</span>
+                <span class="badge-verifie">
+                  <svg width="12"
+                       height="12"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="2.5"
+                       stroke-linecap="round"
+                       stroke-linejoin="round"
+                       aria-hidden="true">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  Gérant vérifié
+                </span>
               {% else %}
-                <span class="badge badge--neutre">Étudiant / Locataire</span>
+                <span class="badge badge--neutre">Locataire</span>
               {% endif %}
             </div>
-            <ul class="compte-menu mt-4">
-              <li>
-                <a class="compte-menu__lien compte-menu__lien--actif" href="/compte">
-                  <span>👤</span> Informations du compte
-                </a>
-              </li>
-              {% if u.role == "client" %}
-                <li>
-                  <a class="compte-menu__lien" href="/compte/favoris">
-                    <span>❤️</span> Mes favoris
-                    {% if total_favoris %}<span class="navigation__compteur ml-auto">{{ total_favoris }}</span>{% endif %}
-                  </a>
-                </li>
-                <li>
-                  <a class="compte-menu__lien" href="/compte/alertes">
-                    <span>🔔</span> Mes alertes
-                    {% if total_alertes %}<span class="navigation__compteur ml-auto">{{ total_alertes }}</span>{% endif %}
-                  </a>
-                </li>
-              {% else %}
-                <li>
-                  <a class="compte-menu__lien" href="/pro/dashboard">
-                    <span>📊</span> Tableau de bord pro
-                  </a>
-                </li>
-              {% endif %}
-              <li>
-                <a class="compte-menu__lien" href="/compte/messages">
-                  <span>💬</span> Messages
-                  {% if non_lus %}<span class="navigation__compteur ml-auto">{{ non_lus }}</span>{% endif %}
-                </a>
-              </li>
-              <li>
-                <a class="compte-menu__lien" href="/compte/preferences">
-                  <span>⚙️</span> Préférences notifications
-                </a>
-              </li>
-              <li>
-                <a class="compte-menu__lien" href="/compte/appareils">
-                  <span>📱</span> Appareils connectés
-                </a>
-              </li>
-              <li>
-                <a class="compte-menu__lien" href="/compte/numero">
-                  <span>📞</span> Changer de numéro
-                </a>
-              </li>
-            </ul>
           </div>
+          <ul class="compte-menu">
+            <li>
+              <a class="compte-menu__lien compte-menu__lien--actif"
+                 href="/compte"
+                 aria-current="page">
+                <svg width="18"
+                     height="18"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                Informations du compte
+              </a>
+            </li>
+            {% if u.role == "client" %}
+              <li>
+                <a class="compte-menu__lien" href="/compte/favoris">
+                  <svg width="18"
+                       height="18"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="2"
+                       stroke-linecap="round"
+                       stroke-linejoin="round"
+                       aria-hidden="true">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  Mes favoris
+                  {% if total_favoris %}<span class="navigation__compteur ml-auto">{{ total_favoris }}</span>{% endif %}
+                </a>
+              </li>
+              <li>
+                <a class="compte-menu__lien" href="/compte/alertes">
+                  <svg width="18"
+                       height="18"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="2"
+                       stroke-linecap="round"
+                       stroke-linejoin="round"
+                       aria-hidden="true">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                  Mes alertes
+                  {% if total_alertes %}<span class="navigation__compteur ml-auto">{{ total_alertes }}</span>{% endif %}
+                </a>
+              </li>
+            {% else %}
+              <li>
+                <a class="compte-menu__lien" href="/pro/dashboard">
+                  <svg width="18"
+                       height="18"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="2"
+                       stroke-linecap="round"
+                       stroke-linejoin="round"
+                       aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                  Tableau de bord pro
+                </a>
+              </li>
+            {% endif %}
+            <li>
+              <a class="compte-menu__lien" href="/compte/messages">
+                <svg width="18"
+                     height="18"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                Messages
+                {% if non_lus %}<span class="navigation__compteur ml-auto">{{ non_lus }}</span>{% endif %}
+              </a>
+            </li>
+            <li>
+              <a class="compte-menu__lien" href="/compte/preferences">
+                <svg width="18"
+                     height="18"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Préférences
+              </a>
+            </li>
+            <li>
+              <a class="compte-menu__lien" href="/compte/appareils">
+                <svg width="18"
+                     height="18"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+                Appareils connectés
+              </a>
+            </li>
+            <li>
+              <a class="compte-menu__lien" href="/compte/numero">
+                <svg width="18"
+                     height="18"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                Changer de numéro
+              </a>
+            </li>
+          </ul>
         </aside>
-        <!-- Contenu Principal -->
+        {# ── Contenu principal ──────────────────────────────────────────────── #}
         <div class="compte-principal">
           <div class="pro-entete">
             <div>
               <h1 class="pro-entete__titre">Mon compte</h1>
-              <p class="texte-doux mb-0">Gérez vos informations personnelles et vos paramètres de sécurité</p>
+              <p class="texte-doux mb-0">Gère tes informations personnelles et tes paramètres de sécurité</p>
             </div>
           </div>
-          {% if message %}<div class="alerte alerte--succes mb-6" role="status"><p>{{ message }}</p></div>{% endif %}
+          {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
           {% if request.GET.numero_change %}
-            <div class="alerte alerte--succes mb-6" role="status">
+            <div class="alerte alerte--succes" role="status">
               <p>Ton numéro a été changé. Les autres appareils sont déconnectés.</p>
             </div>
           {% endif %}
-          <!-- Informations personnelles -->
+          {# Informations personnelles #}
           <div class="compte-section-carte">
-            <h2 class="compte-section-carte__titre"><span>✏️</span> Informations personnelles</h2>
+            <h2 class="compte-section-carte__titre">
+              <svg width="18"
+                   height="18"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Informations personnelles
+            </h2>
             <form method="post" class="pile">
               {% csrf_token %}
               <input type="hidden" name="action" value="nom">
@@ -97,7 +214,7 @@
                 <div class="champ">
                   <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
                   {{ champ }}
-                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                  {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
                 </div>
               {% endfor %}
               <div>
@@ -105,18 +222,32 @@
               </div>
             </form>
           </div>
-          <!-- Sécurité & Mot de passe -->
+          {# Mot de passe #}
           <div class="compte-section-carte">
-            <h2 class="compte-section-carte__titre"><span>🔒</span> Mot de passe</h2>
+            <h2 class="compte-section-carte__titre">
+              <svg width="18"
+                   height="18"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Mot de passe
+            </h2>
             <form method="post" class="pile">
               {% csrf_token %}
               <input type="hidden" name="action" value="mot-de-passe">
-              {% for e in mdp.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+              {% for e in mdp.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
               {% for champ in mdp.visible_fields %}
                 <div class="champ">
                   <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
                   {{ champ }}
-                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                  {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
                 </div>
               {% endfor %}
               <div>
@@ -124,19 +255,33 @@
               </div>
             </form>
           </div>
-          <!-- Zone Danger / Suppression -->
-          <div class="compte-section-carte">
-            <h2 class="compte-section-carte__titre text-danger"><span>⚠️</span> Zone de danger</h2>
+          {# Zone danger #}
+          <div class="compte-section-carte compte-section-carte--danger">
+            <h2 class="compte-section-carte__titre color-danger">
+              <svg width="18"
+                   height="18"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Zone de danger
+            </h2>
             <form method="post" class="pile">
               {% csrf_token %}
               <input type="hidden" name="action" value="suppression">
-              <p class="texte-doux mb-3">Ton compte sera anonymisé. Cette action est irréversible et clôture toutes les données associées.</p>
-              {% for e in suppression.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+              <p class="texte-doux mb-3">Ton compte sera anonymisé. Cette action est irréversible et supprime toutes tes données.</p>
+              {% for e in suppression.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
               {% for champ in suppression.visible_fields %}
                 <div class="champ">
                   <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
                   {{ champ }}
-                  {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+                  {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
                 </div>
               {% endfor %}
               <div>

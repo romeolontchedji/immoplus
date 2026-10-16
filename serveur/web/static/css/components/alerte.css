@@ -1,7 +1,21 @@
-.alerte { display: flex; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--rayon-2); border: 1px solid transparent; font-size: var(--fs-14); }
+/* Alertes/bannières de feedback */
+.alerte {
+  display: flex; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-card); border: 1.5px solid transparent;
+  font-size: var(--fs-15); line-height: 1.5;
+}
 .alerte__titre { font-weight: 700; margin: 0 0 var(--sp-1); }
 .alerte p { margin: 0; }
-.alerte--succes { background: var(--succes-bg); color: var(--succes-text); }
-.alerte--avertissement { background: var(--avertissement-bg); color: var(--avertissement-text); }
-.alerte--danger { background: var(--danger-bg); color: var(--danger-text); }
-.alerte--information { background: var(--information-bg); color: var(--information-text); }
+.alerte--succes   { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+.alerte--avertissement { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+.alerte--danger   { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+.alerte--information { background: var(--blue-soft); color: var(--blue); border-color: var(--info-border); }
+
+/* Incitation vidéo (dashboard gérant) */
+.alerte--incitation {
+  background: var(--warning-bg); color: var(--night);
+  border-color: var(--warning-border);
+  justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);
+}
+.alerte--incitation .alerte__texte strong { display: block; font-size: var(--fs-15); font-weight: 700; margin-bottom: var(--sp-1); }
+.alerte--incitation .alerte__texte p { font-size: var(--fs-14); color: var(--text-muted); }

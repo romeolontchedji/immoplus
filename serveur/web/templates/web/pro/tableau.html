@@ -1,129 +1,98 @@
 {% extends "web/base.html" %}
-{% load logeo %}
+{% load static logeo %}
 {% block titre %}Tableau de bord — Espace Gérant — Logeo{% endblock %}
+{% block navigation %}{% endblock %}
+{# Sidebar remplace la navbar #}
 {% block contenu %}
-  <section class="section">
-    <div class="conteneur">
-      <div class="pro-layout">
-        <!-- Sidebar Navigation Gérant -->
-        <aside class="pro-sidebar">
-          <div>
-            <div class="carte-gerant-fiche__entete mb-6">
-              <div class="avatar-rond">{{ profil.user.full_name|default:"G"|slice:":2"|upper }}</div>
-              <div class="carte-gerant-fiche__infos">
-                <div class="carte-gerant-fiche__nom-ligne">
-                  <h2 class="carte-gerant-fiche__nom fs-16">{{ profil.user.full_name|default:profil.user.phone }}</h2>
-                </div>
-                <p class="carte-gerant-fiche__role">Espace Gérant</p>
-              </div>
-            </div>
-            <ul class="pro-nav">
-              <li>
-                <a class="pro-nav__lien pro-nav__lien--actif" href="/pro/dashboard">
-                  <span>📊</span> Tableau de bord
-                </a>
-              </li>
-              <li>
-                <a class="pro-nav__lien" href="/pro/annonces">
-                  <span>📋</span> Mes chambres
-                  {% if total_annonces %}
-                    <span class="navigation__compteur ml-auto">{{ total_annonces }}</span>
-                  {% endif %}
-                </a>
-              </li>
-              <li>
-                <a class="pro-nav__lien" href="/compte/messages">
-                  <span>💬</span> Messages
-                  {% if non_lus %}
-                    <span class="navigation__compteur ml-auto">{{ non_lus }}</span>
-                  {% endif %}
-                </a>
-              </li>
-              <li>
-                <a class="pro-nav__lien" href="/compte/notifications">
-                  <span>🔔</span> Notifications
-                </a>
-              </li>
-              <li>
-                <a class="pro-nav__lien" href="/compte">
-                  <span>⚙️</span> Mon profil
-                </a>
-              </li>
-            </ul>
+  <div class="pro-layout">
+    {# ── Barre latérale gérant ──────────────────────────────────────────────── #}
+    {% include "web/pro/_sidebar.html" with active_onglet="dashboard" %}
+    {# ── Contenu principal ──────────────────────────────────────────────────── #}
+    <main id="contenu" class="pro-principal">
+      {# En-tête #}
+      <div class="pro-entete">
+        <div>
+          <h1 class="pro-entete__titre">Bonjour {{ profil.user.prenom|default:profil.user.full_name|default:"" }}</h1>
+          <p class="texte-doux mb-0">Voici ce qui se passe sur tes chambres.</p>
+        </div>
+        {% if profil.verification_status == "verified" %}
+          <a class="bouton bouton--accent" href="/pro/annonces/nouvelle">
+            <svg width="18"
+                 height="18"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Publier une chambre
+          </a>
+        {% endif %}
+      </div>
+      {% if profil.verification_status != "verified" %}
+        <div class="alerte alerte--avertissement" role="status">
+          <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Logeo.</p>
+        </div>
+      {% endif %}
+      {# ── Métriques ────────────────────────────────────────────────────────── #}
+      <div class="pro-metriques-grille">
+        <div class="pro-metrique-carte">
+          <p class="pro-metrique-valeur">{{ donnees.listings_by_status.published|default:"—" }}</p>
+          <p class="pro-metrique-label">Chambres actives</p>
+        </div>
+        <div class="pro-metrique-carte">
+          <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:"—" }}</p>
+          <p class="pro-metrique-label">Vues ce mois</p>
+        </div>
+        <div class="pro-metrique-carte">
+          <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.conversations_30d|default:"—" }}</p>
+          <p class="pro-metrique-label">Contacts reçus</p>
+        </div>
+        <div class="pro-metrique-carte">
+          <p class="pro-metrique-valeur pro-metrique-valeur--vert">{{ donnees.listings_by_status.rented|default:"—" }}</p>
+          <p class="pro-metrique-label">Chambre louée</p>
+        </div>
+      </div>
+      {# ── Répartition par statut ───────────────────────────────────────────── #}
+      {% if statuts %}
+        <div class="pro-statuts-annonces" aria-label="Répartition de tes annonces">
+          {% for s in statuts %}
+            <span class="pro-statut-chip"><strong>{{ s.nombre }}</strong> {{ s.libelle }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {# ── Incitation vidéo ─────────────────────────────────────────────────── #}
+      {% if annonce_sans_video %}
+        <div class="alerte alerte--incitation" role="status">
+          <div class="alerte__texte">
+            <strong>Ta chambre de {{ annonce_sans_video.district.name }} n'a aucune vue.</strong>
+            <p class="mb-0">Les annonces avec vidéo donnent plus envie de contacter. Ajoute une visite de 20 secondes.</p>
           </div>
-          {% if profil.verification_status == "verified" %}
-            <div class="pro-sidebar__badge-verifie">
-              <span>✔</span> Gérant certifié Logeo
-            </div>
-          {% endif %}
-        </aside>
-        <!-- Contenu Principal -->
-        <div class="pro-principal">
-          <!-- En-tête Pro -->
-          <div class="pro-entete">
-            <div>
-              <h1 class="pro-entete__titre">Mes chambres</h1>
-              <p class="texte-doux mb-0">Vue globale sur vos activités et vos contacts reçus</p>
-            </div>
-            <div class="pro-entete__actions">
-              <span class="badge-premium">👑 Premium</span>
-              {% if profil.verification_status == "verified" %}
-                <a class="bouton bouton--primaire bouton--grand"
-                   href="/pro/annonces/nouvelle">+ Publier une chambre</a>
-              {% else %}
-                <span class="badge badge--avertissement">Compte en attente de vérification</span>
-              {% endif %}
-            </div>
-          </div>
-          {% if profil.verification_status != "verified" %}
-            <div class="alerte alerte--avertissement mb-6" role="status">
-              <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien de vérification avec l'équipe Logeo.</p>
-            </div>
-          {% endif %}
-          {% if donnees.to_confirm %}
-            <div class="alerte alerte--information mb-6" role="status">
-              <p>⚠️ <strong>{{ donnees.to_confirm }} chambre(s)</strong> à confirmer : confirmez leur disponibilité pour qu'elles restent visibles.</p>
-            </div>
-          {% endif %}
-          <!-- Grille des 4 métriques clés -->
-          <div class="pro-metriques-grille">
-            <div class="pro-metrique-carte">
-              <p class="pro-metrique-valeur">{{ donnees.listings_by_status.published|default:0 }}</p>
-              <p class="pro-metrique-label">Chambres actives</p>
-            </div>
-            <div class="pro-metrique-carte">
-              <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:0 }}</p>
-              <p class="pro-metrique-label">Vues ce mois</p>
-            </div>
-            <div class="pro-metrique-carte">
-              <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.conversations_30d|default:0 }}</p>
-              <p class="pro-metrique-label">
-                Contacts reçus
-                {% if taux is not None %}· {{ taux }}% rép.{% endif %}
-              </p>
-            </div>
-            <div class="pro-metrique-carte">
-              <p class="pro-metrique-valeur pro-metrique-valeur--vert">{{ donnees.listings_by_status.rented|default:0 }}</p>
-              <p class="pro-metrique-label">Chambre louée</p>
-            </div>
-          </div>
-          <!-- Section Mes Chambres -->
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fs-20 fw-bold mb-0">Mes chambres</h2>
-            <a class="bouton bouton--secondaire bouton--petit" href="/pro/annonces">Gérer toutes mes chambres</a>
+          <a class="bouton bouton--primaire"
+             href="/pro/annonces/{{ annonce_sans_video.slug }}/modifier">Ajouter une vidéo</a>
+        </div>
+      {% endif %}
+      {# ── Grille principale : tableau + contacts ────────────────────────────── #}
+      <div class="pro-dashboard-grille">
+        {# Mes annonces #}
+        <div class="pro-section-carte">
+          <div class="pro-section-entete">
+            <h2 class="pro-section-titre">Mes annonces</h2>
+            <a class="bouton bouton--contour bouton--petit" href="/pro/annonces">Voir toutes</a>
           </div>
           {% if recentes %}
-            <div class="tableau-annonces">
-              <table>
+            <div class="tableau-defilable">
+              <table class="tableau-pro">
                 <thead>
                   <tr>
-                    <th>Chambre</th>
-                    <th>Type</th>
-                    <th>Loyer</th>
-                    <th>Statut</th>
-                    <th>Vues</th>
-                    <th>Contacts</th>
-                    <th>Actions</th>
+                    <th>CHAMBRE</th>
+                    <th>LOYER</th>
+                    <th>STATUT</th>
+                    <th>VUES</th>
+                    <th>CONTACTS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,44 +100,44 @@
                     <tr>
                       <td>
                         <div class="cellule-chambre">
-                          <span class="cellule-chambre__icone">{% if r.annonce.has_video %}▶{% else %}🖼️{% endif %}</span>
+                          <span class="cellule-chambre__initiale">{{ r.annonce.district.name|slice:":2"|upper }}</span>
                           <div>
                             <a class="cellule-chambre__titre" href="{{ r.url }}">{{ r.annonce.district.name }}</a>
-                            <span class="texte-doux texte-tres-petit d-block">{{ r.annonce.title }}</span>
+                            <span class="cellule-chambre__type">{{ r.annonce.get_room_type_display }}</span>
                           </div>
                         </div>
-                      </td>
-                      <td>
-                        <span class="texte-doux">{{ r.annonce.get_room_type_display }}</span>
                       </td>
                       <td><strong>{{ r.annonce.rent_amount|fcfa }} F</strong></td>
                       <td>
                         {% if r.annonce.status == "published" %}
-                          <span class="badge badge--succes">Active</span>
+                          {% if r.annonce.has_video %}
+                            <span class="statut-active">Active</span>
+                          {% else %}
+                            <span class="statut-sans-video">Sans vidéo</span>
+                          {% endif %}
                         {% elif r.annonce.status == "rented" %}
-                          <span class="badge badge--neutre">Louée</span>
+                          <span class="statut-louee">Louée</span>
                         {% elif r.annonce.status == "draft" %}
-                          <span class="badge badge--avertissement">Brouillon</span>
+                          <span class="statut-attente">Brouillon</span>
+                        {% elif r.annonce.status == "suspended" %}
+                          <span class="statut-suspendu">Suspendu</span>
                         {% else %}
-                          <span class="badge">{{ r.annonce.status }}</span>
+                          <span class="statut-attente">{{ r.annonce.get_status_display }}</span>
                         {% endif %}
                       </td>
                       <td>
                         {% if r.annonce.status == "published" %}
-                          <span class="fw-bold color-text">{{ r.stats.views|default:0 }}</span>
+                          <span class="fw-700">{{ r.stats.views|default:0 }}</span>
                         {% else %}
                           <span class="texte-doux">—</span>
                         {% endif %}
                       </td>
                       <td>
                         {% if r.annonce.status == "published" %}
-                          <span class="fw-bold text-primary">{{ r.stats.contacts|default:0 }}</span>
+                          <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
                         {% else %}
                           <span class="texte-doux">—</span>
                         {% endif %}
-                      </td>
-                      <td>
-                        <a class="bouton bouton--petit bouton--secondaire" href="{{ r.url }}">Gérer</a>
                       </td>
                     </tr>
                   {% endfor %}
@@ -176,13 +145,58 @@
               </table>
             </div>
           {% else %}
-            <div class="panneau text-center p-8">
-              <p class="texte-doux mb-4">Vous n'avez pas encore publié de chambre.</p>
-              <a class="bouton bouton--primaire" href="/pro/annonces/nouvelle">+ Publier ma première chambre</a>
+            <div class="etat-vide">
+              <div class="etat-vide__symbole">
+                <svg width="28"
+                     height="28"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.5"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <h3 class="etat-vide__titre">Tu n'as pas encore publié de chambre.</h3>
+              <p class="etat-vide__texte">Publie la première : une vidéo, quelques photos, et c'est en ligne.</p>
+              <div class="etat-vide__actions">
+                <a class="bouton bouton--primaire" href="/pro/annonces/nouvelle">Publier une chambre</a>
+              </div>
             </div>
           {% endif %}
         </div>
+        {# Derniers contacts #}
+        <div class="pro-section-carte">
+          <div class="pro-section-entete">
+            <h2 class="pro-section-titre">Derniers contacts</h2>
+          </div>
+          {% if derniers_contacts %}
+            <ul class="pro-contacts-liste">
+              {% for c in derniers_contacts %}
+                <li class="pro-contact-ligne">
+                  <div class="navigation__avatar pro-contact__avatar" aria-hidden="true">
+                    {{ c.locataire.full_name|default:c.locataire.phone|slice:":2"|upper }}
+                  </div>
+                  <div class="pro-contact__infos">
+                    <strong>{{ c.locataire.full_name|default:c.locataire.phone }}</strong>
+                    <span class="pro-contact__meta">{{ c.annonce.get_room_type_display }} · {{ c.date_relative }}</span>
+                  </div>
+                  {% if c.nouveau %}
+                    <span class="badge badge--information">Nouveau</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+            <a class="pro-contacts__lien-voir" href="/compte/messages">Ouvrir les messages</a>
+          {% else %}
+            <div class="p-6 texte-doux texte-centre">Aucun contact pour l'instant.</div>
+          {% endif %}
+        </div>
       </div>
-    </div>
-  </section>
+      {# /pro-dashboard-grille #}
+    </main>
+  </div>
 {% endblock %}

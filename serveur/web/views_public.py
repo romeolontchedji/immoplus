@@ -81,7 +81,7 @@ def _recapitulatif(request, action: str, quartier) -> list:
             {"label": f"Type : {_libelle_type(params['type'])}", "url": lien_sans("type")}
         )
     if params.get("rent_max"):
-        actifs.append({"label": f"Loyer ≤ {params['rent_max']} FCFA", "url": lien_sans("rent_max")})
+        actifs.append({"label": f"Loyer ≤ {params['rent_max']} F", "url": lien_sans("rent_max")})
     if params.get("bathroom") == "true":
         actifs.append({"label": "Douche et WC internes", "url": lien_sans("bathroom")})
     if params.get("sort"):
@@ -129,10 +129,6 @@ def _liste(request, *, quartier=None, action="/annonces"):
     )  # fmt: skip
 
 
-def accueil(request):
-    return _liste(request, action="/annonces")
-
-
 def annonces(request):
     return _liste(request)
 
@@ -160,6 +156,22 @@ def _rendre_fiche(request, f, **extra):
         criteres_alerte["type"] = f["room_type"]
     if f.get("has_private_bathroom"):
         criteres_alerte["bathroom"] = "true"
+    try:
+        similaires_res = fil.rechercher({"district": f["district"]["slug"], "limit": 6})
+        similaires = [
+            c for c in similaires_res.get("items", []) if str(c.get("id")) != str(f["id"])
+        ][:3]
+        if len(similaires) < 3:
+            tous_res = fil.rechercher({"limit": 6})
+            autres = [
+                c
+                for c in tous_res.get("items", [])
+                if str(c.get("id")) != str(f["id"]) and c not in similaires
+            ]
+            similaires.extend(autres[: 3 - len(similaires)])
+    except Exception:
+        similaires = []
+
     contexte = {
         "f": {
             **f,
@@ -168,6 +180,7 @@ def _rendre_fiche(request, f, **extra):
             "eau_label": dict(Eau.choices).get(f["water_source"] or "", ""),
             "compteur_label": dict(Compteur.choices).get(f["electricity_meter"] or "", ""),
         },
+        "similaires": similaires,
         "peut_contacter": est_client,
         "est_proprietaire": request.user.is_authenticated
         and request.user.pk == f["gerant_user_id"],
