@@ -183,7 +183,7 @@ Implémente **tout** ce que décrivent les sections 4 à 11 du CDC. Les points c
 
 ## 8.4 Authentification, sessions, OTP (CDC §5.2, §5.3, §7.1)
 
-- Inscription locataire en deux temps (OTP puis nom + mot de passe), connexion, mot de passe oublié, changement de mot de passe, changement de numéro (mot de passe actuel + OTP du nouveau numéro, révocation des autres appareils, message à l'ancien numéro), activation gérant, suppression de compte (application **et** site), liste et révocation des appareils.
+- Inscription locataire en deux temps (OTP puis nom + mot de passe), connexion, mot de passe oublié, changement de mot de passe, changement de numéro (mot de passe actuel + OTP du nouveau numéro, révocation des autres appareils, message à l'ancien numéro), création manuelle du compte gérant par l'administration, suppression de compte (application **et** site), liste et révocation des appareils.
 - OTP : 6 chiffres, 5 min, 5 essais, HMAC, comparaison à temps constant, plafonds (numéro, appareil, plage /24), budget **par usage** avec friction à 80 % et arrêt à 100 %, calculé depuis `otp_codes`, pays autorisés, réponse identique que le numéro existe ou non, attestation d'appareil (interface `DeviceAttestationProvider` + implémentation factice et squelette Play Integrity), Turnstile sur le site.
 - Verrouillage de connexion par (numéro saisi, IP ou appareil) y compris pour numéro inconnu, réponse `401` uniforme avec `Retry-After`, plafond de 30 échecs/heure/numéro, hachage factice pour temps constant. Les compteurs vivent dans `redis-queue`, jamais dans le cache à éviction.
 - JWT d'accès 15 min (`aud`, `sub`, `did`, `ver`), rafraîchissement opaque 30 jours lié à l'appareil, **rotation avec grâce de 60 s**, détection de réutilisation, liste d'appareils révoqués et `token_version` en cache avec relecture en base si le cache est vide.
@@ -286,7 +286,7 @@ Boutons (primaire, secondaire, fantôme, danger ; tailles ; états chargement/d�
 Publiques : accueil ; recherche (`/chambres`, filtres en feuille, tris, résultat vide avec proposition d'alerte) ; fiche (`/chambres/{slug}`, lecteur HLS, galerie, caractéristiques, description rendue, boutons Contacter/Favori/Partager/Signaler/« Déjà louée ») ; page de quartier ; « Je suis gérant » ; CGU et confidentialité (texte `[À FOURNIR : textes juridiques]` avec gabarit propre) ; 404/500/maintenance ; `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`.
 Authentification : inscription (numéro → OTP → nom + mot de passe), connexion, mot de passe oublié, consentement CGU.
 Espace locataire (`/compte`) : favoris, alertes (création/édition), messages (liste + conversation temps réel par WebSocket, repli par interrogation), notifications, profil, appareils, préférences, suppression de compte.
-Espace gérant (`/pro`) : activation du compte, tableau de bord (indicateurs + liste « à faire »), annonces (liste par statut, modifier, confirmer, marquer louée, annuler), assistant de création en étapes **sur une page** avec éditeur à barre d'outils, aperçu, détection de coordonnées, import de vidéo reprenable (tus-js-client) avec progression, photos réordonnables, statistiques d'une annonce, messages, profil, « Mon abonnement » masqué par drapeau.
+Espace gérant (`/pro`) : tableau de bord (indicateurs + liste « à faire »), annonces (liste par statut, modifier, confirmer, marquer louée, annuler), assistant de création en étapes **sur une page** avec éditeur à barre d'outils, aperçu, détection de coordonnées, import de vidéo reprenable (tus-js-client) avec progression, photos réordonnables, statistiques d'une annonce, messages, profil, « Mon abonnement » masqué par drapeau.
 Administration (hôte séparé) : tous les écrans du CDC §12.5, habillés aux couleurs de la marque, avec cartes de statistiques et graphiques Chart.js locaux.
 
 # 10. Le serveur est prêt pour le mobile : pack de passation (livrable de la partie 1)
@@ -318,7 +318,7 @@ Avant de terminer, tu génères `docs/mobile/` et les outils associés, de sorte
 Pour **chaque phase** : (a) relire les sections du CDC concernées ; (b) écrire les tests **en même temps que le code** selon le §12 bis ; (c) `make verifier` au vert ; (d) mettre à jour `docs/` et `docs/avancement.md` ; (e) commits conformes au §6 sur une branche `feat/…` (fusionnée dans `main` du dépôt local de génération à la fin de la phase) ; (f) `docs/verification.md` mis à jour ; (g) **archive `logeo-partie1.zip` régénérée et envoyée** (§0 bis.7) ; (h) rapport court : livré, tests exécutés (nombre, résultat), non exécuté, décisions (ADR), `[À FOURNIR]` ouverts, risques.
 
 - **Phase 0 — Fondations** : dépôt, arborescence, `AGENTS.md`, hooks et contrôles du §6 (avec tests des scripts : cas valides et invalides), Docker Compose complet (tous les services démarrent), réglages `base/local/public/admin/test`, rôles PostgreSQL, Caddy local, import-linter, CI, `outils/construire_css.py`, jetons de design, `/styleguide` initial, `/healthz` `/readyz`, ADR 0001. Critère : les neuf cas de `outils/tester_hooks.sh` (§6.5) se comportent comme attendu, sortie jointe ; la pile Compose est écrite et relue (son démarrage réel est « non exécuté » si Docker est absent du bac à sable, et vérifié par `make fumee` chez l'utilisateur).
-- **Phase 1 — Comptes** : modèles `users`, `otp_codes`, `devices`, `gerant_profiles`, `audit_logs`, `app_settings` ; OTP, inscription, connexion, rotation des jetons, appareils, activation gérant, suppression de compte, mot de passe oublié, changement de numéro ; pages web d'authentification ; administration : hôte séparé, connexion, 2FA, axes, création de gérants, rôles ; tests de sécurité du §5 (CDC §14.2 scénarios 1, 2, 13, 14).
+- **Phase 1 — Comptes** : modèles `users`, `otp_codes`, `devices`, `gerant_profiles`, `audit_logs`, `app_settings` ; OTP, inscription, connexion, rotation des jetons, appareils, création manuelle des gérants par l'administration, suppression de compte, mot de passe oublié, changement de numéro ; pages web d'authentification ; administration : hôte séparé, connexion, 2FA, axes, création de gérants, rôles ; tests de sécurité du §5 (CDC §14.2 scénarios 1, 2, 13, 14).
 - **Phase 2 — Annonces** : `districts`, `listings` ; champs obligatoires, Markdown restreint + aperçu, détection de coordonnées, brouillons, distance, règles de publication ; assistant web ; API `/pro/listings`.
 - **Phase 3 — Médias** : `listing_media` ; tus, quotas, ffprobe/ffmpeg durcis, HLS, photos WebP, états, suppression différée, `StorageProvider`, affiche de repli ; zone de dépôt web avec reprise. Mesure du transcodage consignée.
 - **Phase 4 — Fil, recherche, fiche** : index et recherche, cache, fil, filtres, tris, fiche, lecteur HLS, favoris, vues et `daily_stats`, pages publiques et SEO, `/styleguide` complet, accueil finalisé, mesures Lighthouse.
@@ -375,7 +375,7 @@ Autorisation et IDOR ; CSRF par requêtes inter-origines ; **XSS** (corpus de ch
 ## Niveau F — Site web et bout en bout (`e2e`, Playwright Python + axe)
 
 - **Pages** : chaque URL du §10.9 répond, aucun gabarit en erreur, **aucune violation CSP dans la console**, `axe` sans violation critique ou sérieuse, poids mesurés (HTML < 30 Ko et JavaScript initial < 60 Ko compressés), contraste des jetons (`outils/contraste.py`), formulaires de base utilisables **sans JavaScript**.
-- **Parcours complets** (deux contextes de navigateur pour la messagerie) : inscription par OTP → connexion → recherche → fiche → contacter → message reçu en temps réel par le gérant → réponse → accusé de lecture ; gérant : activation, création d'annonce avec texte enrichi et aperçu, **import d'une vidéo synthétique avec coupure réseau simulée puis reprise**, publication, « louée » ; favoris ; alerte ; suppression de compte ; administration : connexion + 2FA, création d'un gérant, traitement d'un signalement, lecture d'une conversation avec motif, changement d'un paramètre.
+- **Parcours complets** (deux contextes de navigateur pour la messagerie) : inscription par OTP → connexion → recherche → fiche → contacter → message reçu en temps réel par le gérant → réponse → accusé de lecture ; gérant : création d'annonce avec texte enrichi et aperçu, **import d'une vidéo synthétique avec coupure réseau simulée puis reprise**, publication, « louée » ; favoris ; alerte ; suppression de compte ; administration : connexion + 2FA, création d'un gérant, traitement d'un signalement, lecture d'une conversation avec motif, changement d'un paramètre.
 - **Captures d'écran** des pages types à 360, 768 et 1280 px en clair et sombre, **examinées** pendant la génération pour corriger le design ; non-régression visuelle avec seuil tolérant seulement si l'environnement de l'utilisateur le permet.
 
 ## Niveau G — Scénarios de recette (CDC §14.2)
@@ -422,7 +422,7 @@ Ce document est la référence unique pour construire Logeo : quoi développer, 
 
 | Décision de l'équipe | Conséquence pour le développement |
 |---|---|
-| Inscription par OTP, connexion par numéro + mot de passe, réinitialisation par OTP | L'OTP n'est envoyé que dans quatre cas (inscription, réinitialisation, changement de numéro, activation d'un gérant) : le coût des SMS reste borné (§5.3, §16). |
+| Inscription par OTP, connexion par numéro + mot de passe, réinitialisation par OTP | L'OTP n'est envoyé que dans trois cas (inscription, réinitialisation, changement de numéro) : le coût des SMS reste borné (§5.3, §16). |
 | Aucun contact hors plateforme : tout passe par la messagerie de Logeo | Messagerie temps réel dès le lancement, une notification par message reçu, numéro du gérant jamais exposé, détection des coordonnées. |
 | Messagerie en texte seul : ni vocal, ni image, ni vidéo pour l'instant | Une seule table de messages sans pièce jointe ; l'ajout ultérieur n'oblige pas à modifier l'existant (§6.4). |
 | Une seule application mobile (React Native), expérience selon le rôle | Un seul binaire, deux espaces (locataire, gérant) choisis après la connexion. |
@@ -502,7 +502,7 @@ Trois surfaces partagent la même base de données et la même logique métier. 
 |---|---|---|
 | Visiteur | Aucune | Consulte annonces, vidéos et fiches ; recherche et filtre. |
 | Locataire | Auto-inscription : numéro + OTP, puis mot de passe | Visiteur + favoris, alertes, messagerie, signalements. |
-| Gérant (ou démarcheur) | Créé par l'administration ; activation par OTP | Publie et gère ses annonces, répond, suit ses statistiques. Badge « Vérifié ». |
+| Gérant (ou démarcheur) | Créé par l'administration, mot de passe attribué puis modifiable | Publie et gère ses annonces, répond, suit ses statistiques. Badge « Vérifié ». |
 | Modérateur | Créé par un administrateur (ADM) | Traite les signalements, lit les conversations (journalisé), masque, avertit, suspend. |
 | Administrateur | Créé en ligne de commande (premier) puis par un administrateur | Tout ce que fait le modérateur + création et vérification des gérants, bannissement, paramètres, statistiques complètes, plans. |
 
@@ -883,7 +883,7 @@ Chaque exigence indique ses surfaces (APP, WEB, ADM, §3.1) et sa priorité. « 
 | EF-AUT-04 | Connexion par numéro + mot de passe. APP : jeton d'accès de 15 min et jeton de rafraîchissement de 30 jours avec rotation (§5.2). WEB : session par cookie. | Toutes | M |
 | EF-AUT-05 | Verrouillage progressif après 5 échecs, compté par (numéro saisi, IP ou appareil) ; réponse `401` uniforme, y compris pour un numéro inconnu ; temps de réponse constant (§5.2). | Toutes | M |
 | EF-AUT-06 | Mot de passe oublié : OTP puis nouveau mot de passe ; toutes les sessions et tous les appareils sont révoqués. | Toutes | M |
-| EF-AUT-07 | Activation d'un gérant : l'administration crée le compte ; le gérant reçoit un OTP, choisit son mot de passe et accepte les CGU. | Toutes, ADM | M |
+| EF-AUT-07 | Création manuelle d'un gérant : l'administration crée le compte, attribue un mot de passe et le transmet hors plateforme ; aucune activation par OTP. | Toutes, ADM | M |
 | EF-AUT-08 | Séparation des espaces : un locataire n'accède pas à l'espace gérant, un gérant pas à l'espace locataire ; un compte du personnel n'ouvre ni l'application ni le site, et inversement (§5.1). | Toutes, ADM | M |
 | EF-AUT-09 | Mode invité : consultation sans compte ; une action qui exige un compte ouvre l'inscription puis ramène à l'action. | Toutes | M |
 | EF-AUT-10 | CGU et politique de confidentialité acceptées à l'inscription (version et date dans `users`, événement dans `audit_logs`), avec mention de la consultation possible des conversations par la modération. | Toutes | M |
@@ -1008,7 +1008,7 @@ Chaque exigence indique ses surfaces (APP, WEB, ADM, §3.1) et sa priorité. « 
 
 | ID | Exigence | Surfaces | Prio. |
 |---|---|---|---|
-| EF-ADM-01 | Création d'un gérant : nom, numéro, zone, pièces justificatives (chiffrées, volume privé), notes d'entretien. Statuts de vérification : en attente, entretien, vérifié, refusé ; la suspension est celle du compte (`users.status`). La création déclenche l'activation par OTP. Badge « Vérifié » attribuable et retirable. | ADM | M |
+| EF-ADM-01 | Création d'un gérant : nom, numéro, zone, pièces justificatives (chiffrées, volume privé), notes d'entretien. Statuts de vérification : en attente, entretien, vérifié, refusé ; la suspension est celle du compte (`users.status`). La création attribue un mot de passe (transmis hors plateforme) et déclenche un SMS informatif « compte prêt ». Badge « Vérifié » attribuable et retirable. | ADM | M |
 | EF-ADM-02 | Gestion des utilisateurs : recherche, statut, appareils, historique des sanctions. | ADM | M |
 | EF-ADM-03 | Gestion des annonces : recherche, aperçu complet, masquage, retrait, restauration. | ADM | M |
 | EF-ADM-04 | Statistiques complètes selon le catalogue ci-dessous : tableaux et courbes, période au choix, export CSV. | ADM | M |
@@ -1181,7 +1181,7 @@ Un enregistrement par code envoyé ; sert aussi à compter les envois et leur co
 |---|---|---|---|
 | id | uuid | PK |  |
 | phone_e164 | varchar(16) | NN | Destinataire |
-| purpose | varchar(20) | NN, CK(signup, reset_password, change_phone, gerant_activation) | Usage |
+| purpose | varchar(20) | NN, CK(signup, reset_password, change_phone) | Usage |
 | code_hmac | varchar(64) | NN | HMAC du code ; jamais le code en clair |
 | expires_at | timestamptz | NN | Création + 5 minutes |
 | attempts | smallint | NN, DEF 0 | Essais ; maximum 5 |
@@ -1545,7 +1545,6 @@ Format d'erreur unique :
 | POST /auth/logout | connecté | Révoque l'appareil courant. |
 | POST /auth/password/reset | jeton OTP | Nouveau mot de passe ; révoque tous les appareils. |
 | POST /auth/password/change | connecté | Changement avec l'ancien mot de passe. |
-| POST /auth/activate | jeton OTP | Active un compte gérant : mot de passe, CGU. |
 | POST /ws-ticket | connecté | Ticket à usage unique de 30 s pour ouvrir le WebSocket. |
 | GET · PATCH · DELETE /me | connecté | Profil, modification, demande de suppression. |
 | POST /me/phone/change | connecté + jeton OTP | Changement de numéro : mot de passe actuel et OTP du nouveau numéro ; révoque les autres appareils et prévient l'ancien numéro. |
@@ -1676,7 +1675,7 @@ Chaque changement de statut écrit une ligne `listing.status_changed` dans `audi
 
 ### 11.3 Vérification d'un gérant
 
-pending (compte créé, pièces déposées) → interview → verified (badge, activation envoyée, plan « Gratuit V1 ») ou rejected. La suspension d'un gérant est celle de son compte (`users.status`, `suspended_until`) : ses annonces sont masquées, puis remises en ligne à la levée ; un modérateur peut la prononcer jusqu'à 30 jours. Il ne publie que s'il est verified et actif.
+pending (compte créé, pièces déposées) → interview → verified (badge, plan « Gratuit V1 ») ou rejected. La suspension d'un gérant est celle de son compte (`users.status`, `suspended_until`) : ses annonces sont masquées, puis remises en ligne à la levée ; un modérateur peut la prononcer jusqu'à 30 jours. Il ne publie que s'il est verified et actif.
 
 ### 11.4 Signalements
 
@@ -1786,7 +1785,7 @@ Les sauvegardes ne passent pas par Celery : elles sont lancées par le conteneur
 
 | Écran | Contenu et comportements clés |
 |---|---|
-| Connexion et activation | Connexion ; première activation par OTP ; consigne d'exclusion de l'économie de batterie. |
+| Connexion | Connexion avec le numéro et le mot de passe attribués par l'administration ; consigne d'exclusion de l'économie de batterie. |
 | Tableau de bord | Indicateurs et liste « à faire ». |
 | Mes annonces | Liste par statut ; modifier, confirmer, marquer louée, annuler. |
 | Assistant de création | Informations clés, localisation (position actuelle, ajustement), équipements, médias (choix de la vidéo, compression, envoi avec progression et reprise, photos), description (barre de mise en forme, aperçu, détection de coordonnées), publication. Brouillon enregistré à chaque étape. |

@@ -9,7 +9,7 @@ Priorité fixée : un système complet qui tourne de bout en bout, sans polissag
 | | Contenu | Où |
 |---|---|---|
 | Phase 0 | Dépôt, hooks, Django, Docker/Compose/Caddy écrits, design (jetons, CSS), outils | `docs/avancement.md` |
-| a. comptes | OTP, connexion, JWT + rotation, appareils, inscription, activation gérant, mot de passe oublié, changement de numéro, suppression, préférences | `apps/accounts`, `web/views_auth.py` |
+| a. comptes | OTP, connexion, JWT + rotation, appareils, inscription, création manuelle des gérants, mot de passe oublié, changement de numéro, suppression, préférences | `apps/accounts`, `web/views_auth.py` |
 | a. administration | Hôte séparé, 2FA TOTP, verrouillage, liste blanche d'IP, sessions propres, journal, création de gérants, suspension/bannissement, paramètres | `adminsite/` |
 | b. annonces | Quartiers, annonces, brouillon, publication avec règles, confirmation, masquage, louée, Markdown assaini, détection des coordonnées, distance au campus | `apps/listings`, `web/views_pro.py` |
 | c. médias | Envoi reprenable, photos (WebP, EXIF retiré), vidéo (MP4 720p + affiche), ordre, couverture, nettoyage | `apps/media`, `apps/listings/services/medias.py` |

@@ -17,7 +17,8 @@ contraste, en une seule fois.
 
 | Commande | Route | Méthode | Vue | Service / sélecteur | Permission | Succès | Erreurs |
 |---|---|---|---|---|---|---|---|
-| Voir le catalogue | `/`, `/annonces` | GET | `views_public._liste` | `listings.services.fil.rechercher`, `listings.selectors` | public | page de résultats | `ErreurMetier` (tri/curseur) → message |
+| Voir l'accueil | `/` | GET | `views.accueil` | aucune donnée (page de présentation) | public | page d'accueil (héro, recherche, « Comment ça marche », FAQ) | — |
+| Voir le catalogue | `/annonces` | GET | `views_public._liste` | `listings.services.fil.rechercher`, `listings.selectors` | public | page de résultats | `ErreurMetier` (tri/curseur) → message |
 | Filtrer / trier | `/annonces?…` | GET | idem | idem | public | filtres récapitulés | idem |
 | Voir un quartier | `/quartiers/<slug>` | GET | `quartiers` | `selectors.quartier_par_slug` | public | page quartier | 404 si inactif |
 | Voir une fiche | `/annonces/<slug>` | GET | `fiche` | `selectors.fiche_publique`, `services.vues.enregistrer` | public | fiche (sans adresse ni numéro) | 404 si masquée/inconnue |
