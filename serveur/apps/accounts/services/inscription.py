@@ -1,9 +1,9 @@
-"""Inscription du locataire, activation du gérant, mot de passe oublié (CDC EF-AUT-01, 06, 07, 10)."""
+"""Inscription du locataire, mot de passe oublié (CDC EF-AUT-01, 06, 10)."""
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts.models import Role, Statut, User
+from apps.accounts.models import Role, User
 from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
@@ -79,36 +79,6 @@ def inscrire_client(
         ) from erreur
     audit.enregistrer(
         "auth.inscription", acteur=utilisateur, cible=utilisateur, ip=ip, user_agent=user_agent
-    )
-    return utilisateur
-
-
-def activer_gerant(
-    jeton_otp: str,
-    mot_de_passe: str,
-    cgu_acceptees: bool,
-    *,
-    ip: str | None = None,
-    user_agent: str | None = None,
-) -> User:
-    """Activation d'un compte gérant créé par l'administration : mot de passe et CGU."""
-    _exiger_cgu(cgu_acceptees)
-    mots_de_passe.valider(mot_de_passe)
-    telephone = otp.consommer_jeton(jeton_otp, "gerant_activation")
-    with transaction.atomic():
-        utilisateur = (
-            User.objects.select_for_update().filter(phone_e164=telephone, role=Role.GERANT).first()
-        )
-        if utilisateur is None or utilisateur.status != Statut.ACTIVE:
-            raise ErreurMetier("not_found", "Compte introuvable.", statut=404)
-        if utilisateur.has_usable_password():
-            raise ErreurMetier("already_activated", "Ce compte est déjà activé.", statut=409)
-        utilisateur.password = mots_de_passe.hacher(mot_de_passe)
-        utilisateur.phone_verified_at = timezone.now()
-        _accepter_cgu(utilisateur, ip, user_agent)
-        utilisateur.save()
-    audit.enregistrer(
-        "auth.gerant_active", acteur=utilisateur, cible=utilisateur, ip=ip, user_agent=user_agent
     )
     return utilisateur
 

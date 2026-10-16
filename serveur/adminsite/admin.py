@@ -40,9 +40,15 @@ class AuditLogAdmin(LectureSeule):
 
 class NouveauGerantForm(forms.Form):
     phone = forms.CharField(label="Numéro de téléphone", max_length=40)
-    full_name = forms.CharField(label="Nom complet", max_length=120)
+    full_name = forms.CharField(label="Prénom et nom", max_length=120)
     display_name = forms.CharField(label="Nom affiché", max_length=120, required=False)
     zone = forms.CharField(label="Zone d'activité", max_length=160)
+    password = forms.CharField(
+        label="Mot de passe (à attribuer par défaut)",
+        widget=forms.PasswordInput,
+        max_length=255,
+        help_text="Le gérant devra le modifier à sa première connexion.",
+    )
 
 
 @admin.register(User)
@@ -72,7 +78,7 @@ class UserAdmin(admin.ModelAdmin):
                 *super().get_urls()]  # fmt: skip
 
     def nouveau_gerant(self, request):
-        """Crée un compte gérant (sans mot de passe) : le gérant l'active ensuite par un code reçu par SMS."""
+        """Crée un compte gérant avec un mot de passe (attribué par l'équipe, transmis hors plateforme)."""
         from django.shortcuts import redirect, render
         from django.urls import reverse
 
@@ -88,6 +94,7 @@ class UserAdmin(admin.ModelAdmin):
                     nom=d["full_name"],
                     zone=d["zone"],
                     nom_affiche=d["display_name"],
+                    mot_de_passe=d["password"],
                 )
             except ErreurMetier as erreur:
                 for champ, messages_champ in erreur.champs.items():
@@ -98,7 +105,7 @@ class UserAdmin(admin.ModelAdmin):
             else:
                 self.message_user(
                     request,
-                    f"Compte gérant créé pour {gerant.full_name}. Il peut l'activer depuis l'application.",
+                    f"Compte gérant créé pour {gerant.full_name}. Mot de passe attribué ; à communiquer par le canal choisi (hors plateforme).",
                 )
                 return redirect(reverse("admin:accounts_user_changelist"))
         contexte = {

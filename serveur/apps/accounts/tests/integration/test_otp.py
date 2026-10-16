@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from apps.accounts.models import OtpCode
 from apps.accounts.services import otp
-from apps.accounts.tests.fabriques import ClientFactory, GerantFactory
+from apps.accounts.tests.fabriques import ClientFactory
 from apps.audit.models import AuditLog
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
@@ -96,9 +96,7 @@ class TestDemande:
 
 
 class TestAucuneFuiteDExistence:
-    @pytest.mark.parametrize(
-        "objet", ["reset_password", "change_phone", "gerant_activation", "signup"]
-    )
+    @pytest.mark.parametrize("objet", ["reset_password", "change_phone", "signup"])
     def test_meme_reponse_quel_que_soit_le_numero(self, objet, django_capture_on_commit_callbacks):
         ClientFactory(phone_e164=NUMERO)
         with django_capture_on_commit_callbacks(execute=True):
@@ -125,23 +123,6 @@ class TestAucuneFuiteDExistence:
     def test_les_lignes_sans_sms_ne_consomment_pas_le_budget(self):
         demander("reset_password")
         assert otp._envoyes_aujourdhui("reset_password") == 0
-
-    def test_activation_reservee_a_un_gerant_pas_encore_active(
-        self, django_capture_on_commit_callbacks
-    ):
-        gerant = GerantFactory(phone_e164=NUMERO)
-        gerant.set_unusable_password()
-        gerant.save()
-        with django_capture_on_commit_callbacks(execute=True):
-            demander("gerant_activation")
-        assert dernier_code()
-        cache.delete(CLE_BOITE_DEV)
-        OtpCode.objects.all().delete()
-        gerant.set_password("deja-active-1")
-        gerant.save()
-        with django_capture_on_commit_callbacks(execute=True):
-            demander("gerant_activation")
-        assert not cache.get(CLE_BOITE_DEV)
 
     def test_changement_de_numero_vers_un_numero_deja_pris_n_envoie_rien(
         self, django_capture_on_commit_callbacks
@@ -250,7 +231,7 @@ class TestBudget:
     def petit_budget(self, total=10):
         parametres.definir(
             "OTP_DAILY_BUDGET",
-            {"signup": total, "reset_password": 5, "change_phone": 5, "gerant_activation": 5},
+            {"signup": total, "reset_password": 5, "change_phone": 5},
         )
 
     def remplir(self, n, objet="signup"):

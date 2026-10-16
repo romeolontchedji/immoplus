@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('phone_e164', models.CharField(max_length=16)),
-                ('purpose', models.CharField(choices=[('signup', 'Inscription'), ('reset_password', 'Mot de passe oublié'), ('change_phone', 'Changement de numéro'), ('gerant_activation', 'Activation gérant')], max_length=20)),
+                ('purpose', models.CharField(choices=[('signup', 'Inscription'), ('reset_password', 'Mot de passe oublié'), ('change_phone', 'Changement de numéro')], max_length=20)),
                 ('code_hmac', models.CharField(max_length=64)),
                 ('expires_at', models.DateTimeField()),
                 ('attempts', models.SmallIntegerField(db_default=0, default=0)),
@@ -151,7 +151,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='otpcode',
-            constraint=models.CheckConstraint(condition=models.Q(('purpose__in', ['signup', 'reset_password', 'change_phone', 'gerant_activation'])), name='otp_codes_objet_valide'),
+            constraint=models.CheckConstraint(condition=models.Q(('purpose__in', ['signup', 'reset_password', 'change_phone'])), name='otp_codes_objet_valide'),
         ),
         migrations.AddConstraint(
             model_name='otpcode',

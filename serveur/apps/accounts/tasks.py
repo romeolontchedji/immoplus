@@ -23,6 +23,14 @@ def envoyer_sms(self, numero_e164: str, message: str, otp_id: str | None = None)
         otp.noter_envoi(otp_id, resultat.reference, resultat.cout_xof)
 
 
+@shared_task(name="apps.accounts.notifier_gerant_cree")
+def notifier_gerant_cree(gerant_id: str) -> None:
+    """Prévient un gérant que son compte est prêt ; la création du compte ne dépend jamais de cet envoi."""
+    from apps.accounts.services import administration
+
+    administration.notifier_creation_gerant(gerant_id)
+
+
 @shared_task(name="apps.accounts.purger_otp")
 def purger_otp() -> int:
     from apps.accounts.services import administration

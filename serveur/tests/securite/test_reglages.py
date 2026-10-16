@@ -13,7 +13,9 @@ SERVEUR = Path(__file__).resolve().parents[2]
 
 def importer(module: str, **env) -> subprocess.CompletedProcess:
     propre = {
-        k: v for k, v in os.environ.items() if k not in {"SECRET_KEY", "DEBUG", "OTP_DEBUG_CODE"}
+        k: v
+        for k, v in os.environ.items()
+        if k not in {"SECRET_KEY", "DEBUG", "OTP_DEBUG_CODE", "JWT_SIGNING_KEY", "OTP_HMAC_KEY"}
     }
     return subprocess.run(
         [sys.executable, "-c", f"import {module}"],

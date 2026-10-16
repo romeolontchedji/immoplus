@@ -50,54 +50,6 @@
                 }
             }
         },
-        "/v1/auth/activate": {
-            "post": {
-                "operationId": "v1_auth_activate_create",
-                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
-                "summary": "Activer un compte gérant",
-                "tags": [
-                    "Authentification"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ActivationIn"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ActivationIn"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ActivationIn"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "security": [
-                    {
-                        "BearerJwt": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SessionOut"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/v1/auth/login": {
             "post": {
                 "operationId": "v1_auth_login_create",
@@ -2547,35 +2499,6 @@
     },
     "components": {
         "schemas": {
-            "ActivationIn": {
-                "type": "object",
-                "properties": {
-                    "platform": {
-                        "$ref": "#/components/schemas/PlatformEnum"
-                    },
-                    "label": {
-                        "type": "string",
-                        "maxLength": 120
-                    },
-                    "otp_token": {
-                        "type": "string",
-                        "maxLength": 2048
-                    },
-                    "password": {
-                        "type": "string",
-                        "maxLength": 128
-                    },
-                    "terms_accepted": {
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "otp_token",
-                    "password",
-                    "platform",
-                    "terms_accepted"
-                ]
-            },
             "AlerteIn": {
                 "type": "object",
                 "properties": {
@@ -4194,11 +4117,10 @@
                 "enum": [
                     "signup",
                     "reset_password",
-                    "change_phone",
-                    "gerant_activation"
+                    "change_phone"
                 ],
                 "type": "string",
-                "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone\n* `gerant_activation` - gerant_activation"
+                "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone"
             },
             "QuartierRefOut": {
                 "type": "object",

@@ -8,7 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import Device, OtpCode, User
-from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory, GerantFactory
+from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
 from apps.core.providers.sms import CLE_BOITE_DEV
 
 pytestmark = [pytest.mark.api, pytest.mark.pg, pytest.mark.django_db]
@@ -121,28 +121,6 @@ class TestParcours:
         assert r.status_code == 200
         assert r.json()["user"]["phone"] == E164
         assert Device.objects.get().platform == "ios"
-
-    def test_activation_d_un_gerant(self, django_capture_on_commit_callbacks):
-        g = GerantFactory(phone_e164=E164)
-        g.set_unusable_password()
-        g.save()
-        c = api()
-        jeton = obtenir_jeton_otp(
-            c, "gerant_activation", capture=django_capture_on_commit_callbacks
-        )
-        r = c.post(
-            "/v1/auth/activate",
-            {"otp_token": jeton, "password": FORT, "terms_accepted": True, "platform": "android"},
-            format="json",
-        )
-        assert r.status_code == 200 and r.json()["user"]["role"] == "gerant"
-        # le jeton obtenu a l'audience « gerant »
-        import jwt
-
-        assert (
-            jwt.decode(r.json()["tokens"]["access"], options={"verify_signature": False})["aud"]
-            == "gerant"
-        )
 
     def test_mot_de_passe_oublie(self, session, django_capture_on_commit_callbacks):
         _, corps = session

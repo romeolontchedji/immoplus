@@ -1,5 +1,7 @@
 """Actions du personnel sur les comptes (appelées par l'administration ; toujours journalisées)."""
 
+import logging
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -8,15 +10,30 @@ from apps.accounts.phone import NumeroInvalide, normaliser
 from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
+from apps.core.providers import sms
 
 from .. import signals
 from . import appareils, jetons
 
+journal = logging.getLogger(__name__)
+
+# Texte sans « ê » (GSM-7) pour rester sur un seul segment SMS.
+MESSAGE_COMPTE_PRET = (
+    "Logeo : ton compte gérant est créé. Connecte-toi dans l'application avec le mot de passe "
+    "que l'équipe t'a transmis. Ne le communique jamais."
+)
+
 
 def creer_gerant(
-    *, acteur: User, telephone: str, nom: str, zone: str, nom_affiche: str | None = None
+    *,
+    acteur: User,
+    telephone: str,
+    nom: str,
+    zone: str,
+    nom_affiche: str | None = None,
+    mot_de_passe: str | None = None,
 ) -> User:
-    """Crée un compte gérant sans mot de passe utilisable : le gérant l'active par OTP (EF-AUT-09)."""
+    """Crée un compte gérant avec mot de passe utilisable (création manuelle par l'administration)."""
     try:
         e164 = normaliser(telephone, tuple(parametres.lire("OTP_ALLOWED_COUNTRIES")))
     except NumeroInvalide as erreur:
@@ -25,9 +42,26 @@ def creer_gerant(
         ) from erreur
     if User.objects.filter(phone_e164=e164).exists():
         raise ErreurMetier("phone_already_registered", "Ce numéro a déjà un compte.", statut=409)
+
+    from ..tasks import notifier_gerant_cree
+    from . import mots_de_passe
+
+    if not mot_de_passe:
+        raise ErreurMetier(
+            "validation_error",
+            "Un mot de passe doit être attribué.",
+            champs={"password": ["Obligatoire"]},
+        )
+    mots_de_passe.valider(mot_de_passe)
+
     with transaction.atomic():
-        gerant = User(phone_e164=e164, full_name=" ".join(nom.split()), role=Role.GERANT)
-        gerant.set_unusable_password()
+        gerant = User(
+            phone_e164=e164,
+            full_name=" ".join(nom.split()),
+            role=Role.GERANT,
+            password=mots_de_passe.hacher(mot_de_passe),
+            phone_verified_at=timezone.now(),
+        )
         gerant.save()
         GerantProfile.complets.create(
             user=gerant,
@@ -36,7 +70,20 @@ def creer_gerant(
             created_by=acteur,
         )
         audit.enregistrer("gerant.cree", acteur=acteur, cible=gerant)
+        transaction.on_commit(lambda: notifier_gerant_cree.delay(str(gerant.pk)))
     return gerant
+
+
+def notifier_creation_gerant(gerant_id) -> None:
+    """SMS informatif « compte prêt » au gérant créé ; un échec est journalisé, jamais propagé."""
+    gerant = User.objects.filter(pk=gerant_id, role=Role.GERANT).first()
+    if gerant is None:
+        return
+    try:
+        sms.fournisseur().envoyer(gerant.phone_e164, MESSAGE_COMPTE_PRET)
+    except sms.ErreurFournisseurSms:
+        journal.warning("SMS « compte prêt » non envoyé au gérant %s.", gerant_id)
+        audit.enregistrer("gerant.notification_echec", cible=gerant, metadata={"canal": "sms"})
 
 
 def definir_verification(*, acteur: User, profil: GerantProfile, statut: str) -> None:

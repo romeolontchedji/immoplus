@@ -11,7 +11,7 @@ from .models import AppSetting
 DEFAUTS: dict[str, tuple[object, str]] = {
     "OTP_ALLOWED_COUNTRIES": (["BJ"], "Pays autorisés pour les OTP (codes ISO)."),
     "OTP_DAILY_BUDGET": (
-        {"signup": 150, "reset_password": 80, "change_phone": 40, "gerant_activation": 30},  # nosec B105
+        {"signup": 150, "reset_password": 80, "change_phone": 40},  # nosec B105
         "Budget quotidien d'envois d'OTP par usage (300 au total).",
     ),
     "OTP_PHONE_PER_HOUR": (3, "Demandes d'OTP par heure et par numéro."),

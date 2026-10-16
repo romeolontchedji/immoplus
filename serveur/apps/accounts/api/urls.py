@@ -6,7 +6,6 @@ urlpatterns = [
     path("auth/otp/request", v.OtpDemande.as_view(), name="auth-otp-request"),
     path("auth/otp/verify", v.OtpVerification.as_view(), name="auth-otp-verify"),
     path("auth/register", v.Inscription.as_view(), name="auth-register"),
-    path("auth/activate", v.Activation.as_view(), name="auth-activate"),
     path("auth/login", v.Connexion.as_view(), name="auth-login"),
     path("auth/refresh", v.Rafraichissement.as_view(), name="auth-refresh"),
     path("auth/logout", v.Deconnexion.as_view(), name="auth-logout"),

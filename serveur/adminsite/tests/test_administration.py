@@ -1,9 +1,8 @@
-"""Administration : isolation, 2FA obligatoire, verrouillage, liste blanche, actions journalisées."""
+"""Administration : isolation, connexion par mot de passe, verrouillage, liste blanche, actions journalisées."""
 
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from adminsite import middleware as mw
 from apps.accounts.models import GerantProfile, User
@@ -38,32 +37,12 @@ def reglages_admin():
 
 
 def personnel(fabrique=AdminFactory):
-    u = fabrique()
-    TOTPDevice.objects.create(user=u, name="p", confirmed=True)
-    return u
+    return fabrique()
 
 
-def code_totp(u) -> str:
-    from django_otp.oath import totp
-
-    appareil = TOTPDevice.objects.get(user=u)
-    return (
-        f"{totp(appareil.bin_key, step=appareil.step, t0=appareil.t0, digits=appareil.digits):06d}"
-    )
-
-
-def se_connecter(u, mdp=MOT_DE_PASSE, jeton=None, client=None):
+def se_connecter(u, mdp=MOT_DE_PASSE, client=None):
     c = client or Client()
-    r = c.post(
-        "/login/",
-        {
-            "username": u.email,
-            "password": mdp,
-            "otp_token": jeton or code_totp(u),
-            "otp_device": "",
-            "next": "/",
-        },
-    )
+    r = c.post("/login/", {"username": u.email, "password": mdp, "next": "/"})
     return c, r
 
 
@@ -72,40 +51,20 @@ class TestConnexion:
         r = Client().get("/login/")
         assert r.status_code == 200 and "Adresse e-mail" in r.content.decode()
 
-    def test_connexion_avec_mot_de_passe_et_code(self):
+    def test_connexion_avec_mot_de_passe(self):
         u = personnel()
         c, r = se_connecter(u)
         assert r.status_code == 302
         assert c.get("/").status_code == 200
-
-    def test_mot_de_passe_seul_ne_suffit_pas(self):
-        u = personnel()
-        c, r = se_connecter(u, jeton="000000")
-        assert r.status_code == 200  # formulaire réaffiché
-        assert c.get("/").status_code == 302  # redirigé vers la connexion
-
-    def test_sans_code_la_connexion_est_refusee(self):
-        u = personnel()
-        c = Client()
-        r = c.post(
-            "/login/", {"username": u.email, "password": MOT_DE_PASSE, "otp_token": "", "next": "/"}
-        )
-        assert r.status_code == 200 and c.get("/").status_code == 302
 
     def test_mauvais_mot_de_passe(self):
         u = personnel()
         c, r = se_connecter(u, mdp="faux")
         assert r.status_code == 200 and c.get("/").status_code == 302
 
-    def test_compte_sans_appareil_totp_ne_peut_pas_entrer(self):
-        u = AdminFactory()
-        c, r = se_connecter(u, jeton="123456")
-        assert c.get("/").status_code == 302
-
     @pytest.mark.parametrize("fabrique", [ClientFactory, GerantFactory])
     def test_un_locataire_ou_un_gerant_ne_peut_pas_entrer(self, fabrique):
         u = fabrique(email="client@logeo.test")
-        TOTPDevice.objects.create(user=u, name="p", confirmed=True)
         c, _ = se_connecter(u)
         assert c.get("/").status_code == 302
 
@@ -141,7 +100,7 @@ class TestVerrouillage:
         u = personnel()
         for _ in range(5):
             se_connecter(u, mdp="faux")
-        c, r = se_connecter(u)  # bon mot de passe et bon code : refusé quand même
+        c, r = se_connecter(u)  # bon mot de passe : refusé quand même
         assert r.status_code == 429
         assert c.get("/").status_code == 302
         assert not AuditLog.objects.filter(action="admin.connexion").exists()
@@ -258,11 +217,13 @@ class TestActions:
                 "full_name": "Koffi Gérant",
                 "display_name": "Koffi",
                 "zone": "Banikanni",
+                "password": "Un-Mot-De-Passe-42",
             },
         )
         assert r.status_code == 302
         g = User.objects.get(phone_e164="+2290197343434")
-        assert g.role == "gerant" and not g.has_usable_password()
+        assert g.role == "gerant" and g.has_usable_password()
+        assert g.check_password("Un-Mot-De-Passe-42")
         assert GerantProfile.complets.get(user=g).created_by == admin_
         assert AuditLog.objects.filter(action="gerant.cree", actor=admin_).exists()
 
@@ -358,14 +319,6 @@ class TestActions:
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
 
 
-def test_totp_valide_une_seule_fois():
-    u = personnel()
-    jeton = code_totp(u)
-    _, r1 = se_connecter(u, jeton=jeton)
-    _, r2 = se_connecter(u, jeton=jeton)  # même code rejoué
-    assert r1.status_code == 302 and r2.status_code == 200
-
-
 class TestTableauDeBord:
     def test_la_vue_d_ensemble_s_affiche_avec_des_donnees_reelles(self):
         from apps.core import stats
@@ -388,9 +341,7 @@ class TestTableauDeBord:
         assert r.status_code == 200
         html = r.content.decode()
         assert "Vue d'ensemble" in html
-        assert "Dossiers de modération ouverts" in html and ">1<" in html
-        assert "Sanctions en cours" in html
-        assert "Gérants en attente de vérification" in html
+        assert "Dossiers de modération" in html and ">1<" in html
         assert ">4<" in html  # compteur messages du jour
         assert reverse("admin:moderation_report_changelist") in html
 

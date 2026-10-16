@@ -21,7 +21,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.accounts import tasks
-from apps.accounts.models import ROLES_CLIENTELE, OtpCode, Role, User
+from apps.accounts.models import ROLES_CLIENTELE, OtpCode, User
 from apps.accounts.phone import NumeroInvalide, normaliser
 from apps.audit import services as audit
 from apps.core import parametres, redis_file
@@ -180,12 +180,6 @@ def _compte_a_prevenir(phone: str, objet: str) -> bool:
     if objet == "reset_password":
         return bool(
             utilisateur and utilisateur.role in ROLES_CLIENTELE and utilisateur.status != "deleted"
-        )
-    if objet == "gerant_activation":
-        return bool(
-            utilisateur
-            and utilisateur.role == Role.GERANT
-            and not utilisateur.has_usable_password()
         )
     return False
 

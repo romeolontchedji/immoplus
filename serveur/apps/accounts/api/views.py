@@ -164,26 +164,6 @@ class Inscription(_Public):
         return Response(_session(request, utilisateur, d), status=201)
 
 
-class Activation(_Public):
-    @extend_schema(
-        tags=TAG_AUTH,
-        summary="Activer un compte gérant",
-        request=s.ActivationIn,
-        responses={200: s.SessionOut},
-    )
-    def post(self, request):
-        _installation(request)
-        d = _valide(s.ActivationIn, request)
-        utilisateur = inscription.activer_gerant(
-            d["otp_token"],
-            d["password"],
-            d["terms_accepted"],
-            ip=ip_client(request),
-            user_agent=user_agent(request),
-        )
-        return Response(_session(request, utilisateur, d))
-
-
 class Connexion(_Public):
     @extend_schema(
         tags=TAG_AUTH, summary="Se connecter", request=s.ConnexionIn, responses={200: s.SessionOut}

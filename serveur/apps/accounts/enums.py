@@ -21,7 +21,6 @@ class Objet(models.TextChoices):
     SIGNUP = "signup", "Inscription"
     RESET_PASSWORD = "reset_password", "Mot de passe oublié"
     CHANGE_PHONE = "change_phone", "Changement de numéro"
-    GERANT_ACTIVATION = "gerant_activation", "Activation gérant"
 
 
 class Plateforme(models.TextChoices):

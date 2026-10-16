@@ -1,4 +1,4 @@
-"""Inscription, activation du gérant, mot de passe oublié, gestion du compte."""
+"""Inscription, mot de passe oublié, gestion du compte."""
 
 import pytest
 from django.core.cache import cache
@@ -11,7 +11,6 @@ from apps.accounts.tests.aides import jeton_otp
 from apps.accounts.tests.fabriques import (
     MOT_DE_PASSE,
     ClientFactory,
-    GerantFactory,
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
@@ -93,47 +92,6 @@ class TestInscription:
             otp.demander("97121212", "signup", otp.Contexte())
         jeton = otp.verifier("97121212", "signup", "123456")
         assert inscrire(jeton_otp=jeton).phone_e164 == TEL
-
-
-class TestActivationGerant:
-    def gerant(self):
-        g = GerantFactory(phone_e164=TEL)
-        g.set_unusable_password()
-        g.save()
-        return g
-
-    def test_active_le_compte(self):
-        self.gerant()
-        u = inscription.activer_gerant(jeton_otp(TEL, "gerant_activation"), FORT, True)
-        assert u.role == "gerant" and u.has_usable_password() and u.terms_version == "1"
-        assert AuditLog.objects.filter(action="auth.gerant_active").exists()
-
-    def test_deja_active(self):
-        GerantFactory(phone_e164=TEL)
-        e = refus(inscription.activer_gerant, jeton_otp(TEL, "gerant_activation"), FORT, True)
-        assert e.code == "already_activated"
-
-    def test_ne_concerne_pas_un_locataire(self):
-        ClientFactory(phone_e164=TEL)
-        assert (
-            refus(
-                inscription.activer_gerant, jeton_otp(TEL, "gerant_activation"), FORT, True
-            ).statut
-            == 404
-        )
-
-    def test_cgu_et_mot_de_passe_exiges(self):
-        self.gerant()
-        assert (
-            refus(inscription.activer_gerant, jeton_otp(TEL, "gerant_activation"), FORT, False).code
-            == "terms_not_accepted"
-        )
-        assert (
-            refus(
-                inscription.activer_gerant, jeton_otp(TEL, "gerant_activation"), "1234", True
-            ).code
-            == "validation_error"
-        )
 
 
 class TestMotDePasseOublie:

@@ -34,12 +34,6 @@ class InscriptionIn(AppareilIn):
     terms_accepted = serializers.BooleanField()
 
 
-class ActivationIn(AppareilIn):
-    otp_token = serializers.CharField(max_length=2048)
-    password = serializers.CharField(max_length=128, trim_whitespace=False)
-    terms_accepted = serializers.BooleanField()
-
-
 class ConnexionIn(AppareilIn):
     phone = serializers.CharField(max_length=40)
     password = serializers.CharField(max_length=128, trim_whitespace=False, allow_blank=True)
