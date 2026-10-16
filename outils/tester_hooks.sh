@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Preuve que les hooks refusent ce qu'ils doivent refuser : 9 cas dans un dépôt temporaire avec distant nu.
 set -uo pipefail
+# Le dépôt temporaire ne contient ni Django ni les outils de la CI : les contrôles complets y sont
+# « sautés ». On n'hérite donc pas du mode strict posé par la CI (LOGEO_STRICT=1), sinon le premier
+# push d'amorçage échouerait pour de simples sauts, sans rapport avec les hooks testés.
+unset LOGEO_STRICT
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
