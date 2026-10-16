@@ -4,7 +4,6 @@ from io import StringIO
 
 import pytest
 from django.core.management import CommandError, call_command
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.accounts.models import User
 from apps.accounts.tests.integration.test_contraintes_base import refuse
@@ -13,8 +12,8 @@ from apps.audit.models import AuditLog
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 
 TABLES = [
-    "admin_sessions", "django_admin_log", "otp_totp_totpdevice", "otp_static_staticdevice",
-    "otp_static_statictoken", "axes_accessattempt", "axes_accessfailurelog", "axes_accesslog",
+    "admin_sessions", "django_admin_log",
+    "axes_accessattempt", "axes_accessfailurelog", "axes_accesslog",
 ]  # fmt: skip
 
 
@@ -49,12 +48,11 @@ def creer(**options):
     return sortie.getvalue()
 
 
-def test_creation_d_un_moderateur_avec_son_appareil_totp():
+def test_creation_d_un_moderateur():
     texte = creer(email="Modo@Logeo.test", nom="Modo", role="moderator")
     u = User.objects.get(email="modo@logeo.test")
     assert u.role == "moderator" and u.check_password(MDP) and u.is_staff
-    assert TOTPDevice.objects.get(user=u).confirmed
-    assert "otpauth://totp/" in texte and "Logeo" in texte
+    assert u.email in texte
     assert AuditLog.objects.filter(action="admin.personnel_cree").exists()
 
 

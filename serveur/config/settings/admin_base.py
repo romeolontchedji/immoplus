@@ -8,12 +8,9 @@ from .base import TEMPLATES as _TEMPLATES
 
 ROOT_URLCONF = "config.urls_admin"
 
-# `adminsite.apps.AdminLogeoConfig` remplace `django.contrib.admin` : son site par défaut impose la 2FA.
+# `adminsite.apps.AdminLogeoConfig` remplace `django.contrib.admin` : connexion par e-mail et mot de passe.
 APPLICATIONS_ADMIN = [
     "django.contrib.messages",
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_static",
     "axes",
     "adminsite.admin_config.AdminLogeoConfig",
     "adminsite",
@@ -25,10 +22,9 @@ MIDDLEWARE_ADMIN = [
     *MIDDLEWARE,
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
-# django-otp s'insère après l'authentification ; la durée de session après django-otp ; axes en dernier.
+# La durée de session s'insère après l'authentification ; axes en dernier.
 _i = MIDDLEWARE_ADMIN.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1
 MIDDLEWARE_ADMIN[_i:_i] = [
-    "django_otp.middleware.OTPMiddleware",
     "adminsite.middleware.DureeDeSessionMiddleware",
 ]
 MIDDLEWARE_ADMIN.append("axes.middleware.AxesMiddleware")
@@ -69,5 +65,4 @@ AXES_VERBOSE = False
 CSP_STYLE_SOURCES = ["'self'", "'unsafe-inline'"]
 CSP_SCRIPT_SOURCES = ["'self'"]
 CSP_FRAME_SOURCES = ["'none'"]
-OTP_TOTP_ISSUER = "Logeo"
 LOGIN_URL = "/login/"
