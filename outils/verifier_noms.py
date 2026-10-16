@@ -13,6 +13,15 @@ RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEBAB = r"[a-z0-9]+(?:[.-][a-z0-9]+)*"
 SEGMENT_SOUPLE = re.compile(r"^[a-z0-9_.-]+$")
 SEGMENTS_IMPOSES = {"ISSUE_TEMPLATE", "LC_MESSAGES"}
+# Arborescences dont les noms suivent une convention externe : maquettes Design (majuscules et
+# espaces), gabarits imposés par l'admin Django (ex. change_list.html) et Expo / React Native
+# (composants en PascalCase, groupes (…), segments [id] et fichiers +not-found).
+ARBRES_SANS_CONVENTION = (
+    "docs/design/",
+    "logeo-design-pack/",
+    "serveur/adminsite/templates/admin/",
+    "mobile/",
+)
 PAR_EXTENSION = {
     ".py": re.compile(r"^[a-z0-9_]+\.py$"),
     ".html": re.compile(rf"^{KEBAB}\.html$"),
@@ -34,24 +43,23 @@ def erreurs_chemin(chemin, conf):
         erreurs.append(
             f"{chemin} : le chemin contient un mot interdit (« backend »). Le dossier s'appelle « serveur/ »."
         )
+    if chemin.startswith(ARBRES_SANS_CONVENTION):
+        return erreurs
     segments = chemin.split("/")
     nom = segments[-1]
-    if not (chemin.startswith("docs/design/") or chemin.startswith("logeo-design-pack/")):
-        for seg in segments[:-1]:
-            if seg.startswith(".") or seg in SEGMENTS_IMPOSES or chemin.startswith("mobile/"):
-                continue
-            if not SEGMENT_SOUPLE.match(seg):
-                erreurs.append(
-                    f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
-                )
+    for seg in segments[:-1]:
+        if seg.startswith(".") or seg in SEGMENTS_IMPOSES:
+            continue
+        if not SEGMENT_SOUPLE.match(seg):
+            erreurs.append(
+                f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
+            )
     radical = nom.split(".")[0]
     if (
-        chemin.startswith("docs/design/")
-        or chemin.startswith("logeo-design-pack/")
-        or nom in conf["noms_imposes"]
+        nom in conf["noms_imposes"]
         or radical in conf["noms_majuscules"]
         or nom in {"base_site.html", "swagger_ui.html", "logeo_admin.css"}
-        or nom.startswith(".")
+        or nom.startswith((".", "_"))
     ):
         return erreurs
     motif = PAR_EXTENSION.get(os.path.splitext(nom)[1])
