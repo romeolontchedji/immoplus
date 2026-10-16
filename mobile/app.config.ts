@@ -1,0 +1,57 @@
+import type { ExpoConfig } from "expo/config";
+
+/**
+ * Configuration Expo de Logeo (une seule application, deux espaces : locataire et gérant).
+ * Les valeurs qui changent selon l'environnement viennent de `EXPO_PUBLIC_*` (voir `.env.example`).
+ */
+const hoteWeb = process.env.EXPO_PUBLIC_WEB_HOST ?? "logeo.example"; // domaine du site : liens profonds https
+
+const config: ExpoConfig = {
+  name: "Logeo",
+  slug: "logeo",
+  scheme: "logeo", // liens profonds : logeo://annonces/<slug>
+  version: "1.0.0", // doit rester >= `min_supported_version` renvoyée par GET /v1/app-config
+  orientation: "portrait",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "automatic", // clair / sombre selon le système
+  android: {
+    package: "bj.logeo.app", // à confirmer avant la première publication (impossible à changer ensuite)
+    adaptiveIcon: {
+      backgroundColor: "#117853",
+      foregroundImage: "./assets/android-icon-foreground.png",
+      backgroundImage: "./assets/android-icon-background.png",
+      monochromeImage: "./assets/android-icon-monochrome.png",
+    },
+    permissions: ["POST_NOTIFICATIONS", "ACCESS_FINE_LOCATION", "CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"],
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true, // exige https://<hote>/.well-known/assetlinks.json (servi par Caddy)
+        data: [{ scheme: "https", host: hoteWeb, pathPrefix: "/annonces" }],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
+  },
+  ios: { supportsTablet: false, bundleIdentifier: "bj.logeo.app" },
+  plugins: [
+    "expo-router",
+    "expo-secure-store",
+    "expo-video",
+    "expo-image",
+    "expo-localization",
+    ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 200, resizeMode: "contain", backgroundColor: "#FCFAF6", dark: { backgroundColor: "#14110C" } }],
+    ["expo-build-properties", { android: { minSdkVersion: 26 } }], // Android 8.0 (ENF-COMP-01)
+    ["expo-notifications", { color: "#117853" }],
+    ["expo-image-picker", { photosPermission: "Logeo accède à tes photos pour illustrer ton annonce.", cameraPermission: "Logeo utilise la caméra pour filmer ta chambre." }],
+    ["expo-location", { locationWhenInUsePermission: "Logeo utilise ta position pour situer ta chambre sur la carte." }],
+    "react-native-compressor",
+  ],
+  experiments: { reactCompiler: false },
+  extra: {
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? "" }, // renseigné après `eas init`
+  },
+  updates: { fallbackToCacheTimeout: 0 }, // EAS Update : correctifs JavaScript sans repasser par le magasin
+  runtimeVersion: { policy: "appVersion" },
+};
+
+export default config;
