@@ -1,15 +1,76 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.eggs/
+*.so
+build/
+venv/
+
+# Environnement virtuel
 .venv/
+
+# Environnement réel : seuls les .env.example sont versionnés
 .env
 .env.*
 !.env.example
-*.sqlite3
-.coverage
-htmlcov/
-node_modules/
-*.zip
-serveur/web/static/css/dist/
-serveur/var/
 infra/compose/env/*.env
+
+# Caches et outils de contrôle
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Données et fichiers variables
+*.sqlite3
+serveur/var/
+celerybeat-schedule
+*.pid
+
+# CSS assemblé par outils/construire_css.py
+serveur/web/static/css/dist/
+
+# Node et mobile (complète mobile/.gitignore)
+node_modules/
+.expo/
+dist/
+web-build/
+.metro-health-check*
+*.tsbuildinfo
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.apk
+*.aab
+
+# Clés et certificats : jamais dans le dépôt
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# Journaux, sauvegardes, temporaires
+*.log
+*.bak
+*.orig
+*.rej
+*.zip
+*~
+*.swp
+
+# Système et éditeur
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Dossiers spécifiques au projet
 maquette/
+logeo-design-pack/

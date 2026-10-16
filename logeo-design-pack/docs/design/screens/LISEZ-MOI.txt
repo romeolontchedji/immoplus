@@ -1,1 +1,0 @@
-Place ici les exports image des maquettes (voir DESIGN.md).
