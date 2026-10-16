@@ -1,4 +1,4 @@
-/* Feuille de style de l'administration Logeo — Conforme aux maquettes Admin */
+/* Feuille de style de l'administration Logeo — Conforme aux maquettes Admin et DESIGN.md */
 
 /* En-tête et Marque */
 #header {
@@ -10,6 +10,59 @@
   align-items: center;
 }
 
+.logeo-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--sable-0);
+}
+
+.logeo-brand-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.logeo-name {
+  font-weight: 800;
+  font-size: var(--fs-20);
+  letter-spacing: var(--crenage-titre);
+  color: var(--sable-0);
+}
+
+.logeo-name b {
+  color: var(--accent);
+}
+
+.logeo-brand small {
+  font-size: var(--fs-12);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-header-color);
+  margin-left: var(--sp-2);
+}
+
+.logeo-back {
+  color: var(--accent) !important;
+  font-weight: 700;
+  margin-right: var(--sp-4);
+  text-decoration: none;
+}
+.logeo-back:hover {
+  text-decoration: underline;
+}
+
+.logeo-site {
+  color: var(--admin-header-color) !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+.logeo-site:hover {
+  text-decoration: underline;
+}
+
+/* Compatibilité sélecteurs alternatifs logo */
 .logeo-admin-logo {
   display: inline-flex;
   align-items: center;
@@ -58,6 +111,25 @@
   text-decoration: underline;
 }
 
+/* Fil d'Ariane (Breadcrumbs) */
+div.breadcrumbs {
+  background: var(--surface);
+  color: var(--text-muted);
+  padding: var(--sp-3) var(--sp-6);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--fs-13);
+}
+
+div.breadcrumbs a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+div.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
 /* Barre latérale (Sidebar) */
 #nav-sidebar {
   background: var(--admin-sidebar-bg);
@@ -102,6 +174,7 @@ body {
   background: var(--admin-main-bg);
   color: var(--text);
   font-family: var(--police-corps);
+  font-size: var(--fs-15);
 }
 
 #content {
@@ -113,6 +186,7 @@ body {
 #content h1 {
   font-size: var(--fs-24);
   font-weight: 800;
+  letter-spacing: var(--crenage-titre);
   color: var(--text);
   margin-bottom: var(--sp-4);
 }
@@ -168,6 +242,31 @@ body {
   color: var(--text);
 }
 
+/* Sections du tableau de bord */
+.lg-section {
+  padding: var(--sp-5);
+}
+
+.lg-section__texte {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-14);
+  max-width: var(--mesure);
+}
+
+.lg-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.lg-section__actions svg {
+  width: 1em;
+  height: 1em;
+}
+
 /* Modules Django Admin */
 .module {
   background: var(--surface);
@@ -179,14 +278,55 @@ body {
 }
 
 .module h2,
-.module caption {
-  background: var(--surface-sunken);
-  color: var(--text);
-  font-size: var(--fs-16);
-  font-weight: 700;
+.module caption,
+.inline-group h2 {
+  background: var(--night);
+  color: var(--sable-0);
+  font-size: var(--fs-13);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--admin-border);
   text-align: start;
+}
+
+.module caption a,
+.module h2 a {
+  color: var(--sable-0);
+}
+
+/* Filtres de liste */
+#changelist-filter {
+  background: var(--surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--rayon-3);
+  box-shadow: var(--ombre-1);
+  overflow: hidden;
+}
+
+#changelist-filter h2 {
+  background: var(--night);
+  color: var(--sable-0);
+  font-size: var(--fs-13);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+#changelist-filter h3 {
+  font-weight: 800;
+  font-size: var(--fs-12);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: var(--sp-2) var(--sp-4);
+}
+
+#changelist-filter li.selected a {
+  color: var(--primary);
+  font-weight: 800;
 }
 
 /* Tableaux */
@@ -197,7 +337,8 @@ body {
 }
 
 #changelist table thead th,
-.module table thead th {
+.module table thead th,
+thead th {
   font-size: var(--fs-12);
   font-weight: 700;
   text-transform: uppercase;
@@ -221,39 +362,145 @@ body {
   background: var(--surface-sunken);
 }
 
+/* Formulaires et champs */
+input[type=text],
+input[type=password],
+input[type=email],
+input[type=url],
+input[type=number],
+input[type=tel],
+textarea,
+select,
+.vTextField {
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-field);
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit;
+  background: var(--surface-sunken);
+  color: var(--text);
+  box-sizing: border-box;
+  transition: border-color var(--duree-1) var(--courbe), box-shadow var(--duree-1) var(--courbe),
+    background-color var(--duree-1) var(--courbe);
+}
+
+input:hover,
+textarea:hover,
+select:hover,
+.vTextField:hover {
+  background: var(--surface);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.vTextField:focus {
+  border-color: var(--primary);
+  outline: 0;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
 /* Boutons d'action */
 .button,
 input[type="submit"],
+a.button,
 .submit-row input {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
   background: var(--primary);
   color: var(--on-primary);
   border: none;
-  border-radius: var(--rayon-2);
-  padding: var(--sp-2) var(--sp-4);
-  font-weight: 600;
+  border-radius: var(--r-field);
+  padding: var(--sp-2) var(--sp-5);
+  font-weight: 700;
   font-size: var(--fs-14);
+  line-height: 1.2;
+  text-decoration: none;
   cursor: pointer;
   transition: background-color var(--duree-1) var(--courbe);
 }
 
+a.button {
+  min-height: var(--cible);
+}
+
 .button:hover,
 input[type="submit"]:hover,
+a.button:hover,
 .submit-row input:hover {
   background: var(--primary-hover);
 }
 
+/* Bouton principal Enregistrer en jaune solaire --sun */
+input[name=_save],
 .button.default,
 input[type="submit"].default {
-  background: var(--primary);
+  background: var(--sun) !important;
+  color: var(--night) !important;
 }
 
-.deletelink {
-  color: var(--danger);
-  font-weight: 600;
-  text-decoration: none;
+input[name=_save]:hover,
+.button.default:hover,
+input[type="submit"].default:hover {
+  background: var(--sun-hover) !important;
 }
+
+.submit-row {
+  background: var(--surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--rayon-3);
+  box-shadow: var(--ombre-1);
+  padding: var(--sp-4) var(--sp-5);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.submit-row a.deletelink,
+.deletelink {
+  background: var(--danger);
+  color: var(--white) !important;
+  border-radius: var(--r-field);
+  font-weight: 700;
+  padding: var(--sp-2) var(--sp-5);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.submit-row a.deletelink:hover,
 .deletelink:hover {
-  text-decoration: underline;
+  background: var(--danger-hover);
+}
+
+/* Outils d'objets (History, Add) */
+.object-tools a {
+  border-radius: var(--rayon-pilule);
+  font-weight: 700;
+  padding: var(--sp-2) var(--sp-4);
+}
+
+/* Messages et alertes */
+ul.messagelist li {
+  border-radius: var(--r-field);
+  font-weight: 600;
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+/* Écran de connexion admin */
+.login #container {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--r-card-l);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.login #header {
+  border-radius: var(--r-card-l) var(--r-card-l) 0 0;
+  background: var(--night);
 }
 
 /* Badges de statut */

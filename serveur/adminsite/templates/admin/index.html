@@ -15,14 +15,13 @@
         <h1 class="mb-1">Vue d'ensemble</h1>
         <p class="texte-doux mb-4">Console d'administration et de modération de la plateforme Logeo</p>
 
-        <!-- 4 Cartes Métriques Clés -->
+        {# ── 4 Cartes Métriques Clés ────────────────────────────────────────── #}
         <div class="lg-dashboard">
           <div class="lg-carte">
-            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.gerants_a_verifier }}</p>
-            <p class="lg-etiquette">Gérants en attente</p>
+            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.locataires_total }}</p>
+            <p class="lg-etiquette">Locataires</p>
             <p class="help">
-              {{ vue_ensemble.gerants_en_entretien }} en entretien ·
-              <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Examiner</a>
+              <a href="{% url 'admin:accounts_user_changelist' %}">Examiner</a>
             </p>
           </div>
 
@@ -53,21 +52,38 @@
           </div>
         </div>
 
-        <!-- Section Alertes / Actions prioritaires -->
-        {% if vue_ensemble.moderation.hors_delai or vue_ensemble.gerants_a_verifier %}
+        {# ── Section Gérants : création de compte ──────────────────────────── #}
+        {% if vue_ensemble.role == "admin" %}
+          <div class="module lg-section-module">
+            <h2>Gérants</h2>
+            <div class="lg-section">
+              <p class="lg-section__texte">
+                Crée un compte gérant après vérification des pièces et l'entretien. Un mot de passe lui
+                est attribué puis transmis hors plateforme ; il pourra le modifier ensuite.
+              </p>
+              <div class="lg-section__actions">
+                <a class="button" href="{% url 'admin:accounts_user_nouveau_gerant' %}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  Créer un gérant
+                </a>
+                <a class="button" href="{% url 'admin:accounts_gerantprofile_changelist' %}">Voir les gérants</a>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {# ── Section Alertes / Actions prioritaires ────────────────────────── #}
+        {% if vue_ensemble.moderation.hors_delai %}
           <div class="module p-4 mb-6">
             <h2 class="mb-3">Actions prioritaires requises</h2>
             <div class="d-flex gap-4 flex-wrap">
-              {% if vue_ensemble.gerants_a_verifier %}
-                <div class="d-flex align-items-center gap-3">
-                  <span class="badge badge--avertissement">⚠️ {{ vue_ensemble.gerants_a_verifier }} gérant(s)</span>
-                  <span>en attente de validation de leur pièce d'identité</span>
-                  <a class="button" href="{% url 'admin:accounts_gerantprofile_changelist' %}">Vérifier</a>
-                </div>
-              {% endif %}
+
               {% if vue_ensemble.moderation.ouverts %}
                 <div class="d-flex align-items-center gap-3">
-                  <span class="badge badge--avertissement">🛡️ {{ vue_ensemble.moderation.ouverts }} signalement(s)</span>
+                  <span class="badge badge--avertissement d-inline-flex align-items-center gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    {{ vue_ensemble.moderation.ouverts }} signalement(s)
+                  </span>
                   <span>en attente d'examen</span>
                   <a class="button" href="{% url 'admin:moderation_report_changelist' %}">Modérer</a>
                 </div>
@@ -78,7 +94,7 @@
       </div>
     {% endif %}
 
-    <!-- Applications et Tables Django -->
+    {# Applications et Tables Django #}
     {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
   </div>
 {% endblock %}
@@ -88,12 +104,43 @@
     <div class="module" id="recent-actions-module">
       <h2>Accès rapides</h2>
       <ul class="actionlist">
-        <li><a href="{% url 'admin:accounts_gerantprofile_changelist' %}">👥 Gérants à vérifier</a></li>
-        <li><a href="{% url 'admin:listings_listing_changelist' %}">🏠 Toutes les chambres</a></li>
-        <li><a href="{% url 'admin:moderation_report_changelist' %}">🛡️ Signalements & Modération</a></li>
+        <li>
+          <a href="{% url 'admin:accounts_gerantprofile_changelist' %}" class="d-inline-flex align-items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Gérants à vérifier
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'admin:listings_listing_changelist' %}" class="d-inline-flex align-items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            Toutes les chambres
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'admin:moderation_report_changelist' %}" class="d-inline-flex align-items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Signalements & Modération
+          </a>
+        </li>
         {% if vue_ensemble.role == "admin" %}
-          <li><a href="{% url 'admin:audit_auditlog_changelist' %}">📋 Journal d'audit</a></li>
-          <li><a href="{% url 'admin:accounts_user_changelist' %}">👤 Utilisateurs</a></li>
+          <li>
+            <a href="{% url 'admin:accounts_user_nouveau_gerant' %}" class="d-inline-flex align-items-center gap-2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+              Créer un gérant
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'admin:audit_auditlog_changelist' %}" class="d-inline-flex align-items-center gap-2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Journal d'audit
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'admin:accounts_user_changelist' %}" class="d-inline-flex align-items-center gap-2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Utilisateurs
+            </a>
+          </li>
         {% endif %}
       </ul>
     </div>

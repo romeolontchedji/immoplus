@@ -5,16 +5,18 @@
 
 {% block extrahead %}
   {{ block.super }}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static "css/tokens.css" %}">
   <link rel="stylesheet" href="{% static "admin/css/logeo-adm.css" %}">
 {% endblock %}
 
 {% block branding %}
 <div id="site-name">
-  <a href="{% url 'admin:index' %}" class="logeo-admin-logo">
-    <span class="logeo-admin-icon">🏠</span>
-    <span class="logeo-admin-titre">LOGEO <strong>ADMIN</strong></span>
-    <span class="logeo-admin-badge">Console</span>
+  <a href="{% url 'admin:index' %}" class="logeo-brand">
+    <img src="{% static 'design/logo.svg' %}" alt="Logeo" width="32" height="32" class="logeo-brand-icon">
+    <span class="logeo-name">Logeo<b>.</b></span>
+    <small>Administration</small>
   </a>
 </div>
 {% endblock %}

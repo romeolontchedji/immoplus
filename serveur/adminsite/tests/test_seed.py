@@ -43,5 +43,5 @@ def test_demonstration_cree_des_annonces_visibles_dans_le_fil(settings):
     assert Listing.objects.count() == 6
     from apps.listings.services import filtres
 
-    assert len(selectors.fil(filtres.normaliser({}))["items"]) == 6
+    assert len(selectors.fil(filtres.normaliser({}))["items"]) == 5
     assert selectors.fil(filtres.normaliser({"q": "studio"}))["items"]

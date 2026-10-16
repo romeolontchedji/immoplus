@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {% if request.user.role == "admin" %}
+    <li>
+      <a href="{% url 'admin:accounts_user_nouveau_gerant' %}" class="addlink">Nouveau gérant</a>
+    </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

@@ -1,4 +1,4 @@
-"""Site d'administration : 2FA (TOTP) obligatoire, connexion par e-mail, titres en français."""
+"""Site d'administration : connexion par e-mail et mot de passe, titres en français."""
 
 from django import forms
 from django.contrib.admin import AdminSite
@@ -8,7 +8,7 @@ from django.utils import timezone
 
 
 class FormulaireConnexion(AuthenticationForm):
-    """Adresse e-mail, mot de passe et code à 6 chiffres de l'application d'authentification."""
+    """Adresse e-mail et mot de passe."""
 
     def __init__(self, request=None, *args, **kwargs):
         super().__init__(request, *args, **kwargs)
@@ -36,7 +36,7 @@ def _vue_ensemble(utilisateur) -> dict:
     """Indicateurs du tableau de bord d'administration, issus des données réelles."""
     from django.db.models import Count
 
-    from apps.accounts.models import GerantProfile, User
+    from apps.accounts.models import User
     from apps.audit.models import AuditLog
     from apps.core import stats
     from apps.listings.models import Listing
@@ -58,12 +58,6 @@ def _vue_ensemble(utilisateur) -> dict:
             )
         ),
         "sanctions_actives": sanction_active.count(),
-        "gerants_a_verifier": (
-            GerantProfile.objects.filter(verification_status="pending").count()
-        ),
-        "gerants_en_entretien": (
-            GerantProfile.objects.filter(verification_status="interview").count()
-        ),
         "annonces_publiees": Listing.objects.filter(status="published").count(),
         "taux_reponse": _taux_reponse_moyen(),
         "compteurs_jour": _compteurs_jour(stats),
@@ -73,6 +67,7 @@ def _vue_ensemble(utilisateur) -> dict:
             else None
         ),
         "comptes_total": User.objects.filter(status="active").count(),
+        "locataires_total": User.objects.filter(status="active", role="client").count(),
     }  # fmt: skip
 
 
