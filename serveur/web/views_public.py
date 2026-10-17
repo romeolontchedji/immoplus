@@ -201,7 +201,19 @@ def fiche(request, slug):
     vues.enregistrer(
         f["id"], visiteur, user_agent=request.headers.get("User-Agent"), proprietaire=proprietaire
     )
+    if not proprietaire:
+        _noter_consultation(request, f["id"])
     return _rendre_fiche(request, f)
+
+
+CONSULTEES_MAX = 8
+
+
+def _noter_consultation(request, annonce_id) -> None:
+    """Dernières chambres consultées, dans la session seulement (rien en base) : la plus récente d'abord."""
+    ident = str(annonce_id)
+    anciennes = [i for i in request.session.get("consultees", []) if i != ident]
+    request.session["consultees"] = [ident, *anciennes][:CONSULTEES_MAX]
 
 
 @require_POST

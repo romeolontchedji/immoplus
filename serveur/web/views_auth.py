@@ -348,6 +348,11 @@ def espace_compte(request):
             "notifs_non_lues": notif_selectors.non_lues(u.pk),
             "alertes_actives": alertes_actives,
             "derniers_favoris": favoris[:3],
+            "consultees": listing_selectors.cartes_visibles(request.session.get("consultees", []))[
+                :3
+            ]
+            if u.role == "client"
+            else [],
         },
     )
 

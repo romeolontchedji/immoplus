@@ -28,4 +28,5 @@ export const CLES_KV = {
   onboardingVu: "logeo.onboarding-vu",
   demandeNotifications: "logeo.demande-notifications",
   verrouBiometrique: "logeo.verrou-biometrique",
+  consultees: "logeo.chambres-consultees",
 } as const;

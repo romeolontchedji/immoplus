@@ -8,6 +8,7 @@ import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 import { LIBELLES_TRI, nombreDeFiltres, useFiltres, type Filtres } from "./filtres";
+import { BandeauConsultees } from "./BandeauConsultees";
 import { FiltresActifs } from "./FiltresActifs";
 import { ListeAnnonces } from "./ListeAnnonces";
 import { useFil, useTypesChambre } from "./queries";
@@ -75,6 +76,8 @@ export function AccueilScreen() {
             </ScrollView>
 
             <FiltresActifs />
+
+            {recherche ? null : <BandeauConsultees />}
 
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: sp[1] }}>
               <Text variante="sousTitre">{recherche ? "Résultats" : "Chambres disponibles"}</Text>

@@ -17,6 +17,7 @@ import { Skeleton } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
 import { ListingCard } from "@/ui/components/ListingCard";
 import { TexteEnrichi } from "@/ui/components/TexteEnrichi";
+import { noterConsultation } from "./consultees";
 import { LIBELLES_EAU } from "./filtres";
 import { useBasculerFavori, useCompterVue, useFiche, useSimilaires, type Fiche } from "./queries";
 
@@ -117,6 +118,19 @@ export function FicheScreen() {
     if (ident) compterVue.mutate(ident);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ident]);
+
+  const chargee = requete.data;
+  useEffect(() => {
+    if (!chargee) return;
+    const m = chargee.media ?? [];
+    noterConsultation({
+      slug: chargee.slug,
+      title: chargee.title,
+      rent_amount: chargee.rent_amount,
+      district: chargee.district?.name ?? "",
+      image: imageDe(m.find((x) => x.is_cover) ?? m[0]),
+    });
+  }, [chargee]);
 
   const retour = () => (router.canGoBack() ? router.back() : router.replace("/"));
 

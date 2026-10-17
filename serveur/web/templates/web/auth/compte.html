@@ -247,6 +247,16 @@
                 </div>
               </div>
             {% endif %}
+            {% if consultees %}
+              <div class="pile">
+                <h2 class="compte-section-carte__titre">Tu as regardé récemment</h2>
+                <div class="grille-annonces">
+                  {% for a in consultees %}
+                    {% include "web/composants/carte.html" %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
           {% endif %}
           <div class="pro-entete">
             <div>

@@ -544,6 +544,23 @@ def favoris_de(utilisateur_id) -> list[dict]:
     return _cartes(ordonnees)
 
 
+def cartes_visibles(annonce_ids) -> list[dict]:
+    """Cartes des annonces encore visibles, dans l'ordre donné (dernières chambres consultées, plan v2)."""
+    ordre = []
+    for ident in annonce_ids:
+        try:
+            ordre.append(uuid.UUID(str(ident)))
+        except ValueError:
+            continue
+    annonces = {
+        a.pk: a
+        for a in Listing.objects.filter(
+            pk__in=ordre, status__in=STATUTS_VISIBLES, deleted_at__isnull=True
+        ).select_related("district")
+    }
+    return _cartes([annonces[i] for i in ordre if i in annonces])
+
+
 def alertes_de(utilisateur_id) -> list[Alert]:
     return list(Alert.objects.filter(user_id=utilisateur_id).order_by("-created_at"))
 

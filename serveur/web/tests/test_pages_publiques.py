@@ -400,3 +400,27 @@ class TestNotificationsEtReferencement:
         assert f"/annonces/{a.slug}" in sitemap and "/quartiers/albarika" in sitemap
         assert Client().get("/sitemap.xml")["Content-Type"].startswith("application/xml")
         assert MOT_DE_PASSE
+
+
+class TestConsultees:
+    def test_les_fiches_vues_remontent_sur_le_tableau_du_locataire(self):
+        c = connecte(ClientFactory())
+        a, b = (
+            ListingFactory(title="Chambre vue en premier"),
+            ListingFactory(title="Chambre vue ensuite"),
+        )
+        retiree = ListingFactory(title="Chambre retirée depuis")
+        for x in (a, retiree, b, a):
+            c.get(f"/annonces/{x.slug}")
+        retiree.status = "hidden"
+        retiree.save(update_fields=["status"])
+        page = html(c.get("/compte"))
+        assert "Tu as regardé récemment" in page and "Chambre retirée depuis" not in page
+        assert page.index("Chambre vue en premier") < page.index("Chambre vue ensuite")
+
+    def test_historique_borne_et_absent_sans_consultation(self):
+        c = connecte(ClientFactory())
+        assert "Tu as regardé récemment" not in html(c.get("/compte"))
+        for x in ListingFactory.create_batch(10):
+            c.get(f"/annonces/{x.slug}")
+        assert len(c.session["consultees"]) == 8
