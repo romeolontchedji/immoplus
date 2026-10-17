@@ -3714,6 +3714,18 @@
                     },
                     "terms_accepted": {
                         "type": "boolean"
+                    },
+                    "occupation": {
+                        "nullable": true,
+                        "description": "« Tu es » (facultatif).\n\n* `student_up` - student_up\n* `student_other` - student_other\n* `employee` - employee\n* `self_employed` - self_employed\n* `other` - other",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OccupationEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
                     }
                 },
                 "required": [
@@ -4170,6 +4182,22 @@
                     "title"
                 ]
             },
+            "NullEnum": {
+                "enum": [
+                    null
+                ]
+            },
+            "OccupationEnum": {
+                "enum": [
+                    "student_up",
+                    "student_other",
+                    "employee",
+                    "self_employed",
+                    "other"
+                ],
+                "type": "string",
+                "description": "* `student_up` - student_up\n* `student_other` - student_other\n* `employee` - employee\n* `self_employed` - self_employed\n* `other` - other"
+            },
             "OtpDemandeIn": {
                 "type": "object",
                 "properties": {
@@ -4394,6 +4422,18 @@
                     "full_name": {
                         "type": "string",
                         "maxLength": 200
+                    },
+                    "occupation": {
+                        "nullable": true,
+                        "description": "`null` efface la réponse.\n\n* `student_up` - student_up\n* `student_other` - student_other\n* `employee` - employee\n* `self_employed` - self_employed\n* `other` - other",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OccupationEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
                     }
                 }
             },
@@ -4754,6 +4794,17 @@
                     "full_name": {
                         "type": "string"
                     },
+                    "occupation": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OccupationEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
                     "role": {
                         "$ref": "#/components/schemas/RoleEnum"
                     },
@@ -4774,6 +4825,7 @@
                     "created_at",
                     "full_name",
                     "id",
+                    "occupation",
                     "phone",
                     "role",
                     "terms_version"

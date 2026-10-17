@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.accounts.enums import Objet, Plateforme
+from apps.accounts.enums import Objet, Occupation, Plateforme
 
 
 class OtpDemandeIn(serializers.Serializer):
@@ -32,6 +32,12 @@ class InscriptionIn(AppareilIn):
     full_name = serializers.CharField(max_length=200)
     password = serializers.CharField(max_length=128, trim_whitespace=False)
     terms_accepted = serializers.BooleanField()
+    occupation = serializers.ChoiceField(
+        choices=Occupation.values,
+        required=False,
+        allow_null=True,
+        help_text="« Tu es » (facultatif).",
+    )
 
 
 class ConnexionIn(AppareilIn):
@@ -64,6 +70,12 @@ class SuppressionIn(serializers.Serializer):
 
 class ProfilIn(serializers.Serializer):
     full_name = serializers.CharField(max_length=200, required=False)
+    occupation = serializers.ChoiceField(
+        choices=Occupation.values,
+        required=False,
+        allow_null=True,
+        help_text="`null` efface la réponse.",
+    )
 
 
 class JetonsOut(serializers.Serializer):
@@ -75,6 +87,7 @@ class JetonsOut(serializers.Serializer):
 class UtilisateurOut(serializers.Serializer):
     id = serializers.UUIDField()
     full_name = serializers.CharField()
+    occupation = serializers.ChoiceField(choices=Occupation.values, allow_null=True)
     role = serializers.ChoiceField(choices=["client", "gerant"])
     phone = serializers.CharField(allow_null=True)
     terms_version = serializers.CharField(allow_null=True)

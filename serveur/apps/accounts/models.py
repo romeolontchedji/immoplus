@@ -12,6 +12,7 @@ from .enums import (  # noqa: F401  (réexportées : l'import historique depuis 
     ROLES_PERSONNEL,
     FournisseurPush,
     Objet,
+    Occupation,
     Plateforme,
     Role,
     Statut,
@@ -48,6 +49,7 @@ class User(AbstractBaseUser):
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     password = models.CharField("password", max_length=255, db_column="password_hash")
     full_name = models.CharField(max_length=120)
+    occupation = models.CharField(max_length=16, choices=Occupation.choices, null=True, blank=True)
     role = models.CharField(max_length=12, choices=Role.choices)
     status = models.CharField(
         max_length=12, choices=Statut.choices, default=Statut.ACTIVE, db_default="active"
@@ -76,6 +78,11 @@ class User(AbstractBaseUser):
             ),
             models.CheckConstraint(
                 condition=models.Q(status__in=[s.value for s in Statut]), name="users_status_valide"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(occupation__isnull=True)
+                | models.Q(occupation__in=[o.value for o in Occupation]),
+                name="users_occupation_valide",
             ),
             models.CheckConstraint(
                 condition=~models.Q(role__in=["client", "gerant"])

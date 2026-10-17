@@ -43,6 +43,7 @@ def _utilisateur_out(u) -> dict:
     return {
         "id": u.pk,
         "full_name": u.full_name,
+        "occupation": u.occupation,
         "role": u.role,
         "phone": u.phone_e164,
         "terms_version": u.terms_version,
@@ -158,6 +159,7 @@ class Inscription(_Public):
             d["full_name"],
             d["password"],
             d["terms_accepted"],
+            occupation=d.get("occupation"),
             ip=ip_client(request),
             user_agent=user_agent(request),
         )
@@ -247,7 +249,8 @@ class Moi(_Prive):
     )
     def patch(self, request):
         d = _valide(s.ProfilIn, request)
-        utilisateur = compte.modifier_profil(request.user, nom=d.get("full_name"))
+        options = {"occupation": d["occupation"]} if "occupation" in d else {}
+        utilisateur = compte.modifier_profil(request.user, nom=d.get("full_name"), **options)
         return Response(_utilisateur_out(utilisateur))
 
     @extend_schema(

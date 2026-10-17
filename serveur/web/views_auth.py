@@ -186,6 +186,7 @@ def inscription_profil(request):
         try:
             utilisateur = inscription.inscrire_client(
                 flux["otp_token"], d["full_name"], d["password"], d["terms_accepted"],
+                occupation=d["occupation"] or None,
                 ip=ip_client(request), user_agent=user_agent(request),
             )  # fmt: skip
         except ErreurMetier as erreur:
@@ -267,7 +268,7 @@ def espace_compte(request):
     u = request.user
     nom = forms.ChangementNom(
         request.POST if request.POST.get("action") == "nom" else None,
-        initial={"full_name": u.full_name},
+        initial={"full_name": u.full_name, "occupation": u.occupation or ""},
     )
     mdp = forms.ChangementMotDePasse(
         request.POST if request.POST.get("action") == "mot-de-passe" else None
@@ -280,8 +281,12 @@ def espace_compte(request):
         action = request.POST.get("action")
         try:
             if action == "nom" and nom.is_valid():
-                compte.modifier_profil(u, nom=nom.cleaned_data["full_name"])
-                message = "Ton nom a été mis à jour."
+                compte.modifier_profil(
+                    u,
+                    nom=nom.cleaned_data["full_name"],
+                    occupation=nom.cleaned_data["occupation"] or None,
+                )
+                message = "Ton profil a été mis à jour."
             elif action == "mot-de-passe" and mdp.is_valid():
                 compte.changer_mot_de_passe(
                     u, mdp.cleaned_data["current_password"], mdp.cleaned_data["new_password"]

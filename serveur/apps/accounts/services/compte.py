@@ -11,7 +11,7 @@ from apps.accounts.phone import masquer
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 
-from . import appareils, jetons, mots_de_passe, otp
+from . import appareils, inscription, jetons, mots_de_passe, otp
 
 CATEGORIES_NOTIFICATION = ("messages", "alertes", "rappels")
 
@@ -73,7 +73,12 @@ def changer_numero(
     return utilisateur
 
 
-def modifier_profil(utilisateur: User, *, nom: str | None = None) -> User:
+_NON_FOURNI = object()
+
+
+def modifier_profil(utilisateur: User, *, nom: str | None = None, occupation=_NON_FOURNI) -> User:
+    """`occupation` absent : inchangé ; `None` ou vide : effacé (la réponse reste facultative)."""
+    champs = ["updated_at"]
     if nom is not None:
         nom = " ".join(nom.split())
         if not 2 <= len(nom) <= 120:
@@ -83,7 +88,11 @@ def modifier_profil(utilisateur: User, *, nom: str | None = None) -> User:
                 champs={"full_name": ["Nom invalide"]},
             )
         utilisateur.full_name = nom
-    utilisateur.save(update_fields=["full_name", "updated_at"])
+        champs.append("full_name")
+    if occupation is not _NON_FOURNI:
+        utilisateur.occupation = inscription.occupation_valide(occupation)
+        champs.append("occupation")
+    utilisateur.save(update_fields=champs)
     return utilisateur
 
 

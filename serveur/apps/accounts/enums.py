@@ -17,6 +17,16 @@ class Statut(models.TextChoices):
     DELETED = "deleted", "Supprimé"
 
 
+class Occupation(models.TextChoices):
+    """« Tu es » à l'inscription (décision V2) : facultatif, sert aux statistiques et au ton des messages."""
+
+    STUDENT_UP = "student_up", "Étudiant(e) à l'UP"
+    STUDENT_OTHER = "student_other", "Étudiant(e) ailleurs"
+    EMPLOYEE = "employee", "Salarié(e)"
+    SELF_EMPLOYED = "self_employed", "Indépendant(e)"
+    OTHER = "other", "Autre"
+
+
 class Objet(models.TextChoices):
     SIGNUP = "signup", "Inscription"
     RESET_PASSWORD = "reset_password", "Mot de passe oublié"

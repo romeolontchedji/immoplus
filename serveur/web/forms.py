@@ -2,6 +2,10 @@
 
 from django import forms
 
+from apps.accounts.enums import Occupation
+
+_OCCUPATIONS = [("", "Je préfère ne pas répondre"), *Occupation.choices]
+
 
 class _Base(forms.Form):
     """Applique la classe CSS des champs à tous les widgets."""
@@ -34,7 +38,12 @@ class Code(_Base):
 
 
 class Profil(_Base):
-    full_name = forms.CharField(label="Nom complet", max_length=120)
+    full_name = forms.CharField(
+        label="Nom complet",
+        max_length=120,
+        widget=forms.TextInput(attrs={"autocomplete": "name", "placeholder": "Awa Bio"}),
+    )
+    occupation = forms.ChoiceField(label="Tu es", choices=_OCCUPATIONS, required=False)
     password = forms.CharField(
         label="Mot de passe",
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
@@ -72,6 +81,7 @@ class Connexion(_Base):
 
 class ChangementNom(_Base):
     full_name = forms.CharField(label="Nom complet", max_length=120)
+    occupation = forms.ChoiceField(label="Tu es", choices=_OCCUPATIONS, required=False)
 
 
 class ChangementMotDePasse(_Base):

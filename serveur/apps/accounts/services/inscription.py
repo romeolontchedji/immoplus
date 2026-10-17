@@ -3,7 +3,7 @@
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts.models import Role, User
+from apps.accounts.models import Occupation, Role, User
 from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
@@ -20,6 +20,19 @@ def _nom_valide(nom: str) -> str:
             champs={"full_name": ["Nom invalide"]},
         )
     return nom
+
+
+def occupation_valide(occupation: str | None) -> str | None:
+    """« Tu es » est facultatif ; une valeur inconnue est refusée plutôt qu'ignorée."""
+    if occupation in (None, ""):
+        return None
+    if occupation not in Occupation.values:
+        raise ErreurMetier(
+            "validation_error",
+            "Choisis une des réponses proposées.",
+            champs={"occupation": ["Valeur inconnue"]},
+        )
+    return occupation
 
 
 def _exiger_cgu(acceptees: bool) -> None:
@@ -51,11 +64,13 @@ def inscrire_client(
     mot_de_passe: str,
     cgu_acceptees: bool,
     *,
+    occupation: str | None = None,
     ip: str | None = None,
     user_agent: str | None = None,
 ) -> User:
     """Second temps de l'inscription : le compte n'existe qu'ici, après preuve de possession du numéro."""
     nom = _nom_valide(nom)
+    occupation = occupation_valide(occupation)
     _exiger_cgu(cgu_acceptees)
     mots_de_passe.valider(mot_de_passe)
     telephone = otp.consommer_jeton(jeton_otp, "signup")
@@ -64,6 +79,7 @@ def inscrire_client(
             utilisateur = User(
                 phone_e164=telephone,
                 full_name=nom,
+                occupation=occupation,
                 role=Role.CLIENT,
                 phone_verified_at=timezone.now(),
                 password=mots_de_passe.hacher(mot_de_passe),

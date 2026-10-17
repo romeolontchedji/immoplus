@@ -385,6 +385,7 @@ class TestCompteApi:
         assert set(client.get("/v1/me").json()) == {
             "id",
             "full_name",
+            "occupation",
             "role",
             "phone",
             "terms_version",

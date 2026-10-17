@@ -1239,6 +1239,14 @@ export interface components {
             full_name: string;
             password: string;
             terms_accepted: boolean;
+            /** @description « Tu es » (facultatif).
+             *
+             *     * `student_up` - student_up
+             *     * `student_other` - student_other
+             *     * `employee` - employee
+             *     * `self_employed` - self_employed
+             *     * `other` - other */
+            occupation?: (components["schemas"]["OccupationEnum"] | components["schemas"]["NullEnum"]) | null;
         };
         InterlocuteurOut: {
             /** Format: uuid */
@@ -1364,6 +1372,17 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /** @enum {unknown} */
+        NullEnum: null;
+        /**
+         * @description * `student_up` - student_up
+         *     * `student_other` - student_other
+         *     * `employee` - employee
+         *     * `self_employed` - self_employed
+         *     * `other` - other
+         * @enum {string}
+         */
+        OccupationEnum: "student_up" | "student_other" | "employee" | "self_employed" | "other";
         OtpDemandeIn: {
             phone: string;
             purpose: components["schemas"]["PurposeEnum"];
@@ -1425,6 +1444,14 @@ export interface components {
         };
         PatchedProfilIn: {
             full_name?: string;
+            /** @description `null` efface la réponse.
+             *
+             *     * `student_up` - student_up
+             *     * `student_other` - student_other
+             *     * `employee` - employee
+             *     * `self_employed` - self_employed
+             *     * `other` - other */
+            occupation?: (components["schemas"]["OccupationEnum"] | components["schemas"]["NullEnum"]) | null;
         };
         PatchedSilenceIn: {
             /** Format: date-time */
@@ -1578,6 +1605,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             full_name: string;
+            occupation: (components["schemas"]["OccupationEnum"] | components["schemas"]["NullEnum"]) | null;
             role: components["schemas"]["RoleEnum"];
             phone: string | null;
             terms_version: string | null;
