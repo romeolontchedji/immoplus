@@ -84,7 +84,11 @@
   --motif-clair: url("../../design/motif-clair.svg");
   --motif-sombre: url("../../design/motif-sombre.svg");
   --motif-taille: 25rem;
-  --voile-accueil: linear-gradient(100deg, rgba(15, 27, 61, 0.88) 30%, rgba(15, 27, 61, 0.05));
+  --voile-accueil: linear-gradient(100deg, rgba(15, 27, 61, 0.90) 30%, rgba(15, 27, 61, 0.25));
+  --voile-accueil-etroit: linear-gradient(180deg, rgba(15, 27, 61, 0.80), rgba(15, 27, 61, 0.92));
+  --voile-gerant: linear-gradient(180deg, rgba(15, 27, 61, 0.80), rgba(15, 27, 61, 0.94) 55%);
+  /* Photos d'ambiance (ADR 0006) : décor seulement, jamais une chambre */
+  --duree-diaporama: 21s;
   --voile-catalogue: linear-gradient(180deg, rgba(15, 27, 61, 0.55), rgba(15, 27, 61, 0.85));
   --voile-auth: linear-gradient(180deg, rgba(15, 27, 61, 0.35), rgba(15, 27, 61, 0.90));
 

@@ -1,26 +1,26 @@
 import { useRef, useState } from "react";
-import { FlatList, Pressable, useWindowDimensions, View, type ViewToken } from "react-native";
+import { FlatList, Pressable, useWindowDimensions, View, type ImageSourcePropType, type ViewToken } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BellRing, MessageCircle, ShieldCheck, Video, type LucideIcon } from "lucide-react-native";
 import { Button } from "@/ui/components/Button";
-import { FondMotif } from "@/ui/components/FondMotif";
 import { Logotype } from "@/ui/components/Logo";
 import { Text } from "@/ui/components/Text";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 
-type Etape = { icone: LucideIcon; titre: string; texte: string; teinte: string };
+type Etape = { icone: LucideIcon; titre: string; texte: string; teinte: string; photo: ImageSourcePropType };
 
 const ETAPES: Etape[] = [
-  { icone: Video, titre: "Des vraies chambres, en vidéo", texte: "Chaque annonce a une vidéo tournée sur place. Tu vois la chambre avant de te déplacer.", teinte: colors.blue },
-  { icone: ShieldCheck, titre: "Des gérants vérifiés", texte: "L'équipe Logeo vérifie l'identité de chaque gérant avant qu'il publie.", teinte: "#0E7C66" },
-  { icone: MessageCircle, titre: "Écris sans donner ton numéro", texte: "Tu discutes dans Logeo. Ton numéro reste privé, tant que tu ne décides pas de le partager.", teinte: "#6A3FC8" },
-  { icone: BellRing, titre: "Sois prévenu le premier", texte: "Crée une alerte : on te prévient dès qu'une chambre correspond à ton budget et à ton quartier.", teinte: "#B4471F" },
+  { icone: Video, titre: "Des vraies chambres, en vidéo", texte: "Chaque annonce a une vidéo tournée sur place. Tu vois la chambre avant de te déplacer.", teinte: colors.blue, photo: require("../../../assets/photos/onboarding-2.webp") },
+  { icone: ShieldCheck, titre: "Des gérants vérifiés", texte: "L'équipe Logeo vérifie l'identité de chaque gérant avant qu'il publie.", teinte: "#0E7C66", photo: require("../../../assets/photos/onboarding-4.webp") },
+  { icone: MessageCircle, titre: "Écris sans donner ton numéro", texte: "Tu discutes dans Logeo. Ton numéro reste privé, tant que tu ne décides pas de le partager.", teinte: "#6A3FC8", photo: require("../../../assets/photos/onboarding-3.webp") },
+  { icone: BellRing, titre: "Sois prévenu le premier", texte: "Crée une alerte : on te prévient dès qu'une chambre correspond à ton budget et à ton quartier.", teinte: "#B4471F", photo: require("../../../assets/photos/onboarding-1.webp") },
 ];
 
 /**
  * Présentation en 4 étapes (plan d'actions v2, M2), avant l'écran de bienvenue : au premier lancement en production,
- * à chaque lancement en développement. Les illustrations laisseront la place aux photos d'ambiance (ADR 0006).
+ * à chaque lancement en développement. Photo d'ambiance (ADR 0006) et pastille de l'étape dans sa teinte.
  */
 export function PresentationScreen() {
   const router = useRouter();
@@ -61,10 +61,10 @@ export function PresentationScreen() {
           const Icone = item.icone;
           return (
             <View style={{ width, paddingHorizontal: sp[5], justifyContent: "center", gap: sp[6] }}>
-              <View style={{ height: 300, borderRadius: rayon.sheet, backgroundColor: item.teinte, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                <FondMotif sombre opacite={0.1} />
-                <View style={{ width: 120, height: 120, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center" }}>
-                  <Icone size={60} color={colors.white} strokeWidth={1.75} />
+              <View style={{ height: 300, borderRadius: rayon.sheet, backgroundColor: item.teinte, overflow: "hidden" }}>
+                <Image source={item.photo} style={{ flex: 1 }} contentFit="cover" accessibilityIgnoresInvertColors />
+                <View style={{ position: "absolute", left: sp[4], bottom: sp[4], width: 56, height: 56, borderRadius: 18, backgroundColor: item.teinte, alignItems: "center", justifyContent: "center" }}>
+                  <Icone size={28} color={colors.white} strokeWidth={2} />
                 </View>
               </View>
               <View style={{ gap: sp[3] }}>

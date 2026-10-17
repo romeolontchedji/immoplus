@@ -112,7 +112,7 @@ dans des pastilles teintées, une **carte d'en-tête colorée** (*hero card*) et
 | M3 | Connexion ✅ (verrou par empreinte, V5) | Case « Se souvenir de moi » (session persistante ou effacée à la fermeture) ; verrou par empreinte si activé (V5). | Réouverture sans mot de passe si coché |
 | M4 | Inscription ✅ (V2) | « Tu es » en liste déroulante élargie (V2) ; un seul champ nom. | Données saisies = données stockées |
 | M5 | Alertes ✅ (`GET /v1/alert-options`, `ListeDeroulante`) | Quartier : liste déroulante triée par **fréquence d'usage** (quartiers les plus recherchés en tête). Budget : liste déroulante de montants fréquents + « Autre montant » qui fait apparaître un champ. Fréquences calculées par le serveur (§7.2). | Listes servies par l'API, triées |
-| M6 | Images de fond | Photos réelles (§8) sur Bienvenue, Onboarding, Accueil, fiche sans média. | Aucune illustration générique restante |
+| M6 | Images de fond ✅ (Présentation et Bienvenue ; fiche sans média : affiche vectorielle, ADR 0006) | Photos réelles (§8) sur Bienvenue, Onboarding, Accueil, fiche sans média. | Aucune illustration générique restante |
 | M7 | Profil façon captures ✅ | Carte identité (avatar, nom, numéro, « Compte vérifié »), groupes « Compte et sécurité », « Préférences et assistance » (WhatsApp de l'équipe), « Informations légales », déconnexion, version. | Conforme à P1.3 |
 | M8 | Conversation ✅ (menu ⋮ : bloquer, sourdine, signaler) | Bouton « Bloquer / Débloquer » (D3) ; bulles plus compactes (voir W5). | Blocage effectif depuis le mobile |
 
@@ -140,7 +140,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 
 | # | Action | Détail |
 |---|---|---|
-| W1 | Bannière de l'accueil | Diaporama de 3 à 5 photos réelles (§8) en fondu, CSS seul (`@keyframes`, sans script), `prefers-reduced-motion` respecté, voile pour le contraste du texte. |
+| W1 | Bannière de l'accueil ✅ (3 photos, fondu 21 s ; photo du gérant sur la carte « Je loue des chambres ») | Diaporama de 3 à 5 photos réelles (§8) en fondu, CSS seul (`@keyframes`, sans script), `prefers-reduced-motion` respecté, voile pour le contraste du texte. |
 | W2 | Types de chambre dynamiques ✅ | Liste déroulante + « Autre type… » dans l'éditeur (V1) ; filtres alimentés par l'API. |
 | W3 | Éditeur d'annonce ✅ | Retirer latitude/longitude (V7) ; barre d'outils de texte (V6) ; envoi de médias redessiné (zone de dépôt, vignettes, progression, erreurs lisibles). |
 | W4 | Tableau de bord gérant ✅ | Responsive (cartes empilées sous 768 px) ; sur chaque chambre, interrupteur explicite **« Chambre encore disponible »** : le décocher appelle `marquer_louee` et retire la chambre du fil et de la recherche ; le recocher la remet en ligne (`undo-rented`). |

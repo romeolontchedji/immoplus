@@ -23,7 +23,7 @@ export function BienvenueScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.night }}>
-      {/* Moitié supérieure immersive avec logo et illustration */}
+      {/* Moitié supérieure immersive : logo sur photo d'ambiance */}
       <View
         style={{
           flex: 1.1,
@@ -37,18 +37,19 @@ export function BienvenueScreen() {
         }}
       >
         <Image
-          source={require("../../../assets/illustration-accueil.svg")}
+          source={require("../../../assets/photos/bienvenue.webp")}
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            opacity: 0.85,
           }}
           contentFit="cover"
           accessibilityIgnoresInvertColors
         />
+        {/* Voile : le logo reste lisible sur la photo (ADR 0006) */}
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 27, 61, 0.45)" }} />
 
         {/* Logo Logeo */}
         <Logotype taille={44} surFondSombre />

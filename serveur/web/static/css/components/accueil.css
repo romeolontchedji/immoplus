@@ -3,7 +3,7 @@
 /* ── Héro ─────────────────────────────────────────────────────────────────── */
 .accueil-hero {
   position: relative; overflow: hidden;
-  background: var(--voile-accueil), url("../../design/illustration-accueil.svg") center / cover, var(--night);
+  background: var(--night);
   color: var(--white);
   padding-block: var(--sp-14) var(--sp-12);
   min-height: 28rem;
@@ -14,6 +14,39 @@
   justify-content: space-between;
   flex-wrap: wrap;
 }
+/* Diaporama de photos d'ambiance (plan v2, W1) : fondu en CSS seul, voile pour le contraste du texte */
+.accueil-hero__diaporama { position: absolute; inset: 0; }
+.accueil-hero__diaporama::after { content: ""; position: absolute; inset: 0; background: var(--voile-accueil); }
+.accueil-hero__photo {
+  position: absolute; inset: 0; opacity: 0;
+  background: center / cover no-repeat;
+  animation: accueil-fondu var(--duree-diaporama) linear infinite;
+}
+.accueil-hero__photo--1 { opacity: 1; background-image: url("../../design/photos/accueil-1-960.webp"); animation-delay: -1.5s; }
+.accueil-hero__photo--2 { background-image: url("../../design/photos/accueil-2-960.webp"); animation-delay: 5.5s; }
+.accueil-hero__photo--3 { background-image: url("../../design/photos/accueil-3-960.webp"); animation-delay: 12.5s; }
+@keyframes accueil-fondu {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  33% { opacity: 1; }
+  40% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (min-width: 1100px) {
+  .accueil-hero__photo--1 { background-image: url("../../design/photos/accueil-1-1600.webp"); }
+  .accueil-hero__photo--2 { background-image: url("../../design/photos/accueil-2-1600.webp"); }
+  .accueil-hero__photo--3 { background-image: url("../../design/photos/accueil-3-1600.webp"); }
+}
+@media (max-width: 767px) {
+  .accueil-hero__diaporama::after { background: var(--voile-accueil-etroit); }
+  .accueil-hero__photo--1 { background-image: url("../../design/photos/accueil-1-480.webp"); }
+  .accueil-hero__photo--2 { background-image: url("../../design/photos/accueil-2-480.webp"); }
+  .accueil-hero__photo--3 { background-image: url("../../design/photos/accueil-3-480.webp"); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .accueil-hero__photo { animation: none; }
+}
+
 .accueil-hero__texte { flex: 1; min-width: 0; max-width: 42rem; width: 100%; }
 
 .accueil-hero__capsule {
@@ -120,7 +153,8 @@
   padding: var(--sp-8); background: var(--surface); box-shadow: var(--shadow-card);
 }
 .accueil-comment__carte--sombre {
-  background: var(--night); border-color: var(--night);
+  background: var(--voile-gerant), url("../../design/photos/gerant-960.webp") center top / cover no-repeat, var(--night);
+  border-color: var(--night);
   color: var(--white-85);
 }
 .accueil-comment__role {
