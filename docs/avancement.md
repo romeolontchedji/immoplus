@@ -344,4 +344,11 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   supprimés de l'app (récupérables depuis `10f7333`), question tarifaire retirée de la FAQ web. Rebranchement public
   avec l'application `billing` au lancement payant.
 - **Trou découvert** : `GET /v1/app-config` n'existe pas côté serveur (P0.10 du plan).
+- **`GET /v1/app-config` livré (P0.10)** et **numéro de l'équipe unifié (P0.3)** : paramètre `TEAM_PHONE` (le lien
+  WhatsApp du site avait un 0 de trop), nouveaux paramètres `MIN_SUPPORTED_VERSION`, `MAINTENANCE_ENABLED`,
+  `MAINTENANCE_MESSAGE`, `APP_NOTICE`. 836 tests serveur verts (seul `/readyz` échoue, préexistant).
+- **Piège** : `make seed` lançait la commande dans `web-api`, où `adminsite` n'est pas installée ; elle passe
+  désormais par le conteneur `admin`.
+- **Piège** : le script `outils/exporter_client_ts.sh` prévu par le CDC n'existe pas ; le client mobile a été
+  régénéré avec `npx openapi-typescript@7.4.4 docs/api/openapi.json -o mobile/src/api/genere/api.d.ts`.
 
