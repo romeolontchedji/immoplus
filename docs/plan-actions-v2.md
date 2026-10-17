@@ -122,7 +122,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 
 | # | Fonctionnalité | État actuel | À faire |
 |---|---|---|---|
-| MM1 | Écrire au gérant | Squelette (D19) | Voir P0.8 |
+| MM1 | Écrire au gérant ✅ | Squelette (D19) | Voir P0.8 |
 | MM2 | Liste des conversations ✅ (sauf glisser pour archiver) | Liste simple sans design | Façon WhatsApp : avatar (initiales), nom, chambre liée, extrait du dernier message, heure, pastille de non-lus, conversation en sourdine grisée, glisser pour archiver/sourdine ; recherche dans les conversations |
 | MM3 | Conversation ✅ menu ⋮ et bandeaux (reste : ouverture au bon message depuis une notification) | Fonctionnelle (envoi hors ligne, temps réel) | Menu « ⋮ » : bloquer / débloquer, signaler, sourdine 8 h / 1 semaine / toujours ; bannière « conversation bloquée / lecture seule » ; coches envoyé / lu (`other_read_seq`) ; séparateurs de jour ; saisie multiligne ; ouverture depuis une notification directement au bon message |
 | MM4 | Mes annonces (gérant) ✅ | Squelette | Liste par statut (en ligne, brouillons, masquées, louées) avec actions : confirmer disponible, marquer louée / remettre en ligne, masquer, modifier |
@@ -156,8 +156,8 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 
 | # | Action | Détail |
 |---|---|---|
-| S1 | Types de chambre (V1) | Table, endpoint `GET /v1/room-types` (triés par usage), proposition par le gérant, validation en modération. |
-| S2 | Fréquences | Endpoint `GET /v1/search-hints` : quartiers et plafonds de budget les plus utilisés (recherches + alertes, 90 jours), pour les listes de M5 et du web. |
+| S1 | Types de chambre (V1) ✅ | Table, endpoint `GET /v1/room-types` (triés par usage), proposition par le gérant, validation en modération. |
+| S2 | Fréquences ✅ (livré sous `GET /v1/alert-options` : alertes actives et loyers publiés ; les recherches ne sont pas encore comptées) | Endpoint `GET /v1/search-hints` : quartiers et plafonds de budget les plus utilisés (recherches + alertes, 90 jours), pour les listes de M5 et du web. |
 | S3 | Chambres similaires (D4) | Score : même quartier ou quartier voisin, type identique, loyer à ± 25 %, distance à l'UP proche ; repli sur les plus récentes. Partagé : `GET /v1/listings/{ident}/similar` utilisé par le web et le mobile. |
 | S4 | Vues (D7) | Une fois `beat` réparé : test de bout en bout vue → statistiques → tableau de bord. |
 | S5 | Abonnement prêt mais désactivé | Services, modèles et écrans d'abonnement gérant derrière `SUBSCRIPTION_ENABLED=False` ; aucun prix affiché tant qu'il est faux. Même chose pour les notifications payantes des locataires (`PAID_ALERTS_ENABLED`). |
@@ -245,10 +245,10 @@ vers le bon écran (`routage.ts`, testé). Correspondance des alertes correcte (
 
 | # | Action | Où |
 |---|---|---|
-| N1 | Envoyer `channelId` (messages / alertes / rappels / compte) et `priority: "high"` pour les messages (D22) : bannière en haut de l'écran, son et vibration propres aux messages, même téléphone verrouillé. | S |
-| N2 | Titre « **Nom** » + sous-titre « Chambre-salon à Banikanni », corps = aperçu du message (ou « Nouveau message » si l'aperçu est désactivé). Regroupement par conversation (`threadId` iOS, groupe Android) : « 3 nouveaux messages ». | S M |
+| N1 | ✅ Envoyer `channelId` (messages / alertes / rappels / compte) et `priority: "high"` pour les messages (D22) : bannière en haut de l'écran, son et vibration propres aux messages, même téléphone verrouillé. | S |
+| N2 | ✅ (regroupement par conversation : à faire) Titre « **Nom** » + sous-titre « Chambre-salon à Banikanni », corps = aperçu du message (ou « Nouveau message » si l'aperçu est désactivé). Regroupement par conversation (`threadId` iOS, groupe Android) : « 3 nouveaux messages ». | S M |
 | N3 | **Répondre depuis la notification** (catégorie avec champ texte de `expo-notifications`) et « Marquer comme lu » : la réponse passe par la file d'envoi existante (`outbox`), donc fonctionne même avec un réseau instable. | M S |
-| N4 | Pastille du nombre de non-lus sur l'icône de l'app (`badge`), remise à jour à la lecture. | S M |
+| N4 | ✅ Pastille du nombre de non-lus sur l'icône de l'app (`badge`), remise à jour à la lecture. | S M |
 | N5 | Application ouverte : bannière interne discrète (pas de notification système) sauf si la conversation est à l'écran. | M |
 | N6 | Rattrapage : à la reconnexion, les messages manqués arrivent sans doublon (déjà prévu par `seq`) ; test de recette dédié. | S M |
 
