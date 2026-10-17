@@ -404,3 +404,15 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **Photos (V9)** : circuit retenu avec le porteur : originaux dans `photos-brutes/` (non versionné), script de
   conversion WebP, tailles 480/960/1600 servies en statique par le site, 960 embarquée dans l'app, crédits dans
   `docs/design/credits-photos.md`, exception datée au CDC (« aucune image externe ») à ajouter à l'intégration.
+- **Types de logement élargis** : 13 officiels (migration `listings.0004`), de la chambre simple à la villa.
+- **Phase 1 (socle épuré)** : motif de marque SVG en filigrane (site : pied de page, états vides, pages légales via
+  `--motif-clair`/`--motif-sombre` ; mobile : `FondMotif`), composants mobiles communs (`Groupe.tsx`), Profil refait
+  (carte cobalt, listes groupées, WhatsApp Logeo, version), logo animé au démarrage (`DemarrageAnime`), présentation
+  en 4 étapes (`/presentation`, avant `/bienvenue`). Bug corrigé : double numérotation du sommaire légal.
+- **Mobile, écrans manquants** : espace gérant complet (Mes chambres, fiche, modifier, statistiques) avec deux
+  routes ajoutées `GET /v1/pro/listings/{id}/readiness` et `…/stats?days=7|30` (libellés des manques partagés
+  site/API) ; messagerie façon WhatsApp (recherche, non lues, sourdine, menu ⋮ bloquer/signaler) ; notifications
+  regroupées par jour. 901 tests serveur verts (seul `/readyz` échoue), 105 tests mobile, paquet Android construit.
+  **Non vérifié visuellement** : pas d'émulateur ni de cible web Expo (react-native-web absent) ; à regarder sur
+  téléphone (Expo Go suffit pour ces écrans).
+- **Reste noté** : `base.css` importe Google Fonts, contraire au CDC (« aucune police externe ») et à la CSP.

@@ -97,8 +97,8 @@ dans des pastilles teintées, une **carte d'en-tête colorée** (*hero card*) et
 | # | Action | Où |
 |---|---|---|
 | P1.1 | `tokens.json` unique + génération web/mobile (voir §1.3) ; ajout des jetons : fonds teintés `--blue-25/50`, bordures 1 px très pâles, rayons 20/24, ombres très douces. | S W M |
-| P1.2 | Motif de fond SVG (courbe + points cobalt et solaire, opacité ≤ 8 %) : en `background` CSS sur le web, composant `FondMotif` sur mobile. | W M |
-| P1.3 | Composants communs (même nom, même rendu) : `CarteHero`, `GroupeListe` + `LigneListe` (icône pastille, titre, sous-titre, chevron ou interrupteur), `EnTeteEcran` (retour en carte, titre, sous-titre, action), `ChampIcone` (icône à gauche, œil à droite), `ListeDeroulante`. Présentés dans `/styleguide`. | W M |
+| P1.2 | ✅ **Fait (2026-10-17).** Motif de fond SVG (courbe + points cobalt et solaire, opacité ≤ 8 %) : en `background` CSS sur le web, composant `FondMotif` sur mobile. | W M |
+| P1.3 | ✅ **Fait sur mobile (2026-10-17)** : `FondMotif`, `CarteHero`, `GroupeListe`, `LigneListe`, `Pastille`, `Avatar` (`src/ui/components/Groupe.tsx`). Web : à faire. Composants communs (même nom, même rendu) : `CarteHero`, `GroupeListe` + `LigneListe` (icône pastille, titre, sous-titre, chevron ou interrupteur), `EnTeteEcran` (retour en carte, titre, sous-titre, action), `ChampIcone` (icône à gauche, œil à droite), `ListeDeroulante`. Présentés dans `/styleguide`. | W M |
 | P1.4 | Appliquer d'abord à : Profil, Compte/Sécurité, Préférences, Appareils, Légal (là où les captures s'appliquent directement). | W M |
 
 ---
@@ -107,14 +107,14 @@ dans des pastilles teintées, une **carte d'en-tête colorée** (*hero card*) et
 
 | # | Action | Détail | Critère |
 |---|---|---|---|
-| M1 | Logo animé au démarrage | Écran de démarrage natif blanc, puis animation du logo (épingle qui tombe, maison qui apparaît, point solaire qui pulse ; `Animated` de React Native, sans dépendance), 1,2 s maximum. | Fluide, pas de saut entre écran natif et animation |
-| M2 | Onboarding 4 étapes | 1) Des vraies chambres en vidéo 2) Gérants vérifiés par l'équipe 3) Écris sans donner ton numéro 4) Sois prévenu (alertes). Illustrations/photos, points de progression, « Passer », motif de fond. En dev : **toujours affiché** (déjà en place dans `src/app/index.tsx`). | Visible au 1er lancement en prod, à chaque lancement en dev |
-| M3 | Connexion | Case « Se souvenir de moi » (session persistante ou effacée à la fermeture) ; verrou par empreinte si activé (V5). | Réouverture sans mot de passe si coché |
-| M4 | Inscription | « Tu es » en liste déroulante élargie (V2) ; un seul champ nom. | Données saisies = données stockées |
+| M1 | Logo animé au démarrage ✅ | Écran de démarrage natif blanc, puis animation du logo (épingle qui tombe, maison qui apparaît, point solaire qui pulse ; `Animated` de React Native, sans dépendance), 1,2 s maximum. | Fluide, pas de saut entre écran natif et animation |
+| M2 | Onboarding 4 étapes ✅ (`/presentation`, illustrations en attendant les photos) | 1) Des vraies chambres en vidéo 2) Gérants vérifiés par l'équipe 3) Écris sans donner ton numéro 4) Sois prévenu (alertes). Illustrations/photos, points de progression, « Passer », motif de fond. En dev : **toujours affiché** (déjà en place dans `src/app/index.tsx`). | Visible au 1er lancement en prod, à chaque lancement en dev |
+| M3 | Connexion ✅ (verrou par empreinte, V5) | Case « Se souvenir de moi » (session persistante ou effacée à la fermeture) ; verrou par empreinte si activé (V5). | Réouverture sans mot de passe si coché |
+| M4 | Inscription ✅ (V2) | « Tu es » en liste déroulante élargie (V2) ; un seul champ nom. | Données saisies = données stockées |
 | M5 | Alertes | Quartier : liste déroulante triée par **fréquence d'usage** (quartiers les plus recherchés en tête). Budget : liste déroulante de montants fréquents + « Autre montant » qui fait apparaître un champ. Fréquences calculées par le serveur (§7.2). | Listes servies par l'API, triées |
 | M6 | Images de fond | Photos réelles (§8) sur Bienvenue, Onboarding, Accueil, fiche sans média. | Aucune illustration générique restante |
-| M7 | Profil façon captures | Carte identité (avatar, nom, numéro, « Compte vérifié »), groupes « Compte et sécurité », « Préférences et assistance » (WhatsApp de l'équipe), « Informations légales », déconnexion, version. | Conforme à P1.3 |
-| M8 | Conversation | Bouton « Bloquer / Débloquer » (D3) ; bulles plus compactes (voir W5). | Blocage effectif depuis le mobile |
+| M7 | Profil façon captures ✅ | Carte identité (avatar, nom, numéro, « Compte vérifié »), groupes « Compte et sécurité », « Préférences et assistance » (WhatsApp de l'équipe), « Informations légales », déconnexion, version. | Conforme à P1.3 |
+| M8 | Conversation ✅ (menu ⋮ : bloquer, sourdine, signaler) | Bouton « Bloquer / Débloquer » (D3) ; bulles plus compactes (voir W5). | Blocage effectif depuis le mobile |
 
 ### 5 bis. Fonctionnalités manquantes ou incomplètes du mobile
 
@@ -123,16 +123,16 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | # | Fonctionnalité | État actuel | À faire |
 |---|---|---|---|
 | MM1 | Écrire au gérant | Squelette (D19) | Voir P0.8 |
-| MM2 | Liste des conversations | Liste simple sans design | Façon WhatsApp : avatar (initiales), nom, chambre liée, extrait du dernier message, heure, pastille de non-lus, conversation en sourdine grisée, glisser pour archiver/sourdine ; recherche dans les conversations |
-| MM3 | Conversation | Fonctionnelle (envoi hors ligne, temps réel) | Menu « ⋮ » : bloquer / débloquer, signaler, sourdine 8 h / 1 semaine / toujours ; bannière « conversation bloquée / lecture seule » ; coches envoyé / lu (`other_read_seq`) ; séparateurs de jour ; saisie multiligne ; ouverture depuis une notification directement au bon message |
-| MM4 | Mes annonces (gérant) | Squelette | Liste par statut (en ligne, brouillons, masquées, louées) avec actions : confirmer disponible, marquer louée / remettre en ligne, masquer, modifier |
-| MM5 | Fiche annonce gérant | Squelette | Aperçu, statut, ce qui manque pour publier (`manques_a_la_publication`), médias en cours de traitement |
-| MM6 | Modifier une annonce | Squelette | Réutiliser les étapes du tunnel en mode édition (PATCH) |
-| MM7 | Statistiques d'une annonce | Squelette | Vues, favoris, contacts sur 7 / 30 jours (`daily_stats`), même source que le web |
-| MM8 | Messages gérant | Onglet partagé | Filtre « à répondre », délai de réponse affiché |
-| MM9 | Notifications | Écran présent | Regroupement par jour, actions rapides (ouvrir la conversation, voir la chambre), « tout marquer comme lu » |
+| MM2 | Liste des conversations ✅ (sauf glisser pour archiver) | Liste simple sans design | Façon WhatsApp : avatar (initiales), nom, chambre liée, extrait du dernier message, heure, pastille de non-lus, conversation en sourdine grisée, glisser pour archiver/sourdine ; recherche dans les conversations |
+| MM3 | Conversation ✅ menu ⋮ et bandeaux (reste : ouverture au bon message depuis une notification) | Fonctionnelle (envoi hors ligne, temps réel) | Menu « ⋮ » : bloquer / débloquer, signaler, sourdine 8 h / 1 semaine / toujours ; bannière « conversation bloquée / lecture seule » ; coches envoyé / lu (`other_read_seq`) ; séparateurs de jour ; saisie multiligne ; ouverture depuis une notification directement au bon message |
+| MM4 | Mes annonces (gérant) ✅ | Squelette | Liste par statut (en ligne, brouillons, masquées, louées) avec actions : confirmer disponible, marquer louée / remettre en ligne, masquer, modifier |
+| MM5 | Fiche annonce gérant ✅ (`GET …/readiness`) | Squelette | Aperçu, statut, ce qui manque pour publier (`manques_a_la_publication`), médias en cours de traitement |
+| MM6 | Modifier une annonce ✅ (formulaire unique, PATCH des champs changés) | Squelette | Réutiliser les étapes du tunnel en mode édition (PATCH) |
+| MM7 | Statistiques d'une annonce ✅ (`GET …/stats?days=7|30`) | Squelette | Vues, favoris, contacts sur 7 / 30 jours (`daily_stats`), même source que le web |
+| MM8 | Messages gérant ✅ (filtre « À répondre » ; délai de réponse : à faire) | Onglet partagé | Filtre « à répondre », délai de réponse affiché |
+| MM9 | Notifications ✅ regroupées par jour | Écran présent | Regroupement par jour, actions rapides (ouvrir la conversation, voir la chambre), « tout marquer comme lu » |
 | MM10 | Abonnement / paiement | Retirés de l'app (P0.9) | Rebranchés sur l'API de §7 bis seulement au lancement payant |
-| MM11 | Pages légales, aide, WhatsApp de l'équipe | Absents | Écrans « Conditions », « Confidentialité », « Aide » servis par l'API (§1.4) ; ligne « WhatsApp Logeo » dans le Profil |
+| MM11 | Pages légales, aide, WhatsApp de l'équipe ✅ | Absents | Écrans « Conditions », « Confidentialité », « Aide » servis par l'API (§1.4) ; ligne « WhatsApp Logeo » dans le Profil |
 
 ---
 
