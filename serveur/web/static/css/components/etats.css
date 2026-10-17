@@ -7,7 +7,7 @@
   padding: var(--sp-8) var(--sp-4);
   border: 1px dashed var(--border-strong);
   border-radius: var(--rayon-3);
-  background: var(--surface-sunken);
+  background: var(--motif-clair) center / var(--motif-taille) repeat, var(--surface-sunken);
 }
 .etat-vide__symbole {
   display: inline-flex; align-items: center; justify-content: center;

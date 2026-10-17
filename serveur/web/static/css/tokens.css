@@ -35,6 +35,10 @@
   --hero-blue-1: #1a2a6c;
   --hero-blue-2: #2a3f8f;
   /* Voiles des bannières (image d'arrière-plan, DESIGN.md) */
+  /* Motif de marque en filigrane (plan d'actions v2, P1.2) : clair sur fonds pâles, sombre sur cobalt ou nuit */
+  --motif-clair: url("../../design/motif-clair.svg");
+  --motif-sombre: url("../../design/motif-sombre.svg");
+  --motif-taille: 25rem;
   --voile-accueil: linear-gradient(100deg, rgba(15, 27, 61, 0.88) 30%, rgba(15, 27, 61, 0.05));
   --voile-catalogue: linear-gradient(180deg, rgba(15, 27, 61, 0.55), rgba(15, 27, 61, 0.85));
   --voile-auth: linear-gradient(180deg, rgba(15, 27, 61, 0.35), rgba(15, 27, 61, 0.90));

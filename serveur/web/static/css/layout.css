@@ -40,7 +40,7 @@
 /* ─── Pied de page ─────────────────────────────────────────────────────────── */
 /* ─── Pied de page ─────────────────────────────────────────────────────────── */
 .pied {
-  background: var(--night); color: var(--white-65);
+  background: var(--motif-sombre) 0 0 / var(--motif-taille) repeat, var(--night); color: var(--white-65);
   padding-block: var(--sp-8) var(--sp-5);
   font-size: var(--fs-14);
 }

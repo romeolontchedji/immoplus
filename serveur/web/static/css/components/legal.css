@@ -4,7 +4,8 @@
 .legal-hero {
   display: flex; gap: var(--sp-5); align-items: flex-start;
   padding: var(--sp-8) var(--sp-6); border-radius: var(--r-card-l);
-  background: var(--blue); color: var(--on-primary); box-shadow: var(--ombre-2);
+  background: var(--motif-sombre) right top / var(--motif-taille) repeat, var(--blue);
+  color: var(--on-primary); box-shadow: var(--ombre-2);
 }
 .legal-hero__icone {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
@@ -27,7 +28,7 @@
 .legal-sommaire, .legal-section, .legal-editeur {
   padding: var(--sp-6); border-radius: var(--r-card); background: var(--surface); border: var(--bordure);
 }
-.legal-sommaire ol { margin: 0; padding-left: var(--sp-5); columns: 2 16rem; column-gap: var(--sp-8); }
+.legal-sommaire ol { margin: 0; padding-left: 0; list-style: none; columns: 2 16rem; column-gap: var(--sp-8); } /* titres déjà numérotés */
 .legal-sommaire li { margin-bottom: var(--sp-2); break-inside: avoid; }
 .legal-sommaire a { color: var(--blue); font-weight: 600; text-decoration: none; }
 .legal-sommaire a:hover { text-decoration: underline; }
