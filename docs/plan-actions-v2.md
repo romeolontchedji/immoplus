@@ -66,7 +66,7 @@ Le web (Django) et le mobile (Expo) restent deux clients séparés, mais **une s
 | V8 | Identité légale | ✅ **Décidé (2026-10-17) : valeurs fictives provisoires**, centralisées dans un seul fichier de paramètres (`LEGAL_*` dans `app_settings`) et marquées « provisoire » dans les textes, à remplacer avant la mise en ligne publique (point bloquant de la check-list de lancement). | Contenu |
 | V10 | Fournisseur de paiement | ✅ **Décidé (2026-10-17) : KKiaPay, intégration plus tard** (un seul adaptateur, plus de squelette FedaPay). FedaPay ou KKiaPay (les deux gèrent MTN MoMo et Moov au Bénin) : squelettes pour les deux, choix au moment de l'activation selon les frais et le contrat. | Aucun tant que le drapeau est faux |
 | V11 | Plans et prix | ✅ **Reporté (2026-10-17) : grille fixée au moment de l'activation.** Grille du §7 bis (prix à fixer) ; seul « Gratuit V1 » est actif au lancement. | Paramètres, pas de migration |
-| V9 | Images réelles | ✅ **Décidé (2026-10-17) : le porteur télécharge les 13 photos listées au §8** et les dépose dans `photos-brutes/` (non versionné). Images libres (voir §8) : tu télécharges, on les place dans `serveur/web/static/design/photos/` et `mobile/assets/photos/`, compressées en WebP. | Contenu |
+| V9 | Images réelles | ✅ **Décidé (2026-10-17) : le porteur télécharge les 9 photos d'ambiance listées au §8 (décor seulement ; une annonce sans image garde l'affiche vectorielle du CDC)** et les dépose dans `photos-brutes/` (non versionné). Images libres (voir §8) : tu télécharges, on les place dans `serveur/web/static/design/photos/` et `mobile/assets/photos/`, compressées en WebP. | Contenu |
 
 ---
 
@@ -210,7 +210,7 @@ valides et invalides de la machine à états, idempotence des webhooks, signatur
 Sources à licence libre, utilisables sans attribution obligatoire (créditer reste apprécié) :
 **Unsplash** (unsplash.com/license), **Pexels** (pexels.com/license), **Pixabay** (pixabay.com/service/license-summary).
 
-**13 photos à télécharger** (décision V9). Dépose-les dans `photos-brutes/` à la racine du dépôt (non versionné),
+**9 photos à télécharger** (décision V9, compromis du 2026-10-17 : décor seulement, aucune photo pour représenter une chambre ; CDC §9.3 point 8, ADR 0006). Dépose-les dans `photos-brutes/` à la racine du dépôt (non versionné),
 en les nommant comme ci-dessous ; l'extension n'a pas d'importance (JPG, PNG…).
 
 | Fichier | Où elle sert | Ce qu'on doit voir | Recherches conseillées | Format |
@@ -218,10 +218,6 @@ en les nommant comme ci-dessous ; l'extension n'a pas d'importance (JPG, PNG…)
 | `accueil-1` | Bannière d'accueil du site (diaporama) | Rue résidentielle d'Afrique de l'Ouest : maisons basses, murs clairs, arbres, lumière du jour | `west africa street houses`, `benin street`, `african residential street` | Paysage, ≥ 1920 px de large |
 | `accueil-2` | Bannière d'accueil du site | Jeune étudiant ou étudiante africain(e) souriant(e), téléphone en main, en extérieur | `african student phone`, `young african smiling phone` | Paysage, ≥ 1920 px |
 | `accueil-3` | Bannière d'accueil du site | Cour intérieure d'une maison ou d'une petite résidence, avec plantes | `african house courtyard`, `tropical house courtyard` | Paysage, ≥ 1920 px |
-| `type-single` | Fiche sans photo : chambre simple | Petite chambre propre : lit, moustiquaire ou ventilateur, fenêtre | `simple bedroom africa`, `small bedroom mosquito net` | 4:3, ≥ 1200 px |
-| `type-entree-coucher` | Fiche sans photo : entrée-coucher | Petite pièce d'entrée avec une porte ouverte sur la chambre | `small apartment entrance bedroom`, `small living room door bedroom` | 4:3, ≥ 1200 px |
-| `type-chambre-salon` | Fiche sans photo : chambre-salon | Salon simple (canapé, table basse) | `simple living room africa`, `small living room sofa` | 4:3, ≥ 1200 px |
-| `type-studio` | Fiche sans photo : studio | Studio avec lit et coin cuisine dans la même pièce | `studio apartment kitchenette`, `small studio interior` | 4:3, ≥ 1200 px |
 | `onboarding-1` | Présentation mobile : « Cherche » | Personne qui fait défiler son téléphone, assise | `african woman scrolling phone`, `young african man phone` | Portrait, ≥ 1080 × 1350 |
 | `onboarding-2` | Présentation mobile : « Vois en vidéo » | Main qui filme une pièce avec un téléphone | `filming room with phone`, `phone recording video interior` | Portrait, ≥ 1080 × 1350 |
 | `onboarding-3` | Présentation mobile : « Discute » | Deux jeunes qui discutent, ou gros plan d'une messagerie | `african friends talking`, `phone chat close up` | Portrait, ≥ 1080 × 1350 |

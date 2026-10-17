@@ -228,6 +228,11 @@ Journaux JSON avec identifiant de requête propagé aux tâches ; Sentry sans do
 
 Le site (et l'administration) doivent donner une impression de **produit soigné et professionnel** alors qu'on n'a ni photographe, ni illustrateur, ni banque d'images. La beauté vient de : un système de design rigoureux, une typographie maîtrisée, des espaces généreux, des illustrations **vectorielles originales** générées dans le code, des états vides et de chargement travaillés, et une cohérence totale. **Aucune image externe, aucun CDN, aucune police externe.**
 
+> **Amendement du 2026-10-17 (accord du porteur, ADR 0006) :** des **photos d'ambiance** à licence libre sont
+> autorisées pour le décor seulement (§9.3, point 8). Elles sont **hébergées par Logeo** (fichiers statiques du site,
+> ressources de l'application), jamais chargées depuis un site tiers : la règle « aucune image externe, aucun CDN »
+> reste entière. Les annonces n'utilisent jamais de photo de banque d'images.
+
 ## 9.1 Identité
 
 - Nom de travail **Logeo**. Logo : logotype vectoriel en SVG (mot « Logeo » en graisse 700, un pictogramme original d'une porte ouverte formant une épingle de localisation), versions claire, sombre et monochrome, favicon, icônes PWA (192/512, maskable), image de partage Open Graph générée (SVG converti en PNG 1200×630 par un script Pillow, texte « Trouve ta chambre à Parakou »).
@@ -258,6 +263,12 @@ Le site (et l'administration) doivent donner une impression de **produit soigné
 4. **Pictogrammes** : un sprite SVG `icons.svg` d'environ 60 icônes (style trait, 1,75 px, coins arrondis) : accueil, recherche, filtre, lieu, loyer, douche, eau, électricité, clôture, vidéo/lecture, favori, message, cloche, utilisateur, plus, modifier, supprimer, partager, signaler, vérifié, horloge, calendrier, flèches, fermer, menu, réglages, tableau de bord, statistiques, alerte, envoi, coche, œil, cadenas, etc. Ces icônes sont **dessinées dans le code** (formes simples) ou reprises d'un jeu à licence libre (MIT/ISC) dont la licence est copiée dans `serveur/web/static/img/LICENCE-ICONES.txt`.
 5. **Illustrations d'états vides** (SVG originaux, trait fin + aplats de marque) : aucune annonce trouvée, aucun message, aucune notification, aucun favori, aucune alerte, erreur 404, erreur 500, hors connexion, maintenance, mise à jour requise. Chacune a un titre court, une phrase et **une action**.
 6. **Héros de l'accueil** : grand titre, champ de recherche central avec sélecteur de quartier, puces de filtres rapides, motif de marque en fond, trois blocs « Comment ça marche » (vidéo → message → visite) avec pictogrammes, bandeau de confiance (gérants vérifiés, vidéos réelles, aucune arnaque par téléphone), appel à l'action gérant.
+8. **Photos d'ambiance (amendement du 2026-10-17, ADR 0006)** : 9 photos à licence libre (Unsplash, Pexels, Pixabay)
+   pour la bannière de l'accueil (3), la présentation de l'application (4), l'écran de bienvenue (1) et la page
+   « Publie ta chambre » (1). Converties en WebP (480/960/1600 px pour le site, 960 px dans l'application), licence
+   et lien de chaque photo dans `docs/design/credits-photos.md`. **Jamais** pour représenter une chambre : une annonce
+   sans image garde l'affiche vectorielle de repli (point 2), pour ne pas faire passer une photo de banque d'images
+   pour la vraie chambre.
 7. **Cartes d'annonce** : rapport 16/10, affiche (ou affiche de repli), bouton lecture centré, durée de la vidéo, prix en gras avec « FCFA / mois », puces (douche interne, eau, compteur, clôture), distance au campus, badge « Vérifié », cœur de favori, indicateur « Confirmée il y a X jours ». Aucun saut de mise en page (dimensions réservées, `aspect-ratio`).
 
 ## 9.4 Bibliothèque de composants (gabarits `{% include %}` + classes sémantiques en CSS pur, une feuille par composant dans `components/`)
@@ -1248,7 +1259,7 @@ Les informations qui servent à filtrer sont des colonnes ; le reste est dans la
 | gerant_id | uuid | NN, FK→gerant_profiles(user_id) | Propriétaire |
 | slug | varchar(160) | UQ, NN | URL publique lisible |
 | title | varchar(120) | NN, CK(≥ 5 caractères) |  |
-| room_type | varchar(16) | NN, CK(single, entree_coucher, chambre_salon, studio) |  |
+| room_type | varchar(40) | NN | Slug d'un type de `room_types` (amendement du 2026-10-17, décision V1) : 4 officiels (single, entree_coucher, chambre_salon, studio) et propositions des gérants, contrôlé par le service ; filtres et alertes sur les seuls types validés |
 | district_id | uuid | NN, FK→districts |  |
 | landmark_text | varchar(160) | NN | Repère public |
 | address_private | varchar(255) |  | Visible des seuls participants d'une conversation |
