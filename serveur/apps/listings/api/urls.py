@@ -31,6 +31,16 @@ urlpatterns = [
     ),
     path("pro/listings/<uuid:annonce_id>/hide", v.Masquage.as_view(), name="pro-listing-hide"),
     path(
+        "pro/listings/<uuid:annonce_id>/readiness",
+        v.PreparationAnnonce.as_view(),
+        name="pro-listing-readiness",
+    ),
+    path(
+        "pro/listings/<uuid:annonce_id>/stats",
+        v.StatistiquesAnnonce.as_view(),
+        name="pro-listing-stats",
+    ),
+    path(
         "pro/listings/<uuid:annonce_id>/mark-rented",
         v.MarquerLouee.as_view(),
         name="pro-listing-rented",

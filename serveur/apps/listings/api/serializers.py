@@ -133,3 +133,28 @@ class TypeChambreProOut(serializers.Serializer):
 
 class PropositionTypeIn(serializers.Serializer):
     label = serializers.CharField(max_length=40, help_text="Nom du type, 3 à 40 caractères.")
+
+
+class ManqueOut(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
+class PreparationOut(serializers.Serializer):
+    publishable = serializers.BooleanField()
+    missing = ManqueOut(many=True)
+
+
+class StatJourOut(serializers.Serializer):
+    day = serializers.DateField()
+    views = serializers.IntegerField()
+    favorites = serializers.IntegerField()
+    contacts = serializers.IntegerField()
+
+
+class StatistiquesOut(serializers.Serializer):
+    days = serializers.IntegerField()
+    views = serializers.IntegerField()
+    favorites = serializers.IntegerField()
+    contacts = serializers.IntegerField()
+    daily = StatJourOut(many=True)

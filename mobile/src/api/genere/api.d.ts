@@ -859,6 +859,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pro/listings/{annonce_id}/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ce qui manque pour publier l'annonce */
+        get: operations["v1_pro_listings_readiness_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/pro/listings/{annonce_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Statistiques d'une annonce (7 ou 30 jours) */
+        get: operations["v1_pro_listings_stats_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/pro/listings/{annonce_id}/undo-rented": {
         parameters: {
             query?: never;
@@ -1356,6 +1390,10 @@ export interface components {
             active: boolean;
             message: string;
         };
+        ManqueOut: {
+            code: string;
+            label: string;
+        };
         MediaIn: {
             kind: components["schemas"]["KindEnum"];
             size_bytes: number;
@@ -1536,6 +1574,10 @@ export interface components {
             /** @description Conversations en sourdine. */
             silence?: string[];
         };
+        PreparationOut: {
+            publishable: boolean;
+            missing: components["schemas"]["ManqueOut"][];
+        };
         PropositionTypeIn: {
             /** @description Nom du type, 3 à 40 caractères. */
             label: string;
@@ -1609,6 +1651,20 @@ export interface components {
          * @enum {string}
          */
         SlugEnum: "conditions" | "confidentialite";
+        StatJourOut: {
+            /** Format: date */
+            day: string;
+            views: number;
+            favorites: number;
+            contacts: number;
+        };
+        StatistiquesOut: {
+            days: number;
+            views: number;
+            favorites: number;
+            contacts: number;
+            daily: components["schemas"]["StatJourOut"][];
+        };
         TableauOut: {
             listings_by_status: {
                 [key: string]: number;
@@ -3060,6 +3116,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnonceProOut"];
+                };
+            };
+        };
+    };
+    v1_pro_listings_readiness_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                annonce_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationOut"];
+                };
+            };
+        };
+    };
+    v1_pro_listings_stats_retrieve: {
+        parameters: {
+            query?: {
+                /** @description Période, 30 par défaut. */
+                days?: 30 | 7;
+            };
+            header?: never;
+            path: {
+                annonce_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatistiquesOut"];
                 };
             };
         };

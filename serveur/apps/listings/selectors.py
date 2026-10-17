@@ -63,6 +63,29 @@ def stats_par_annonce(annonce_ids: list, *, jours: int = 30) -> dict:
     return resultats
 
 
+def statistiques_annonce(annonce_id, *, jours: int) -> dict:
+    """Vues, favoris et contacts d'une annonce, au total et jour par jour (même source que le tableau de bord)."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.core import stats
+
+    noms = {"views": "views", "favorites": "favorites_added", "contacts": "conversations_started"}
+    aujourd_hui = timezone.localdate()
+    depuis = aujourd_hui - datetime.timedelta(days=jours - 1)
+    valeurs = stats.serie(list(noms.values()), str(annonce_id), depuis=depuis)
+    quotidien = []
+    for i in range(jours):
+        jour = depuis + datetime.timedelta(days=i)
+        ligne = valeurs.get(jour, {})
+        quotidien.append(
+            {"day": jour, **{cle: ligne.get(metrique, 0) for cle, metrique in noms.items()}}
+        )
+    totaux = {cle: sum(j[cle] for j in quotidien) for cle in noms}
+    return {"days": jours, **totaux, "daily": quotidien}
+
+
 # ----------------------------------------------------------------------------- fil public (CDC §10.3)
 STATUTS_VISIBLES = (StatutAnnonce.PUBLISHED, StatutAnnonce.RENTED)
 _CHAMP_TRI = {

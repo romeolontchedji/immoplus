@@ -266,6 +266,29 @@ def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) 
         journal.exception("notification_gerant_echouee")
 
 
+MANQUES_PUBLICATION = {
+    "gerant_non_verifie": "ton compte gérant n'est pas encore vérifié",
+    "gerant_suspendu": "ton compte gérant est suspendu",
+    "video_prete": "la vidéo n'est pas encore prête",
+    "trois_photos_pretes": "il faut au moins 3 photos prêtes",
+}
+CHAMPS_ANNONCE = {
+    "title": "le titre", "room_type": "le type de chambre", "district": "le quartier", "landmark_text": "le repère",
+    "rent_amount": "le loyer", "deposit_months": "la caution", "advance_months": "l'avance",
+    "available_from": "la date de disponibilité", "has_private_bathroom": "la douche interne",
+    "is_fenced": "la clôture", "water_source": "la source d'eau", "electricity_meter": "le compteur SBEE",
+}  # fmt: skip
+
+
+def libelle_manque(code: str) -> str:
+    """Code de `manques_a_la_publication` → texte français (site et API)."""
+    if code in MANQUES_PUBLICATION:
+        return MANQUES_PUBLICATION[code]
+    if code.startswith("champ:"):
+        return CHAMPS_ANNONCE.get(code.split(":", 1)[1], "une information à compléter")
+    return code
+
+
 def manques_a_la_publication(annonce: Listing) -> list[str]:
     """Liste lisible de ce qui empêche la publication (§9.23)."""
     manques = []

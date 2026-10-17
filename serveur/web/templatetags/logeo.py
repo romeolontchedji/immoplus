@@ -7,6 +7,8 @@ from django import template
 from django.conf import settings
 from django.templatetags.static import static
 
+from apps.listings.services import annonces
+
 register = template.Library()
 
 
@@ -81,37 +83,7 @@ def statut_conversation(valeur: str) -> str:
     return STATUTS_CONVERSATION.get(valeur, valeur)
 
 
-MANQUES_PUBLICATION = {
-    "gerant_non_verifie": "ton compte gérant n'est pas encore vérifié",
-    "gerant_suspendu": "ton compte gérant est suspendu",
-    "video_prete": "la vidéo n'est pas encore prête",
-    "trois_photos_pretes": "il faut au moins 3 photos prêtes",
-}
-
-CHAMPS_ANNONCE = {
-    "title": "le titre",
-    "room_type": "le type de chambre",
-    "district": "le quartier",
-    "landmark_text": "le repère",
-    "latitude": "la latitude",
-    "longitude": "la longitude",
-    "rent_amount": "le loyer",
-    "deposit_months": "la caution",
-    "advance_months": "l'avance",
-    "available_from": "la date de disponibilité",
-    "has_private_bathroom": "la douche interne",
-    "is_fenced": "la clôture",
-    "water_source": "la source d'eau",
-    "electricity_meter": "le compteur SBEE",
-}
-
-
 @register.filter
 def manque_publication(code: str) -> str:
-    """Code technique de publication manquante → texte français."""
-    if code in MANQUES_PUBLICATION:
-        return MANQUES_PUBLICATION[code]
-    if code.startswith("champ:"):
-        nom = code.split(":", 1)[1]
-        return CHAMPS_ANNONCE.get(nom, "une information à compléter")
-    return code
+    """Code technique de publication manquante → texte français (même source que l'API)."""
+    return annonces.libelle_manque(code)

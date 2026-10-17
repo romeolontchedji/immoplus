@@ -2421,6 +2421,92 @@
                 }
             }
         },
+        "/v1/pro/listings/{annonce_id}/readiness": {
+            "get": {
+                "operationId": "v1_pro_listings_readiness_retrieve",
+                "summary": "Ce qui manque pour publier l'annonce",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PreparationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/listings/{annonce_id}/stats": {
+            "get": {
+                "operationId": "v1_pro_listings_stats_retrieve",
+                "summary": "Statistiques d'une annonce (7 ou 30 jours)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "annonce_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "days",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                30,
+                                7
+                            ]
+                        },
+                        "description": "Période, 30 par défaut."
+                    }
+                ],
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StatistiquesOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/pro/listings/{annonce_id}/undo-rented": {
             "post": {
                 "operationId": "v1_pro_listings_undo_rented_create",
@@ -4063,6 +4149,21 @@
                     "message"
                 ]
             },
+            "ManqueOut": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "label"
+                ]
+            },
             "MediaIn": {
                 "type": "object",
                 "properties": {
@@ -4631,6 +4732,24 @@
                     }
                 }
             },
+            "PreparationOut": {
+                "type": "object",
+                "properties": {
+                    "publishable": {
+                        "type": "boolean"
+                    },
+                    "missing": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ManqueOut"
+                        }
+                    }
+                },
+                "required": [
+                    "missing",
+                    "publishable"
+                ]
+            },
             "PropositionTypeIn": {
                 "type": "object",
                 "properties": {
@@ -4809,6 +4928,60 @@
                 ],
                 "type": "string",
                 "description": "* `conditions` - conditions\n* `confidentialite` - confidentialite"
+            },
+            "StatJourOut": {
+                "type": "object",
+                "properties": {
+                    "day": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "views": {
+                        "type": "integer"
+                    },
+                    "favorites": {
+                        "type": "integer"
+                    },
+                    "contacts": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "contacts",
+                    "day",
+                    "favorites",
+                    "views"
+                ]
+            },
+            "StatistiquesOut": {
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer"
+                    },
+                    "views": {
+                        "type": "integer"
+                    },
+                    "favorites": {
+                        "type": "integer"
+                    },
+                    "contacts": {
+                        "type": "integer"
+                    },
+                    "daily": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatJourOut"
+                        }
+                    }
+                },
+                "required": [
+                    "contacts",
+                    "daily",
+                    "days",
+                    "favorites",
+                    "views"
+                ]
             },
             "TableauOut": {
                 "type": "object",

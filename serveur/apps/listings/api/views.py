@@ -1,6 +1,6 @@
 """API des quartiers et de l'espace gérant (CDC §10.3, §10.4)."""
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -112,6 +112,47 @@ class AnnoncesPro(_Pro):
     def post(self, request):
         annonce = annonces.creer_brouillon(self.profil(request), _donnees(s.AnnonceIn, request))
         return Response(_sortie(annonce), status=201)
+
+
+class _AnnonceDuGerant(_Pro):
+    def _trouver(self, request, annonce_id):
+        annonce = selectors.annonce_du_gerant(self.profil(request), annonce_id)
+        if annonce is None:
+            raise ErreurMetier("not_found", "Annonce introuvable.", statut=404)
+        return annonce
+
+
+class PreparationAnnonce(_AnnonceDuGerant):
+    @extend_schema(
+        tags=TAG_PRO,
+        summary="Ce qui manque pour publier l'annonce",
+        responses={200: s.PreparationOut},
+    )
+    def get(self, request, annonce_id):
+        manques = annonces.manques_a_la_publication(self._trouver(request, annonce_id))
+        return Response(
+            {
+                "publishable": not manques,
+                "missing": [{"code": m, "label": annonces.libelle_manque(m)} for m in manques],
+            }
+        )
+
+
+class StatistiquesAnnonce(_AnnonceDuGerant):
+    @extend_schema(
+        tags=TAG_PRO,
+        summary="Statistiques d'une annonce (7 ou 30 jours)",
+        parameters=[
+            OpenApiParameter("days", int, enum=[7, 30], description="Période, 30 par défaut.")
+        ],
+        responses={200: s.StatistiquesOut},
+    )
+    def get(self, request, annonce_id):
+        annonce = self._trouver(request, annonce_id)
+        jours = 7 if request.query_params.get("days") == "7" else 30
+        return Response(
+            s.StatistiquesOut(selectors.statistiques_annonce(annonce.pk, jours=jours)).data
+        )
 
 
 class AnnonceProDetail(_Pro):

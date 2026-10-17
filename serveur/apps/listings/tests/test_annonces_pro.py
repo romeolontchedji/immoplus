@@ -338,3 +338,32 @@ class TestServicesPurs:
     def test_mots_cles_seulement_signales(self, texte):
         d = contenu.detecter(texte)
         assert d.faibles and not d.fort
+
+
+class TestPreparationEtStatistiques:
+    """Pour l'espace gérant mobile (MM5, MM7) : mêmes sources que le site."""
+
+    def test_ce_qui_manque_pour_publier(self, pro, quartier):
+        a = creer(pro, quartier)
+        r = pro.get(f"/v1/pro/listings/{a['id']}/readiness")
+        assert r.status_code == 200 and r.json()["publishable"] is False
+        assert {"code": "video_prete", "label": "la vidéo n'est pas encore prête"} in r.json()[
+            "missing"
+        ]
+
+    def test_statistiques_par_jour(self, pro, quartier):
+        from apps.core import stats
+
+        a = creer(pro, quartier)
+        stats.incrementer("views", 4, sujet=a["id"])
+        stats.incrementer("conversations_started", sujet=a["id"])
+        r = pro.get(f"/v1/pro/listings/{a['id']}/stats?days=7")
+        corps = r.json()
+        assert r.status_code == 200 and corps["days"] == 7 and len(corps["daily"]) == 7
+        assert (corps["views"], corps["contacts"], corps["favorites"]) == (4, 1, 0)
+        assert corps["daily"][-1]["views"] == 4
+
+    def test_l_annonce_d_un_autre_gerant_est_introuvable(self, pro):
+        autre = ListingFactory()
+        assert pro.get(f"/v1/pro/listings/{autre.pk}/stats").status_code == 404
+        assert pro.get(f"/v1/pro/listings/{autre.pk}/readiness").status_code == 404

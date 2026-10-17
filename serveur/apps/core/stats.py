@@ -44,3 +44,18 @@ def somme(metrique: str, sujets: list[str], *, depuis: datetime.date) -> int:
             [metrique, sujets, depuis],
         )
         return int(c.fetchone()[0])
+
+
+def serie(
+    metriques: list[str], sujet: str, *, depuis: datetime.date
+) -> dict[datetime.date, dict[str, int]]:
+    """Valeurs jour par jour de plusieurs compteurs d'un même sujet (statistiques d'une annonce)."""
+    with connection.cursor() as c:
+        c.execute(
+            "SELECT day, metric, value FROM daily_stats WHERE subject = %s AND metric = ANY(%s) AND day >= %s",
+            [sujet, metriques, depuis],
+        )
+        resultat: dict[datetime.date, dict[str, int]] = {}
+        for jour, metrique, valeur in c.fetchall():
+            resultat.setdefault(jour, {})[metrique] = int(valeur)
+    return resultat
