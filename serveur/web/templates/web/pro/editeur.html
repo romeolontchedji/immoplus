@@ -178,72 +178,95 @@
                 </p>
               </div>
             </div>
-            <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="champ">
-              <label class="champ__etiquette" for="envoi-fichiers">Sélectionner des fichiers vidéo ou photo</label>
-              <input class="champ__saisie"
+            {# Récapitulatif de ce qu'il faut pour publier (1 vidéo, 3 photos au moins) #}
+            <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
+              <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
+                {% if video_prete %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Vidéo {% if video_prete %}prête{% else %}à ajouter (obligatoire){% endif %}
+              </li>
+              <li class="depot-recap__item{% if photos_pretes >= 3 %} depot-recap__item--ok{% endif %}">
+                {% if photos_pretes >= 3 %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Photos : {{ photos_pretes }}/10 prêtes (3 au minimum)
+              </li>
+            </ul>
+            {# Zone de dépôt : glisser-déposer ou choix de fichiers ; sans JavaScript, le champ reste visible #}
+            <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="depot">
+              <label class="depot__zone" for="envoi-fichiers" id="depot-zone">
+                <span class="depot__icone">{% include "web/composants/icone.html" with nom="upload" taille=28 %}</span>
+                <span class="depot__titre">Glisse ta vidéo et tes photos ici</span>
+                <span class="depot__aide">ou <u>choisis-les sur ton appareil</u> · vidéo de 10 à 60 s (150 Mo max) · photos JPEG, PNG ou HEIC (12 Mo max)</span>
+              </label>
+              <input class="depot__fichier"
                      id="envoi-fichiers"
                      type="file"
                      accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
                      multiple>
-              <p class="champ__aide" id="envoi-etat" role="status"></p>
+              <ul class="depot__envois" id="envoi-liste" aria-live="polite">
+              </ul>
+              <p class="depot__etat" id="envoi-etat" role="status"></p>
             </div>
             <script src="{% static 'js/envoi.js' %}" defer></script>
-            <ul class="pro-contacts-liste mt-4">
-              {% for m in medias %}
-                <li class="p-3 border-bottom d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                  <div class="d-flex align-items-center gap-3">
-                    {% if m.apercu %}
-                      <img class="vignette-media"
-                           src="{{ m.apercu }}"
-                           alt="Aperçu du média {{ m.kind_display }}"
-                           loading="lazy"
-                           width="96"
-                           height="72">
-                    {% endif %}
-                    <div>
-                      <strong>{{ m.kind_display }}</strong>
-                      <span class="texte-doux texte-petit d-block">{{ m.status_display }}</span>
-                      {% if m.is_cover %}<span class="badge badge--marque mt-1">Couverture</span>{% endif %}
-                      {% if m.error_detail %}<span class="color-danger texte-petit d-block">{{ m.error_detail }}</span>{% endif %}
+            {% if medias %}
+              <ul class="medias-grille">
+                {% for m in medias %}
+                  <li class="media-carte{% if m.erreur %} media-carte--erreur{% endif %}">
+                    <div class="media-carte__vignette">
+                      {% if m.apercu %}
+                        <img src="{{ m.apercu }}"
+                             alt="Aperçu : {{ m.kind_display }}"
+                             loading="lazy"
+                             width="240"
+                             height="160">
+                      {% else %}
+                        <span class="media-carte__vide">{% include "web/composants/icone.html" with nom="eye" taille=24 %}</span>
+                      {% endif %}
+                      <span class="media-carte__genre">{{ m.kind_display }}</span>
+                      {% if m.is_cover %}<span class="media-carte__couverture">Couverture</span>{% endif %}
                     </div>
-                  </div>
-                  <div class="rangee">
-                    {% if m.est_photo and not m.is_cover %}
-                      <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="couvrir">
-                        <input type="hidden" name="media_id" value="{{ m.id }}">
-                        <button class="bouton bouton--contour bouton--petit"
-                                type="submit">Définir en couverture</button>
-                      </form>
-                    {% endif %}
-                    <form method="post">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="monter">
-                      <input type="hidden" name="media_id" value="{{ m.id }}">
-                      <button class="bouton bouton--contour bouton--petit"
-                              type="submit"
-                              aria-label="Monter">
-                        {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
-                      </button>
-                    </form>
-                    <form method="post">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="descendre">
-                      <input type="hidden" name="media_id" value="{{ m.id }}">
-                      <button class="bouton bouton--contour bouton--petit"
-                              type="submit"
-                              aria-label="Descendre">
-                        {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
-                      </button>
-                    </form>
-                    {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
-                  </div>
-                </li>
-              {% empty %}
-                <li class="p-4 texte-doux texte-centre">Aucun média envoyé pour l'instant. Ajoute une vidéo ou des photos ci-dessus.</li>
-              {% endfor %}
-            </ul>
+                    <div class="media-carte__corps">
+                      <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
+                        {% if m.en_cours %}
+                          Traitement en cours…
+                        {% else %}
+                          {{ m.status_display }}
+                        {% endif %}
+                      </span>
+                      {% if m.error_detail %}<p class="media-carte__erreur">{{ m.error_detail }}</p>{% endif %}
+                      <div class="media-carte__actions">
+                        {% if m.est_photo and not m.is_cover and m.pret %}
+                          <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="couvrir">
+                            <input type="hidden" name="media_id" value="{{ m.id }}">
+                            <button class="bouton bouton--contour bouton--petit"
+                                    type="submit">Définir en couverture</button>
+                          </form>
+                        {% endif %}
+                        <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="monter">
+                          <input type="hidden" name="media_id" value="{{ m.id }}">
+                          <button class="bouton bouton--contour bouton--petit"
+                                  type="submit"
+                                  aria-label="Monter">
+                            {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
+                          </button>
+                        </form>
+                        <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="descendre">
+                          <input type="hidden" name="media_id" value="{{ m.id }}">
+                          <button class="bouton bouton--contour bouton--petit"
+                                  type="submit"
+                                  aria-label="Descendre">
+                            {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
+                          </button>
+                        </form>
+                        {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
+                      </div>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
           </div>
           {# 5. Publication & Actions #}
           {% if commandes %}

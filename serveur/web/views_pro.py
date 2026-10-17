@@ -168,7 +168,13 @@ def _medias_vue(liste) -> list[dict]:
     for m in liste:
         apercu = None
         if m.status == StatutMedia.READY:
-            apercu = stockage.url_publique(m.playback_path) or stockage.url_publique(m.poster_path)
+            # Vidéo : l'affiche (le flux HLS n'est pas une image) ; photo : la variante publiée.
+            chemins = (
+                (m.poster_path, m.playback_path)
+                if m.kind == "video"
+                else (m.playback_path, m.poster_path)
+            )
+            apercu = next((u for u in (stockage.url_publique(c) for c in chemins if c) if u), None)
         vue.append(
             {
                 "id": m.pk,
@@ -179,6 +185,8 @@ def _medias_vue(liste) -> list[dict]:
                 "error_detail": m.error_detail,
                 "apercu": apercu,
                 "est_photo": m.kind == "photo",
+                "pret": m.status == StatutMedia.READY,
+                "erreur": m.status == StatutMedia.FAILED,
                 "en_cours": m.status
                 in (StatutMedia.UPLOADING, StatutMedia.UPLOADED, StatutMedia.PROCESSING),
             }
@@ -267,5 +275,7 @@ def editeur(request, profil, annonce_id=None):
     en_cours = any(m["en_cours"] for m in liste_medias)
     apercu = selectors.carte_apercu(annonce) if annonce else None
     contexte = {"form": form, "annonce": annonce, "message": message, "manques": manques,
-                "erreur_media": erreur_media, "apercu": apercu, "titre": "Modifier l'annonce" if annonce else "Nouvelle annonce", "medias": liste_medias, "medias_en_cours": en_cours, "commandes": commandes_autorisees(annonce) if annonce else []}  # fmt: skip
+                "erreur_media": erreur_media, "apercu": apercu, "titre": "Modifier l'annonce" if annonce else "Nouvelle annonce", "medias": liste_medias, "medias_en_cours": en_cours,
+                "photos_pretes": sum(1 for m in liste_medias if m["est_photo"] and m["pret"]),
+                "video_prete": any(not m["est_photo"] and m["pret"] for m in liste_medias), "commandes": commandes_autorisees(annonce) if annonce else []}  # fmt: skip
     return render(request, "web/pro/editeur.html", contexte)
