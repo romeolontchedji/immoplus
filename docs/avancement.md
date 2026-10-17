@@ -370,3 +370,10 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   échoue, préexistant), 97 tests mobile, 0 erreur de type.
 - **Piège** : la pile Docker exécute le code de l'image, pas celui du dépôt ; après un changement serveur, `make up`
   (reconstruction) avant toute vérification en direct.
+- **Accueil (P0.6)** : bouton de recherche coupé sur ordinateur et collé aux bords sur téléphone, doublon « Voir les
+  chambres » retiré ; vérifié par captures (Playwright + Chrome du poste) à 360, 768 et 1280 px.
+- **Conteneurs « unhealthy » (P0.2)** : fausse alerte, la sonde HTTP de l'image (port 8000) s'appliquait à tous les
+  processus. Sondes propres à chaque service dans `docker-compose.yml`. Les 11 conteneurs sont *healthy*.
+  **Phase 0 terminée.**
+- **Reste noté** : `realtime` et `admin` journalisent `Control server error: Permission denied: '/app/.gunicorn'`
+  au démarrage (socket de contrôle de gunicorn dans le code monté en lecture pour l'utilisateur `logeo`) ; sans effet.
