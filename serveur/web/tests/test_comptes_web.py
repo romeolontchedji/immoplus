@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.core.cache import cache
 from django.test import Client
 
@@ -223,3 +224,23 @@ def test_gerant_cree_par_l_administration_se_connecte_puis_change_de_mot_de_pass
         == 302
     )
     assert c2.get("/pro/dashboard").status_code == 200
+
+
+# --------------------------------------------------------------- « Se souvenir de moi » (ADR 0005)
+def test_connexion_sans_se_souvenir_session_de_navigateur():
+    ClientFactory(phone_e164="+2290197626262")
+    c = Client()
+    page = c.get("/connexion").content.decode()
+    assert "Se souvenir de moi" in page and 'name="se_souvenir"' in page and "checked" not in page
+    c.post("/connexion", {"phone": "97626262", "password": MOT_DE_PASSE})
+    assert c.session.get_expire_at_browser_close()
+    assert c.cookies[settings.SESSION_COOKIE_NAME]["expires"] == "" and c.cookies[settings.SESSION_COOKIE_NAME]["max-age"] == ""
+
+
+def test_connexion_avec_se_souvenir_trente_jours():
+    ClientFactory(phone_e164="+2290197636363")
+    c = Client()
+    c.post("/connexion", {"phone": "97636363", "password": MOT_DE_PASSE, "se_souvenir": "on"})
+    assert not c.session.get_expire_at_browser_close()
+    assert c.session.get_expiry_age() == 30 * 24 * 60 * 60
+    assert c.cookies[settings.SESSION_COOKIE_NAME]["max-age"] == 30 * 24 * 60 * 60

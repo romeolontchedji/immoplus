@@ -3,13 +3,13 @@
   <div class="champ champ--case">
     {{ champ }}
     <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
-    {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+    {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
   </div>
 {% else %}
   <div class="champ">
     <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
     {{ champ }}
     {% if champ.help_text %}<p class="champ__aide">{{ champ.help_text }}</p>{% endif %}
-    {% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
+    {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
   </div>
 {% endif %}

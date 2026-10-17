@@ -77,6 +77,8 @@ class Connexion(_Base):
         strip=False,
         max_length=128,
     )
+    # ADR 0005 : décochée par défaut (ordinateurs partagés, cybercafés) ; cochée, la session dure 30 jours.
+    se_souvenir = forms.BooleanField(label="Se souvenir de moi pendant 30 jours", required=False)
 
 
 class ChangementNom(_Base):

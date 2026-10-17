@@ -114,13 +114,7 @@
             <input type="hidden" name="next" value="{{ suite }}">
           {% endif %}
           {% for champ in form.visible_fields %}
-            <div class="champ">
-              <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
-              {{ champ }}
-              {% for e in champ.errors %}
-                <p class="champ__erreur" role="alert">{{ e }}</p>
-              {% endfor %}
-            </div>
+            {% include "web/composants/champ.html" %}
           {% endfor %}
           {% for champ in form.hidden_fields %}{{ champ }}{% endfor %}
           {% if captcha_requis and not captcha_fictif and site_key %}

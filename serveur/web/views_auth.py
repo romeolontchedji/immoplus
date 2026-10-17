@@ -31,9 +31,14 @@ def _signaler(form, erreur: ErreurMetier) -> None:
         form.add_error(None, erreur.message)
 
 
-def _ouvrir_session(request, utilisateur) -> None:
+DUREE_SE_SOUVENIR_S = 30 * 24 * 60 * 60
+
+
+def _ouvrir_session(request, utilisateur, *, se_souvenir: bool = True) -> None:
+    """Sans « se souvenir de moi », la session s'arrête à la fermeture du navigateur (ADR 0005)."""
     login(request, utilisateur, backend="django.contrib.auth.backends.ModelBackend")
     request.session["tv"] = utilisateur.token_version
+    request.session.set_expiry(DUREE_SE_SOUVENIR_S if se_souvenir else 0)
 
 
 def connecte_obligatoire(vue):
@@ -79,7 +84,7 @@ def connexion(request):
         except ErreurMetier as erreur:
             _signaler(form, erreur)
         else:
-            _ouvrir_session(request, utilisateur)
+            _ouvrir_session(request, utilisateur, se_souvenir=form.cleaned_data["se_souvenir"])
             return redirect(_suite(request))
     return _page(request, "web/auth/formulaire.html", form, "Connexion", bouton="Se connecter", suite=request.GET.get("next", ""),
                  liens=[("/inscription", "Créer un compte"), ("/mot-de-passe-oublie", "Mot de passe oublié")])  # fmt: skip
