@@ -5,9 +5,16 @@ import { IDENTITE_APPAREIL, useSession } from "@/state/session";
 
 export type Objet = "signup" | "reset_password" | "change_phone";
 
+/**
+ * Les mutations d'authentification partent toujours : si NetInfo se trompe sur l'accès à Internet (wifi local sans
+ * sortie), TanStack les mettrait en pause sans fin. Une vraie coupure remonte en `NetworkError` affichée à l'écran.
+ */
+const TOUJOURS = { networkMode: "always" } as const;
+
 /** Étape 1 : demande d'un code SMS. Retourne le délai avant de pouvoir en redemander un. */
 export function useDemanderCode(objet: Objet) {
   return useMutation({
+    ...TOUJOURS,
     mutationFn: async (saisie: string) => {
       const phone = versE164(saisie);
       if (!phone) throw new Error("numero_invalide");
@@ -20,6 +27,7 @@ export function useDemanderCode(objet: Objet) {
 /** Étape 2 : vérification du code ; rend le jeton à usage unique que consomme l'étape finale. */
 export function useVerifierCode(objet: Objet) {
   return useMutation({
+    ...TOUJOURS,
     mutationFn: async ({ phone, code }: { phone: string; code: string }) =>
       (await unwrap(api.POST("/v1/auth/otp/verify", { body: { phone, purpose: objet, code } }))).otp_token,
   });
@@ -28,6 +36,7 @@ export function useVerifierCode(objet: Objet) {
 export function useConnexion() {
   const { ouvrir } = useSession();
   return useMutation({
+    ...TOUJOURS,
     mutationFn: async ({ phone, password }: { phone: string; password: string }) => {
       const e164 = versE164(phone);
       if (!e164) throw new Error("numero_invalide");
@@ -41,6 +50,7 @@ export function useConnexion() {
 export function useInscription() {
   const { ouvrir } = useSession();
   return useMutation({
+    ...TOUJOURS,
     mutationFn: async (v: { otpToken: string; full_name: string; password: string }) => {
       const r = await unwrap(api.POST("/v1/auth/register", { body: { ...IDENTITE_APPAREIL, otp_token: v.otpToken, full_name: v.full_name, password: v.password, terms_accepted: true } }));
       await ouvrir(r);
@@ -50,6 +60,7 @@ export function useInscription() {
 
 export function useReinitialiserMotDePasse() {
   return useMutation({
+    ...TOUJOURS,
     mutationFn: async (v: { otpToken: string; new_password: string }) => {
       await unwrap(api.POST("/v1/auth/password/reset", { body: { otp_token: v.otpToken, new_password: v.new_password } }));
     },

@@ -5,8 +5,17 @@ import { ApiError, NetworkError, toApiError } from "./errors";
 import { apiEvents } from "./events";
 import { accessToken, brancherRenouveleur, hasRefreshToken, installationId, refreshTokens, type Jetons } from "./session";
 
+/** Délai maximal d'une requête : sans lui, un serveur injoignable laisse le bouton tourner indéfiniment. */
+const DELAI_REQUETE_MS = 20_000;
+
+function fetchAvecDelai(entree: Request): Promise<Response> {
+  const controleur = new AbortController();
+  const minuteur = setTimeout(() => controleur.abort(), DELAI_REQUETE_MS);
+  return globalThis.fetch(entree, { signal: controleur.signal }).finally(() => clearTimeout(minuteur));
+}
+
 /** Client typé : chemins, paramètres et réponses viennent du schéma OpenAPI (`npm run api:generer`). */
-export const api = createClient<paths>({ baseUrl: API_URL });
+export const api = createClient<paths>({ baseUrl: API_URL, fetch: fetchAvecDelai });
 
 const COPIES = new WeakMap<Request, Request>();
 const SANS_RENOUVELLEMENT = ["/v1/auth/login", "/v1/auth/refresh", "/v1/auth/register", "/v1/auth/otp/", "/v1/auth/password/reset"];
