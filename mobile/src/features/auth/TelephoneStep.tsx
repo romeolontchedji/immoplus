@@ -8,23 +8,19 @@ import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
-import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
-import { PhoneField, TextField } from "@/ui/components/TextField";
+import { PhoneField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
 import { Check } from "lucide-react-native";
+import { EnTeteEtapes } from "./EnTeteEtapes";
 import { useAuthFlow } from "./flow";
 import { useDemanderCode, type Objet } from "./hooks";
 import { telephoneSchema } from "./schemas";
 
 /**
- * Première étape conforme à la maquette Mobile · Inscription 1 2@1x.png :
- * - En-tête : Logo Logeo à gauche, "Étape 1/2" à droite, barre de progression 2 segments
- * - Titre : "Crée ton compte locataire"
- * - Champs Prénom et Numéro de téléphone (+229)
- * - Puces TU ES : "Étudiant(e) UP", "Étudiant(e) autre", "Autre"
- * - Case à cocher CGU
- * - Bouton "Recevoir le code" + lien connexion.
+ * Première étape d'un parcours à code (inscription, mot de passe oublié) : le numéro seulement.
+ * Inscription : étape 1/2 et acceptation des conditions, active et jamais précochée, avant l'envoi du SMS.
+ * Le nom et « Tu es » viennent à l'étape 2 (InscriptionProfilScreen), une seule fois (décision V2).
  */
 export function TelephoneStep({
   objet,
@@ -40,8 +36,6 @@ export function TelephoneStep({
   const router = useRouter();
   const flow = useAuthFlow();
   const demander = useDemanderCode(objet);
-  const [prenom, setPrenom] = useState("");
-  const [statutEtudiant, setStatutEtudiant] = useState<"up" | "autre" | "non">("up");
   const [cguAcceptees, setCguAcceptees] = useState(false); // acceptation active, jamais précochée
 
   const {
@@ -58,38 +52,7 @@ export function TelephoneStep({
   return (
     <Screen scroll>
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
-        {/* En-tête : Logo + Étape 1/2 */}
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Logotype taille={38} />
-
-          {estInscription ? (
-            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textMuted }}>
-              Étape 1/2
-            </Text>
-          ) : null}
-        </View>
-
-        {/* Barre de progression 2 segments */}
-        {estInscription ? (
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <View
-              style={{
-                flex: 1,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: colors.primary,
-              }}
-            />
-            <View
-              style={{
-                flex: 1,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: "#E2E8F0",
-              }}
-            />
-          </View>
-        ) : null}
+        <EnTeteEtapes {...(estInscription ? { etape: 1, total: 2 } : {})} />
 
         {/* Titre et sous-titre */}
         <View style={{ gap: 6 }}>
@@ -110,15 +73,6 @@ export function TelephoneStep({
 
         {/* Formulaire */}
         <View style={{ gap: sp[2] }}>
-          {estInscription ? (
-            <TextField
-              label="PRÉNOM"
-              placeholder="Awa"
-              value={prenom}
-              onChangeText={setPrenom}
-            />
-          ) : null}
-
           <Controller
             control={control}
             name="phone"
@@ -130,55 +84,6 @@ export function TelephoneStep({
               />
             )}
           />
-
-          {estInscription ? (
-            <View style={{ gap: 8, marginTop: 4 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "800",
-                  color: colors.night,
-                  letterSpacing: 0.5,
-                  textTransform: "uppercase",
-                }}
-              >
-                TU ES
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {[
-                  { id: "up", label: "Étudiant(e) UP" },
-                  { id: "autre", label: "Étudiant(e) autre" },
-                  { id: "non", label: "Autre" },
-                ].map((item) => {
-                  const actif = statutEtudiant === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => setStatutEtudiant(item.id as "up" | "autre" | "non")}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
-                        borderRadius: 999,
-                        backgroundColor: actif ? colors.primary : "#FFFFFF",
-                        borderWidth: 1.5,
-                        borderColor: actif ? colors.primary : "rgba(15, 27, 61, 0.12)",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: "700",
-                          color: actif ? "#FFFFFF" : colors.night,
-                        }}
-                      >
-                        {item.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
 
           {estInscription ? (
             <Pressable

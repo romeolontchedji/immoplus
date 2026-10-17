@@ -11,6 +11,5 @@ export const codeSchema = z.object({ code: z.string().regex(/^\d{6}$/, "Le code 
 export const profilSchema = z.object({
   full_name: z.string().trim().min(2, "Au moins 2 caractères.").max(80, "80 caractères au plus."),
   password: motDePasse,
-  terms_accepted: z.literal(true, { error: "Accepte les conditions pour continuer." }),
 });
 export const nouveauMotDePasseSchema = z.object({ new_password: motDePasse });

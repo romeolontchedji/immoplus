@@ -1,3 +1,4 @@
+import type { Occupation } from "./ChoixOccupation";
 import { useMutation } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { versE164 } from "@/lib/phone";
@@ -51,8 +52,9 @@ export function useInscription() {
   const { ouvrir } = useSession();
   return useMutation({
     ...TOUJOURS,
-    mutationFn: async (v: { otpToken: string; full_name: string; password: string }) => {
-      const r = await unwrap(api.POST("/v1/auth/register", { body: { ...IDENTITE_APPAREIL, otp_token: v.otpToken, full_name: v.full_name, password: v.password, terms_accepted: true } }));
+    // `terms_accepted` : la case de l'étape 1 conditionne l'envoi du code, donc l'accès à cette étape.
+    mutationFn: async (v: { otpToken: string; full_name: string; password: string; occupation: Occupation | null }) => {
+      const r = await unwrap(api.POST("/v1/auth/register", { body: { ...IDENTITE_APPAREIL, otp_token: v.otpToken, full_name: v.full_name, password: v.password, terms_accepted: true, occupation: v.occupation } }));
       await ouvrir(r);
     },
   });

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { qk } from "@/api/keys";
 import type { components } from "@/api/genere/api";
+import type { Occupation } from "@/features/auth/ChoixOccupation";
 import { useSession } from "@/state/session";
 
 export type Appareil = components["schemas"]["AppareilOut"];
@@ -10,11 +11,11 @@ export type PreferencesNotif = { messages: boolean; apercu: boolean; alertes: bo
 /** Profil courant (cache court : rafraîchi à l'ouverture de l'écran). */
 export const useMe = () => useQuery({ queryKey: qk.me, queryFn: () => unwrap(api.GET("/v1/me")), staleTime: 30_000 });
 
-/** Modifier le nom complet. */
-export function useModifierNom() {
+/** Modifier le nom complet et « Tu es » (`null` efface la réponse). */
+export function useModifierProfil() {
   const { rafraichirProfil } = useSession();
   return useMutation({
-    mutationFn: (full_name: string) => unwrap(api.PATCH("/v1/me", { body: { full_name } })),
+    mutationFn: (corps: { full_name: string; occupation: Occupation | null }) => unwrap(api.PATCH("/v1/me", { body: corps })),
     onSuccess: () => void rafraichirProfil(),
   });
 }
