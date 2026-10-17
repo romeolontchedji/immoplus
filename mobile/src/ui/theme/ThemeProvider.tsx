@@ -1,15 +1,18 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { useColorScheme } from "react-native";
-import { clair, sombre, type Palette } from "./tokens";
+import { createContext, useContext, type ReactNode } from "react";
+import { clair, type Palette } from "./tokens";
 
 type Theme = { c: Palette; sombre: boolean };
-const Ctx = createContext<Theme>({ c: clair, sombre: false });
 
-/** Thème clair/sombre selon le réglage du système. La taille de police du système est respectée (pas de `allowFontScaling={false}`). */
+/**
+ * Thème unique : clair, quel que soit le réglage du système. Le mode sombre rendait des textes illisibles (écrans
+ * qui utilisent `colors.night` en dur sur un fond sombre) ; décision produit : fond blanc partout.
+ * La taille de police du système est respectée (pas de `allowFontScaling={false}`).
+ */
+const THEME: Theme = { c: clair, sombre: false };
+const Ctx = createContext<Theme>(THEME);
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const schema = useColorScheme();
-  const valeur = useMemo<Theme>(() => ({ c: schema === "dark" ? sombre : clair, sombre: schema === "dark" }), [schema]);
-  return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={THEME}>{children}</Ctx.Provider>;
 }
 
 export const useTheme = (): Theme => useContext(Ctx);

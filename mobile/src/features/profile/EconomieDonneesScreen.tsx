@@ -45,7 +45,7 @@ export function EconomieDonneesScreen() {
         }}
       >
         <Text variante="legende" couleur={c.primary}>
-          Ce réglage est sauvegardé sur cet appareil uniquement. Il n'affecte pas les téléchargements en Wi-Fi.
+          Ce réglage est sauvegardé sur cet appareil uniquement. Il n’affecte pas les téléchargements en Wi-Fi.
         </Text>
       </View>
     </Screen>

@@ -4,7 +4,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Send } from "lucide-react-native";
 import { Image } from "expo-image";
 import { isApiError } from "@/api/errors";
-import { fcfa, heure } from "@/lib/format";
+import { francs, heure } from "@/lib/format";
+import { urlMedia } from "@/lib/media";
+import { useFiche } from "@/features/listings/queries";
 import { messageErreur } from "@/i18n/fr";
 import { useConversationFocus } from "@/realtime/RealtimeProvider";
 import { useSession } from "@/state/session";
@@ -33,7 +35,7 @@ import {
 export function ConversationScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { etat } = useSession();
+  const { etat, role } = useSession();
   const moi = etat.statut === "connecte" ? etat.user.id : "";
 
   useConversationFocus(id);
@@ -42,6 +44,7 @@ export function ConversationScreen() {
   const envoyer = useEnvoyerMessage(id);
   const reprendre = useReprendreEnvoi(id);
   const lire = useLireConversation(id);
+  const fiche = useFiche(conversation.data?.listing.slug ?? undefined);
   const lignes = useLignes(id, moi, conversation.data?.other_read_seq ?? 0, messages.data);
   const [texte, setTexte] = useState("");
 
@@ -66,8 +69,11 @@ export function ConversationScreen() {
   }
 
   const annonce = conversation.data.listing;
-  const autreNom = conversation.data.other_party?.name ?? "Correspondant";
-  const autreVerifie = conversation.data.other_party?.verified ?? true;
+  const autreNom = conversation.data.other?.name ?? "Correspondant";
+  // L'interlocuteur n'expose pas « vérifié » : on reprend celui du gérant sur la fiche (côté locataire uniquement).
+  const autreVerifie = role !== "gerant" && !!fiche.data?.gerant?.verified;
+  const couvertureAnnonce = fiche.data?.media.find((m) => m.is_cover) ?? fiche.data?.media[0];
+  const imageAnnonce = urlMedia(couvertureAnnonce ? (couvertureAnnonce.kind === "video" ? couvertureAnnonce.poster_url : (couvertureAnnonce.thumb_url ?? couvertureAnnonce.url)) : null);
   const ecritureImpossible =
     conversation.data.status === "read_only" ||
     (conversation.data.status === "blocked" && !conversation.data.blocked_by_me);
@@ -164,8 +170,8 @@ export function ConversationScreen() {
               overflow: "hidden",
             }}
           >
-            {annonce.cover_url ? (
-              <Image source={{ uri: annonce.cover_url }} style={{ width: "100%", height: "100%" }} />
+            {imageAnnonce ? (
+              <Image source={{ uri: imageAnnonce }} style={{ width: "100%", height: "100%" }} />
             ) : null}
           </View>
 
@@ -173,9 +179,11 @@ export function ConversationScreen() {
             <Text style={{ fontSize: 15, fontWeight: "700", color: colors.night }} numberOfLines={1}>
               {annonce.title}
             </Text>
-            <Text style={{ fontSize: 14, fontWeight: "800", color: colors.primary }}>
-              {fcfa(annonce.rent_amount)}/mois
-            </Text>
+            {fiche.data ? (
+              <Text style={{ fontSize: 14, fontWeight: "800", color: colors.primary }}>
+                {francs(fiche.data.rent_amount)}/mois
+              </Text>
+            ) : null}
           </View>
         </Pressable>
       ) : null}

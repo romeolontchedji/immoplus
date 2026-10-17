@@ -25,4 +25,5 @@ export const CLES_KV = {
   brouillon: "logeo.brouillon-annonce",
   outbox: "logeo.outbox",
   cacheRequetes: "logeo.cache-requetes",
+  onboardingVu: "logeo.onboarding-vu",
 } as const;

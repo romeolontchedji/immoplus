@@ -101,41 +101,6 @@ export const clair: Palette = {
   informationText: colors.blue,
 };
 
-export const sombre: Palette = {
-  bg: colors.sable950,
-  surface: colors.night,
-  surfaceRaised: "#1A264F",
-  surfaceSunken: "#060B1A",
-  border: "#2D3A63",
-  borderStrong: "#4A5B8C",
-  divider: "#1E2B52",
-  text: "#F1F5F9",
-  textMuted: colors.sable300,
-  primary: "#3B82F6",
-  primaryHover: "#60A5FA",
-  onPrimary: colors.sable950,
-  primarySoft: "#172554",
-  onPrimarySoft: "#93C5FD",
-  accent: colors.sun,
-  accentHover: colors.sunHover,
-  onAccent: colors.night,
-  link: "#60A5FA",
-  focus: "#60A5FA",
-  scrim: "rgba(0, 0, 0, 0.70)",
-  succes: "#10B981",
-  succesBg: "#064E3B",
-  succesText: "#A7F3D0",
-  avertissement: "#F59E0B",
-  avertissementBg: "#78350F",
-  avertissementText: "#FDE68A",
-  danger: "#EF4444",
-  dangerBg: "#7F1D1D",
-  dangerText: "#FECACA",
-  information: "#3B82F6",
-  informationBg: "#1E3A8A",
-  informationText: "#BFDBFE",
-};
-
 /** Grille de 4 dp. */
 export const sp = {
   1: 4,

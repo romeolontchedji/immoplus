@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react-native";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
 import { Text } from "@/ui/components/Text";
+import { Logotype } from "@/ui/components/Logo";
 
 /**
  * CompteGerantScreen conforme à la maquette Mobile · Compte gérant@1x.png :
@@ -59,7 +60,13 @@ export function CompteGerantScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Retour"
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/bienvenue");
+            }
+          }}
           style={{
             width: 40,
             height: 40,
@@ -84,6 +91,8 @@ export function CompteGerantScreen() {
           paddingBottom: 40,
         }}
       >
+        <Logotype />
+
         {/* Badge carré vert avec coche */}
         <View
           style={{

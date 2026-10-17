@@ -4,7 +4,7 @@ import { qk } from "@/api/keys";
 import type { components } from "@/api/genere/api";
 import { useSession } from "@/state/session";
 
-export type Appareil = components["schemas"]["DeviceOut"];
+export type Appareil = components["schemas"]["AppareilOut"];
 export type PreferencesNotif = { messages: boolean; alerts: boolean; reminders: boolean };
 
 /** Profil courant (cache court : rafraîchi à l'ouverture de l'écran). */
@@ -22,7 +22,7 @@ export function useModifierNom() {
 /** Changer le mot de passe (connexion : ancien + nouveau). */
 export function useChangerMotDePasse() {
   return useMutation({
-    mutationFn: (corps: { old_password: string; new_password: string }) =>
+    mutationFn: (corps: { current_password: string; new_password: string }) =>
       unwrap(api.POST("/v1/auth/password/change", { body: corps })),
   });
 }

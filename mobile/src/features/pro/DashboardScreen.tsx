@@ -1,12 +1,13 @@
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Image } from "expo-image";
-import { fcfa } from "@/lib/format";
+import { Home } from "lucide-react-native";
+import { francs } from "@/lib/format";
 import { t } from "@/i18n/fr";
 import { useSession } from "@/state/session";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Button } from "@/ui/components/Button";
+import { Logotype } from "@/ui/components/Logo";
 import { Badge } from "@/ui/components/Card";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
@@ -75,6 +76,7 @@ export function DashboardScreen() {
 
   return (
     <Screen scroll>
+      <Logotype taille={34} />
       {/* ── En-tête salutation + avatar ── */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: sp[4] }}>
         <View>
@@ -101,15 +103,15 @@ export function DashboardScreen() {
           <>
             <View style={{ flexDirection: "row", gap: sp[3], marginBottom: sp[3] }}>
               <CarteMetrique valeur={data.views_30d ?? 0} label="Vues ce mois" />
-              <CarteMetrique valeur={data.contacts_30d ?? 0} label="Contacts reçus" />
+              <CarteMetrique valeur={data.conversations_30d ?? 0} label="Contacts reçus" />
             </View>
             <View style={{ flexDirection: "row", gap: sp[3], marginBottom: sp[4] }}>
-              <CarteMetrique valeur={data.active_listings ?? 0} label="Chambres actives" />
-              <CarteMetrique valeur={data.rented_listings ?? 0} label="Chambre louée" couleur={c.succes} />
+              <CarteMetrique valeur={data.listings_by_status?.published ?? 0} label="Chambres en ligne" />
+              <CarteMetrique valeur={data.listings_by_status?.rented ?? 0} label="Chambres louées" couleur={c.succes} />
             </View>
 
-            {/* Alerte jaune si annonce sans vidéo (conforme maquette) */}
-            {data.listings_without_video && data.listings_without_video > 0 ? (
+            {/* Bandeau jaune : annonces dont la disponibilité est à reconfirmer (sinon elles sont masquées) */}
+            {data.to_confirm > 0 ? (
               <View
                 style={{
                   backgroundColor: c.avertissementBg,
@@ -120,10 +122,10 @@ export function DashboardScreen() {
                 }}
               >
                 <Text variante="corpsGras" couleur={c.avertissementText}>
-                  {data.listings_without_video === 1 ? "Une annonce" : `${data.listings_without_video} annonces`} sans vidéo.
+                  {data.to_confirm === 1 ? "Une annonce" : `${data.to_confirm} annonces`} à confirmer.
                 </Text>
                 <Text variante="legende" couleur={c.avertissementText}>
-                  Ajoute une vidéo pour attirer des étudiants.
+                  Confirme qu’elles sont toujours libres pour qu’elles restent visibles.
                 </Text>
               </View>
             ) : null}
@@ -171,30 +173,22 @@ export function DashboardScreen() {
                     width: 64,
                     height: 64,
                     borderRadius: 12,
-                    backgroundColor: colors.night,
-                    overflow: "hidden",
+                    backgroundColor: colors.blueSoft,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {annonce.cover_url ? (
-                    <Image
-                      source={{ uri: annonce.cover_url }}
-                      style={{ width: "100%", height: "100%" }}
-                      contentFit="cover"
-                      accessibilityIgnoresInvertColors
-                    />
-                  ) : null}
+                  <Home size={26} color={colors.primary} />
                 </View>
 
                 {/* Infos */}
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text variante="corpsGras" numberOfLines={1}>{annonce.district?.name ?? ""}</Text>
+                  <Text variante="corpsGras" numberOfLines={1}>{annonce.title}</Text>
                   <Text variante="legende" muted numberOfLines={1}>
-                    {t.typeChambre[annonce.type] ?? annonce.type}
-                    {annonce.views_count != null ? ` · ${annonce.views_count} vue${annonce.views_count > 1 ? "s" : ""}` : ""}
-                    {annonce.contacts_count != null ? ` · ${annonce.contacts_count} contact${annonce.contacts_count > 1 ? "s" : ""}` : ""}
+                    {[t.typeChambre[annonce.room_type] ?? annonce.room_type, annonce.district_name].filter(Boolean).join(" · ")}
                   </Text>
                   <Text variante="legende" couleur={c.primary} style={{ fontWeight: "700" }}>
-                    {fcfa(annonce.rent_amount)} F
+                    {francs(annonce.rent_amount)}
                   </Text>
                 </View>
 

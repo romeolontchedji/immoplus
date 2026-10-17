@@ -1,31 +1,40 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Bell, Search } from "lucide-react-native";
-import { colors, sp } from "@/ui/theme/tokens";
+import { Bell } from "lucide-react-native";
+import { colors, ombre, sp } from "@/ui/theme/tokens";
+import { BarreRecherche } from "@/ui/components/BarreRecherche";
 import { Chip } from "@/ui/components/Chip";
+import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
-import { FILTRES_VIDES, useFiltres } from "./filtres";
+import { LIBELLES_TRI, nombreDeFiltres, useFiltres, type Filtres } from "./filtres";
+import { FiltresActifs } from "./FiltresActifs";
 import { ListeAnnonces } from "./ListeAnnonces";
 import { useFil } from "./queries";
 
+type Raccourci = { titre: string; actif: (f: Filtres) => boolean; basculer: (f: Filtres) => Filtres };
+
+const basculerDans = (liste: string[], v: string) => (liste.includes(v) ? liste.filter((x) => x !== v) : [...liste, v]);
+
+/** Raccourcis de la maquette : chacun s'ajoute aux autres critères au lieu de les écraser. */
+const RACCOURCIS: Raccourci[] = [
+  { titre: "Près de l'UP", actif: (f) => f.sort === "distance", basculer: (f) => ({ ...f, sort: f.sort === "distance" ? "recent" : "distance" }) },
+  { titre: "≤ 15 000 F", actif: (f) => f.rent_max === 15000, basculer: (f) => ({ ...f, rent_max: f.rent_max === 15000 ? undefined : 15000 }) },
+  { titre: "Entrée-coucher", actif: (f) => f.type.includes("entree_coucher"), basculer: (f) => ({ ...f, type: basculerDans(f.type, "entree_coucher") }) },
+  { titre: "Chambre-salon", actif: (f) => f.type.includes("chambre_salon"), basculer: (f) => ({ ...f, type: basculerDans(f.type, "chambre_salon") }) },
+  { titre: "Douche interne", actif: (f) => f.bathroom === true, basculer: (f) => ({ ...f, bathroom: f.bathroom ? undefined : true }) },
+];
+
 /**
- * AccueilScreen conforme à la maquette Mobile · Accueil@1x.png :
- * - En-tête : Logo Logeo à gauche, bouton cloche notifications à droite
- * - Titre héroïque : "Où veux-tu habiter ?"
- * - Barre de recherche avec bouton bleu "Filtres"
- * - Chips raccourcis horizontaux (Près de l'UP, ≤ 15 000 F, Entrée-coucher...)
- * - Fil des annonces avec ListingCard fidèle.
+ * Accueil locataire (maquette Mobile · Accueil) : logo + cloche, « Où veux-tu habiter ? », barre de recherche où l'on
+ * tape directement (résultats en direct), raccourcis cumulables, filtres actifs retirables, puis le fil.
  */
 export function AccueilScreen() {
   const router = useRouter();
   const { filtres, definir } = useFiltres();
   const requete = useFil(filtres);
-
-  const estActifDistance = filtres.sort === "distance";
-  const estActifBudget15k = filtres.rent_max === 15000;
-  const estActifEntreeCoucher = Array.isArray(filtres.type) && filtres.type.includes("entree_coucher");
-  const estActifDouche = filtres.bathroom === true;
+  const nb = nombreDeFiltres(filtres);
+  const recherche = filtres.q.trim() !== "" || nb > 0;
 
   return (
     <Screen flush>
@@ -33,151 +42,45 @@ export function AccueilScreen() {
         requete={requete}
         vide={{
           titre: "Aucune chambre trouvée",
-          texte: "Essaie d'élargir tes critères ou crée une alerte pour être prévenu.",
+          texte: recherche ? "Retire un filtre ou crée une alerte : tu seras prévenu dès qu'une chambre correspond." : "Les nouvelles chambres arrivent bientôt. Crée une alerte pour être prévenu.",
           action: "Créer une alerte",
           onAction: () => router.push("/nouvelle-alerte"),
         }}
         enTete={
-          <View style={{ gap: sp[4], paddingBottom: sp[3], paddingTop: sp[2] }}>
-            {/* Barre haute : Logo + Cloche de notification */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <View
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 12,
-                    backgroundColor: colors.primary,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={{ color: "#FFFFFF", fontSize: 20, fontWeight: "800" }}>⌂</Text>
-                </View>
-                <Text style={{ fontSize: 22, fontWeight: "800", color: colors.night }}>
-                  Logeo<Text style={{ color: colors.sun }}>.</Text>
-                </Text>
-              </View>
-
+          <View style={{ gap: sp[4], paddingBottom: sp[2], paddingTop: sp[2] }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <Logotype taille={38} />
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
                 onPress={() => router.push("/notifications")}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: "#FFFFFF",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  shadowColor: colors.night,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 8,
-                  elevation: 2,
-                }}
+                style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", ...ombre.card }}
               >
                 <Bell size={20} color={colors.night} />
               </Pressable>
             </View>
 
-            {/* Titre héroïque */}
-            <Text
-              style={{
-                fontSize: 28,
-                fontWeight: "800",
-                color: colors.night,
-                letterSpacing: -0.5,
-              }}
-            >
-              Où veux–tu habiter ?
-            </Text>
+            <Text style={{ fontSize: 28, lineHeight: 34, fontWeight: "800", color: colors.night, letterSpacing: -0.5 }}>Où veux-tu habiter ?</Text>
 
-            {/* Barre de recherche avec bouton Filtres */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#FFFFFF",
-                borderRadius: 20,
-                paddingHorizontal: sp[3],
-                paddingVertical: 8,
-                shadowColor: colors.night,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.06,
-                shadowRadius: 10,
-                elevation: 2,
-              }}
-            >
-              <Pressable
-                onPress={() => router.push("/recherche")}
-                style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 6 }}
-              >
-                <Search size={18} color={colors.textMuted} />
-                <Text style={{ fontSize: 15, color: colors.textMuted, fontWeight: "500" }}>
-                  Quartier, prix, type...
-                </Text>
-              </Pressable>
+            <BarreRecherche
+              valeur={filtres.q}
+              onRecherche={(q) => definir({ ...filtres, q })}
+              onFiltres={() => router.push("/filtres")}
+              nbFiltres={nb}
+            />
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Ouvrir les filtres"
-                onPress={() => router.push("/filtres")}
-                style={{
-                  backgroundColor: colors.primary,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 14,
-                }}
-              >
-                <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "700" }}>Filtres</Text>
-              </Pressable>
-            </View>
-
-            {/* Rangée horizontale de filtres rapides */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: sp[2], paddingRight: sp[2] }}
-            >
-              <Chip
-                titre="Près de l’UP"
-                actif={estActifDistance}
-                onPress={() =>
-                  definir({ ...filtres, sort: estActifDistance ? "recent" : "distance" })
-                }
-              />
-              <Chip
-                titre="≤ 15 000 F"
-                actif={estActifBudget15k}
-                onPress={() =>
-                  definir({ ...filtres, rent_max: estActifBudget15k ? undefined : 15000 })
-                }
-              />
-              <Chip
-                titre="Entrée–coucher"
-                actif={estActifEntreeCoucher}
-                onPress={() =>
-                  definir({
-                    ...filtres,
-                    type: estActifEntreeCoucher ? [] : ["entree_coucher"],
-                  })
-                }
-              />
-              <Chip
-                titre="Douche interne"
-                actif={estActifDouche}
-                onPress={() =>
-                  definir({ ...filtres, bathroom: estActifDouche ? undefined : true })
-                }
-              />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2], paddingRight: sp[2] }}>
+              {RACCOURCIS.map((r) => (
+                <Chip key={r.titre} titre={r.titre} actif={r.actif(filtres)} onPress={() => definir(r.basculer(filtres))} />
+              ))}
             </ScrollView>
+
+            <FiltresActifs />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: sp[1] }}>
+              <Text variante="sousTitre">{recherche ? "Résultats" : "Chambres disponibles"}</Text>
+              <Text variante="legende" muted>{LIBELLES_TRI[filtres.sort]}</Text>
+            </View>
           </View>
         }
       />

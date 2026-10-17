@@ -16,6 +16,7 @@ import { useChangerTelephone } from "./queries";
 type Etape = "telephone" | "code";
 
 const telephoneSchema = z.object({ phone: telephone });
+type ValeursPhone = z.infer<typeof telephoneSchema>;
 const codeSchemaAvecMdp = codeSchema.extend({
   password: z.string().min(1, "Mot de passe requis."),
 });

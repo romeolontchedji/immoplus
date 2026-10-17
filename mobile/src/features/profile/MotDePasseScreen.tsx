@@ -33,7 +33,7 @@ export function MotDePasseScreen() {
   return (
     <Screen scroll>
       <Text variante="titre">Changer le mot de passe</Text>
-      <Text muted>Pour confirmer ton identité, saisis d'abord ton mot de passe actuel.</Text>
+      <Text muted>Pour confirmer ton identité, saisis d’abord ton mot de passe actuel.</Text>
       <Controller
         control={control}
         name="old_password"
@@ -85,7 +85,7 @@ export function MotDePasseScreen() {
         chargement={changer.isPending}
         onPress={handleSubmit((v) => {
           changer.reset();
-          changer.mutate({ old_password: v.old_password, new_password: v.new_password }, {
+          changer.mutate({ current_password: v.old_password, new_password: v.new_password }, {
             onSuccess: () => reset(),
           });
         })}

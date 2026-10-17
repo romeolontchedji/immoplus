@@ -1,5 +1,6 @@
 import { Linking, Platform } from "react-native";
 import { Button } from "@/ui/components/Button";
+import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 
@@ -9,6 +10,7 @@ const MAGASIN = Platform.select({ ios: "itms-apps://apps.apple.com/app/logeo", d
 export function MiseAJourScreen() {
   return (
     <Screen>
+      <Logotype />
       <Text variante="titre">Mise à jour nécessaire</Text>
       <Text>{"Cette version de Logeo n'est plus prise en charge. Mets l'application à jour pour continuer."}</Text>
       <Button titre="Mettre à jour" onPress={() => void Linking.openURL(MAGASIN)} />

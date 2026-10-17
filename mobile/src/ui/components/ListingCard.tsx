@@ -1,8 +1,9 @@
 import { Pressable, View } from "react-native";
 import { Image } from "expo-image";
 import type { components } from "@/api/genere/api";
-import { distance, fcfa } from "@/lib/format";
-import { Play } from "lucide-react-native";
+import { distance, francs } from "@/lib/format";
+import { urlMedia } from "@/lib/media";
+import { Check, Play } from "lucide-react-native";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { Text } from "./Text";
 
@@ -10,7 +11,7 @@ export type Carte = components["schemas"]["CarteOut"];
 
 /**
  * Carte d'annonce conforme à la maquette Mobile · Accueil@1x.png :
- * - Visuel haut avec image/dégradé nuit, bouton play blanc au centre, badge vert "✓ Vérifié" en haut à gauche, durée vidéo en bas à droite
+ * - Visuel haut avec image/dégradé nuit, bouton play blanc au centre, badge vert « Vérifié » en haut à gauche (la durée vidéo n'est pas fournie par CarteOut)
  * - Zone blanche basse avec titre + détails à gauche et prix bleu cobalt à droite.
  */
 export function ListingCard({
@@ -22,7 +23,8 @@ export function ListingCard({
   favori?: boolean;
 }) {
   const details = [
-    annonce.distance_m != null ? `${distance(annonce.distance_m)} de l'UP` : annonce.district.name,
+    annonce.district.name,
+    annonce.distance_m != null ? `${distance(annonce.distance_m)} de l'UP` : null,
     annonce.has_private_bathroom ? "Douche interne" : null,
   ]
     .filter(Boolean)
@@ -31,9 +33,9 @@ export function ListingCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${annonce.title}, ${fcfa(annonce.rent_amount)} par mois`}
+      accessibilityLabel={`${annonce.title}, ${francs(annonce.rent_amount)} par mois`}
       onPress={onPress}
-      style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1, marginBottom: sp[4] }]}
+      style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }]}
     >
       <View
         style={{
@@ -60,15 +62,17 @@ export function ListingCard({
             alignItems: "center",
           }}
         >
-          {annonce.cover_url ? (
-            <Image
-              source={{ uri: annonce.cover_url }}
-              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-              contentFit="cover"
-              transition={150}
-              accessibilityIgnoresInvertColors
-            />
-          ) : null}
+          <Image
+            source={
+              (annonce.cover_url ?? annonce.video_poster_url)
+                ? { uri: urlMedia(annonce.cover_url ?? annonce.video_poster_url) }
+                : require("../../../assets/illustration-chambres.svg")
+            }
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            contentFit="cover"
+            transition={150}
+            accessibilityIgnoresInvertColors
+          />
 
           {/* Badge Vérifié en haut à gauche */}
           {annonce.gerant.verified ? (
@@ -79,13 +83,15 @@ export function ListingCard({
                 left: 14,
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: "#0D9488",
+                gap: 4,
+                backgroundColor: colors.success,
                 paddingHorizontal: 10,
                 paddingVertical: 5,
                 borderRadius: rayon.pilule,
               }}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>✓ Vérifié</Text>
+              <Check size={12} color="#FFFFFF" strokeWidth={3} />
+              <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
             </View>
           ) : null}
 
@@ -127,26 +133,6 @@ export function ListingCard({
             </View>
           ) : null}
 
-          {/* Durée de la vidéo en bas à droite */}
-          {annonce.has_video ? (
-            <View
-              style={{
-                position: "absolute",
-                bottom: 12,
-                right: 14,
-                backgroundColor: "rgba(0, 0, 0, 0.4)",
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                borderRadius: 8,
-              }}
-            >
-              <Text style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "700" }}>
-                {(annonce as unknown as { video_duration_s?: number }).video_duration_s != null
-                  ? `0:${Math.round((annonce as unknown as { video_duration_s: number }).video_duration_s).toString().padStart(2, "0")}`
-                  : "0:24"}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         {/* Zone texte sous le média */}
@@ -191,7 +177,7 @@ export function ListingCard({
               color: colors.primary,
             }}
           >
-            {fcfa(annonce.rent_amount)}
+            {francs(annonce.rent_amount)}
           </Text>
         </View>
       </View>

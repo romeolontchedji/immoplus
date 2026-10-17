@@ -9,6 +9,7 @@ import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
 import { Screen } from "@/ui/components/Screen";
 import { PasswordField, PhoneField } from "@/ui/components/TextField";
+import { Logotype } from "@/ui/components/Logo";
 import { Text } from "@/ui/components/Text";
 import { useConnexion } from "./hooks";
 import { connexionSchema } from "./schemas";
@@ -43,22 +44,8 @@ export function ConnexionScreen() {
     <Screen scroll>
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
         {/* Logo Logeo */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: sp[2] }}>
-          <View
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 14,
-              backgroundColor: colors.primary,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#FFFFFF", fontSize: 22, fontWeight: "800" }}>⌂</Text>
-          </View>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: colors.night }}>
-            Logeo<Text style={{ color: colors.sun }}>.</Text>
-          </Text>
+        <View style={{ marginBottom: sp[2] }}>
+          <Logotype taille={38} />
         </View>
 
         {/* Titre et consigne */}

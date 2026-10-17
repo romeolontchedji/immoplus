@@ -2,7 +2,8 @@ import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { isApiError } from "@/api/errors";
-import { fcfa } from "@/lib/format";
+import { francs } from "@/lib/format";
+import { urlMedia } from "@/lib/media";
 import { messageErreur, t } from "@/i18n/fr";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
@@ -56,8 +57,8 @@ export function PublicationStep() {
   const medias = useMediasPro(id);
   const publier = useActionAnnonce(id ?? "");
 
-  const nbPhotos = (medias.data ?? []).filter((m) => m.media_type === "image").length;
-  const hasVideo = (medias.data ?? []).some((m) => m.media_type === "video");
+  const nbPhotos = (medias.data ?? []).filter((m) => m.kind === "photo").length;
+  const hasVideo = (medias.data ?? []).some((m) => m.kind === "video");
   const cover = (medias.data ?? []).find((m) => m.is_cover);
 
   const lancer = () => {
@@ -78,19 +79,15 @@ export function PublicationStep() {
         <Button
           titre="Publier la chambre"
           chargement={publier.isPending}
-          style={{
-            // Bouton jaune solaire (conforme maquette Publier 4/4)
-            backgroundColor: "#FDB836",
-          }}
-          textStyle={{ color: colors.night, fontWeight: "700" }}
+          variante="accent" // jaune solaire (maquette Publier 4/4)
           onPress={lancer}
         />
       }
     >
-      <EntetePublication etape={4} total={4} />
+      <EntetePublication etape={6} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Tout est bon ?</Text>
-      <Text muted>Vérifie l'aperçu avant de publier.</Text>
+      <Text muted>Vérifie l’aperçu avant de publier.</Text>
 
       {/* Vignette vidéo/photo avec bouton play */}
       <View
@@ -103,8 +100,8 @@ export function PublicationStep() {
           justifyContent: "center",
         }}
       >
-        {cover?.thumbnail_url ? (
-          <Image source={{ uri: cover.thumbnail_url }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" accessibilityIgnoresInvertColors />
+        {urlMedia(cover?.poster_url) ? (
+          <Image source={{ uri: urlMedia(cover?.poster_url) }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" accessibilityIgnoresInvertColors />
         ) : null}
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,27,61,0.35)" }} />
         <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "rgba(255,255,255,0.92)", alignItems: "center", justifyContent: "center" }}>
@@ -124,10 +121,10 @@ export function PublicationStep() {
         >
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
             <Text variante="corpsGras" numberOfLines={1} style={{ flex: 1 }}>{annonce.data.title}</Text>
-            <Text variante="corpsGras" couleur={c.primary}>{fcfa(annonce.data.rent_amount)} F</Text>
+            <Text variante="corpsGras" couleur={c.primary}>{francs(annonce.data.rent_amount)}</Text>
           </View>
           <Text variante="legende" muted>
-            {annonce.data.district?.name}{annonce.data.deposit_months ? ` · Caution ${annonce.data.deposit_months} mois` : ""}
+            {annonce.data.district_name}{annonce.data.deposit_months ? ` · Caution ${annonce.data.deposit_months} mois` : ""}
           </Text>
         </View>
       ) : null}

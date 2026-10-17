@@ -1,8 +1,11 @@
 import { Pressable, View } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
+import { Logotype } from "@/ui/components/Logo";
 import { Text } from "@/ui/components/Text";
+import { CLES_KV, kv } from "@/storage/kv";
 
 /**
  * BienvenueScreen conforme à la maquette Mobile · Bienvenue@1x.png :
@@ -20,7 +23,7 @@ export function BienvenueScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.night }}>
-      {/* Moitié supérieure immersive avec logo */}
+      {/* Moitié supérieure immersive avec logo et illustration */}
       <View
         style={{
           flex: 1.1,
@@ -29,30 +32,26 @@ export function BienvenueScreen() {
           paddingTop: 60,
           justifyContent: "space-between",
           paddingBottom: 20,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        {/* Logo Logeo */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              backgroundColor: colors.primary,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#FFFFFF", fontSize: 22, fontWeight: "800" }}>⌂</Text>
-          </View>
-          <Text style={{ fontSize: 26, fontWeight: "800", color: "#FFFFFF" }}>
-            Logeo<Text style={{ color: colors.sun }}>.</Text>
-          </Text>
-        </View>
+        <Image
+          source={require("../../../assets/illustration-accueil.svg")}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.85,
+          }}
+          contentFit="cover"
+          accessibilityIgnoresInvertColors
+        />
 
-        <Text style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: 12, fontWeight: "600" }}>
-          PHOTO DE FOND · quartier étudiant, Parakou
-        </Text>
+        {/* Logo Logeo */}
+        <Logotype taille={44} surFondSombre />
       </View>
 
       {/* Feuille blanche inférieure */}
@@ -109,7 +108,10 @@ export function BienvenueScreen() {
         <View style={{ gap: 12, marginTop: sp[3] }}>
           <Button
             titre="Je cherche une chambre"
-            onPress={() => router.push("/(locataire)/(onglets)")}
+            onPress={() => {
+              void kv.set(CLES_KV.onboardingVu, true);
+              router.replace("/(locataire)/(onglets)");
+            }}
           />
 
           <Pressable

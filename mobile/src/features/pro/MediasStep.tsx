@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -12,7 +13,8 @@ import { QueryState } from "@/ui/components/States";
 import { Text } from "@/ui/components/Text";
 import { useBrouillon } from "./brouillon";
 import { useMediasPro } from "./queries";
-import { envoyerFichier } from "./envoi";
+import { ajouterMedia } from "./envoi";
+import { urlMedia } from "@/lib/media";
 import { EntetePublication } from "./EntetePublication";
 
 /**
@@ -28,6 +30,26 @@ export function MediasStep() {
   const { brouillon, maj } = useBrouillon();
   const id = brouillon.serveurId;
   const medias = useMediasPro(id);
+  const [envoi, setEnvoi] = useState<{ libelle: string; ratio: number } | null>(null);
+  const [erreurEnvoi, setErreurEnvoi] = useState<unknown>(null);
+
+  /** Envoie les fichiers un par un en affichant la progression ; une erreur s'affiche sous la zone vidéo. */
+  const envoyer = async (fichiers: { uri: string; kind: "video" | "photo" }[]) => {
+    if (!id) { router.push("/pro/nouvelle-annonce/infos" as never); return; }
+    setErreurEnvoi(null);
+    try {
+      for (const [i, f] of fichiers.entries()) {
+        const libelle = f.kind === "video" ? "Envoi de la vidéo" : `Envoi de la photo ${i + 1}/${fichiers.length}`;
+        setEnvoi({ libelle, ratio: 0 });
+        await ajouterMedia({ annonceId: id, uri: f.uri, kind: f.kind, surProgression: (ratio) => setEnvoi({ libelle, ratio }) });
+      }
+    } catch (e) {
+      setErreurEnvoi(e);
+    } finally {
+      setEnvoi(null);
+      void medias.refetch();
+    }
+  };
 
   const choisirVideo = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({
@@ -36,10 +58,7 @@ export function MediasStep() {
       videoMaxDuration: 60,
     });
     if (r.canceled || !r.assets[0]) return;
-    const asset = r.assets[0];
-    if (!id) { router.push("/pro/nouvelle-annonce/infos" as never); return; }
-    await envoyerFichier({ annonceId: id, uri: asset.uri, mimeType: asset.mimeType ?? "video/mp4", type: "video" });
-    void medias.refetch();
+    await envoyer([{ uri: r.assets[0].uri, kind: "video" }]);
   };
 
   const choisirPhoto = async () => {
@@ -50,15 +69,11 @@ export function MediasStep() {
       selectionLimit: 10,
     });
     if (r.canceled) return;
-    if (!id) { router.push("/pro/nouvelle-annonce/infos" as never); return; }
-    for (const asset of r.assets) {
-      await envoyerFichier({ annonceId: id, uri: asset.uri, mimeType: asset.mimeType ?? "image/jpeg", type: "image" });
-    }
-    void medias.refetch();
+    await envoyer(r.assets.map((a) => ({ uri: a.uri, kind: "photo" as const })));
   };
 
-  const videos = medias.data?.filter((m) => m.media_type === "video") ?? [];
-  const photos = medias.data?.filter((m) => m.media_type === "image") ?? [];
+  const videos = medias.data?.filter((m) => m.kind === "video") ?? [];
+  const photos = medias.data?.filter((m) => m.kind === "photo") ?? [];
   const hasVideo = videos.length > 0;
 
   return (
@@ -68,7 +83,7 @@ export function MediasStep() {
         onPress={() => router.push("/pro/nouvelle-annonce/description" as never)}
       />
     }>
-      <EntetePublication etape={3} total={4} />
+      <EntetePublication etape={5} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Montre-la en vidéo</Text>
       <Text muted>Une vidéo rassure et fait gagner du temps à tout le monde.</Text>
@@ -77,6 +92,7 @@ export function MediasStep() {
       <Pressable
         accessibilityRole="button"
         onPress={choisirVideo}
+        disabled={!!envoi}
         style={({ pressed }) => ({
           borderWidth: 2,
           borderStyle: "dashed",
@@ -102,11 +118,25 @@ export function MediasStep() {
             <View style={{ width: 0, height: 0, borderTopWidth: 10, borderBottomWidth: 10, borderLeftWidth: 18, borderTopColor: "transparent", borderBottomColor: "transparent", borderLeftColor: c.primary }} />
             <Text variante="corpsGras" couleur={c.primary}>Ajouter la visite vidéo</Text>
             <Text variante="legende" muted style={{ textAlign: "center" }}>
-              20 à 30 secondes · filme l'entrée, la chambre, la douche
+              20 à 30 secondes · filme l’entrée, la chambre, la douche
             </Text>
           </>
         )}
       </Pressable>
+
+      {envoi ? (
+        <View style={{ gap: sp[2] }}>
+          <Text variante="legende" couleur={c.primary} style={{ fontWeight: "700" }}>{envoi.libelle} · {Math.round(envoi.ratio * 100)} %</Text>
+          <View style={{ height: 6, borderRadius: 3, backgroundColor: c.primarySoft, overflow: "hidden" }}>
+            <View style={{ height: 6, width: `${Math.round(envoi.ratio * 100)}%`, backgroundColor: c.primary }} />
+          </View>
+        </View>
+      ) : null}
+      {erreurEnvoi ? (
+        <Text variante="legende" couleur={c.danger} accessibilityLiveRegion="polite">
+          {isApiError(erreurEnvoi) ? messageErreur(erreurEnvoi.code, erreurEnvoi.message) : "L'envoi a échoué. Vérifie ta connexion et réessaie."}
+        </Text>
+      ) : null}
 
       {/* Astuce jaune (conforme maquette) */}
       {!hasVideo ? (
@@ -132,6 +162,7 @@ export function MediasStep() {
           <Pressable
             accessibilityRole="button"
             onPress={choisirPhoto}
+            disabled={!!envoi}
             style={({ pressed }) => ({
               width: 72,
               height: 72,
@@ -162,8 +193,8 @@ export function MediasStep() {
                 borderColor: i === 0 ? c.primary : undefined,
               }}
             >
-              {photo.thumbnail_url ? (
-                <Image source={{ uri: photo.thumbnail_url }} style={{ width: "100%", height: "100%" }} contentFit="cover" accessibilityIgnoresInvertColors />
+              {urlMedia(photo.poster_url ?? photo.playback_url) ? (
+                <Image source={{ uri: urlMedia(photo.poster_url ?? photo.playback_url) }} style={{ width: "100%", height: "100%" }} contentFit="cover" accessibilityIgnoresInvertColors />
               ) : (
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                   <View style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: c.primary, opacity: 0.6 }} />
@@ -172,7 +203,7 @@ export function MediasStep() {
             </View>
           ))}
         </View>
-        <Text variante="legende" muted>La première photo sera la couverture de l'annonce.</Text>
+        <Text variante="legende" muted>La première photo sera la couverture de l’annonce.</Text>
       </View>
     </Screen>
   );

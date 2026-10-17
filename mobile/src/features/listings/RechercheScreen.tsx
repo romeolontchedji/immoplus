@@ -1,30 +1,49 @@
-import { useState } from "react";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import { sp } from "@/ui/theme/tokens";
-import { Button } from "@/ui/components/Button";
+import { ArrowDownUp } from "lucide-react-native";
+import { colors, sp } from "@/ui/theme/tokens";
+import { BarreRecherche } from "@/ui/components/BarreRecherche";
+import { Chip } from "@/ui/components/Chip";
 import { Screen } from "@/ui/components/Screen";
-import { TextField } from "@/ui/components/TextField";
-import { nombreDeFiltres, useFiltres } from "./filtres";
+import { Text } from "@/ui/components/Text";
+import { LIBELLES_TRI, nombreDeFiltres, useFiltres, type Filtres } from "./filtres";
+import { FiltresActifs } from "./FiltresActifs";
 import { ListeAnnonces } from "./ListeAnnonces";
 import { useFil } from "./queries";
 
-/** Onglet « Recherche » : texte libre (sans accents, tolérant aux fautes côté serveur) + filtres. Le vide propose de créer une alerte. */
+const TRIS = Object.keys(LIBELLES_TRI) as Filtres["sort"][];
+
+/**
+ * Onglet « Recherche » : saisie libre en direct (sans accents, tolérante aux fautes côté serveur), tri en pastilles,
+ * filtres actifs retirables. La barre et les résultats restent visibles ensemble ; le vide propose une alerte.
+ */
 export function RechercheScreen() {
   const router = useRouter();
   const { filtres, definir } = useFiltres();
-  const [texte, setTexte] = useState(filtres.q);
   const requete = useFil(filtres);
-  const n = nombreDeFiltres(filtres);
+  const nb = nombreDeFiltres(filtres);
+
   return (
     <Screen flush>
-      <View style={{ padding: sp[4], gap: sp[3] }}>
-        <TextField label="Rechercher" value={texte} onChangeText={setTexte} onSubmitEditing={() => definir({ ...filtres, q: texte })} returnKeyType="search" placeholder="Quartier, repère, type…" />
-        <Button titre={n ? `Filtres (${n})` : "Filtres"} variante="secondaire" onPress={() => router.push("/filtres")} />
+      <View style={{ paddingHorizontal: sp[4], paddingTop: sp[3], paddingBottom: sp[2], gap: sp[3] }}>
+        <Text variante="titre">Rechercher</Text>
+        <BarreRecherche valeur={filtres.q} onRecherche={(q) => definir({ ...filtres, q })} onFiltres={() => router.push("/filtres")} nbFiltres={nb} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2], alignItems: "center", paddingRight: sp[2] }}>
+          <ArrowDownUp size={18} color={colors.textMuted} accessibilityLabel="Trier" />
+          {TRIS.map((tri) => (
+            <Chip key={tri} titre={LIBELLES_TRI[tri]} actif={filtres.sort === tri} onPress={() => definir({ ...filtres, sort: tri })} />
+          ))}
+        </ScrollView>
+        <FiltresActifs />
       </View>
       <ListeAnnonces
         requete={requete}
-        vide={{ titre: "Aucune chambre ne correspond", texte: "Élargis tes critères ou crée une alerte : tu seras prévenu dès qu'une chambre correspond.", action: "Créer une alerte", onAction: () => router.push("/nouvelle-alerte") }}
+        vide={{
+          titre: filtres.q ? `Aucun résultat pour « ${filtres.q} »` : "Aucune chambre ne correspond",
+          texte: "Vérifie l'orthographe, retire un filtre ou crée une alerte : tu seras prévenu dès qu'une chambre correspond.",
+          action: "Créer une alerte",
+          onAction: () => router.push("/nouvelle-alerte"),
+        }}
       />
     </Screen>
   );

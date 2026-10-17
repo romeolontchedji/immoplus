@@ -27,7 +27,7 @@ export function NomScreen() {
   return (
     <Screen scroll>
       <Text variante="titre">Modifier mon nom</Text>
-      <Text muted>Saisis ton prénom et ton nom tels qu'ils apparaîtront dans l'application.</Text>
+      <Text muted>Saisis ton prénom et ton nom tels qu’ils apparaîtront dans l’application.</Text>
       <Controller
         control={control}
         name="full_name"

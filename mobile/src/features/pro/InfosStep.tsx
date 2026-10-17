@@ -21,7 +21,7 @@ const CAUTIONS = ["1", "2", "3"] as const;
 const schema = z.object({
   title: z.string().trim().min(3, "Au moins 3 caractères.").max(120, "120 caractères au plus."),
   room_type: z.enum(TYPES, { error: "Choisis un type." }),
-  rent_amount: z.coerce.number({ invalid_type_error: "Obligatoire." }).min(1000, "1 000 F minimum.").max(999_999, "Trop élevé."),
+  rent_amount: z.coerce.number({ error: "Obligatoire." }).min(1000, "1 000 F minimum.").max(999_999, "Trop élevé."),
   deposit_months: z.coerce.number().min(1).max(6),
   is_available: z.boolean(),
 });
@@ -40,7 +40,7 @@ export function InfosStep() {
   const router = useRouter();
   const { brouillon, maj } = useBrouillon();
 
-  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<Valeurs>({
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<z.input<typeof schema>, unknown, Valeurs>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: brouillon.title ?? "",
@@ -68,7 +68,7 @@ export function InfosStep() {
 
   return (
     <Screen scroll footer={<Button titre="Continuer" onPress={handleSubmit(suivant)} />}>
-      <EntetePublication etape={1} total={4} />
+      <EntetePublication etape={1} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Parle-nous de ta chambre</Text>
       <Text muted>Les infos que les étudiants cherchent en premier.</Text>

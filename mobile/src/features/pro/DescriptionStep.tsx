@@ -14,7 +14,7 @@ import { Screen } from "@/ui/components/Screen";
 import { SwitchRow } from "@/ui/components/SwitchRow";
 import { TextField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
-import { champsManquants, useBrouillon } from "./brouillon";
+import { CHAMPS_CREATION, champsManquants, useBrouillon } from "./brouillon";
 import { EntetePublication } from "./EntetePublication";
 
 type EQUIPEMENT = {
@@ -24,11 +24,14 @@ type EQUIPEMENT = {
 
 const EQUIPEMENTS: EQUIPEMENT[] = [
   { cle: "has_private_bathroom", label: "Douche interne" },
-  { cle: "has_water", label: "Eau + électricité" },
   { cle: "is_fenced", label: "Cour clôturée" },
-  { cle: "has_well", label: "Forage" },
-  { cle: "has_tiled_floor", label: "Carrelé" },
 ];
+
+/** Étape de l'assistant où se saisit chaque champ obligatoire. */
+const ETAPE_DU_CHAMP: Partial<Record<(typeof CHAMPS_CREATION)[number], string>> = {
+  district: "localisation", landmark_text: "localisation", address_private: "localisation", latitude: "localisation", longitude: "localisation",
+  water_source: "equipements", electricity_meter: "equipements", has_private_bathroom: "equipements", is_fenced: "equipements",
+};
 
 type Valeurs = {
   description_md: string;
@@ -51,10 +54,16 @@ export function DescriptionStep() {
   const creer = useMutation({
     mutationFn: async (corps: Record<string, unknown>) => unwrap(api.POST("/v1/pro/listings", { body: corps as never })),
     onSuccess: (data) => {
-      maj({ serveurId: (data as Record<string, string>).id });
+      maj({ serveurId: data.id });
       void qc.invalidateQueries({ queryKey: qk.pro.annonces });
     },
   });
+  const modifier = useMutation({
+    mutationFn: async (corps: { description_md: string; has_private_bathroom: boolean; is_fenced: boolean }) =>
+      unwrap(api.PATCH("/v1/pro/listings/{annonce_id}", { params: { path: { annonce_id: brouillon.serveurId as string } }, body: corps })),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.pro.annonce(brouillon.serveurId ?? "") }),
+  });
+  const erreur = creer.error ?? modifier.error;
 
   const { control, handleSubmit, watch, setValue } = useForm<Valeurs>({
     defaultValues: {
@@ -74,34 +83,38 @@ export function DescriptionStep() {
   const suivant = (v: Valeurs) => {
     const mise: Partial<typeof brouillon> = {
       description_md: v.description_md,
-      ...Object.fromEntries(Object.entries(v.equipements).map(([k, val]) => [k, val])),
+      has_private_bathroom: !!v.equipements.has_private_bathroom,
+      is_fenced: !!v.equipements.is_fenced,
     };
     maj(mise);
 
     const brouillonMaj = { ...brouillon, ...mise };
     const manques = champsManquants(brouillonMaj);
 
-    if (!brouillonMaj.serveurId && manques.length === 0) {
-      // Créer l'annonce sur le serveur
-      const corps: Record<string, unknown> = {};
-      for (const cle of Object.keys(brouillonMaj)) {
-        if (brouillonMaj[cle as keyof typeof brouillonMaj] !== undefined) {
-          corps[cle] = brouillonMaj[cle as keyof typeof brouillonMaj];
-        }
-      }
-      creer.mutate(corps, {
-        onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never),
-      });
-    } else {
-      router.push("/pro/nouvelle-annonce/medias" as never);
+    if (brouillonMaj.serveurId) {
+      // Annonce déjà créée : on enregistre la description et les équipements sur le serveur.
+      modifier.mutate(
+        { description_md: v.description_md, has_private_bathroom: !!brouillonMaj.has_private_bathroom, is_fenced: !!brouillonMaj.is_fenced },
+        { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) },
+      );
+      return;
     }
+    if (manques.length) {
+      // Un champ obligatoire manque (brouillon ancien ou étape sautée) : on renvoie vers l'étape concernée.
+      router.push(`/pro/nouvelle-annonce/${ETAPE_DU_CHAMP[manques[0]!] ?? "infos"}` as never);
+      return;
+    }
+    const corps: Record<string, unknown> = {};
+    for (const cle of CHAMPS_CREATION) corps[cle] = brouillonMaj[cle];
+    if (brouillonMaj.description_md) corps.description_md = brouillonMaj.description_md;
+    creer.mutate(corps, { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) });
   };
 
   return (
     <Screen scroll footer={
-      <Button titre="Continuer" chargement={creer.isPending} onPress={handleSubmit(suivant)} />
+      <Button titre="Continuer" chargement={creer.isPending || modifier.isPending} onPress={handleSubmit(suivant)} />
     }>
-      <EntetePublication etape={4} total={4} />
+      <EntetePublication etape={4} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Décris-la en détail</Text>
       <Text muted>Mets en avant ce qui la rend unique.</Text>
@@ -161,9 +174,9 @@ export function DescriptionStep() {
         </View>
       </View>
 
-      {creer.error ? (
+      {erreur ? (
         <Text variante="legende" couleur={c.danger} accessibilityLiveRegion="polite">
-          {isApiError(creer.error) ? messageErreur(creer.error.code, creer.error.message) : "Une erreur est survenue."}
+          {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.erreurs.network}
         </Text>
       ) : null}
     </Screen>

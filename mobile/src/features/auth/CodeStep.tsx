@@ -8,6 +8,7 @@ import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
+import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 import { useAuthFlow } from "./flow";
@@ -71,23 +72,7 @@ export function CodeStep({
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
         {/* En-tête : Logo + Étape 2/2 */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                backgroundColor: colors.primary,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: "#FFFFFF", fontSize: 20, fontWeight: "800" }}>⌂</Text>
-            </View>
-            <Text style={{ fontSize: 22, fontWeight: "800", color: colors.night }}>
-              Logeo<Text style={{ color: colors.sun }}>.</Text>
-            </Text>
-          </View>
+          <Logotype taille={38} />
 
           {estInscription ? (
             <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textMuted }}>

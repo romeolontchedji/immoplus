@@ -13,7 +13,7 @@ const config: ExpoConfig = {
   version: "1.0.0", // doit rester >= `min_supported_version` renvoyée par GET /v1/app-config
   orientation: "portrait",
   icon: "./assets/icon.png",
-  userInterfaceStyle: "automatic", // clair / sombre selon le système
+  userInterfaceStyle: "light", // thème clair uniquement (le sombre rendait des textes illisibles)
   android: {
     package: "bj.logeo.app", // à confirmer avant la première publication (impossible à changer ensuite)
     adaptiveIcon: {
@@ -39,7 +39,7 @@ const config: ExpoConfig = {
     "expo-video",
     "expo-image",
     "expo-localization",
-    ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 200, resizeMode: "contain", backgroundColor: "#FCFAF6", dark: { backgroundColor: "#14110C" } }],
+    ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 200, resizeMode: "contain", backgroundColor: "#FFFFFF" }],
     ["expo-build-properties", { android: { minSdkVersion: 26 } }], // Android 8.0 (ENF-COMP-01)
     ["expo-notifications", { color: "#117853" }],
     ["expo-image-picker", { photosPermission: "Logeo accède à tes photos pour illustrer ton annonce.", cameraPermission: "Logeo utilise la caméra pour filmer ta chambre." }],

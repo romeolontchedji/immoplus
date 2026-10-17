@@ -3,6 +3,11 @@ export function fcfa(montant: number): string {
   return `${Math.round(montant).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F")} FCFA`;
 }
 
+/** Prix affiché comme sur le site et les maquettes : « 18 000 F ». */
+export function francs(montant: number): string {
+  return fcfa(montant).replace(/ FCFA$/, " F");
+}
+
 export function distance(metres: number): string {
   return metres >= 1000 ? `${(metres / 1000).toFixed(1).replace(".", ",")} km` : `${metres} m`;
 }

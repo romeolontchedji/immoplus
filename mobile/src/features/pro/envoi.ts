@@ -1,4 +1,5 @@
 import { Upload } from "tus-js-client";
+import { api, unwrap } from "@/api/client";
 import { accessToken, installationId, refreshTokens } from "@/api/session";
 
 /**
@@ -63,4 +64,18 @@ export async function envoyerFichier(o: { uploadUrl: string; uri: string; surPro
     o.signal?.addEventListener("abort", () => void envoi.abort());
     envoi.start();
   });
+}
+
+/**
+ * Ajoute un média à une annonce : compresse la vidéo, déclare l'envoi au serveur (`kind`, `size_bytes` → `upload_url`),
+ * puis envoie le fichier par morceaux. La progression va de 0 à 1.
+ */
+export async function ajouterMedia(o: { annonceId: string; uri: string; kind: "video" | "photo"; surProgression?: (ratio: number) => void }): Promise<void> {
+  const uri = o.kind === "video" ? await compresserVideo(o.uri) : o.uri;
+  const taille = (await (await fetch(uri)).blob()).size;
+  const media = await unwrap(
+    api.POST("/v1/pro/listings/{annonce_id}/media", { params: { path: { annonce_id: o.annonceId } }, body: { kind: o.kind, size_bytes: taille } }),
+  );
+  if (!media.upload_url) throw new Error("upload_url manquant");
+  await envoyerFichier({ uploadUrl: media.upload_url, uri, surProgression: (envoyes, total) => o.surProgression?.(total ? envoyes / total : 0) });
 }

@@ -17,11 +17,12 @@ type CodeMotif = components["schemas"]["SignalementIn"]["reason_code"];
 type Motif = { code: CodeMotif; label: string; description: string };
 
 const MOTIFS: Motif[] = [
-  { code: "false_info", label: "Informations incorrectes", description: "Photos ou description ne correspondent pas à la réalité." },
+  { code: "fake_listing", label: "Annonce fausse ou trompeuse", description: "Photos ou description ne correspondent pas à la réalité." },
   { code: "already_rented", label: "Chambre déjà louée", description: "Cette chambre n'est plus disponible mais l'annonce reste en ligne." },
-  { code: "contact_outside", label: "Coordonnées partagées", description: "Le gérant partage son numéro ou demande à sortir de Logeo." },
-  { code: "fraud", label: "Fraude ou arnaque", description: "Demande d'acompte sans visite, identité douteuse ou autre abus." },
-  { code: "inappropriate", label: "Contenu inapproprié", description: "Photos ou texte offensants, discriminatoires ou hors sujet." },
+  { code: "price_mismatch", label: "Prix différent", description: "Le loyer ou les frais demandés ne sont pas ceux de l'annonce." },
+  { code: "contact_leak", label: "Coordonnées partagées", description: "Le gérant partage son numéro ou demande à sortir de Logeo." },
+  { code: "scam", label: "Arnaque", description: "Demande d'acompte sans visite, identité douteuse ou autre abus." },
+  { code: "harassment", label: "Harcèlement", description: "Messages insistants, insultants ou déplacés." },
   { code: "other", label: "Autre raison", description: "Décris le problème dans le champ ci-dessous." },
 ];
 
