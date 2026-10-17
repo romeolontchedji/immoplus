@@ -5,6 +5,7 @@ import uuid
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
+from apps.notifications import textes
 
 from .. import selectors
 from ..enums import TypeChambre
@@ -118,12 +119,19 @@ def notifier_correspondances(annonce_id) -> int:
     if annonce is None:
         return 0
     creees = 0
+    loin = textes.distance(annonce.distance_to_campus_m)
+    details = [
+        TypeChambre(annonce.room_type).label if annonce.room_type in TypeChambre.values else None,
+        f"{textes.francs(annonce.rent_amount)}/mois",
+        f"à {loin} de l'UP" if loin else None,
+    ]
+    corps = " · ".join(d for d in details if d) + ". Vois-la avant les autres."
     for alerte_id, utilisateur_id in selectors.alertes_correspondantes(annonce_id):
         n = notifications.creer(
             utilisateur_id,
             "alert.match",
-            "Nouvelle chambre pour toi",
-            f"{annonce.title} — {annonce.rent_amount} FCFA par mois.",
+            f"Nouvelle chambre à {annonce.district.name}",
+            corps,
             data={"listing_id": str(annonce.pk), "slug": annonce.slug, "alert_id": str(alerte_id)},
             dedupe_key=f"alert:{alerte_id}:{annonce_id}",
         )

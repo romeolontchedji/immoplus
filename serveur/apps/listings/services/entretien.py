@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.core import parametres
 from apps.media import stockage
 from apps.notifications import services as notifications
+from apps.notifications import textes
 
 from ..enums import StatutAnnonce, StatutMedia, TypeMedia
 from ..models import Listing, ListingMedia
@@ -36,8 +37,9 @@ def relances_de_fraicheur() -> dict:
             notifications.creer(
                 annonce.gerant_id,
                 "listing.reminder",
-                "Cette chambre est-elle toujours disponible ?",
-                f"Confirme « {annonce.title} » : sans réponse, elle sera masquée dans {reste} jour(s).",
+                "Ta chambre est toujours libre ?",
+                f"Confirme « {textes.tronquer(annonce.title, 60)} » en un geste, sinon elle sera masquée"
+                f" dans {textes.pluriel(reste, 'jour')}.",
                 data={"listing_id": str(annonce.pk), "slug": annonce.slug, "stage": etape},
                 dedupe_key=f"reminder:{annonce.pk}:{etape}:{reference.date().isoformat()}",
             )

@@ -235,7 +235,7 @@ def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) 
         if ancien == StatutAnnonce.PROCESSING and nouveau == StatutAnnonce.PUBLISHED:
             notifications.creer(
                 annonce.gerant_id, "listing.published", "Ton annonce est en ligne",
-                f"« {annonce.title} » est visible par les locataires.", data=data,
+                f"« {annonce.title} » est visible. Les locataires qui ont une alerte correspondante sont prévenus.", data=data,
                 dedupe_key=f"published:{annonce.pk}:{annonce.published_at.isoformat() if annonce.published_at else ''}",
             )  # fmt: skip
         elif nouveau == StatutAnnonce.HIDDEN and raison in _MOTIFS_MASQUAGE:

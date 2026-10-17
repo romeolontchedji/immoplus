@@ -382,7 +382,9 @@ class TestNotificationsDeMessage:
         assert {n.collapse_key for n in notifs} == {
             f"conv:{conversation.pk}"
         }  # groupées à l'affichage seulement
-        assert boite()[0]["titre"] == decor.locataire.full_name
+        assert boite()[0]["titre"].startswith(
+            f"{decor.locataire.full_name} · "
+        )  # qui · quelle chambre
         for m in (m1, m2):
             m.refresh_from_db()
             assert m.notified_at is not None

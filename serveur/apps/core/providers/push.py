@@ -25,10 +25,28 @@ class ResultatPush:
     erreur: str = ""
 
 
+@dataclass(frozen=True)
+class OptionsPush:
+    """Présentation sur l'appareil. `canal` : canal Android créé par l'application (messages, alertes, rappels,
+    compte) ; `prioritaire` : bannière immédiate même téléphone en veille ; `badge` : non-lus sur l'icône ;
+    `sous_titre` : ligne sous le titre (iOS)."""
+
+    canal: str | None = None
+    prioritaire: bool = False
+    badge: int | None = None
+    sous_titre: str | None = None
+
+
 class PushProvider(ABC):
     @abstractmethod
     def envoyer(
-        self, jeton: str, titre: str, corps: str, data: dict, collapse_key: str | None = None
+        self,
+        jeton: str,
+        titre: str,
+        corps: str,
+        data: dict,
+        collapse_key: str | None = None,
+        options: OptionsPush | None = None,
     ) -> ResultatPush:
         """Envoie un push à un appareil. Ne lève jamais : le résultat dit ce qui s'est passé."""
 
@@ -42,7 +60,7 @@ class ConsolePushProvider(PushProvider):
                 "Le fournisseur push « console » est réservé au développement."
             )
 
-    def envoyer(self, jeton, titre, corps, data, collapse_key=None) -> ResultatPush:
+    def envoyer(self, jeton, titre, corps, data, collapse_key=None, options=None) -> ResultatPush:
         if jeton.startswith("invalide"):
             return ResultatPush(ok=False, jeton_invalide=True, erreur="jeton invalide")
         if jeton.startswith("panne"):
@@ -56,6 +74,9 @@ class ConsolePushProvider(PushProvider):
                 "titre": titre,
                 "corps": corps,
                 "data": data,
+                "canal": options.canal if options else None,
+                "prioritaire": options.prioritaire if options else False,
+                "badge": options.badge if options else None,
                 "collapse": collapse_key,
             },
         )
@@ -70,10 +91,20 @@ class ExpoPushProvider(PushProvider):
         self.delai = float(getattr(settings, "PUSH_HTTP_TIMEOUT_S", 5))
         self.url = getattr(settings, "EXPO_PUSH_URL", EXPO_URL)
 
-    def envoyer(self, jeton, titre, corps, data, collapse_key=None) -> ResultatPush:
+    def envoyer(self, jeton, titre, corps, data, collapse_key=None, options=None) -> ResultatPush:
         message = {"to": jeton, "title": titre, "body": corps, "data": data, "sound": "default"}
         if collapse_key:
             message["collapseId"] = collapse_key  # remplace la précédente dans le tiroir (Android)
+        if options:
+            if options.canal:
+                message["channelId"] = (
+                    options.canal
+                )  # sans lui, Android range tout dans le canal par défaut
+            message["priority"] = "high" if options.prioritaire else "default"
+            if options.badge is not None:
+                message["badge"] = options.badge
+            if options.sous_titre:
+                message["subtitle"] = options.sous_titre
         requete = urllib.request.Request(  # noqa: S310
             self.url,
             data=json.dumps(message).encode(),
@@ -100,7 +131,7 @@ class ExpoPushProvider(PushProvider):
 class FcmPushProvider(PushProvider):
     """Squelette FCM (HTTP v1) : à compléter avec le compte de service du projet Firebase [À FOURNIR]."""
 
-    def envoyer(self, jeton, titre, corps, data, collapse_key=None) -> ResultatPush:
+    def envoyer(self, jeton, titre, corps, data, collapse_key=None, options=None) -> ResultatPush:
         raise NotImplementedError(
             "FCM : fournir le compte de service Firebase puis implémenter l'appel HTTP v1."
         )

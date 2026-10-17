@@ -30,6 +30,28 @@ CATEGORIES = {
 }
 NON_DESACTIVABLES = {"account.sanction"}
 
+# Canaux Android créés par l'application (mobile/src/features/notifications/push.ts). Les messages sont prioritaires :
+# bannière immédiate, son et vibration, même téléphone en veille, comme une messagerie.
+CANAUX = {
+    "message.received": "messages",
+    "message.unanswered_reminder": "messages",
+    "alert.match": "alertes",
+    "favorite.unavailable": "alertes",
+    "listing.reminder": "rappels",
+    "listing.reported_rented": "rappels",
+}
+PRIORITAIRES = {"message.received", "message.unanswered_reminder", "account.sanction"}
+
+
+def options_push(n: Notification) -> push.OptionsPush:
+    """Canal, priorité, pastille de non-lus et sous-titre (chambre concernée) d'une notification."""
+    return push.OptionsPush(
+        canal=CANAUX.get(n.kind, "compte"),
+        prioritaire=n.kind in PRIORITAIRES,
+        badge=selectors.non_lues(n.user_id),
+        sous_titre=(n.data.get("_sous_titre") or None),
+    )
+
 
 def _motif_de_saut(utilisateur_id, kind: str, data: dict) -> str | None:
     """Raison pour laquelle aucun push ne doit partir (préférences de l'utilisateur), sinon None."""
@@ -161,10 +183,13 @@ def envoyer_push(notification_id) -> str:
     titre, corps = _contenu_push(n)
     charge = {"kind": n.kind, **{k: v for k, v in n.data.items() if not k.startswith("_")}}
     fournisseur = push.fournisseur()
+    options = options_push(n)
     livres, echecs, invalides, derniere = set(deja_livres), 0, 0, ""
     for appareil in cibles:
         try:
-            resultat = fournisseur.envoyer(appareil["token"], titre, corps, charge, n.collapse_key)
+            resultat = fournisseur.envoyer(
+                appareil["token"], titre, corps, charge, n.collapse_key, options
+            )
         except Exception as erreur:  # noqa: BLE001 - un fournisseur défaillant ne casse jamais l'appelant
             resultat = push.ResultatPush(ok=False, erreur=type(erreur).__name__)
         if resultat.ok:

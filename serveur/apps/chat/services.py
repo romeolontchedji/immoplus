@@ -14,6 +14,7 @@ from apps.listings.enums import StatutAnnonce
 from apps.listings.services import contenu
 from apps.listings.services.entretien import annonces_louees_depuis
 from apps.notifications import services as notifications
+from apps.notifications import textes
 
 from . import selectors, signals
 from .models import Conversation, Message
@@ -418,13 +419,16 @@ def notifier(message_id) -> str:
     noms = comptes.noms_utilisateurs([message.sender_id])
     apercu = (message.body_masked or message.body)[:APERCU_MAX]
     silence = selectors.en_silence(conversation, destinataire, timezone.now())
+    annonce = annonces.annonce_pour_messagerie(conversation.listing_id)
+    chambre = textes.tronquer(annonce["title"], 32) if annonce else None
+    nom = noms.get(message.sender_id) or "Nouveau message"
     notifications.creer(
         destinataire,
         "message.received",
-        noms.get(message.sender_id) or "Nouveau message",
+        f"{nom} · {chambre}" if chambre else nom,  # comme une messagerie : qui, à propos de quoi
         apercu,
         data={"conversation_id": str(conversation.pk), "message_id": str(message.pk), "seq": message.seq,
-              "listing_id": str(conversation.listing_id)},
+              "listing_id": str(conversation.listing_id), "_sous_titre": chambre},
         dedupe_key=f"message:{message.pk}",
         collapse_key=f"conv:{conversation.pk}",
         silence=silence,
@@ -463,11 +467,16 @@ def rappeler_gerants_sans_reponse() -> int:
         last_sender_id=F("client_id"),
         status="open",
     )[:500]:
+        nom = comptes.noms_utilisateurs([c.client_id]).get(c.client_id) or "Un locataire"
+        non_lus = textes.pluriel(
+            selectors.non_lus(c, c.gerant_id), "message non lu", "messages non lus"
+        )
         n = notifications.creer(
             c.gerant_id,
             "message.unanswered_reminder",
-            "Un locataire attend ta réponse",
-            f"Tu as {selectors.non_lus(c, c.gerant_id)} message(s) non lu(s) depuis plus de {heures} h.",
+            f"{nom} attend ta réponse",
+            f"{non_lus} depuis plus de {textes.pluriel(heures, 'heure')}. "
+            "Réponds vite : les locataires choisissent le gérant le plus réactif.",
             data={"conversation_id": str(c.pk), "listing_id": str(c.listing_id)},
             dedupe_key=f"reminder:{c.pk}:{c.last_seq}",
             silence=selectors.en_silence(c, c.gerant_id, timezone.now()),
@@ -502,16 +511,14 @@ def prevenir_conversations(annonce_id, nouveau_statut: str) -> int:
     envoyees = 0
     for c in Conversation.objects.filter(listing_id=annonce_id):
         _diffuser_statut(c)
-        motif = (
-            "est maintenant louée"
-            if nouveau_statut == StatutAnnonce.RENTED
-            else "n'est plus disponible"
-        )
+        titre = textes.tronquer(annonce["title"], 40)
         n = notifications.creer(
             c.client_id,
             "favorite.unavailable",
-            "Une annonce a changé",
-            f"« {annonce['title']} » {motif}.",
+            f"« {titre} » vient d'être louée"
+            if nouveau_statut == StatutAnnonce.RENTED
+            else f"« {titre} » n'est plus disponible",
+            "Continue ta recherche : d'autres chambres t'attendent sur Logeo.",
             data={
                 "listing_id": str(annonce_id),
                 "slug": annonce["slug"],

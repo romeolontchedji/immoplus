@@ -370,7 +370,7 @@ class TestFavoris:
         with django_capture_on_commit_callbacks(execute=True):
             annonces.masquer(p, a.pk)
         n = Notification.objects.get(kind="favorite.unavailable")
-        assert "n'est plus disponible" in n.body and n.user_id == u.pk
+        assert "n'est plus disponible" in n.title and n.user_id == u.pk
 
 
 class TestAlertes:

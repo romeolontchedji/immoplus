@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from apps.core import stats
 from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
+from apps.notifications import textes
 
 from .. import selectors
 from ..enums import StatutAnnonce
@@ -39,18 +40,19 @@ def notifier_indisponibilite(annonce_id, nouveau_statut: str) -> int:
     annonce = Listing.objects.filter(pk=annonce_id).first()
     if annonce is None:
         return 0
-    motif = (
-        "est maintenant louée"
+    titre = textes.tronquer(annonce.title, 40)
+    titre_notif = (
+        f"« {titre} » vient d'être louée"
         if nouveau_statut == StatutAnnonce.RENTED
-        else "n'est plus disponible"
+        else f"« {titre} » n'est plus disponible"
     )
     envoyees = 0
     for utilisateur_id in selectors.locataires_favoris(annonce_id):
         n = notifications.creer(
             utilisateur_id,
             "favorite.unavailable",
-            "Une annonce en favori a changé",
-            f"« {annonce.title} » {motif}.",
+            titre_notif,
+            "D'autres chambres t'attendent dans le même quartier.",
             data={"listing_id": str(annonce.pk), "slug": annonce.slug},
             dedupe_key=f"favorite:{utilisateur_id}:{annonce_id}:{nouveau_statut}",
         )
