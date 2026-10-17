@@ -21,6 +21,7 @@ def test_accueil():
     assert re.search(r'href="/static/css/dist/logeo\.[0-9a-f]{10}\.css"', html)
 
 
+@pytest.mark.django_db  # le pied de page commun lit le contact de l'équipe (paramètre TEAM_PHONE)
 def test_styleguide_en_local():
     reponse = Client().get("/styleguide")
     assert reponse.status_code == 200

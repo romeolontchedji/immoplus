@@ -62,6 +62,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "web.context_processors.navigation",
+                "web.context_processors.contact",
             ],
         },
     }
