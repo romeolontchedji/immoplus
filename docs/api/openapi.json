@@ -2712,12 +2712,15 @@
                     "latitude": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier."
                     },
                     "longitude": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$",
+                        "nullable": true
                     },
                     "rent_amount": {
                         "type": "integer",
@@ -2767,8 +2770,6 @@
                     "has_private_bathroom",
                     "is_fenced",
                     "landmark_text",
-                    "latitude",
-                    "longitude",
                     "rent_amount",
                     "room_type",
                     "title",
@@ -4351,12 +4352,15 @@
                     "latitude": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier."
                     },
                     "longitude": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$"
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,6})?$",
+                        "nullable": true
                     },
                     "rent_amount": {
                         "type": "integer",

@@ -17,8 +17,16 @@ class AnnonceIn(serializers.Serializer):
     district = serializers.UUIDField()
     landmark_text = serializers.CharField(max_length=160)
     address_private = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
-    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    latitude = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        required=False,
+        allow_null=True,
+        help_text="Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.",
+    )
+    longitude = serializers.DecimalField(
+        max_digits=9, decimal_places=6, required=False, allow_null=True
+    )
     rent_amount = serializers.IntegerField(min_value=1)
     deposit_months = serializers.IntegerField(min_value=0, max_value=12)
     advance_months = serializers.IntegerField(min_value=0, max_value=12)

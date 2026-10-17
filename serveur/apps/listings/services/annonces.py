@@ -31,8 +31,10 @@ CHAMPS_MODIFIABLES = (
     "deposit_months", "advance_months", "agent_fee_amount", "available_from", "has_private_bathroom", "is_fenced",
     "water_source", "electricity_meter", "description_md",
 )  # fmt: skip
+# La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
+# partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
 OBLIGATOIRES = (
-    "title", "room_type", "district", "landmark_text", "latitude", "longitude", "rent_amount", "deposit_months",
+    "title", "room_type", "district", "landmark_text", "rent_amount", "deposit_months",
     "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter",
 )  # fmt: skip
 LIMITES_BENIN = {"latitude": (6.0, 12.6), "longitude": (0.7, 3.9)}
@@ -61,8 +63,10 @@ def _valider(d: dict) -> None:
         isinstance(d["agent_fee_amount"], int) and d["agent_fee_amount"] >= 0
     ):
         raise _champ("agent_fee_amount", "Les frais doivent être un entier positif ou nul.")
+    if (d.get("latitude") is None) != (d.get("longitude") is None):
+        raise _champ("latitude", "La position doit avoir une latitude et une longitude.")
     for nom, (bas, haut) in LIMITES_BENIN.items():
-        if nom in d and not (bas <= float(d[nom]) <= haut):
+        if d.get(nom) is not None and not (bas <= float(d[nom]) <= haut):
             raise _champ(nom, "Position hors du Bénin.")
 
 
@@ -101,7 +105,10 @@ def _slug(titre: str) -> str:
 
 
 def _appliquer(annonce: Listing, donnees: dict) -> None:
+    ancien_quartier = annonce.district_id
     for nom in CHAMPS_MODIFIABLES:
+        if nom in ("latitude", "longitude"):
+            continue
         if nom in donnees:
             valeur = donnees[nom]
             if nom == "district":
@@ -112,8 +119,15 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
                 setattr(annonce, nom, " ".join(str(valeur or "").split()))
             else:
                 setattr(annonce, nom, valeur)
-    if "latitude" in donnees or "longitude" in donnees:
-        annonce.distance_to_campus_m = geo.distance_au_campus(annonce.latitude, annonce.longitude)
+    if (
+        donnees.get("latitude") is not None
+    ):  # GPS partagé par le gérant (la paire est contrôlée par `_valider`)
+        annonce.latitude, annonce.longitude = donnees["latitude"], donnees["longitude"]
+    elif annonce.district_id != ancien_quartier:  # nouveau quartier sans GPS : centre du quartier
+        annonce.latitude, annonce.longitude = annonce.district.latitude, annonce.district.longitude
+    else:
+        return
+    annonce.distance_to_campus_m = geo.distance_au_campus(annonce.latitude, annonce.longitude)
 
 
 @transaction.atomic

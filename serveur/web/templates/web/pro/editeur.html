@@ -114,14 +114,10 @@
               {% with champ=form.address_private %}
                 {% include "web/composants/champ.html" %}
               {% endwith %}
-              <div class="grille grille--2">
-                {% with champ=form.latitude %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.longitude %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-              </div>
+              <p class="champ__aide">
+                La distance à l'UP est calculée depuis le centre du quartier. Depuis l'application, tu peux utiliser la position
+                exacte de ton téléphone.
+              </p>
             </div>
           </div>
           {# 3. Loyer et conditions #}

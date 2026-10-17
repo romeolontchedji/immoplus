@@ -184,7 +184,7 @@ def _initial(annonce) -> dict:
     return {
         "title": annonce.title, "room_type": annonce.room_type, "district": str(annonce.district_id),
         "landmark_text": annonce.landmark_text, "address_private": annonce.address_private,
-        "latitude": annonce.latitude, "longitude": annonce.longitude, "rent_amount": annonce.rent_amount,
+        "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months, "advance_months": annonce.advance_months,
         "agent_fee_amount": annonce.agent_fee_amount, "available_from": annonce.available_from,
         "has_private_bathroom": annonce.has_private_bathroom, "is_fenced": annonce.is_fenced,

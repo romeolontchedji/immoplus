@@ -149,6 +149,40 @@ class TestAutorisations:
         assert r.status_code == 200 and r.json()[0]["slug"] == quartier.slug
 
 
+class TestPosition:
+    """Décision V7 : la position n'est plus demandée ; centre du quartier, ou GPS partagé par le gérant."""
+
+    def test_sans_position_la_chambre_est_au_centre_du_quartier(self, pro):
+        quartier = DistrictFactory(latitude=9.36, longitude=2.61)
+        corps = donnees_annonce(quartier)
+        corps.pop("latitude"), corps.pop("longitude")
+        r = pro.post("/v1/pro/listings", corps, format="json")
+        assert r.status_code == 201, r.content
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.36, 2.61)
+        assert r.json()["distance_to_campus_m"] == geo.distance_au_campus(9.36, 2.61)
+
+    def test_une_seule_coordonnee_refusee(self, pro, quartier):
+        corps = donnees_annonce(quartier)
+        corps.pop("longitude")
+        r = pro.post("/v1/pro/listings", corps, format="json")
+        assert r.status_code == 400 and "latitude" in r.json()["error"]["fields"]
+
+    def test_changer_de_quartier_replace_la_chambre(self, pro, quartier):
+        a = creer(pro, quartier, latitude="9.341000", longitude="2.633000")
+        autre = DistrictFactory(latitude=9.38, longitude=2.6)
+        r = pro.patch(f"/v1/pro/listings/{a['id']}", {"district": str(autre.pk)}, format="json")
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.38, 2.6)
+
+    def test_le_gps_reste_si_le_quartier_ne_change_pas(self, pro, quartier):
+        a = creer(pro, quartier, latitude="9.341000", longitude="2.633000")
+        r = pro.patch(
+            f"/v1/pro/listings/{a['id']}",
+            {"district": str(quartier.pk), "rent_amount": 26000},
+            format="json",
+        )
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.341, 2.633)
+
+
 class TestModification:
     def test_modifier_recalcule_la_distance(self, pro, quartier):
         a = creer(pro, quartier)

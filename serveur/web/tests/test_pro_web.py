@@ -24,7 +24,7 @@ def session_gerant():
 def formulaire(quartier, **extra):
     return {
         "action": "enregistrer", "title": "Chambre propre près du campus", "room_type": "single", "district": str(quartier.pk),
-        "landmark_text": "Derrière la pharmacie", "address_private": "", "latitude": "9.340000", "longitude": "2.633000",
+        "landmark_text": "Derrière la pharmacie", "address_private": "",
         "rent_amount": "25000", "deposit_months": "2", "advance_months": "1", "agent_fee_amount": "0",
         "available_from": "2026-11-01", "has_private_bathroom": "on", "is_fenced": "on", "water_source": "running",
         "electricity_meter": "individual", "description_md": "Chambre **calme**", **extra,

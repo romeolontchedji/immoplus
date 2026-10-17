@@ -960,10 +960,13 @@ export interface components {
             district: string;
             landmark_text: string;
             address_private?: string;
+            /**
+             * Format: decimal
+             * @description Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.
+             */
+            latitude?: string | null;
             /** Format: decimal */
-            latitude: string;
-            /** Format: decimal */
-            longitude: string;
+            longitude?: string | null;
             rent_amount: number;
             deposit_months: number;
             advance_months: number;
@@ -1421,10 +1424,13 @@ export interface components {
             district?: string;
             landmark_text?: string;
             address_private?: string;
+            /**
+             * Format: decimal
+             * @description Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.
+             */
+            latitude?: string | null;
             /** Format: decimal */
-            latitude?: string;
-            /** Format: decimal */
-            longitude?: string;
+            longitude?: string | null;
             rent_amount?: number;
             deposit_months?: number;
             advance_months?: number;

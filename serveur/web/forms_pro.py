@@ -18,8 +18,6 @@ class AnnonceForm(_Base):
         max_length=255,
         required=False,
     )
-    latitude = forms.DecimalField(label="Latitude", max_digits=9, decimal_places=6)
-    longitude = forms.DecimalField(label="Longitude", max_digits=9, decimal_places=6)
     rent_amount = forms.IntegerField(label="Loyer mensuel (FCFA)", min_value=1)
     deposit_months = forms.IntegerField(label="Caution (mois)", min_value=0, max_value=12)
     advance_months = forms.IntegerField(label="Avance (mois)", min_value=0, max_value=12)
