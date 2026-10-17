@@ -12,6 +12,7 @@ urlpatterns = [
     path("healthz", vues_core.healthz, name="healthz"),
     path("readyz", vues_core.readyz, name="readyz"),
     path("uploads/<uuid:media_id>", envoi_media, name="uploads"),
+    path("v1/app-config", vues_core.ConfigurationApp.as_view(), name="app-config"),
     path("v1/", include("apps.accounts.api.urls")),
     path("v1/", include("apps.listings.api.urls")),
     path("v1/", include("apps.notifications.api.urls")),

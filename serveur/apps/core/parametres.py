@@ -67,6 +67,20 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "RENTED_REPORTS_THRESHOLD": (3, "Signalements « déjà louée » distincts avant dossier."),
     "STALE_HIDE_DAYS": (14, "Jours sans confirmation avant le masquage d'une annonce."),
     "STALE_REMINDER_DAYS": ([7, 10], "Jours sans confirmation avant chaque relance."),
+    "MIN_SUPPORTED_VERSION": (
+        "1.0.0",
+        "Version minimale de l'application mobile (en dessous : mise à jour).",
+    ),
+    "MAINTENANCE_ENABLED": (False, "Maintenance annoncée à l'application mobile."),
+    "MAINTENANCE_MESSAGE": (
+        "",
+        "Message affiché pendant la maintenance (vide : texte par défaut).",
+    ),
+    "APP_NOTICE": ("", "Avis court affiché dans l'application (vide : aucun)."),
+    "TEAM_PHONE": (
+        "+2290156201400",
+        "Numéro de l'équipe Logeo (appel et WhatsApp), format international.",
+    ),
 }
 
 _DELAI_CACHE_S = 30

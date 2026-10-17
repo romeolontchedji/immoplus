@@ -50,6 +50,31 @@
                 }
             }
         },
+        "/v1/app-config": {
+            "get": {
+                "operationId": "app_config",
+                "description": "GET /v1/app-config : version minimale, maintenance, avis, drapeaux, limites, temps réel, contact de l'équipe.",
+                "summary": "Configuration distante",
+                "tags": [
+                    "Application"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AppConfigOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/auth/login": {
             "post": {
                 "operationId": "v1_auth_login_create",
@@ -2864,6 +2889,44 @@
                     "markdown"
                 ]
             },
+            "AppConfigOut": {
+                "type": "object",
+                "properties": {
+                    "min_supported_version": {
+                        "type": "string"
+                    },
+                    "maintenance": {
+                        "$ref": "#/components/schemas/MaintenanceOut"
+                    },
+                    "notice": {
+                        "type": "string"
+                    },
+                    "flags": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/LimitesOut"
+                    },
+                    "realtime": {
+                        "$ref": "#/components/schemas/TempsReelOut"
+                    },
+                    "contact": {
+                        "$ref": "#/components/schemas/ContactOut"
+                    }
+                },
+                "required": [
+                    "contact",
+                    "flags",
+                    "limits",
+                    "maintenance",
+                    "min_supported_version",
+                    "notice",
+                    "realtime"
+                ]
+            },
             "AppareilOut": {
                 "type": "object",
                 "properties": {
@@ -3062,6 +3125,22 @@
                     "password",
                     "phone",
                     "platform"
+                ]
+            },
+            "ContactOut": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string"
+                    },
+                    "whatsapp_url": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                },
+                "required": [
+                    "phone",
+                    "whatsapp_url"
                 ]
             },
             "ConversationDetailOut": {
@@ -3556,6 +3635,53 @@
                     "up_to_seq"
                 ]
             },
+            "LimitesOut": {
+                "type": "object",
+                "properties": {
+                    "message_max_length": {
+                        "type": "integer"
+                    },
+                    "messages_per_minute": {
+                        "type": "integer"
+                    },
+                    "alerts_max": {
+                        "type": "integer"
+                    },
+                    "favorites_max": {
+                        "type": "integer"
+                    },
+                    "photos_max": {
+                        "type": "integer"
+                    },
+                    "photo_max_bytes": {
+                        "type": "integer"
+                    },
+                    "video_max_bytes": {
+                        "type": "integer"
+                    },
+                    "upload_chunk_max_bytes": {
+                        "type": "integer"
+                    },
+                    "page_size_default": {
+                        "type": "integer"
+                    },
+                    "page_size_max": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "alerts_max",
+                    "favorites_max",
+                    "message_max_length",
+                    "messages_per_minute",
+                    "page_size_default",
+                    "page_size_max",
+                    "photo_max_bytes",
+                    "photos_max",
+                    "upload_chunk_max_bytes",
+                    "video_max_bytes"
+                ]
+            },
             "ListeConversationsOut": {
                 "type": "object",
                 "properties": {
@@ -3600,6 +3726,21 @@
                     "items",
                     "next_cursor",
                     "unread_count"
+                ]
+            },
+            "MaintenanceOut": {
+                "type": "object",
+                "properties": {
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "active",
+                    "message"
                 ]
             },
             "MediaIn": {
@@ -4312,6 +4453,33 @@
                 ],
                 "type": "string",
                 "description": "* `listing` - listing\n* `message` - message\n* `user` - user\n* `conversation` - conversation"
+            },
+            "TempsReelOut": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "ticket_ttl_s": {
+                        "type": "integer"
+                    },
+                    "ping_interval_s": {
+                        "type": "integer"
+                    },
+                    "inactivity_close_s": {
+                        "type": "integer"
+                    },
+                    "max_connections": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "inactivity_close_s",
+                    "max_connections",
+                    "path",
+                    "ping_interval_s",
+                    "ticket_ttl_s"
+                ]
             },
             "TicketOut": {
                 "type": "object",
