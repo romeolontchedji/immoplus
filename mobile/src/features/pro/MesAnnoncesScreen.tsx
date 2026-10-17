@@ -1,23 +1,92 @@
-import { EmptyState } from "@/ui/components/States";
+import { useState } from "react";
+import { FlatList, Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { useRouter } from "expo-router";
+import { CalendarCheck, Plus } from "lucide-react-native";
+import { francs } from "@/lib/format";
+import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
+import { Badge } from "@/ui/components/Card";
+import { Chip } from "@/ui/components/Chip";
+import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
+import { type AnnoncePro, useMesAnnonces } from "./queries";
+import { ilYA, ONGLETS, STATUTS } from "./statuts";
 
-/**
- * SQUELETTE — Mes annonces
- *
- * Route    : /pro/annonces (onglet)
- * API      : GET /v1/pro/listings
- * États    : vide → « Créer une annonce » ; statuts (brouillon, en traitement, en ligne, masquée, louée) ; actions rapides
- * Réf. CDC : EF-ANN-01, EF-ANN-12
- *
- * À faire : remplacer le contenu par l'écran réel. Les crochets de données vont dans `queries.ts` de la fonctionnalité ;
- * les composants communs (`Screen`, `Button`, `TextField`, `QueryState`…) sont dans `src/ui/components`.
- */
-export function MesAnnoncesScreen() {
+function CarteAnnonce({ annonce, onPress }: { annonce: AnnoncePro; onPress: () => void }) {
+  const statut = STATUTS[annonce.status] ?? { libelle: annonce.status, ton: "neutre" as const };
+  const confirmee = annonce.status === "published" ? ilYA(annonce.last_confirmed_at ?? annonce.published_at) : null;
   return (
-    <Screen scroll>
-      <Text variante="titre">Mes annonces</Text>
-      <EmptyState titre="Écran à construire" texte="Liste par statut." />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${annonce.title}, ${statut.libelle}`}
+      onPress={onPress}
+      style={({ pressed }) => ({ backgroundColor: pressed ? colors.bg : colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.divider, padding: sp[4], gap: sp[2], ...ombre.card })}
+    >
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp[3] }}>
+        <Text variante="corpsGras" style={{ flex: 1 }} numberOfLines={2}>{annonce.title}</Text>
+        <Badge titre={statut.libelle} ton={statut.ton} />
+      </View>
+      <Text variante="legende" muted>{[annonce.room_type_label, annonce.district_name].filter(Boolean).join(" · ")}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Text variante="corpsGras" couleur={colors.primary}>{francs(annonce.rent_amount)} / mois</Text>
+        {confirmee ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <CalendarCheck size={14} color={colors.textMuted} />
+            <Text variante="legende" muted>Confirmée {confirmee}</Text>
+          </View>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+/** Mes annonces (EF-ANN-01, EF-ANN-12 ; plan v2, MM4) : filtres par statut avec compteurs, accès à chaque annonce. */
+export function MesAnnoncesScreen() {
+  const router = useRouter();
+  const requete = useMesAnnonces();
+  const [onglet, setOnglet] = useState<(typeof ONGLETS)[number]["cle"]>("tout");
+
+  return (
+    <Screen flush>
+      <View style={{ paddingHorizontal: sp[4], paddingTop: sp[4], gap: sp[3] }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text variante="titre">Mes chambres</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Publier une nouvelle chambre"
+            onPress={() => router.push("/pro/nouvelle-annonce/infos" as never)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.sun, paddingHorizontal: sp[4], paddingVertical: sp[2], borderRadius: rayon.pilule }}
+          >
+            <Plus size={18} color={colors.night} />
+            <Text variante="corpsGras">Publier</Text>
+          </Pressable>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2] }}>
+          {ONGLETS.map((o) => {
+            const n = (requete.data ?? []).filter((a) => !o.statuts || (o.statuts as readonly string[]).includes(a.status)).length;
+            return <Chip key={o.cle} titre={`${o.libelle} · ${n}`} actif={onglet === o.cle} onPress={() => setOnglet(o.cle)} />;
+          })}
+        </ScrollView>
+      </View>
+      <QueryState
+        query={requete}
+        vide={{ quand: (l) => l.length === 0, titre: "Aucune chambre publiée", texte: "Publie ta première chambre : une vidéo, quelques photos, et les étudiants te contactent.", action: "Publier une chambre", onAction: () => router.push("/pro/nouvelle-annonce/infos" as never) }}
+      >
+        {(liste) => {
+          const filtre = ONGLETS.find((o) => o.cle === onglet)?.statuts;
+          const visibles = liste.filter((a) => !filtre || (filtre as readonly string[]).includes(a.status));
+          return (
+            <FlatList
+              data={visibles}
+              keyExtractor={(a) => a.id}
+              contentContainerStyle={{ padding: sp[4], gap: sp[3] }}
+              refreshControl={<RefreshControl refreshing={requete.isRefetching} onRefresh={() => void requete.refetch()} />}
+              ListEmptyComponent={<Text muted style={{ textAlign: "center", paddingTop: sp[8] }}>Aucune chambre dans cette catégorie.</Text>}
+              renderItem={({ item }) => <CarteAnnonce annonce={item} onPress={() => router.push(`/pro/annonce/${item.id}` as never)} />}
+            />
+          );
+        }}
+      </QueryState>
     </Screen>
   );
 }

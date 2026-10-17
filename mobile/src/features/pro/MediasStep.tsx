@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { isApiError } from "@/api/errors";
@@ -28,7 +28,9 @@ export function MediasStep() {
   const { c } = useTheme();
   const router = useRouter();
   const { brouillon, maj } = useBrouillon();
-  const id = brouillon.serveurId;
+  // `?annonce=` : médias d'une annonce existante, depuis sa fiche gérant (hors assistant de création).
+  const { annonce } = useLocalSearchParams<{ annonce?: string }>();
+  const id = annonce ?? brouillon.serveurId;
   const medias = useMediasPro(id);
   const [envoi, setEnvoi] = useState<{ libelle: string; ratio: number } | null>(null);
   const [erreurEnvoi, setErreurEnvoi] = useState<unknown>(null);
@@ -79,11 +81,11 @@ export function MediasStep() {
   return (
     <Screen scroll footer={
       <Button
-        titre="Continuer"
-        onPress={() => router.push("/pro/nouvelle-annonce/description" as never)}
+        titre={annonce ? "Terminer" : "Continuer"}
+        onPress={() => (annonce ? router.back() : router.push("/pro/nouvelle-annonce/description" as never))}
       />
     }>
-      <EntetePublication etape={5} total={6} />
+      {annonce ? null : <EntetePublication etape={5} total={6} />}
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Montre-la en vidéo</Text>
       <Text muted>Une vidéo rassure et fait gagner du temps à tout le monde.</Text>

@@ -21,5 +21,7 @@ export const qk = {
     annonce: (id: string) => ["pro", "annonce", id] as const,
     medias: (id: string) => ["pro", "medias", id] as const,
     types: ["pro", "types"] as const,
+    preparation: (id: string) => ["pro", "preparation", id] as const,
+    stats: (id: string, jours: number) => ["pro", "stats", id, jours] as const,
   },
 };

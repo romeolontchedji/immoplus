@@ -25,7 +25,26 @@ export function useActionAnnonce(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (action: Action) => unwrap(api.POST(`/v1/pro/listings/{annonce_id}/${action}`, { params: { path: { annonce_id: id } } })),
-    onSuccess: () => void Promise.all([qc.invalidateQueries({ queryKey: qk.pro.annonce(id) }), qc.invalidateQueries({ queryKey: qk.pro.annonces }), qc.invalidateQueries({ queryKey: qk.pro.tableau })]),
+    onSuccess: () => void Promise.all([qc.invalidateQueries({ queryKey: qk.pro.annonce(id) }), qc.invalidateQueries({ queryKey: qk.pro.annonces }), qc.invalidateQueries({ queryKey: qk.pro.tableau }), qc.invalidateQueries({ queryKey: qk.pro.preparation(id) })]),
+  });
+}
+
+/** Ce qui manque pour publier (mêmes libellés que le site). */
+export const usePreparation = (id: string | undefined) =>
+  useQuery({ queryKey: qk.pro.preparation(id ?? ""), enabled: !!id, queryFn: () => unwrap(api.GET("/v1/pro/listings/{annonce_id}/readiness", { params: { path: { annonce_id: id as string } } })) });
+
+/** Vues, favoris et contacts d'une annonce sur 7 ou 30 jours. */
+export const useStatistiques = (id: string | undefined, jours: 7 | 30) =>
+  useQuery({ queryKey: qk.pro.stats(id ?? "", jours), enabled: !!id, queryFn: () => unwrap(api.GET("/v1/pro/listings/{annonce_id}/stats", { params: { path: { annonce_id: id as string }, query: { days: jours } } })) });
+
+export type ModificationAnnonce = components["schemas"]["PatchedAnnonceIn"];
+
+/** Modifier une annonce existante (PATCH partiel). */
+export function useModifierAnnonce(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (corps: ModificationAnnonce) => unwrap(api.PATCH("/v1/pro/listings/{annonce_id}", { params: { path: { annonce_id: id } }, body: corps })),
+    onSuccess: () => void Promise.all([qc.invalidateQueries({ queryKey: qk.pro.annonce(id) }), qc.invalidateQueries({ queryKey: qk.pro.annonces }), qc.invalidateQueries({ queryKey: qk.pro.preparation(id) })]),
   });
 }
 
