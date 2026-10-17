@@ -121,6 +121,15 @@ class TestPreferences:
         )
         assert boite()[0]["corps"] == "Nouveau message"
 
+    def test_apercu_coupe_garde_le_nombre_de_messages(self, django_capture_on_commit_callbacks):
+        u = ClientFactory(notif_prefs={"messages": {"apercu": False}})
+        appareil_avec_jeton(u)
+        creer_et_envoyer(
+            django_capture_on_commit_callbacks, u, kind="message.received",
+            data={"conversation_id": "c", "_nombre": 3},
+        )  # fmt: skip
+        assert boite()[0]["corps"] == "3 nouveaux messages"
+
 
 class TestPresenceEtAppareils:
     def test_conversation_ouverte_supprime_le_push_de_cet_appareil_seulement(

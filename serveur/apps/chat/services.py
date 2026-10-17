@@ -422,13 +422,16 @@ def notifier(message_id) -> str:
     annonce = annonces.annonce_pour_messagerie(conversation.listing_id)
     chambre = textes.tronquer(annonce["title"], 32) if annonce else None
     nom = noms.get(message.sender_id) or "Nouveau message"
+    # La notification d'une conversation remplace la précédente (même collapse_key) : elle dit combien attendent.
+    en_attente = message.seq - selectors.position_de_lecture(conversation, destinataire)  # jusqu'à ce message
+    corps = f"{en_attente} nouveaux messages · {apercu}" if en_attente > 1 else apercu
     notifications.creer(
         destinataire,
         "message.received",
         f"{nom} · {chambre}" if chambre else nom,  # comme une messagerie : qui, à propos de quoi
-        apercu,
+        corps,
         data={"conversation_id": str(conversation.pk), "message_id": str(message.pk), "seq": message.seq,
-              "listing_id": str(conversation.listing_id), "_sous_titre": chambre},
+              "listing_id": str(conversation.listing_id), "_sous_titre": chambre, "_nombre": en_attente},
         dedupe_key=f"message:{message.pk}",
         collapse_key=f"conv:{conversation.pk}",
         silence=silence,

@@ -35,6 +35,7 @@ class OptionsPush:
     prioritaire: bool = False
     badge: int | None = None
     sous_titre: str | None = None
+    categorie: str | None = None  # actions sur la notification (« Répondre », « Marquer comme lu »)
 
 
 class PushProvider(ABC):
@@ -77,6 +78,7 @@ class ConsolePushProvider(PushProvider):
                 "canal": options.canal if options else None,
                 "prioritaire": options.prioritaire if options else False,
                 "badge": options.badge if options else None,
+                "categorie": options.categorie if options else None,
                 "collapse": collapse_key,
             },
         )
@@ -105,6 +107,8 @@ class ExpoPushProvider(PushProvider):
                 message["badge"] = options.badge
             if options.sous_titre:
                 message["subtitle"] = options.sous_titre
+            if options.categorie:
+                message["categoryId"] = options.categorie
         requete = urllib.request.Request(  # noqa: S310
             self.url,
             data=json.dumps(message).encode(),

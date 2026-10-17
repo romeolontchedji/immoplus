@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { VerrouHote } from "@/features/auth/verrou";
+import { BanniereInterne } from "@/features/notifications/BanniereInterne";
 import { AppGate } from "@/features/system/AppGate";
 import { FiltresProvider } from "@/features/listings/filtres";
 import { DemandeNotificationsHote } from "@/features/notifications/DemandeNotifications";
@@ -58,6 +59,7 @@ function Racine() {
     <>
       <Stack screenOptions={{ headerShown: false }} />
       <DemandeNotificationsHote />
+      <BanniereInterne />
       <VerrouHote />
       {animation && etat.statut !== "chargement" ? <DemarrageAnime onFin={finAnimation} /> : null}
     </>

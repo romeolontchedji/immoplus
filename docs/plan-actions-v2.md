@@ -246,11 +246,11 @@ vers le bon écran (`routage.ts`, testé). Correspondance des alertes correcte (
 | # | Action | Où |
 |---|---|---|
 | N1 | ✅ Envoyer `channelId` (messages / alertes / rappels / compte) et `priority: "high"` pour les messages (D22) : bannière en haut de l'écran, son et vibration propres aux messages, même téléphone verrouillé. | S |
-| N2 | ✅ (regroupement par conversation : à faire) Titre « **Nom** » + sous-titre « Chambre-salon à Banikanni », corps = aperçu du message (ou « Nouveau message » si l'aperçu est désactivé). Regroupement par conversation (`threadId` iOS, groupe Android) : « 3 nouveaux messages ». | S M |
-| N3 | **Répondre depuis la notification** (catégorie avec champ texte de `expo-notifications`) et « Marquer comme lu » : la réponse passe par la file d'envoi existante (`outbox`), donc fonctionne même avec un réseau instable. | M S |
+| N2 | ✅ (« N nouveaux messages » remplace la précédente, même sans aperçu) Titre « **Nom** » + sous-titre « Chambre-salon à Banikanni », corps = aperçu du message (ou « Nouveau message » si l'aperçu est désactivé). Regroupement par conversation (`threadId` iOS, groupe Android) : « 3 nouveaux messages ». | S M |
+| N3 | ✅ code livré, à recetter sur dev build : **Répondre depuis la notification** (catégorie avec champ texte de `expo-notifications`) et « Marquer comme lu » : la réponse passe par la file d'envoi existante (`outbox`), donc fonctionne même avec un réseau instable. | M S |
 | N4 | ✅ Pastille du nombre de non-lus sur l'icône de l'app (`badge`), remise à jour à la lecture. | S M |
-| N5 | Application ouverte : bannière interne discrète (pas de notification système) sauf si la conversation est à l'écran. | M |
-| N6 | Rattrapage : à la reconnexion, les messages manqués arrivent sans doublon (déjà prévu par `seq`) ; test de recette dédié. | S M |
+| N5 | ✅ (bannière interne alimentée par le temps réel, aussi sous Expo Go) Application ouverte : bannière interne discrète (pas de notification système) sauf si la conversation est à l'écran. | M |
+| N6 | ✅ (relecture à chaque reconnexion, dédoublonnage par `seq`, balayage serveur des messages non notifiés) Rattrapage : à la reconnexion, les messages manqués arrivent sans doublon (déjà prévu par `seq`) ; test de recette dédié. | S M |
 
 ### 9.3 Demande d'autorisation (au bon moment, avec explication)
 

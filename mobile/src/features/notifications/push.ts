@@ -8,6 +8,7 @@ import { api, unwrap } from "@/api/client";
 import { EAS_PROJECT_ID } from "@/config/env";
 import { focusActuel } from "@/realtime/focus";
 import { useSession } from "@/state/session";
+import { definirCategories, traiterAction } from "./actions";
 import { destination } from "./routage";
 
 type ModuleNotifications = typeof import("expo-notifications");
@@ -27,14 +28,16 @@ async function chargerNotifications(): Promise<ModuleNotifications | null> {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const notifs = require("expo-notifications") as ModuleNotifications;
-        // Au premier plan : bannière et son, sauf pour la conversation déjà à l'écran.
+        // Application ouverte : pas de notification système ; la bannière interne discrète (BanniereInterne, alimentée
+        // par le temps réel) prend le relais (plan v2, N5). Elle reste dans la liste sauf pour la conversation à l'écran.
         notifs.setNotificationHandler({
           handleNotification: async (n) => {
             const data = n.request.content.data as { kind?: string; conversation_id?: string } | undefined;
             const dejaALEcran = data?.kind === "message.received" && data.conversation_id === focusActuel();
-            return { shouldShowBanner: !dejaALEcran, shouldShowList: !dejaALEcran, shouldPlaySound: !dejaALEcran, shouldSetBadge: true };
+            return { shouldShowBanner: false, shouldShowList: !dejaALEcran, shouldPlaySound: false, shouldSetBadge: true };
           },
         });
+        void definirCategories(notifs).catch(() => undefined); // boutons « Répondre » et « Marquer comme lu »
         return notifs;
       } catch {
         return null;
@@ -107,13 +110,14 @@ export function usePushBootstrap(): void {
     let abonnement: { remove(): void } | undefined;
     void chargerNotifications().then((notifs) => {
       if (!notifs || annule) return;
-      const aller = (r: Notifications.NotificationResponse | null) => {
+      const aller = async (r: Notifications.NotificationResponse | null) => {
         if (!r) return;
+        if (await traiterAction(notifs, r)) return; // bouton d'action : rien à ouvrir
         const contenu = r.notification.request.content.data as Record<string, unknown>;
         router.push(destination(contenu.kind as string | undefined, contenu, role));
       };
-      aller(notifs.getLastNotificationResponse());
-      abonnement = notifs.addNotificationResponseReceivedListener(aller);
+      void aller(notifs.getLastNotificationResponse());
+      abonnement = notifs.addNotificationResponseReceivedListener((r) => void aller(r));
     });
     return () => {
       annule = true;

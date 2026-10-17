@@ -48,7 +48,7 @@ export function useMessages(id: string | undefined) {
 }
 
 /** Envoie un message du service `outbox` : POST idempotent (même `client_msg_id`) → jamais de doublon, même après un envoi « incertain ». */
-async function posterMessage(e: ElementFile): Promise<void> {
+export async function posterMessage(e: ElementFile): Promise<void> {
   await unwrap(api.POST("/v1/conversations/{conversation_id}/messages", { params: { path: { conversation_id: e.conversationId } }, body: { body: e.body, client_msg_id: e.clientMsgId } }));
 }
 

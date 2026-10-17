@@ -52,6 +52,7 @@ def options_push(n: Notification) -> push.OptionsPush:
         prioritaire=n.kind in PRIORITAIRES,
         badge=selectors.non_lues(n.user_id),
         sous_titre=(n.data.get("_sous_titre") or None),
+        categorie="message" if n.kind == "message.received" else None,
     )
 
 
@@ -171,7 +172,8 @@ def _contenu_push(n: Notification) -> tuple[str, str]:
     if n.kind == "message.received":
         prefs = comptes.preferences_notifications(n.user_id)
         if (prefs.get("messages") or {}).get("apercu") is False:
-            return n.title, "Nouveau message"
+            nombre = int(n.data.get("_nombre") or 1)
+            return n.title, f"{nombre} nouveaux messages" if nombre > 1 else "Nouveau message"
     return n.title, n.body
 
 

@@ -1,6 +1,7 @@
 import { qk } from "@/api/keys";
 import { appliquerModeration, fusionner, type HistoriqueLocal } from "@/lib/messages";
 import { queryClient } from "@/state/queryClient";
+import { annoncerNotification } from "@/features/notifications/annonces";
 import type { EvenementServeur } from "./events";
 
 /** Met à jour le cache TanStack à partir d'un événement serveur (la source de vérité reste l'API HTTP). */
@@ -26,6 +27,7 @@ export function appliquerEvenement(e: EvenementServeur): void {
       void queryClient.invalidateQueries({ queryKey: qk.conversations });
       break;
     case "notification.new":
+      annoncerNotification(e.data.notification);
       queryClient.setQueryData(qk.nonLues, { unread_count: e.data.unread_count });
       void queryClient.invalidateQueries({ queryKey: qk.notifications });
       break;

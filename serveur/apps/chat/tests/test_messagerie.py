@@ -389,6 +389,23 @@ class TestNotificationsDeMessage:
             m.refresh_from_db()
             assert m.notified_at is not None
 
+    def test_la_notification_compte_les_messages_en_attente_et_porte_les_actions(
+        self, decor, django_capture_on_commit_callbacks
+    ):
+        """N2 et N3 : « 2 nouveaux messages · … » remplace la précédente ; catégorie « message » (Répondre, Lu)."""
+        DeviceFactory(user=decor.gerant.user, push_provider="expo", push_token="jeton-gerant")
+        with django_capture_on_commit_callbacks(execute=True):
+            conversation, *_ = ouvrir(decor)
+            services.envoyer(decor.locataire, conversation.pk, "Et la caution ?", mid())
+        dernier, premier = boite()[0], boite()[1]
+        assert (
+            premier["corps"].startswith("Bonjour")
+            and dernier["corps"] == "2 nouveaux messages · Et la caution ?"
+        )
+        assert (
+            dernier["categorie"] == "message" and dernier["collapse"] == f"conv:{conversation.pk}"
+        )
+
     def test_aucun_appareil_saut_motive_pose_notified_at(
         self, decor, django_capture_on_commit_callbacks
     ):
