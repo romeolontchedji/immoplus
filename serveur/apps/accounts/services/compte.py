@@ -38,6 +38,26 @@ def changer_mot_de_passe(
     audit.enregistrer("auth.mot_de_passe_change", acteur=utilisateur, cible=utilisateur)
 
 
+def deconnecter_partout(utilisateur: User) -> int:
+    """Déconnecte tous les appareils et toutes les sessions du site (nouvelle version de sécurité).
+
+    L'appelant qui veut garder sa propre session web la remet à la nouvelle version (`session["tv"]`).
+    Retourne le nombre d'appareils de l'application déconnectés.
+    """
+    with transaction.atomic():
+        utilisateur.token_version += 1
+        utilisateur.save(update_fields=["token_version", "updated_at"])
+    jetons.invalider_utilisateur(utilisateur.pk)
+    nombre = appareils.revoquer_autres(utilisateur, None, raison="deconnexion_partout")
+    audit.enregistrer(
+        "auth.deconnexion_partout",
+        acteur=utilisateur,
+        cible=utilisateur,
+        metadata={"appareils": nombre},
+    )
+    return nombre
+
+
 def changer_numero(
     utilisateur: User, mot_de_passe: str, jeton_otp: str, appareil_courant_id=None
 ) -> User:

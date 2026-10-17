@@ -373,13 +373,58 @@ def mes_preferences(request):
     )
 
 
+def _navigateur(ua: str) -> str:
+    """« Chrome sur Android » : lecture simple de l'en-tête User-Agent pour reconnaître la session en cours."""
+    ua = ua or ""
+    navigateur = next(
+        (
+            nom
+            for cle, nom in (
+                ("Edg/", "Edge"),
+                ("OPR/", "Opera"),
+                ("Firefox/", "Firefox"),
+                ("Chrome/", "Chrome"),
+                ("Safari/", "Safari"),
+            )
+            if cle in ua
+        ),
+        "Navigateur",
+    )
+    systeme = next(
+        (
+            nom
+            for cle, nom in (
+                ("Android", "Android"),
+                ("iPhone", "iPhone"),
+                ("iPad", "iPad"),
+                ("Windows", "Windows"),
+                ("Mac OS", "Mac"),
+                ("Linux", "Linux"),
+            )
+            if cle in ua
+        ),
+        None,
+    )
+    return f"{navigateur} sur {systeme}" if systeme else navigateur
+
+
 @connecte_obligatoire
 def mes_appareils(request):
-    appareils_actifs = appareils.lister(request.user)
+    message = None
+    if request.method == "POST" and request.POST.get("action") == "partout":
+        nombre = compte.deconnecter_partout(request.user)
+        request.user.refresh_from_db()
+        request.session["tv"] = request.user.token_version  # cette session-ci reste ouverte
+        message = f"{nombre} appareil{'s' if nombre > 1 else ''} et toutes les autres sessions du site sont déconnectés."
     return render(
         request,
         "web/auth/appareils.html",
-        {"appareils": appareils_actifs, "titre": "Appareils connectés"},
+        {
+            "appareils": appareils.lister(request.user),
+            "session_courante": _navigateur(user_agent(request)),
+            "message": message,
+            "titre": "Appareils connectés",
+        },
     )
 
 

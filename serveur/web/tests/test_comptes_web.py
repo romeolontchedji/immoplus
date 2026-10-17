@@ -247,3 +247,27 @@ def test_connexion_avec_se_souvenir_trente_jours():
     assert not c.session.get_expire_at_browser_close()
     assert c.session.get_expiry_age() == 30 * 24 * 60 * 60
     assert c.cookies[settings.SESSION_COOKIE_NAME]["max-age"] == 30 * 24 * 60 * 60
+
+
+# --------------------------------------------------------------- appareils (plan v2, W7)
+def test_appareils_montre_la_session_en_cours_et_explique():
+    ClientFactory(phone_e164="+2290197646464")
+    c = Client(
+        HTTP_USER_AGENT="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36"
+    )
+    c.post("/connexion", {"phone": "97646464", "password": MOT_DE_PASSE})
+    page = c.get("/compte/appareils").content.decode()
+    assert "Chrome sur Android" in page and "Session en cours" in page and "Un appareil, c" in page
+
+
+def test_deconnecter_partout_garde_cette_session():
+    u = ClientFactory(phone_e164="+2290197656565")
+    DeviceFactory(user=u)
+    ici, ailleurs = Client(), Client()
+    for c in (ici, ailleurs):
+        c.post("/connexion", {"phone": "97656565", "password": MOT_DE_PASSE})
+    r = ici.post("/compte/appareils", {"action": "partout"})
+    assert "1 appareil et toutes les autres sessions" in r.content.decode()
+    assert ici.get("/compte").status_code == 200
+    assert ailleurs.get("/compte").status_code == 302
+    assert not u.devices.filter(revoked_at__isnull=True).exists()
