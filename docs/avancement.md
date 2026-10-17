@@ -393,3 +393,14 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   session de 30 jours si cochée, sinon fermée avec le navigateur (avant : 2 semaines dans tous les cas). Les erreurs
   de champ des formulaires d'authentification passent par `composants/champ.html` (cases à cocher alignées).
   871 tests serveur verts (seul `/readyz` échoue), 104 tests mobile, paquet Android construit.
+- **Types de chambre dynamiques (V1)** : table `room_types` (migration `listings.0003`, avec les 4 officiels) ; la
+  contrainte `listings_type_valide` est retirée (le service contrôle), `room_type` passe à 40 caractères.
+  `GET /v1/room-types` (public, validés, triés par nombre d'annonces), `GET|POST /v1/pro/room-types` (gérant),
+  `room_type_label` sur les cartes, la fiche et les annonces du gérant. Administration : « Types de logement »
+  (modérateurs autorisés), action « Valider », page « Rattacher à un type existant ». Site : « Ou un autre type »
+  dans l'éditeur, onglets de l'accueil et listes de recherche/alertes lus en base. Mobile : chips dynamiques
+  (repli hors ligne sur les officiels), « Autre… » dans la publication. 897 tests serveur verts (seul `/readyz`
+  échoue), 105 tests mobile. Écart au CDC (§ table `listings`, CK sur `room_type`) : à reporter dans le CDC.
+- **Photos (V9)** : circuit retenu avec le porteur : originaux dans `photos-brutes/` (non versionné), script de
+  conversion WebP, tailles 480/960/1600 servies en statique par le site, 960 embarquée dans l'app, crédits dans
+  `docs/design/credits-photos.md`, exception datée au CDC (« aucune image externe ») à ajouter à l'intégration.
