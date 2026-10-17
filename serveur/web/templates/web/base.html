@@ -9,6 +9,12 @@
     <title>{% block titre %}Logeo — Chambres à Parakou, visite en vidéo{% endblock %}</title>
     <meta name="description"
           content="{% block description %}Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct. Visite d'abord, paie ensuite.{% endblock %}">
+    <link rel="icon" href="{% static 'design/logo.svg' %}" type="image/svg+xml">
+    <link rel="preload"
+          href="{% static 'fonts/plus-jakarta-sans-latin.woff2' %}"
+          as="font"
+          type="font/woff2"
+          crossorigin>
     <link rel="stylesheet" href="{% css_logeo %}">
     {% block tete %}{% endblock %}
   </head>
