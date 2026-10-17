@@ -15,6 +15,7 @@ import { Button } from "@/ui/components/Button";
 import { ErrorState, OfflineBanner } from "@/ui/components/States";
 import { Skeleton } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
+import { TexteEnrichi } from "@/ui/components/TexteEnrichi";
 import { LIBELLES_EAU } from "./filtres";
 import { useBasculerFavori, useCompterVue, useFiche, type Fiche } from "./queries";
 
@@ -292,7 +293,10 @@ export function FicheScreen() {
           {description ? (
             <View style={{ gap: sp[2] }}>
               <Text variante="label" muted>Description</Text>
-              <Text style={{ fontSize: 15, lineHeight: 23, color: colors.night }} numberOfLines={descriptionOuverte ? undefined : 6}>{description}</Text>
+              {/* Fermée : environ 6 lignes visibles ; le Markdown restreint est rendu (gras, listes…), jamais affiché brut. */}
+              <View style={descriptionOuverte ? null : { maxHeight: 6 * 23, overflow: "hidden" }}>
+                <TexteEnrichi md={description} />
+              </View>
               {description.length > 240 ? (
                 <Pressable accessibilityRole="button" onPress={() => setDescriptionOuverte((v) => !v)} hitSlop={8}>
                   <Text variante="lien" style={{ fontWeight: "700" }}>{descriptionOuverte ? "Réduire" : "Lire la suite"}</Text>

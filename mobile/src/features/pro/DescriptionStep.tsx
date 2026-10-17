@@ -12,9 +12,9 @@ import { Button } from "@/ui/components/Button";
 import { Chip } from "@/ui/components/Chip";
 import { Screen } from "@/ui/components/Screen";
 import { SwitchRow } from "@/ui/components/SwitchRow";
-import { TextField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
 import { CHAMPS_CREATION, champsManquants, useBrouillon } from "./brouillon";
+import { EditeurDescription } from "./EditeurDescription";
 import { EntetePublication } from "./EntetePublication";
 
 type EQUIPEMENT = {
@@ -41,7 +41,7 @@ type Valeurs = {
 /**
  * Étape 4/4 (description + équipements) — conforme à la maquette « Mobile · Publier 3 4@1x.png » :
  * - Titre "Décris-la en détail"
- * - Zone texte DESCRIPTION avec barre de formatage (B I U •• 1.)
+ * - Description avec barre de mise en forme (gras, italique, intertitre, listes, aperçu ; décision V6, sans souligné)
  * - Section ÉQUIPEMENTS avec chips pilule (actif = bleu cobalt)
  * Crée l'annonce côté serveur si tous les champs requis sont présents.
  */
@@ -120,45 +120,17 @@ export function DescriptionStep() {
       <Text variante="titre" style={{ marginTop: sp[2] }}>Décris-la en détail</Text>
       <Text muted>Mets en avant ce qui la rend unique.</Text>
 
-      {/* Zone description */}
-      <View style={{ gap: sp[2] }}>
-        <Text variante="label">Description</Text>
-        {/* Barre de formatage simplifiée (conforme maquette Publier 3/4) */}
-        <View
-          style={{
-            flexDirection: "row",
-            gap: sp[3],
-            padding: sp[3],
-            backgroundColor: c.surfaceSunken,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            borderWidth: 1,
-            borderColor: c.border,
-            borderBottomWidth: 0,
-          }}
-        >
-          {["G", "I", "S", "•", "1."].map((label) => (
-            <Text key={label} variante="corps" style={{ fontWeight: label === "G" ? "700" : label === "I" ? "400" : "600", color: c.textMuted, minWidth: 20, textAlign: "center" }}>
-              {label}
-            </Text>
-          ))}
-        </View>
-        <Controller
-          control={control}
-          name="description_md"
-          render={({ field }) => (
-            <TextField
-              label=""
-              value={field.value}
-              onChangeText={field.onChange}
-              multiline
-              numberOfLines={5}
-              style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: 0 }}
-              placeholder={"Chambre carrelée, cour clôturée, forage et compteur SBEE individuel.\nÀ 7 min à pied de l'Université de Parakou. Disponible maintenant."}
-            />
-          )}
-        />
-      </View>
+      <Controller
+        control={control}
+        name="description_md"
+        render={({ field }) => (
+          <EditeurDescription
+            valeur={field.value}
+            onChange={field.onChange}
+            placeholder={"Chambre carrelée, cour clôturée, forage et compteur SBEE individuel.\nÀ 7 min à pied de l'Université de Parakou. Disponible maintenant."}
+          />
+        )}
+      />
 
       {/* Équipements en chips (conforme maquette Publier 3/4) */}
       <View style={{ gap: sp[2] }}>
