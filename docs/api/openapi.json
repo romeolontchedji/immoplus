@@ -1633,7 +1633,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PreferencesSchema"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             },
@@ -1644,6 +1651,25 @@
                 "tags": [
                     "Compte"
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreferencesSchema"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreferencesSchema"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreferencesSchema"
+                            }
+                        }
+                    }
+                },
                 "security": [
                     {
                         "BearerJwt": []
@@ -1651,7 +1677,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PreferencesSchema"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -4254,6 +4287,29 @@
                 "type": "string",
                 "description": "* `android` - android\n* `ios` - ios\n* `web` - web"
             },
+            "PreferencesSchema": {
+                "type": "object",
+                "description": "Forme documentée de `PreferencesIO` (OpenAPI) : seules les catégories envoyées changent.",
+                "properties": {
+                    "messages": {
+                        "$ref": "#/components/schemas/ReglageNotification"
+                    },
+                    "alertes": {
+                        "$ref": "#/components/schemas/ReglageNotification"
+                    },
+                    "rappels": {
+                        "$ref": "#/components/schemas/ReglageNotification"
+                    },
+                    "silence": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 64
+                        },
+                        "description": "Conversations en sourdine."
+                    }
+                }
+            },
             "PurposeEnum": {
                 "enum": [
                     "signup",
@@ -4302,6 +4358,19 @@
                 ],
                 "type": "string",
                 "description": "* `fake_listing` - fake_listing\n* `already_rented` - already_rented\n* `price_mismatch` - price_mismatch\n* `contact_leak` - contact_leak\n* `harassment` - harassment\n* `scam` - scam\n* `other` - other"
+            },
+            "ReglageNotification": {
+                "type": "object",
+                "properties": {
+                    "push": {
+                        "type": "boolean",
+                        "description": "Faux : aucune notification push (absent = activé)."
+                    },
+                    "apercu": {
+                        "type": "boolean",
+                        "description": "Messages : faux = « Nouveau message » sans le texte."
+                    }
+                }
             },
             "RoleEnum": {
                 "enum": [

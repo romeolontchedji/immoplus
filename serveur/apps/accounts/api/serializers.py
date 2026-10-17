@@ -102,6 +102,28 @@ class JetonPushIn(serializers.Serializer):
     token = serializers.CharField(max_length=4096)
 
 
+class ReglageNotification(serializers.Serializer):
+    push = serializers.BooleanField(
+        required=False, help_text="Faux : aucune notification push (absent = activé)."
+    )
+    apercu = serializers.BooleanField(
+        required=False, help_text="Messages : faux = « Nouveau message » sans le texte."
+    )
+
+
+class PreferencesSchema(serializers.Serializer):
+    """Forme documentée de `PreferencesIO` (OpenAPI) : seules les catégories envoyées changent."""
+
+    messages = ReglageNotification(required=False)
+    alertes = ReglageNotification(required=False)
+    rappels = ReglageNotification(required=False)
+    silence = serializers.ListField(
+        child=serializers.CharField(max_length=64),
+        required=False,
+        help_text="Conversations en sourdine.",
+    )
+
+
 class PreferencesIO(serializers.Serializer):
     """Objet libre {catégorie: {push, apercu}, silence: [...]}, validé par le service."""
 

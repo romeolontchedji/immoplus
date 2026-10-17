@@ -279,7 +279,7 @@ class ChangementNumero(_Prive):
 
 class Preferences(_Prive):
     @extend_schema(
-        tags=TAG_COMPTE, summary="Préférences de notification", responses={200: s.PreferencesIO}
+        tags=TAG_COMPTE, summary="Préférences de notification", responses={200: s.PreferencesSchema}
     )
     def get(self, request):
         return Response(compte.preferences(request.user))
@@ -287,8 +287,8 @@ class Preferences(_Prive):
     @extend_schema(
         tags=TAG_COMPTE,
         summary="Modifier les préférences de notification",
-        request=s.PreferencesIO,
-        responses={200: s.PreferencesIO},
+        request=s.PreferencesSchema,
+        responses={200: s.PreferencesSchema},
     )
     def put(self, request):
         return Response(compte.definir_preferences(request.user, request.data))
