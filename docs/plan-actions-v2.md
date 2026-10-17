@@ -96,7 +96,7 @@ dans des pastilles teintées, une **carte d'en-tête colorée** (*hero card*) et
 
 | # | Action | Où |
 |---|---|---|
-| P1.1 | `tokens.json` unique + génération web/mobile (voir §1.3) ; ajout des jetons : fonds teintés `--blue-25/50`, bordures 1 px très pâles, rayons 20/24, ombres très douces. | S W M |
+| P1.1 | ✅ (`docs/design/tokens.json` → `make jetons`, vérifié dans `verifier_tout.sh`) `tokens.json` unique + génération web/mobile (voir §1.3) ; ajout des jetons : fonds teintés `--blue-25/50`, bordures 1 px très pâles, rayons 20/24, ombres très douces. | S W M |
 | P1.2 | ✅ **Fait (2026-10-17).** Motif de fond SVG (courbe + points cobalt et solaire, opacité ≤ 8 %) : en `background` CSS sur le web, composant `FondMotif` sur mobile. | W M |
 | P1.3 | ✅ **Fait sur mobile (2026-10-17)** : `FondMotif`, `CarteHero`, `GroupeListe`, `LigneListe`, `Pastille`, `Avatar` (`src/ui/components/Groupe.tsx`). Web : à faire. Composants communs (même nom, même rendu) : `CarteHero`, `GroupeListe` + `LigneListe` (icône pastille, titre, sous-titre, chevron ou interrupteur), `EnTeteEcran` (retour en carte, titre, sous-titre, action), `ChampIcone` (icône à gauche, œil à droite), `ListeDeroulante`. Présentés dans `/styleguide`. | W M |
 | P1.4 | Appliquer d'abord à : Profil, Compte/Sécurité, Préférences, Appareils, Légal (là où les captures s'appliquent directement). | W M |
@@ -123,7 +123,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | # | Fonctionnalité | État actuel | À faire |
 |---|---|---|---|
 | MM1 | Écrire au gérant ✅ | Squelette (D19) | Voir P0.8 |
-| MM2 | Liste des conversations ✅ (sauf glisser pour archiver) | Liste simple sans design | Façon WhatsApp : avatar (initiales), nom, chambre liée, extrait du dernier message, heure, pastille de non-lus, conversation en sourdine grisée, glisser pour archiver/sourdine ; recherche dans les conversations |
+| MM2 | Liste des conversations ✅ (balayage : « Lu », sourdine 8 h / réactiver ; l'archivage demanderait un champ serveur, non fait) | Liste simple sans design | Façon WhatsApp : avatar (initiales), nom, chambre liée, extrait du dernier message, heure, pastille de non-lus, conversation en sourdine grisée, glisser pour archiver/sourdine ; recherche dans les conversations |
 | MM3 | Conversation ✅ menu ⋮ et bandeaux (reste : ouverture au bon message depuis une notification) | Fonctionnelle (envoi hors ligne, temps réel) | Menu « ⋮ » : bloquer / débloquer, signaler, sourdine 8 h / 1 semaine / toujours ; bannière « conversation bloquée / lecture seule » ; coches envoyé / lu (`other_read_seq`) ; séparateurs de jour ; saisie multiligne ; ouverture depuis une notification directement au bon message |
 | MM4 | Mes annonces (gérant) ✅ | Squelette | Liste par statut (en ligne, brouillons, masquées, louées) avec actions : confirmer disponible, marquer louée / remettre en ligne, masquer, modifier |
 | MM5 | Fiche annonce gérant ✅ (`GET …/readiness`) | Squelette | Aperçu, statut, ce qui manque pour publier (`manques_a_la_publication`), médias en cours de traitement |
@@ -145,7 +145,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | W3 | Éditeur d'annonce ✅ | Retirer latitude/longitude (V7) ; barre d'outils de texte (V6) ; envoi de médias redessiné (zone de dépôt, vignettes, progression, erreurs lisibles). |
 | W4 | Tableau de bord gérant ✅ | Responsive (cartes empilées sous 768 px) ; sur chaque chambre, interrupteur explicite **« Chambre encore disponible »** : le décocher appelle `marquer_louee` et retire la chambre du fil et de la recherche ; le recocher la remet en ligne (`undo-rented`). |
 | W5 | Messagerie façon WhatsApp ✅ | Liste à gauche (avatar, nom, extrait, heure, pastille non lus), fil à droite ; bulles compactes (largeur max 75 %, coins arrondis asymétriques, heure et coches dans la bulle), séparateurs de jour, en-tête avec la chambre liée (photo, prix), menu (bloquer, signaler, sourdine). Mobile aligné. |
-| W6 | Tableau de bord locataire ✅ (sans « dernières chambres consultées » : non mémorisées par compte) | Refonte : en-tête de salutation, raccourcis (favoris, alertes, messages, notifications) en cartes avec compteurs, dernières chambres consultées, alertes actives. |
+| W6 | Tableau de bord locataire ✅ (« Tu as regardé récemment » : session sur le site, appareil sur le mobile, rien en base) | Refonte : en-tête de salutation, raccourcis (favoris, alertes, messages, notifications) en cartes avec compteurs, dernières chambres consultées, alertes actives. |
 | W7 | Appareils connectés ✅ | Expliquer ce qu'est un appareil (D6) ; lister aussi la **session web en cours** ; bouton de déconnexion des autres appareils. |
 | W8 | Changer de numéro ✅ (code en cases en CSS seul) | Écran en 2 étapes avec barre d'étapes, `ChampIcone`, code en 6 cases (même composant que l'inscription). |
 | W9 | Contacter l'équipe ✅ (P0.3) | Lien WhatsApp direct (P0.3) partout où « Contacte l'équipe » apparaît. |
@@ -160,7 +160,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | S2 | Fréquences ✅ (livré sous `GET /v1/alert-options` : alertes actives et loyers publiés ; les recherches ne sont pas encore comptées) | Endpoint `GET /v1/search-hints` : quartiers et plafonds de budget les plus utilisés (recherches + alertes, 90 jours), pour les listes de M5 et du web. |
 | S3 | Chambres similaires (D4) ✅ | Score : même quartier ou quartier voisin, type identique, loyer à ± 25 %, distance à l'UP proche ; repli sur les plus récentes. Partagé : `GET /v1/listings/{ident}/similar` utilisé par le web et le mobile. |
 | S4 | Vues (D7) | Une fois `beat` réparé : test de bout en bout vue → statistiques → tableau de bord. |
-| S5 | Abonnement prêt mais désactivé ✅ (serveur ; `PAID_ALERTS_ENABLED` des locataires : à faire) | Services, modèles et écrans d'abonnement gérant derrière `SUBSCRIPTION_ENABLED=False` ; aucun prix affiché tant qu'il est faux. Même chose pour les notifications payantes des locataires (`PAID_ALERTS_ENABLED`). |
+| S5 | Abonnement prêt mais désactivé ✅ (serveur ; `PAID_ALERTS_ENABLED` présent, `paid_alerts` toujours faux en V1) | Services, modèles et écrans d'abonnement gérant derrière `SUBSCRIPTION_ENABLED=False` ; aucun prix affiché tant qu'il est faux. Même chose pour les notifications payantes des locataires (`PAID_ALERTS_ENABLED`). |
 | S6 | Avis (V4, reporté en V2) et gérant-locataire (V3) | Consignés dans `docs/reste-a-faire.md` pour la V2. |
 
 ### 7 bis. Plans et architecture de paiement (CDC §7.11, EF-ABO-01 à 08)
@@ -254,7 +254,7 @@ vers le bon écran (`routage.ts`, testé). Correspondance des alertes correcte (
 
 ### 9.3 Demande d'autorisation (au bon moment, avec explication)
 
-✅ **Fait (2026-10-17)** : N1 (canaux + priorité), N2 (titre « Nom · chambre »), N4 (pastille), §9.3 (feuille d'explication après le premier message et la première alerte), §9.4 (textes). Corrigé au passage : les préférences de notification du mobile étaient toutes refusées par le serveur (format). **Reste** : N3 (répondre depuis la notification, tâche d'arrière-plan, à tester sur dev build), N5, N6, §9.5 A2 (récapitulatif quotidien), recette §9.6 sur dev build.
+✅ **Fait (2026-10-17)** : N1 (canaux + priorité), N2 (titre « Nom · chambre »), N4 (pastille), §9.3 (feuille d'explication après le premier message et la première alerte), §9.4 (textes). Corrigé au passage : les préférences de notification du mobile étaient toutes refusées par le serveur (format). **Puis** : N3, N5, N6 et A2 livrés. **Reste** : recette §9.6 sur dev build (N3 notamment).
 
 Le système ne permet de demander qu'une fois (Android 13+, iOS) : un refus est presque définitif. On affiche donc d'abord
 **notre propre écran d'explication**, puis la demande système seulement si la personne accepte :

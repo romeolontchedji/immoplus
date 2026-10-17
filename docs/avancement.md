@@ -2,7 +2,19 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
-**Chantier en cours : refonte générale de l'interface et messagerie mobile.**
+**2026-10-17 : notifications, jetons uniques, petits points.**
+- Notifications : réponse et « Marquer comme lu » depuis la notification (N3, à recetter sur dev build), bannière
+  interne quand l'app est ouverte (N5), regroupement « N nouveaux messages » (N2), rattrapage (N6).
+- Jetons : `docs/design/tokens.json` génère le haut de `tokens.css` et `mobile/src/ui/theme/jetons.genere.ts`
+  (`make jetons`, contrôle dans `outils/verifier_tout.sh`).
+- `PAID_ALERTS_ENABLED` (éteint) dans les paramètres ; `paid_alerts` toujours faux en V1.
+- Dernières chambres consultées : bandeau sur l'accueil mobile (stockage local), section du tableau locataire web
+  (session, relue à l'affichage).
+- Mobile : balayage d'une conversation (« Lu », sourdine 8 h, réactiver) ; `GestureHandlerRootView` à la racine.
+- Reste : photos d'ambiance (W1/M6, dès qu'elles sont dans `photos-brutes/`), recette sur dev build (push, N3,
+  biométrie, GPS, balayage), KKiaPay et prix au lancement payant.
+
+**Chantier précédent : refonte générale de l'interface et messagerie mobile.**
 - Refonte de la navigation (visiteur, locataire, gérant) responsive desktop et mobile avec menu hamburger et popover de notifications.
 - Intégration fidèle de la messagerie/chat selon la maquette `Mobile · Conversation@1x.png` (en-tête interlocuteur avec badge vérifié, carte chambre liée avec prix et miniature, bulles de discussion avec horodatage, encart sécurité ambré, champ d'envoi en pilule ergonomique).
 - Ajout des propriétés `initiales` et `prenom` sur le modèle `User` pour fiabiliser le rendu des gabarits.
