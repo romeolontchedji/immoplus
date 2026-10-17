@@ -356,12 +356,97 @@ def mes_alertes(request):
 # --------------------------------------------------------------- messages
 @connecte_obligatoire
 def mes_conversations(request):
-    lignes, _ = chat_selectors.liste(request.user.pk, role=request.user.role)
-    return render(
-        request,
-        "web/public/messages.html",
-        {"conversations": chat_selectors.decrire(lignes, request.user.pk)},
+    return _messagerie(request)
+
+
+MOTIFS_CONVERSATION = [
+    ("contact_leak", "Coordonnées partagées ou demande de sortir de Logeo"),
+    ("scam", "Arnaque ou demande d'acompte sans visite"),
+    ("harassment", "Harcèlement ou propos déplacés"),
+    ("other", "Autre raison"),
+]
+DUREES_SOURDINE = {"8h": 8, "semaine": 7 * 24, "toujours": 10 * 365 * 24}
+
+
+def _jour(date, aujourd_hui) -> str:
+    if date == aujourd_hui:
+        return "Aujourd'hui"
+    if (aujourd_hui - date).days == 1:
+        return "Hier"
+    return date.strftime("%d/%m/%Y")
+
+
+def _fil(c, lecteur_id) -> list[dict]:
+    """Messages avec séparateurs de jour et état de lecture de mes messages (coches, plan v2 W5)."""
+    from django.utils import timezone
+
+    lignes, _ = chat_selectors.messages(c)
+    lu_jusqua = chat_selectors.position_de_lecture(
+        c, chat_selectors.autre_participant(c, lecteur_id)
     )
+    aujourd_hui, precedent, sortie = timezone.localdate(), None, []
+    for m in lignes:
+        jour = timezone.localtime(m.created_at).date()
+        if jour != precedent:
+            sortie.append({"jour": _jour(jour, aujourd_hui)})
+            precedent = jour
+        mien = m.sender_id == lecteur_id
+        sortie.append(
+            {**chat.message_pour(m, lecteur_id), "mine": mien, "lu": mien and m.seq <= lu_jusqua}
+        )
+    return sortie
+
+
+def _agir(request, c) -> tuple[str | None, str | None]:
+    """Actions du formulaire de conversation : envoyer, bloquer, débloquer, sourdine, signaler."""
+    import datetime
+
+    from django.utils import timezone
+
+    action = request.POST.get("action")
+    if action == "envoyer":
+        _, _, info = chat.envoyer(
+            request.user, c.pk, request.POST.get("body", ""), request.POST.get("client_msg_id", "")
+        )
+        return (info["warning"], "avertissement") if info["warning"] else (None, None)
+    if action == "bloquer":
+        chat.bloquer(request.user, c.pk)
+        return "Conversation bloquée : l'autre personne ne peut plus t'écrire.", "information"
+    if action == "debloquer":
+        chat.debloquer(request.user, c.pk)
+        return "Conversation débloquée.", "succes"
+    if action == "sourdine":
+        heures = DUREES_SOURDINE.get(request.POST.get("duree", ""))
+        jusqua = timezone.now() + datetime.timedelta(hours=heures) if heures else None
+        chat.definir_silence(request.user, c.pk, jusqua)
+        return (
+            ("Notifications coupées pour cette conversation.", "information")
+            if jusqua
+            else ("Notifications réactivées.", "succes")
+        )
+    if action == "signaler":
+        moderation.signaler(request.user, "conversation", c.pk, request.POST.get("motif", ""))
+        return "Merci, ton signalement a été transmis à l'équipe.", "succes"
+    return None, None
+
+
+def _messagerie(request, c=None, message=None, niveau=None):
+    """Messagerie façon WhatsApp (plan v2, W5) : liste à gauche, fil à droite (un seul panneau sur téléphone)."""
+    lignes, _ = chat_selectors.liste(request.user.pk, role=request.user.role)
+    contexte = {"conversations": chat_selectors.decrire(lignes, request.user.pk), "c": None}
+    if c is not None:
+        contexte.update(
+            c=chat_selectors.decrire([c], request.user.pk)[0],
+            fil=_fil(c, request.user.pk),
+            client_msg_id=uuid.uuid4(),
+            message=message,
+            niveau=niveau,
+            motifs=MOTIFS_CONVERSATION,
+            adresse=selectors.adresse_privee(c.listing_id)
+            if c.gerant_id == request.user.pk
+            else None,
+        )
+    return render(request, "web/public/messagerie.html", contexte)
 
 
 @connecte_obligatoire
@@ -372,36 +457,14 @@ def conversation(request, conversation_id):
         raise Http404 from erreur
     message = niveau = None
     if request.method == "POST":
-        action = request.POST.get("action")
         try:
-            if action == "envoyer":
-                _, _, info = chat.envoyer(
-                    request.user,
-                    c.pk,
-                    request.POST.get("body", ""),
-                    request.POST.get("client_msg_id", ""),
-                )
-                if info["warning"]:
-                    message, niveau = info["warning"], "avertissement"
-            elif action == "bloquer":
-                chat.bloquer(request.user, c.pk)
-            elif action == "debloquer":
-                chat.debloquer(request.user, c.pk)
+            message, niveau = _agir(request, c)
         except ErreurMetier as e:
             message, niveau = _message(e), "danger"
         c = chat_selectors.conversation_par_id(c.pk)
     chat.lire(request.user, c.pk, c.last_seq)
-    lignes, _ = chat_selectors.messages(c)
-    description = chat_selectors.decrire([c], request.user.pk)[0]
-    return render(
-        request,
-        "web/public/conversation.html",
-        {
-            "c": description, "message": message, "niveau": niveau, "client_msg_id": uuid.uuid4(),
-            "messages": [{**chat.message_pour(m, request.user.pk), "mine": m.sender_id == request.user.pk} for m in lignes],
-            "adresse": selectors.adresse_privee(c.listing_id) if c.gerant_id == request.user.pk else None,
-        },
-    )  # fmt: skip
+    c = chat_selectors.conversation_par_id(c.pk)
+    return _messagerie(request, c, message, niveau)
 
 
 # --------------------------------------------------------------- notifications

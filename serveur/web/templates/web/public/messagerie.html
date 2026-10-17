@@ -1,0 +1,257 @@
+{% extends "web/base.html" %}
+{% load logeo static %}
+{% block titre %}
+  {% if c %}{{ c.other.name }} — {% endif %}Messages — Logeo
+{% endblock %}
+{% block pied %}{% endblock %}
+{# Messagerie façon WhatsApp (plan d'actions v2, W5) : liste à gauche, fil à droite ; un seul panneau sur téléphone. #}
+{% block contenu %}
+  <div class="msg{% if c %} msg--ouvert{% endif %}">
+    {# ── Liste des conversations ── #}
+    <aside class="msg__liste" aria-label="Conversations">
+      <div class="msg__liste-entete">
+        <h1 class="msg__titre">Messages</h1>
+      </div>
+      {% if conversations %}
+        <ul class="msg__conversations">
+          {% for x in conversations %}
+            <li>
+              <a class="msg-ligne{% if c and x.id == c.id %} msg-ligne--active{% endif %}{% if x.unread_count %} msg-ligne--non-lue{% endif %}{% if x.muted %} msg-ligne--sourdine{% endif %}"
+                 href="/compte/messages/{{ x.id }}"
+                 {% if c and x.id == c.id %}aria-current="page"{% endif %}>
+                <span class="msg-avatar" aria-hidden="true">{{ x.other.name|default:"U"|slice:":2"|upper }}</span>
+                <span class="msg-ligne__corps">
+                  <span class="msg-ligne__haut">
+                    <strong class="msg-ligne__nom">{{ x.other.name|default:"Utilisateur" }}</strong>
+                    {% if x.last_message_at %}
+                      <span class="msg-ligne__heure">{{ x.last_message_at|horodatage_court }}</span>
+                    {% endif %}
+                  </span>
+                  {% if x.listing.title %}<span class="msg-ligne__chambre">{{ x.listing.title }}</span>{% endif %}
+                  <span class="msg-ligne__bas">
+                    <span class="msg-ligne__apercu">
+                      {% if x.status == "blocked" %}
+                        Conversation bloquée
+                      {% elif x.status == "read_only" %}
+                        Lecture seule
+                      {% else %}
+                        {{ x.last_message_preview|default:"Nouvelle conversation" }}
+                      {% endif %}
+                    </span>
+                    {% if x.muted %}
+                      <span class="msg-ligne__icone" title="En sourdine">
+                        {% include "web/composants/icone.html" with nom="bell-off" taille=14 %}
+                      </span>
+                    {% endif %}
+                    {% if x.unread_count %}
+                      <span class="msg-pastille" aria-label="{{ x.unread_count }} non lus">
+                        {% if x.unread_count > 99 %}
+                          99+
+                        {% else %}
+                          {{ x.unread_count }}
+                        {% endif %}
+                      </span>
+                    {% endif %}
+                  </span>
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="msg__vide">
+          <p class="etat-vide__titre">Aucune conversation</p>
+          <p class="etat-vide__texte">
+            {% if user.role == "gerant" %}
+              Les messages des étudiants intéressés par tes chambres arrivent ici.
+            {% else %}
+              Écris à un gérant depuis la fiche d'une chambre.
+            {% endif %}
+          </p>
+          {% if user.role != "gerant" %}<a class="bouton bouton--primaire"
+   href="/annonces">Voir les chambres</a>{% endif %}
+        </div>
+      {% endif %}
+    </aside>
+    {# ── Fil de la conversation ── #}
+    <section class="msg__fil" aria-label="Conversation">
+      {% if c %}
+        <header class="msg-entete">
+          <a class="msg-entete__retour"
+             href="/compte/messages"
+             aria-label="Retour aux conversations">
+            {% include "web/composants/icone.html" with nom="arrow-left" taille=20 %}
+          </a>
+          <span class="msg-avatar msg-avatar--petit"
+                aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
+          <div class="msg-entete__texte">
+            <h2 class="msg-entete__nom">
+              {{ c.other.name }}
+              {% if c.other.verified %}<span class="badge-verifie-pill badge-verifie-pill--petit">Vérifié</span>{% endif %}
+            </h2>
+            {% if c.listing.title %}
+              <a class="msg-entete__chambre"
+                 href="{% if c.listing.slug %}/annonces/{{ c.listing.slug }}{% else %}#{% endif %}">
+                {{ c.listing.title }}
+                {% if c.listing.rent_amount %}· {{ c.listing.rent_amount|fcfa }} F{% endif %}
+              </a>
+            {% endif %}
+          </div>
+          {% if c.muted %}
+            <span class="msg-entete__etat" title="En sourdine">
+              {% include "web/composants/icone.html" with nom="bell-off" taille=18 %}
+            </span>
+          {% endif %}
+          {# Menu sans JavaScript : <details> #}
+          <details class="msg-menu">
+            <summary class="msg-menu__bouton" aria-label="Options de la conversation">
+              {% include "web/composants/icone.html" with nom="ellipsis-vertical" taille=20 %}
+            </summary>
+            <div class="msg-menu__panneau">
+              {% if c.listing.slug %}
+                <a class="msg-menu__item"
+                   href="/annonces/{{ c.listing.slug }}">{% include "web/composants/icone.html" with nom="house" taille=18 %} Voir la chambre</a>
+              {% endif %}
+              <form method="post" class="msg-menu__groupe">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sourdine">
+                {% if c.muted %}
+                  <button class="msg-menu__item" type="submit" name="duree" value="">
+                    {% include "web/composants/icone.html" with nom="bell" taille=18 %} Réactiver les notifications
+                  </button>
+                {% else %}
+                  <p class="msg-menu__titre">Mettre en sourdine</p>
+                  <button class="msg-menu__item" type="submit" name="duree" value="8h">
+                    {% include "web/composants/icone.html" with nom="bell-off" taille=18 %} Pendant 8 heures
+                  </button>
+                  <button class="msg-menu__item" type="submit" name="duree" value="semaine">
+                    {% include "web/composants/icone.html" with nom="bell-off" taille=18 %} Pendant 1 semaine
+                  </button>
+                  <button class="msg-menu__item" type="submit" name="duree" value="toujours">
+                    {% include "web/composants/icone.html" with nom="bell-off" taille=18 %} Toujours
+                  </button>
+                {% endif %}
+              </form>
+              <details class="msg-menu__sous">
+                <summary class="msg-menu__item">
+                  {% include "web/composants/icone.html" with nom="flag" taille=18 %} Signaler la conversation
+                </summary>
+                <form method="post" class="msg-menu__groupe">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="signaler">
+                  {% for code, libelle in motifs %}
+                    <button class="msg-menu__item msg-menu__item--doux"
+                            type="submit"
+                            name="motif"
+                            value="{{ code }}">{{ libelle }}</button>
+                  {% endfor %}
+                </form>
+              </details>
+              {% if c.status == "open" or c.blocked_by_me %}
+                <form method="post">
+                  {% csrf_token %}
+                  {% if c.status == "blocked" %}
+                    <button class="msg-menu__item" type="submit" name="action" value="debloquer">
+                      {% include "web/composants/icone.html" with nom="shield-check" taille=18 %} Débloquer
+                    </button>
+                  {% else %}
+                    <button class="msg-menu__item msg-menu__item--danger"
+                            type="submit"
+                            name="action"
+                            value="bloquer">
+                      {% include "web/composants/icone.html" with nom="ban" taille=18 %} Bloquer
+                    </button>
+                  {% endif %}
+                </form>
+              {% endif %}
+            </div>
+          </details>
+        </header>
+        <div class="msg-fil" id="conv-fil">
+          <p class="msg-securite" role="note">
+            Ne paie jamais avant d'avoir visité. Ton numéro reste privé ; signale tout message suspect.
+          </p>
+          {% if adresse %}<p class="msg-systeme">Adresse privée de la chambre : {{ adresse }}</p>{% endif %}
+          {% if c.listing.status == "rented" %}<p class="msg-systeme">Cette chambre est désormais louée.</p>{% endif %}
+          {% if message %}
+            <div class="alerte alerte--{{ niveau|default:'information' }}"
+                 role="status">
+              <p>{{ message }}</p>
+            </div>
+          {% endif %}
+          {% for m in fil %}
+            {% if m.jour %}
+              <p class="msg-jour">
+                <span>{{ m.jour }}</span>
+              </p>
+            {% else %}
+              <div class="msg-bulle{% if m.mine %} msg-bulle--moi{% endif %}">
+                <span class="sr-only">
+                  {% if m.mine %}
+                    Toi
+                  {% else %}
+                    {{ c.other.name }}
+                  {% endif %}
+                :</span>
+                <span class="msg-bulle__texte">{{ m.body|linebreaksbr }}</span>
+                <span class="msg-bulle__meta">
+                  {{ m.created_at|date:"H:i" }}
+                  {% if m.mine %}
+                    <span class="msg-bulle__coche{% if m.lu %} msg-bulle__coche--lu{% endif %}"
+                          title="{% if m.lu %}Lu{% else %}Envoyé{% endif %}">
+                      {% if m.lu %}
+                        {% include "web/composants/icone.html" with nom="check-check" taille=16 %}
+                      {% else %}
+                        {% include "web/composants/icone.html" with nom="check" taille=16 %}
+                      {% endif %}
+                    </span>
+                  {% endif %}
+                </span>
+              </div>
+            {% endif %}
+          {% empty %}
+            <p class="msg-systeme">Aucun message pour l'instant. Pose ta question à {{ c.other.name }}.</p>
+          {% endfor %}
+        </div>
+        <div class="msg-saisie">
+          {% if c.status == "blocked" and c.blocked_by_me %}
+            <p class="msg-saisie__bandeau">
+              Tu as bloqué cette conversation : {{ c.other.name }} ne peut plus t'écrire. Pour débloquer, ouvre le menu.
+            </p>
+          {% endif %}
+          {% if c.status == "open" or c.blocked_by_me %}
+            <form method="post" class="msg-saisie__form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="envoyer">
+              <input type="hidden" name="client_msg_id" value="{{ client_msg_id }}">
+              <label class="sr-only" for="body">Ton message</label>
+              <textarea class="msg-saisie__champ"
+                        id="body"
+                        name="body"
+                        rows="1"
+                        placeholder="Écris un message…"
+                        maxlength="2000"
+                        required></textarea>
+              <button class="msg-saisie__envoyer"
+                      type="submit"
+                      aria-label="Envoyer le message">
+                {% include "web/composants/icone.html" with nom="send" taille=20 %}
+              </button>
+            </form>
+          {% elif c.status == "blocked" %}
+            <p class="msg-saisie__bandeau">{{ c.other.name }} a bloqué cette conversation. Tu ne peux plus écrire.</p>
+          {% else %}
+            <p class="msg-saisie__bandeau">Cette conversation est en lecture seule.</p>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="msg__accueil">
+          <span class="msg__accueil-icone">{% include "web/composants/icone.html" with nom="message-circle" taille=40 %}</span>
+          <p class="msg__accueil-titre">Choisis une conversation</p>
+          <p class="texte-doux">Tes échanges restent dans Logeo : ton numéro n'est jamais partagé.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+  <script src="{% static 'js/conversation.js' %}" defer></script>
+{% endblock %}

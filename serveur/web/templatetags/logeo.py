@@ -87,3 +87,17 @@ def statut_conversation(valeur: str) -> str:
 def manque_publication(code: str) -> str:
     """Code technique de publication manquante → texte français (même source que l'API)."""
     return annonces.libelle_manque(code)
+
+
+@register.filter
+def horodatage_court(valeur) -> str:
+    """Liste de conversations : heure si aujourd'hui, « Hier », sinon jj/mm (comme les messageries)."""
+    if not valeur:
+        return ""
+    from django.utils import timezone
+
+    local = timezone.localtime(valeur)
+    ecart = (timezone.localdate() - local.date()).days
+    if ecart == 0:
+        return local.strftime("%H:%M")
+    return "Hier" if ecart == 1 else local.strftime("%d/%m")

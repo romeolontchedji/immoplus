@@ -315,6 +315,38 @@ class TestMessagesWeb:
             connecte(p.user).get(f"/compte/messages/{conversation.pk}")
         )
 
+    def test_deux_panneaux_jour_et_coches(self):
+        """Plan v2, W5 : liste et fil sur la même page, séparateur de jour, coche « lu » quand l'autre a lu."""
+        p, a, locataire, conversation = self.mise_en_place()
+        cote_loc = connecte(locataire)
+        page = html(cote_loc.get(f"/compte/messages/{conversation.pk}"))
+        assert 'class="msg msg--ouvert"' in page and "msg-ligne--active" in page
+        assert "Aujourd&#x27;hui" in page or "Aujourd'hui" in page
+        assert 'title="Envoyé"' in page  # pas encore lu par le gérant
+        connecte(p.user).get(f"/compte/messages/{conversation.pk}")  # le gérant lit
+        assert 'title="Lu"' in html(cote_loc.get(f"/compte/messages/{conversation.pk}"))
+
+    def test_sourdine_et_reactivation(self):
+        p, a, locataire, conversation = self.mise_en_place()
+        c = connecte(locataire)
+        r = html(
+            c.post(f"/compte/messages/{conversation.pk}", {"action": "sourdine", "duree": "8h"})
+        )
+        assert "Notifications coupées" in r and "Réactiver les notifications" in r
+        conversation.refresh_from_db()
+        assert conversation.client_muted_until is not None
+        c.post(f"/compte/messages/{conversation.pk}", {"action": "sourdine", "duree": ""})
+        conversation.refresh_from_db()
+        assert conversation.client_muted_until is None
+
+    def test_signaler_la_conversation(self):
+        p, a, locataire, conversation = self.mise_en_place()
+        r = connecte(locataire).post(
+            f"/compte/messages/{conversation.pk}", {"action": "signaler", "motif": "harassment"}
+        )
+        assert "signalement a été transmis" in html(r)
+        assert Report.objects.filter(target_type="conversation", target_id=conversation.pk).exists()
+
     def test_un_tiers_obtient_404(self):
         *_, conversation = self.mise_en_place()
         assert (

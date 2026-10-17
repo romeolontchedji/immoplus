@@ -35,6 +35,14 @@
   --hero-blue-1: #1a2a6c;
   --hero-blue-2: #2a3f8f;
   /* Voiles des bannières (image d'arrière-plan, DESIGN.md) */
+  /* Messagerie (plan v2, W5) */
+  --hauteur-entete: 3.75rem;
+  --msg-liste-largeur: 22rem;
+  --msg-bulle-max: 75%;
+  --msg-fond: #EFEAE2;              /* fond du fil, beige doux façon messageries */
+  --msg-fond-voile: rgba(239, 234, 226, 0.65); /* atténue le motif sous les bulles */
+  --msg-bulle-moi: #DCE6FF;          /* bulle envoyée : bleu très pâle, texte nuit */
+  --msg-coche-lu: var(--blue);
   /* Motif de marque en filigrane (plan d'actions v2, P1.2) : clair sur fonds pâles, sombre sur cobalt ou nuit */
   --motif-clair: url("../../design/motif-clair.svg");
   --motif-sombre: url("../../design/motif-sombre.svg");
