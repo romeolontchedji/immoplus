@@ -102,6 +102,8 @@ def definir_verification(*, acteur: User, profil: GerantProfile, statut: str) ->
     audit.enregistrer(
         "gerant.verification", acteur=acteur, cible=profil.user, metadata={"statut": statut}
     )
+    if statut == StatutVerification.VERIFIED:
+        signals.gerant_verifie.send(sender=None, gerant_id=profil.pk)
 
 
 def changer_statut(

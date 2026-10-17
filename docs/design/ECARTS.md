@@ -45,3 +45,12 @@ Ce document consigne les éléments présents sur les maquettes de référence (
 | **Budget en curseur** | Aucun composant curseur sans dépendance native. | Pastilles de budget (≤ 10 000 à ≤ 30 000 F) + champ « Autre montant ». |
 | **« Voir 34 chambres »** | `FilOut` ne renvoie pas de total (pagination par curseur). | Aperçu réel : « Voir N chambres » sur la première page, « Voir plus de N chambres » s'il y a une page suivante. |
 | **Durée vidéo sur la carte du fil** | `CarteOut` (schéma OpenAPI) n'expose pas la durée. | Durée affichée sur la fiche seulement (`media[].duration_s`) ; le « 0:24 » inventé de la carte est supprimé. |
+
+## Abonnement (CDC §7.11) — 2026-10-17
+
+| Exigence | Écart | Raison |
+|---|---|---|
+| EF-ABO-07 écrans « Mon abonnement », « Choisir un plan » masqués | Non développés (les anciens écrans mobiles sont récupérables depuis le commit `10f7333`) | Décision du porteur : aucun écran de paiement en V1, même masqué ; à créer au lancement payant |
+| EF-ABO-04 squelettes FedaPay et KKiaPay | KKiaPay seul | Décision V10 du porteur |
+| EF-ABO-08 masquage des annonces 7 jours après expiration | Non appliqué | Le CDC le marque « à valider avant activation » |
+

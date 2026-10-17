@@ -41,6 +41,28 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     ),
     "CONTACT_LEAK_MODE": ("mask", "Détection des coordonnées : mask, flag ou block."),
     "SUBSCRIPTION_ENABLED": (False, "Abonnement des gérants (désactivé au lancement)."),
+    "PLANS": (
+        [
+            {
+                "code": "free_v1",
+                "label": "Gratuit V1",
+                "price": 0,
+                "period_months": 1,
+                "max_active_listings": None,
+                "active": True,
+            },
+            {
+                "code": "standard",
+                "label": "Standard",
+                "price": None,
+                "period_months": 1,
+                "max_active_listings": None,
+                "active": False,
+            },
+        ],
+        "Plans d'abonnement des gérants (CDC §9.19) ; prix à fixer avant activation (décision V11).",
+    ),
+    "SUBSCRIPTION_GRACE_DAYS": (7, "Jours de grâce d'un abonnement impayé avant expiration."),
     "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
     "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),
     "NEW_CONVERSATIONS_PER_DAY": (20, "Nouvelles conversations par jour et par locataire."),

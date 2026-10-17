@@ -77,6 +77,18 @@ def _quartier(identifiant) -> District:
         raise _champ("district", "Quartier inconnu.") from erreur
 
 
+def _abonnement_permet(gerant: "GerantProfile") -> None:
+    """Point d'extension unique de l'abonnement (CDC EF-ABO-03) : toujours vrai tant que le drapeau est faux."""
+    from apps.billing import services as abonnement
+
+    if not abonnement.can_publish(gerant.pk):
+        raise ErreurMetier(
+            "subscription_required",
+            "Ton abonnement ne permet pas de publier. Renouvelle-le pour continuer.",
+            statut=402,
+        )
+
+
 def _gerant_actif(gerant: "GerantProfile") -> None:
     if not gerant.user.is_active or gerant.user.status != Statut.ACTIVE:
         raise ErreurMetier("account_suspended", "Ton compte est suspendu.", statut=403)
@@ -133,6 +145,7 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
 @transaction.atomic
 def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
     _gerant_actif(gerant)
+    _abonnement_permet(gerant)
     manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "")]
     if manquants:
         raise ErreurMetier(
@@ -313,6 +326,7 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
 def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     """Publie si toutes les conditions sont réunies ; sinon 409 `listing_not_publishable` avec les manques."""
     _gerant_actif(gerant)
+    _abonnement_permet(gerant)
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status not in (StatutAnnonce.DRAFT, StatutAnnonce.PROCESSING, StatutAnnonce.HIDDEN):
         raise ErreurMetier(

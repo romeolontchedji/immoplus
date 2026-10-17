@@ -433,3 +433,15 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   session en cours, « Déconnecter tous les autres appareils » via `compte.deconnecter_partout`), W8 (préfixe +229 sur
   tous les numéros, code en cases en CSS seul). Reste W1 (photos de la bannière, en attente des fichiers).
   Essai réel : une photo d'essai (« essai.jpg », bleu uni) a été ajoutée à une annonce du gérant de démonstration.
+- **Abonnement prêt mais inactif (CDC §7.11, S5)** : application `billing` (tables `subscriptions`, `payments` avec
+  `webhook_events`), plans dans `app_settings.PLANS` (Gratuit V1 actif, Standard sans prix : V11), drapeau
+  `SUBSCRIPTION_ENABLED` faux. `can_publish` appelé à la création et à la publication d'une annonce. Fournisseur
+  `apps/core/providers/paiement.py` : factice signé HMAC (local, tests) et squelette KKiaPay (V10). Webhook : signature,
+  idempotence par identifiant d'événement, tâche `apps.billing.appliquer_evenement`. Échéances quotidiennes (grâce
+  7 jours). Plan Gratuit V1 attribué à la vérification (signal `gerant_verifie`) et aux gérants déjà vérifiés
+  (migration). Routes `/v1/pro/plans`, `/v1/pro/subscription[/checkout|/cancel]`, `/v1/webhooks/payments/{fournisseur}`
+  en `404 feature_disabled` et absentes du schéma public. Administration en lecture seule. 929 tests serveur verts.
+  **Écarts au CDC** (consignés dans `docs/design/ECARTS.md`) : écrans « Mon abonnement » et « Choisir un plan »
+  (EF-ABO-07) non développés, par décision du porteur (aucun écran de paiement en V1) ; squelette FedaPay non livré
+  (V10 : KKiaPay seul) ; masquage des annonces 7 jours après expiration non appliqué (« règle à valider »).
+

@@ -170,6 +170,10 @@ PUSH_PROVIDER = env.texte("PUSH_PROVIDER", "console")
 STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
 VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
 PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
+PAYMENT_WEBHOOK_SECRET = env.texte(
+    "PAYMENT_WEBHOOK_SECRET"
+)  # signature des webhooks (factice et réels)
+KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
 DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
 CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER", "fake")
 TURNSTILE_SECRET = env.texte("TURNSTILE_SECRET")

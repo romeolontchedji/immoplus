@@ -265,4 +265,22 @@ class AppSettingAdmin(admin.ModelAdmin):
         )
 
 
+from apps.billing.models import Payment, Subscription  # noqa: E402
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(LectureSeule):
+    """Abonnements (inactifs en V1 : plan Gratuit V1 pour chaque gérant vérifié)."""
+
+    list_display = ("gerant", "plan_code", "status", "current_period_end", "cancel_at_period_end")
+    list_filter = ("status", "plan_code")
+
+
+@admin.register(Payment)
+class PaymentAdmin(LectureSeule):
+    list_display = ("created_at", "gerant", "plan_code", "amount", "provider", "status")
+    list_filter = ("status", "provider")
+    exclude = ("payer_phone_e164",)  # numéro du payeur jamais affiché en liste ni en détail
+
+
 from . import admin_moderation  # noqa: E402,F401  (annonces, signalements, sanctions)

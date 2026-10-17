@@ -160,7 +160,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | S2 | Fréquences ✅ (livré sous `GET /v1/alert-options` : alertes actives et loyers publiés ; les recherches ne sont pas encore comptées) | Endpoint `GET /v1/search-hints` : quartiers et plafonds de budget les plus utilisés (recherches + alertes, 90 jours), pour les listes de M5 et du web. |
 | S3 | Chambres similaires (D4) | Score : même quartier ou quartier voisin, type identique, loyer à ± 25 %, distance à l'UP proche ; repli sur les plus récentes. Partagé : `GET /v1/listings/{ident}/similar` utilisé par le web et le mobile. |
 | S4 | Vues (D7) | Une fois `beat` réparé : test de bout en bout vue → statistiques → tableau de bord. |
-| S5 | Abonnement prêt mais désactivé | Services, modèles et écrans d'abonnement gérant derrière `SUBSCRIPTION_ENABLED=False` ; aucun prix affiché tant qu'il est faux. Même chose pour les notifications payantes des locataires (`PAID_ALERTS_ENABLED`). |
+| S5 | Abonnement prêt mais désactivé ✅ (serveur ; `PAID_ALERTS_ENABLED` des locataires : à faire) | Services, modèles et écrans d'abonnement gérant derrière `SUBSCRIPTION_ENABLED=False` ; aucun prix affiché tant qu'il est faux. Même chose pour les notifications payantes des locataires (`PAID_ALERTS_ENABLED`). |
 | S6 | Avis (V4, reporté en V2) et gérant-locataire (V3) | Consignés dans `docs/reste-a-faire.md` pour la V2. |
 
 ### 7 bis. Plans et architecture de paiement (CDC §7.11, EF-ABO-01 à 08)

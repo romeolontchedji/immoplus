@@ -7,3 +7,6 @@ compte_supprime = Signal()
 
 # Émis après un changement de statut (suspension, bannissement, réactivation) : `utilisateur`, `ancien`, `nouveau`.
 statut_compte_change = Signal()
+
+# Émis quand l'administration vérifie un gérant : `gerant_id` (l'abonnement lui attribue le plan Gratuit V1).
+gerant_verifie = Signal()
