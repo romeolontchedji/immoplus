@@ -387,3 +387,9 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **Reste noté** : `/favicon.ico` répond 404 sur le site (préexistant).
 - **Données locales** : le gérant de démonstration `+229 01 97 00 00 01` a maintenant le mot de passe
   `GerantEssai2026!` (celui du jeu d'essai ne fonctionnait pas), pour les essais dans le navigateur.
+- **Empreinte et « Se souvenir de moi » (V5, ADR 0005)** : nouvelle dépendance mobile `expo-local-authentication`
+  (module officiel, ~57.0.3). Verrou facultatif proposé dans le Profil seulement si le téléphone a une empreinte
+  enregistrée ; à tester sur un vrai téléphone (dev build). Site : case « Se souvenir de moi » décochée par défaut,
+  session de 30 jours si cochée, sinon fermée avec le navigateur (avant : 2 semaines dans tous les cas). Les erreurs
+  de champ des formulaires d'authentification passent par `composants/champ.html` (cases à cocher alignées).
+  871 tests serveur verts (seul `/readyz` échoue), 104 tests mobile, paquet Android construit.
