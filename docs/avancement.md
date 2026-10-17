@@ -449,4 +449,13 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **Alertes (A1, A2, A4)** : 3 notifications par alerte et par jour, puis un récapitulatif `alert.digest` mis à jour
   sans re-sonner ; tests de bout en bout (API → publication → notification), pause, reprise, suppression.
 - **Recette des filtres (phase 6)** : 38 cas dont la parité site/API. Suite serveur complète verte (seul `/readyz`).
+- **426 et 503** : `apps/core/acces_application.py` (intergiciel du site et de l'API) : version sous
+  `MIN_SUPPORTED_VERSION` → 426, `MAINTENANCE_ENABLED` → 503 (page `web/maintenance.html` sur le site). Restent ouverts :
+  app-config, textes légaux, webhooks, santé, statiques ; l'administration n'est jamais bloquée.
+- **Administration refondue** : design aligné (jetons, police locale, `adminsite/static/admin/css/logeo-adm.css`
+  réécrit en redirigeant les variables de l'admin Django), accueil « À traiter / Activité / Gérer », page Paramètres par
+  thème (`adminsite/parametres_page.py`), quartiers gérables, tout en français (intitulés des applications, modèles,
+  champs et valeurs de modération ; migrations d'options et d'intitulés **sans SQL**, vérifiées par `sqlmigrate`),
+  noms lisibles, groupes retirés. 984 tests serveur verts (seul `/readyz`).
+- **Données locales** : compte administrateur d'essai `admin.essai@logeo.local` / `AdminEssai2026!` (local seulement).
 
