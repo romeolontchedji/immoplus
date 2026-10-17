@@ -39,8 +39,21 @@ def en_tant_que_app():
 
 
 class TestReferentiel:
-    def test_les_quatre_officiels_existent(self):
-        assert set(types.slugs_valides()) >= {"single", "entree_coucher", "chambre_salon", "studio"}
+    def test_les_officiels_vont_de_la_chambre_a_la_villa(self):
+        attendus = {
+            "single",
+            "entree_coucher",
+            "chambre_salon",
+            "studio",
+            "colocation",
+            "appartement_meuble",
+            "villa",
+        }
+        assert set(types.slugs_valides()) >= attendus
+
+    def test_appartement_meuble_est_deja_officiel(self, pro):
+        r = pro.post("/v1/pro/room-types", {"label": "appartement meublé"}, format="json")
+        assert r.status_code == 200 and r.json()["status"] == "approved"
 
     def test_liste_publique_les_plus_courants_d_abord(self):
         ListingFactory.create_batch(2, room_type="studio")
@@ -49,35 +62,36 @@ class TestReferentiel:
         assert r.json()[0] == {"slug": "studio", "label": "Studio", "count": 2}
 
     def test_proposition_absente_de_la_liste_publique(self, gerant):
-        types.proposer(gerant, "Appartement meublé")
+        types.proposer(gerant, "Chambre avec mezzanine")
         slugs = [t["slug"] for t in Client().get("/v1/room-types").json()]
-        assert "appartement_meuble" not in slugs
+        assert "chambre_avec_mezzanine" not in slugs
 
 
 class TestProposition:
     def test_creer_puis_utiliser_tout_de_suite(self, pro):
-        r = pro.post("/v1/pro/room-types", {"label": "appartement meublé"}, format="json")
+        r = pro.post("/v1/pro/room-types", {"label": "chambre avec mezzanine"}, format="json")
         assert r.status_code == 201
         assert r.json() == {
-            "slug": "appartement_meuble",
-            "label": "Appartement meublé",
+            "slug": "chambre_avec_mezzanine",
+            "label": "Chambre avec mezzanine",
             "status": "pending",
         }
-        assert "appartement_meuble" in [t["slug"] for t in pro.get("/v1/pro/room-types").json()]
+        assert "chambre_avec_mezzanine" in [t["slug"] for t in pro.get("/v1/pro/room-types").json()]
         a = pro.post(
             "/v1/pro/listings",
-            donnees_annonce(DistrictFactory(), room_type="appartement_meuble"),
+            donnees_annonce(DistrictFactory(), room_type="chambre_avec_mezzanine"),
             format="json",
         )
         assert a.status_code == 201, a.content
-        assert a.json()["room_type_label"] == "Appartement meublé"
+        assert a.json()["room_type_label"] == "Chambre avec mezzanine"
         assert AuditLog.objects.filter(action="room_type.propose").exists()
 
     @pytest.mark.parametrize("saisie", ["Entrée coucher", "ENTREE-COUCHER", "entrée  couchér"])
     def test_equivalent_existant_reutilise(self, pro, saisie):
+        avant = RoomType.objects.count()
         r = pro.post("/v1/pro/room-types", {"label": saisie}, format="json")
         assert r.status_code == 200 and r.json()["slug"] == "entree_coucher"
-        assert RoomType.objects.count() == 4
+        assert RoomType.objects.count() == avant
 
     def test_la_proposition_d_un_autre_gerant_est_partagee(self, gerant, pro):
         autre = gerant_verifie()
@@ -109,23 +123,23 @@ class TestProposition:
 
     def test_un_locataire_ne_propose_pas(self):
         c = client_de(ClientFactory())
-        assert c.post("/v1/pro/room-types", {"label": "Villa"}, format="json").status_code == 403
+        assert c.post("/v1/pro/room-types", {"label": "Bungalow"}, format="json").status_code == 403
 
 
 class TestFiltresEtAlertes:
     def test_filtre_sur_un_type_en_attente_refuse(self, gerant):
-        t = types.proposer(gerant, "Villa")
+        t = types.proposer(gerant, "Bungalow")
         assert Client().get(f"/v1/listings?type={t.slug}").status_code == 400
 
     def test_filtre_sur_un_type_valide(self, gerant):
-        t = types.valider(types.proposer(gerant, "Villa"), acteur=None)
+        t = types.valider(types.proposer(gerant, "Bungalow"), acteur=None)
         ListingFactory(room_type=t.slug)
         r = Client().get(f"/v1/listings?type={t.slug}")
         assert r.status_code == 200 and len(r.json()["items"]) == 1
-        assert r.json()["items"][0]["room_type_label"] == "Villa"
+        assert r.json()["items"][0]["room_type_label"] == "Bungalow"
 
     def test_alerte_sur_un_type_en_attente_refusee(self, gerant):
-        t = types.proposer(gerant, "Villa")
+        t = types.proposer(gerant, "Bungalow")
         c = client_de(ClientFactory())
         r = c.post("/v1/me/alerts", {"room_types": [t.slug]}, format="json")
         assert r.status_code == 400
@@ -161,7 +175,7 @@ class TestRoleApp:
     def test_le_role_app_ne_peut_que_proposer(self, gerant):
         with en_tant_que_app():
             t = RoomType.objects.create(
-                slug="villa", label="Villa", status="approved", sort_order=1
+                slug="bungalow", label="Bungalow", status="approved", sort_order=1
             )
         t.refresh_from_db()
         assert (t.status, t.sort_order) == ("pending", 100)  # forcé par le déclencheur
@@ -169,7 +183,7 @@ class TestRoleApp:
     def test_le_role_app_ne_peut_pas_valider(self, gerant):
         from django.db.utils import ProgrammingError
 
-        t = types.proposer(gerant, "Villa")
+        t = types.proposer(gerant, "Bungalow")
         with pytest.raises(ProgrammingError), en_tant_que_app():
             RoomType.objects.filter(pk=t.pk).update(status="approved")
 
@@ -186,13 +200,13 @@ def test_site_proposer_un_type_depuis_l_editeur():
         "/pro/annonces/nouvelle",
         {
             "action": "enregistrer", "title": "Appartement près du campus", "room_type": "",
-            "nouveau_type": "Appartement meublé", "district": str(q.pk), "landmark_text": "Derrière la pharmacie",
+            "nouveau_type": "Chambre avec mezzanine", "district": str(q.pk), "landmark_text": "Derrière la pharmacie",
             "rent_amount": "45000", "deposit_months": "2", "advance_months": "1", "agent_fee_amount": "0",
             "available_from": "2026-11-01", "water_source": "running", "electricity_meter": "individual",
         },
     )  # fmt: skip
     assert r.status_code == 302, r.content.decode()[:2000]
-    assert Listing.objects.get(gerant=g).room_type == "appartement_meuble"
+    assert Listing.objects.get(gerant=g).room_type == "chambre_avec_mezzanine"
 
 
 @pytest.mark.integration

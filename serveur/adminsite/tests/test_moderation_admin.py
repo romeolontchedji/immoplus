@@ -206,12 +206,12 @@ class TestTypesDeLogement:
         from apps.listings.services import types
 
         _, c = mod
-        t = types.proposer(gerant_verifie(), "Villa")
+        t = types.proposer(gerant_verifie(), "Bungalow")
         lancer(c, "listings_roomtype", "valider", [t.pk])
         t.refresh_from_db()
         assert t.status == "approved"
         assert AuditLog.objects.filter(action="room_type.valide").exists()
-        assert RoomType.objects.filter(slug="villa", status="approved").exists()
+        assert RoomType.objects.filter(slug="bungalow", status="approved").exists()
 
     def test_rattacher(self, mod):
         from apps.listings.models import RoomType

@@ -45,7 +45,7 @@ class TestFiltres:
         ("params", "champ"),
         [
             ({"sort": "hasard"}, "sort"),
-            ({"type": "villa"}, "type"),
+            ({"type": "chateau"}, "type"),
             ({"water": "mer"}, "water"),
             ({"rent_min": "abc"}, "rent_min"),
             ({"rent_min": "100", "rent_max": "50"}, "rent_min"),

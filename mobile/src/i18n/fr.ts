@@ -25,7 +25,13 @@ const fr = {
     network: "Pas de connexion. Vérifie ton réseau et réessaie.",
   } as Record<string, string>,
   statutAnnonce: { draft: "Brouillon", processing: "En traitement", published: "En ligne", hidden: "Masquée", rented: "Louée", archived: "Archivée", removed: "Retirée" } as Record<string, string>,
-  typeChambre: { single: "Chambre simple", entree_coucher: "Entrée-coucher", chambre_salon: "Chambre-salon", studio: "Studio" } as Record<string, string>,
+  // Repli hors ligne : types officiels (la liste vivante vient de GET /v1/room-types, décision V1).
+  typeChambre: {
+    single: "Chambre simple", entree_coucher: "Entrée-coucher", chambre_salon: "Chambre-salon", studio: "Studio",
+    studio_meuble: "Studio meublé", colocation: "Chambre en colocation", residence_etudiante: "Chambre en résidence étudiante",
+    appartement_2_chambres: "Appartement 2 chambres salon", appartement_3_chambres: "Appartement 3 chambres salon et plus",
+    appartement_meuble: "Appartement meublé", maison: "Maison individuelle", duplex: "Duplex", villa: "Villa",
+  } as Record<string, string>,
 };
 
 export type Textes = typeof fr;
