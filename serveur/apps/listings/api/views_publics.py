@@ -96,6 +96,23 @@ def _visiteur(request) -> str:
     return "a:" + hashlib.sha256(base.encode()).hexdigest()[:24]
 
 
+class Similaires(_Public):
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=TAG,
+        summary="Chambres similaires (quartier, type, loyer, distance)",
+        responses={200: s.CarteOut(many=True)},
+    )
+    def get(self, request, ident):
+        fiche = selectors.fiche_publique(ident)
+        if fiche is None:
+            raise ErreurMetier("not_found", "Annonce introuvable.", statut=404)
+        reponse = Response(s.CarteOut(selectors.similaires(fiche["id"]), many=True).data)
+        reponse["Cache-Control"] = "public, max-age=60"
+        return reponse
+
+
 class Vue(_Public):
     @extend_schema(tags=TAG, summary="Compter une vue", request=None, responses={200: s.VueOut})
     def post(self, request, ident):

@@ -7,6 +7,7 @@ export const qk = {
   optionsAlerte: ["options-alerte"] as const,
   fil: (filtres: unknown) => ["fil", filtres] as const,
   fiche: (ident: string) => ["fiche", ident] as const,
+  similaires: (ident: string) => ["similaires", ident] as const,
   favoris: ["favoris"] as const,
   alertes: ["alertes"] as const,
   conversations: ["conversations"] as const,

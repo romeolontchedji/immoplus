@@ -28,6 +28,10 @@ export function libelleType(types: TypeChambre[], slug: string): string {
   return types.find((x) => x.slug === slug)?.label ?? t.typeChambre[slug] ?? slug;
 }
 
+/** Chambres similaires (quartier, type, loyer, distance), même source que le site (plan v2, S3). */
+export const useSimilaires = (ident: string | undefined) =>
+  useQuery({ queryKey: qk.similaires(ident ?? ""), enabled: !!ident, queryFn: () => unwrap(api.GET("/v1/listings/{ident}/similar", { params: { path: { ident: ident as string } } })), staleTime: 5 * 60_000 });
+
 /** Fil et recherche : pagination par curseur opaque (`next_cursor`), 10 cartes par page. */
 export function useFil(filtres: Filtres) {
   return useInfiniteQuery({

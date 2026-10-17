@@ -161,21 +161,10 @@ def _rendre_fiche(request, f, **extra):
         criteres_alerte["type"] = f["room_type"]
     if f.get("has_private_bathroom"):
         criteres_alerte["bathroom"] = "true"
-    try:
-        similaires_res = fil.rechercher({"district": f["district"]["slug"], "limit": 6})
-        similaires = [
-            c for c in similaires_res.get("items", []) if str(c.get("id")) != str(f["id"])
-        ][:3]
-        if len(similaires) < 3:
-            tous_res = fil.rechercher({"limit": 6})
-            autres = [
-                c
-                for c in tous_res.get("items", [])
-                if str(c.get("id")) != str(f["id"]) and c not in similaires
-            ]
-            similaires.extend(autres[: 3 - len(similaires)])
-    except Exception:
-        similaires = []
+    similaires = [
+        {**c, "type_label": _libelle_type(c["room_type"])}
+        for c in selectors.similaires(f["id"], limite=3)
+    ]  # plan v2, S3 : même source que l'API
 
     contexte = {
         "f": {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Share, View } from "react-native";
+import { FlatList, Pressable, ScrollView, Share, useWindowDimensions, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -15,9 +15,10 @@ import { Button } from "@/ui/components/Button";
 import { ErrorState, OfflineBanner } from "@/ui/components/States";
 import { Skeleton } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
+import { ListingCard } from "@/ui/components/ListingCard";
 import { TexteEnrichi } from "@/ui/components/TexteEnrichi";
 import { LIBELLES_EAU } from "./filtres";
-import { useBasculerFavori, useCompterVue, useFiche, type Fiche } from "./queries";
+import { useBasculerFavori, useCompterVue, useFiche, useSimilaires, type Fiche } from "./queries";
 
 type Media = Fiche["media"][number];
 
@@ -68,6 +69,31 @@ function BoutonRond({ libelle, onPress, children }: { libelle: string; onPress: 
     >
       {children}
     </Pressable>
+  );
+}
+
+/** Chambres similaires en bandeau horizontal (plan v2, S3). */
+function Similaires({ ident }: { ident: string }) {
+  const router = useRouter();
+  const { data } = useSimilaires(ident);
+  const { width } = useWindowDimensions();
+  if (!data?.length) return null;
+  return (
+    <View style={{ gap: sp[2] }}>
+      <Text variante="label" muted>Chambres similaires</Text>
+      <FlatList
+        horizontal
+        data={data}
+        keyExtractor={(c) => c.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: sp[3] }}
+        renderItem={({ item }) => (
+          <View style={{ width: Math.min(280, width * 0.75) }}>
+            <ListingCard annonce={item} onPress={() => router.push({ pathname: "/annonces/[ident]", params: { ident: item.slug } })} />
+          </View>
+        )}
+      />
+    </View>
   );
 }
 
@@ -304,6 +330,8 @@ export function FicheScreen() {
               ) : null}
             </View>
           ) : null}
+
+          <Similaires ident={fiche.slug} />
 
           <Pressable
             accessibilityRole="button"

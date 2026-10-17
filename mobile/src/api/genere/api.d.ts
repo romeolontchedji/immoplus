@@ -474,6 +474,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/listings/{ident}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chambres similaires (quartier, type, loyer, distance) */
+        get: operations["v1_listings_similar_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/listings/{ident}/views": {
         parameters: {
             query?: never;
@@ -2473,6 +2490,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FicheOut"];
+                };
+            };
+        };
+    };
+    v1_listings_similar_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarteOut"][];
                 };
             };
         };

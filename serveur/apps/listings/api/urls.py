@@ -13,6 +13,7 @@ urlpatterns = [
     path("listings", p.Fil.as_view(), name="listings"),
     path("listings/<str:ident>", p.Fiche.as_view(), name="listing"),
     path("listings/<str:ident>/views", p.Vue.as_view(), name="listing-views"),
+    path("listings/<str:ident>/similar", p.Similaires.as_view(), name="listing-similar"),
     path("me/favorites", p.Favoris.as_view(), name="favorites"),
     path("me/favorites/<uuid:annonce_id>", p.FavoriDetail.as_view(), name="favorite"),
     path("alert-options", p.OptionsAlerte.as_view(), name="alert-options"),

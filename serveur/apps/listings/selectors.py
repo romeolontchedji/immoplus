@@ -240,6 +240,66 @@ def _cartes(annonces: list[Listing]) -> list[dict]:
     return [_carte(a, medias.get(a.pk, []), gerants) for a in annonces]
 
 
+def similaires(annonce_id, *, limite: int = 4) -> list[dict]:
+    """Chambres similaires (plan v2, S3), même source pour le site et l'API.
+
+    Score : même quartier (3) ou quartier voisin, centres à moins de 2 km (1,5) ; même type (2) ; loyer à ± 25 % (2) ;
+    distance à l'UP à moins de 1 km d'écart (1). Égalités : la plus récente d'abord. Repli : les plus récentes en ligne.
+    """
+    ref = Listing.objects.select_related("district").filter(pk=annonce_id).first()
+    if ref is None:
+        return []
+    publiees = Listing.objects.filter(
+        status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True
+    ).exclude(pk=ref.pk)
+    loyer_bas, loyer_haut = ref.rent_amount * 0.5, ref.rent_amount * 1.5
+    candidates = list(
+        publiees.filter(
+            Q(district_id=ref.district_id)
+            | Q(room_type=ref.room_type)
+            | Q(rent_amount__range=(loyer_bas, loyer_haut))
+        )
+        .select_related("district")
+        .order_by("-published_at")[:80]
+    )
+
+    def score(a: Listing) -> float:
+        total = 0.0
+        if a.district_id == ref.district_id:
+            total += 3
+        elif (
+            geo.haversine_m(
+                float(a.district.latitude),
+                float(a.district.longitude),
+                float(ref.district.latitude),
+                float(ref.district.longitude),
+            )
+            <= 2000
+        ):
+            total += 1.5
+        if a.room_type == ref.room_type:
+            total += 2
+        if abs(a.rent_amount - ref.rent_amount) <= 0.25 * ref.rent_amount:
+            total += 2
+        if abs(a.distance_to_campus_m - ref.distance_to_campus_m) <= 1000:
+            total += 1
+        return total
+
+    classees = sorted(
+        candidates,
+        key=lambda a: (-score(a), -(a.published_at.timestamp() if a.published_at else 0)),
+    )
+    choisies = [a for a in classees if score(a) >= 2][:limite]
+    if len(choisies) < limite:  # repli : les plus récentes, sans doublon
+        deja = {a.pk for a in choisies}
+        choisies += [
+            a
+            for a in publiees.select_related("district").order_by("-published_at")[: limite * 2]
+            if a.pk not in deja
+        ][: limite - len(choisies)]
+    return _cartes(choisies)
+
+
 def carte_apercu(annonce: Listing) -> dict:
     """Carte d'aperçu gérant : même rendu public, sans exiger que l'annonce soit publiée."""
     medias = _medias_prets([annonce.pk]).get(annonce.pk, [])

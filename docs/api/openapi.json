@@ -1266,6 +1266,46 @@
                 }
             }
         },
+        "/v1/listings/{ident}/similar": {
+            "get": {
+                "operationId": "v1_listings_similar_list",
+                "summary": "Chambres similaires (quartier, type, loyer, distance)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CarteOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/listings/{ident}/views": {
             "post": {
                 "operationId": "v1_listings_views_create",
