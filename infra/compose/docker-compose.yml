@@ -12,6 +12,16 @@ x-image: &image
 x-profils: &profils
   profiles: ["dev", "prod"]
 
+# Sondes de santé par processus. Celle de l'image (HTTP sur 8000) ne vaut que pour web-api : sans elles, realtime
+# (8001), admin (8002), les workers et beat (pas de HTTP) étaient marqués « unhealthy » alors qu'ils fonctionnaient.
+x-sante-worker: &sante_worker
+  healthcheck:
+    test: ["CMD-SHELL", "celery -A config.celery inspect ping -d celery@$$HOSTNAME --timeout 10 | grep -q pong"]
+    interval: 60s
+    timeout: 30s
+    start_period: 60s
+    retries: 3
+
 x-code-dev: &code_dev
   volumes:
     - ../../serveur:/app
@@ -100,6 +110,8 @@ services:
   realtime:
     <<: [*profils, *image, *code_dev]
     command: ["realtime"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8001/healthz || exit 1"]
     env_file: [env/realtime.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
@@ -112,6 +124,8 @@ services:
   admin:
     <<: [*profils, *image, *code_dev]
     command: ["admin"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8002/healthz || exit 1"]
     env_file: [env/admin.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.admin_local
@@ -126,7 +140,7 @@ services:
     networks: [interne]
 
   worker:
-    <<: [*profils, *image, *code_dev]
+    <<: [*profils, *image, *code_dev, *sante_worker]
     command: ["worker"]
     env_file: [env/worker.env]
     environment:
@@ -137,7 +151,7 @@ services:
     networks: [interne, sortie]
 
   worker-media:
-    <<: [*profils, *image, *code_dev]
+    <<: [*profils, *image, *code_dev, *sante_worker]
     command: ["worker-media"]
     env_file: [env/worker-media.env]
     environment:
@@ -158,6 +172,11 @@ services:
   beat:
     <<: [*profils, *image, *code_dev]
     command: ["beat"]
+    healthcheck:
+      # beat réécrit son fichier de planification à chaque envoi (une tâche part chaque minute).
+      test: ["CMD-SHELL", "find /var/lib/logeo/celerybeat-schedule -mmin -5 | grep -q ."]
+      interval: 60s
+      start_period: 120s
     env_file: [env/beat.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
