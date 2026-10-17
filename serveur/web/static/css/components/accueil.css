@@ -179,6 +179,9 @@
   font-size: var(--fs-14); font-weight: 800; display: flex; align-items: center; justify-content: center;
 }
 .accueil-comment__numero--soleil { background: var(--sun); color: var(--night); }
+/* La pastille est un <span> de l'étape : la couleur du texte de l'étape ne doit pas l'atteindre. */
+.accueil-comment__etape .accueil-comment__numero { color: var(--white); }
+.accueil-comment__etape .accueil-comment__numero--soleil { color: var(--night); }
 .accueil-comment__cta {
   display: inline-flex; align-items: center; justify-content: center;
   padding: var(--sp-4) var(--sp-6); border-radius: var(--r-field);
