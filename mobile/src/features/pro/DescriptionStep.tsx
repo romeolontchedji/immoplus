@@ -29,7 +29,7 @@ const EQUIPEMENTS: EQUIPEMENT[] = [
 
 /** Étape de l'assistant où se saisit chaque champ obligatoire. */
 const ETAPE_DU_CHAMP: Partial<Record<(typeof CHAMPS_CREATION)[number], string>> = {
-  district: "localisation", landmark_text: "localisation", address_private: "localisation", latitude: "localisation", longitude: "localisation",
+  district: "localisation", landmark_text: "localisation", address_private: "localisation",
   water_source: "equipements", electricity_meter: "equipements", has_private_bathroom: "equipements", is_fenced: "equipements",
 };
 
@@ -106,6 +106,7 @@ export function DescriptionStep() {
     }
     const corps: Record<string, unknown> = {};
     for (const cle of CHAMPS_CREATION) corps[cle] = brouillonMaj[cle];
+    if (brouillonMaj.latitude && brouillonMaj.longitude) Object.assign(corps, { latitude: brouillonMaj.latitude, longitude: brouillonMaj.longitude });
     if (brouillonMaj.description_md) corps.description_md = brouillonMaj.description_md;
     creer.mutate(corps, { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) });
   };

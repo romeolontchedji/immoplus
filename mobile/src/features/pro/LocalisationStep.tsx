@@ -1,6 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as Location from "expo-location";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { View } from "react-native";
+import { CircleCheck } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { z } from "zod";
 import { sp } from "@/ui/theme/tokens";
@@ -28,7 +31,19 @@ type Valeurs = z.infer<typeof schema>;
  * Étape 2/4 — Localisation (EF-ANN-03).
  * Quartier en chips + repère campus + adresse confidentielle.
  * L'adresse privée n'est jamais affichée aux locataires (serveur l'exclut des réponses publiques).
+ * Pas de latitude ni de longitude à saisir (décision V7) : le serveur place la chambre au centre du quartier ; le gérant
+ * qui est sur place peut partager la position exacte du téléphone, pour une distance à l'UP plus juste.
  */
+
+type Gps = { latitude: string; longitude: string } | null;
+
+/** Position actuelle, arrondie à 6 décimales comme l'exige l'API ; `null` si refusée ou indisponible. */
+async function positionActuelle(): Promise<Gps | "refusee"> {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== "granted") return "refusee";
+  const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+  return { latitude: p.coords.latitude.toFixed(6), longitude: p.coords.longitude.toFixed(6) };
+}
 export function LocalisationStep() {
   const { c } = useTheme();
   const router = useRouter();
@@ -46,17 +61,28 @@ export function LocalisationStep() {
   });
 
   const districtSel = watch("district");
+  const [gps, setGps] = useState<Gps>(brouillon.latitude && brouillon.longitude ? { latitude: brouillon.latitude, longitude: brouillon.longitude } : null);
+  const [etatGps, setEtatGps] = useState<"repos" | "recherche" | "refusee" | "erreur">("repos");
+
+  const localiser = async () => {
+    setEtatGps("recherche");
+    try {
+      const r = await positionActuelle();
+      if (r === "refusee") return setEtatGps("refusee");
+      setGps(r);
+      setEtatGps("repos");
+    } catch {
+      setEtatGps("erreur");
+    }
+  };
 
   const suivant = (v: Valeurs) => {
-    // Le serveur attend l'identifiant du quartier ; à défaut de point GPS, on place la chambre au centre du quartier
-    // (la distance à l'UP en dépend), arrondi à 6 décimales comme l'exige l'API.
-    const quartier = districts.data?.find((d) => d.id === v.district);
     maj({
       district: v.district,
       landmark_text: v.landmark_text,
       address_private: v.address_private,
-      latitude: quartier ? quartier.latitude.toFixed(6) : undefined,
-      longitude: quartier ? quartier.longitude.toFixed(6) : undefined,
+      latitude: gps?.latitude, // absent : le serveur prend le centre du quartier
+      longitude: gps?.longitude,
     });
     router.push("/pro/nouvelle-annonce/equipements" as never);
   };
@@ -86,6 +112,31 @@ export function LocalisationStep() {
           )}
         </QueryState>
         {errors.district ? <Text variante="legende" couleur={c.danger}>{errors.district.message}</Text> : null}
+      </View>
+
+      {/* Position exacte, facultative */}
+      <View style={{ gap: sp[2] }}>
+        {gps ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2] }}>
+            <CircleCheck size={18} color={c.succes} />
+            <Text variante="legende" style={{ flex: 1 }}>Position exacte enregistrée.</Text>
+            <Button titre="Retirer" variante="fantome" taille="compacte" onPress={() => setGps(null)} />
+          </View>
+        ) : (
+          <Button
+            titre="Je suis dans la chambre : utiliser ma position"
+            variante="secondaire"
+            chargement={etatGps === "recherche"}
+            onPress={() => void localiser()}
+          />
+        )}
+        <Text variante="legende" muted>
+          {etatGps === "refusee"
+            ? "Position refusée : la distance à l'UP sera calculée depuis le centre du quartier."
+            : etatGps === "erreur"
+              ? "Position introuvable. Réessaie dehors, ou continue sans : on prendra le centre du quartier."
+              : "Facultatif. Sans ta position, la distance à l'UP est calculée depuis le centre du quartier."}
+        </Text>
       </View>
 
       {/* Repère campus */}
