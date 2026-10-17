@@ -429,5 +429,7 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   interrupteur « Disponible » (louée / remise en ligne) ; bugs corrigés : « Sans vidéo » affiché partout (champ
   inexistant), type de chambre vide, « Derniers contacts » toujours vides, colonne Chambre montrant le quartier.
   908 tests serveur verts (seul `/readyz` échoue).
-- **Reste (phase 3 web)** : W1 (photos de la bannière, en attente des fichiers), W3 (zone de dépôt des médias
-  redessinée), W7 (session web dans « Appareils connectés »), W8 (changement de numéro en 2 étapes).
+- **Phase 3 web** : W3 (zone de dépôt, progression par fichier, vignettes ; aperçu vidéo corrigé), W7 (explication,
+  session en cours, « Déconnecter tous les autres appareils » via `compte.deconnecter_partout`), W8 (préfixe +229 sur
+  tous les numéros, code en cases en CSS seul). Reste W1 (photos de la bannière, en attente des fichiers).
+  Essai réel : une photo d'essai (« essai.jpg », bleu uni) a été ajoutée à une annonce du gérant de démonstration.

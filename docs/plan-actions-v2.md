@@ -142,12 +142,12 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 |---|---|---|
 | W1 | Bannière de l'accueil | Diaporama de 3 à 5 photos réelles (§8) en fondu, CSS seul (`@keyframes`, sans script), `prefers-reduced-motion` respecté, voile pour le contraste du texte. |
 | W2 | Types de chambre dynamiques ✅ | Liste déroulante + « Autre type… » dans l'éditeur (V1) ; filtres alimentés par l'API. |
-| W3 | Éditeur d'annonce | Retirer latitude/longitude (V7) ; barre d'outils de texte (V6) ; envoi de médias redessiné (zone de dépôt, vignettes, progression, erreurs lisibles). |
+| W3 | Éditeur d'annonce ✅ | Retirer latitude/longitude (V7) ; barre d'outils de texte (V6) ; envoi de médias redessiné (zone de dépôt, vignettes, progression, erreurs lisibles). |
 | W4 | Tableau de bord gérant ✅ | Responsive (cartes empilées sous 768 px) ; sur chaque chambre, interrupteur explicite **« Chambre encore disponible »** : le décocher appelle `marquer_louee` et retire la chambre du fil et de la recherche ; le recocher la remet en ligne (`undo-rented`). |
 | W5 | Messagerie façon WhatsApp ✅ | Liste à gauche (avatar, nom, extrait, heure, pastille non lus), fil à droite ; bulles compactes (largeur max 75 %, coins arrondis asymétriques, heure et coches dans la bulle), séparateurs de jour, en-tête avec la chambre liée (photo, prix), menu (bloquer, signaler, sourdine). Mobile aligné. |
 | W6 | Tableau de bord locataire ✅ (sans « dernières chambres consultées » : non mémorisées par compte) | Refonte : en-tête de salutation, raccourcis (favoris, alertes, messages, notifications) en cartes avec compteurs, dernières chambres consultées, alertes actives. |
-| W7 | Appareils connectés | Expliquer ce qu'est un appareil (D6) ; lister aussi la **session web en cours** ; bouton de déconnexion des autres appareils. |
-| W8 | Changer de numéro | Écran en 2 étapes avec barre d'étapes, `ChampIcone`, code en 6 cases (même composant que l'inscription). |
+| W7 | Appareils connectés ✅ | Expliquer ce qu'est un appareil (D6) ; lister aussi la **session web en cours** ; bouton de déconnexion des autres appareils. |
+| W8 | Changer de numéro ✅ (code en cases en CSS seul) | Écran en 2 étapes avec barre d'étapes, `ChampIcone`, code en 6 cases (même composant que l'inscription). |
 | W9 | Contacter l'équipe ✅ (P0.3) | Lien WhatsApp direct (P0.3) partout où « Contacte l'équipe » apparaît. |
 
 ---
