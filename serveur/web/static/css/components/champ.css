@@ -51,3 +51,22 @@ select.champ__saisie { padding-right: var(--sp-8); appearance: none; background-
 .interrupteur input:checked ~ .interrupteur__piste { background: var(--success); }
 .interrupteur input:checked ~ .interrupteur__piste .interrupteur__curseur { transform: translateX(1.25rem); }
 .interrupteur input:focus-visible ~ .interrupteur__piste { box-shadow: 0 0 0 3px var(--blue-focus-ring); }
+
+/* Numéro avec préfixe pays (plan d'actions v2, W8) */
+.champ__groupe-prefixe { display: flex; align-items: stretch; }
+.champ__prefixe {
+  display: inline-flex; align-items: center; padding: 0 var(--sp-3);
+  border: 1.5px solid var(--border); border-right: none; border-radius: var(--r-field) 0 0 var(--r-field);
+  background: var(--bg); color: var(--night); font-weight: 700;
+}
+.champ__groupe-prefixe .champ__saisie { flex: 1; min-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+/* Code à 6 chiffres en cases (CSS seul : chiffres à chasse fixe espacés, un trait sous chaque chiffre) */
+.champ__saisie--code {
+  width: calc(6 * var(--code-case) + var(--sp-6)); max-width: 100%;
+  padding-inline: var(--sp-3); font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: var(--fs-24); font-weight: 800; letter-spacing: calc(var(--code-case) - 1ch);
+  background-image: repeating-linear-gradient(90deg, var(--blue) 0 calc(var(--code-case) - 0.6ch), transparent 0 var(--code-case));
+  background-size: calc(6 * var(--code-case)) 2px; background-repeat: no-repeat;
+  background-position: var(--sp-3) calc(100% - var(--sp-2));
+}

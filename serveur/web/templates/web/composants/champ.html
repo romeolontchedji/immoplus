@@ -8,7 +8,14 @@
 {% else %}
   <div class="champ">
     <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
-    {{ champ }}
+    {% if champ.field.prefixe %}
+      <div class="champ__groupe-prefixe">
+        <span class="champ__prefixe" aria-hidden="true">{{ champ.field.prefixe }}</span>
+        {{ champ }}
+      </div>
+    {% else %}
+      {{ champ }}
+    {% endif %}
     {% if champ.help_text %}<p class="champ__aide">{{ champ.help_text }}</p>{% endif %}
     {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
   </div>

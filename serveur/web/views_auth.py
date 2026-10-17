@@ -439,6 +439,23 @@ def revoquer_appareil(request, appareil_id):
 
 
 # --------------------------------------------------------------- changement de numéro
+def _lisible(numero: str) -> str:
+    """« 97777888 » → « 97 77 78 88 » (chiffres groupés par deux, comme sur une carte de visite)."""
+    chiffres = "".join(c for c in str(numero) if c.isdigit())
+    return " ".join(chiffres[i : i + 2] for i in range(0, len(chiffres), 2))
+
+
+_LATERAL_NUMERO = {
+    "accroche": "Ton numéro, c'est ta clé.",
+    "sous_accroche": "Il sert à te connecter et à recevoir les codes de sécurité. Il n'est jamais montré aux gérants.",
+    "promesses": [
+        "Les autres appareils seront déconnectés",
+        "Ton ancien numéro sera prévenu par SMS",
+        "Tes favoris, alertes et messages restent",
+    ],
+}
+
+
 @connecte_obligatoire
 def changement_numero_telephone(request):
     form = forms.ChangementNumero(request.POST or None)
@@ -465,6 +482,8 @@ def changement_numero_telephone(request):
         captcha_requis=True,
         etapes=["Nouveau numéro", "Code et mot de passe"],
         etape_actuelle=1,
+        sous_titre="On envoie un code par SMS à ton nouveau numéro pour vérifier qu'il est bien à toi.",
+        **_LATERAL_NUMERO,
     )
 
 
@@ -488,7 +507,9 @@ def changement_numero_code(request):
         form,
         "Confirme le changement",
         bouton="Changer mon numéro",
-        liens=[("/compte/numero", "Changer de numéro")],
+        liens=[("/compte/numero", "Utiliser un autre numéro")],
         etapes=["Nouveau numéro", "Code et mot de passe"],
         etape_actuelle=2,
+        sous_titre=f"Code envoyé au +229 {_lisible(flux['phone'])}. Confirme avec ton mot de passe actuel.",
+        **_LATERAL_NUMERO,
     )

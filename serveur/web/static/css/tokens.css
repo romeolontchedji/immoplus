@@ -35,6 +35,7 @@
   --hero-blue-1: #1a2a6c;
   --hero-blue-2: #2a3f8f;
   /* Voiles des bannières (image d'arrière-plan, DESIGN.md) */
+  --code-case: 2.25ch; /* largeur d'une case du code à 6 chiffres */
   /* Messagerie (plan v2, W5) */
   --hauteur-entete: 3.75rem;
   --msg-liste-largeur: 22rem;

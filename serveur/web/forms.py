@@ -8,13 +8,17 @@ _OCCUPATIONS = [("", "Je préfère ne pas répondre"), *Occupation.choices]
 
 
 class _Base(forms.Form):
-    """Applique la classe CSS des champs à tous les widgets."""
+    """Applique la classe CSS des champs à tous les widgets ; préfixe +229 sur les numéros, cases sur les codes."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for champ in self.fields.values():
+        for nom, champ in self.fields.items():
             if not isinstance(champ.widget, (forms.HiddenInput, forms.CheckboxInput)):
                 champ.widget.attrs.setdefault("class", "champ__saisie")
+            if nom == "phone":
+                champ.prefixe = "+229"  # lu par composants/champ.html (plan v2, W8)
+            if nom == "code":
+                champ.widget.attrs["class"] = "champ__saisie champ__saisie--code"
 
 
 class Telephone(_Base):

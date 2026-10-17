@@ -10,7 +10,7 @@
     var(--night);
   color: var(--white); flex-direction: column; padding: var(--sp-10);
 }
-.auth-lateral__logo { color: var(--white); margin-bottom: auto; }
+.auth-lateral__logo { display: none; } /* l'en-tête du site porte déjà le logo */
 .auth-lateral__logo .logotype__point { color: var(--sun); }
 .auth-lateral__contenu {
   position: relative; z-index: 1;
