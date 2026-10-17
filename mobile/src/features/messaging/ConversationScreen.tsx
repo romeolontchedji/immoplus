@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Send } from "lucide-react-native";
+import { ArrowLeft, BadgeCheck, BellOff, EllipsisVertical, Send } from "lucide-react-native";
 import { Image } from "expo-image";
 import { isApiError } from "@/api/errors";
 import { francs, heure } from "@/lib/format";
@@ -15,6 +15,7 @@ import { outbox } from "@/storage/outbox";
 import { ErrorState } from "@/ui/components/States";
 import { Skeleton } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
+import { MenuConversation } from "./MenuConversation";
 import {
   useConversation,
   useEnvoyerMessage,
@@ -26,7 +27,7 @@ import {
 
 /**
  * Conversation conforme à la maquette Mobile · Conversation@1x.png :
- * - En-tête : Retour dans cercle blanc, nom correspondant, badge vert "✓ Vérifié"
+ * - En-tête : Retour dans cercle blanc, nom correspondant, badge vert « Vérifié », menu « ⋮ » (MenuConversation)
  * - Carte blanche de l'annonce rattachée (vignette + titre + loyer bleu cobalt)
  * - Bulles de discussion : reçues en blanc, envoyées en bleu cobalt avec texte blanc
  * - Alerte de sécurité jaune "Ne paie jamais avant d'avoir visité..."
@@ -47,6 +48,7 @@ export function ConversationScreen() {
   const fiche = useFiche(conversation.data?.listing.slug ?? undefined);
   const lignes = useLignes(id, moi, conversation.data?.other_read_seq ?? 0, messages.data);
   const [texte, setTexte] = useState("");
+  const [menu, setMenu] = useState(false);
 
   const dernierSeq = messages.data?.dernierSeq ?? 0;
   const maLecture = conversation.data?.my_read_seq ?? 0;
@@ -134,10 +136,24 @@ export function ConversationScreen() {
                 borderRadius: rayon.pilule,
               }}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>✓ Vérifié</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                <BadgeCheck size={12} color="#FFFFFF" />
+                <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
+              </View>
             </View>
           ) : null}
+          {conversation.data.muted ? <BellOff size={16} color={colors.textMuted} accessibilityLabel="En sourdine" /> : null}
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Options de la conversation"
+          onPress={() => setMenu(true)}
+          hitSlop={8}
+          style={{ marginLeft: "auto", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" }}
+        >
+          <EllipsisVertical size={22} color={colors.night} />
+        </Pressable>
+        <MenuConversation conversation={conversation.data} autreNom={autreNom} ouvert={menu} onFermer={() => setMenu(false)} />
       </View>
 
       {/* Carte d'annonce rattachée */}
@@ -273,13 +289,21 @@ export function ConversationScreen() {
         }}
       />
 
+      {conversation.data.status === "blocked" && conversation.data.blocked_by_me ? (
+        <View style={{ paddingHorizontal: sp[4], paddingVertical: sp[2], backgroundColor: colors.warningBg }}>
+          <Text variante="legende" couleur={colors.warningText} style={{ textAlign: "center" }}>
+            Tu as bloqué cette conversation : {autreNom} ne peut plus t’écrire. Pour débloquer, ouvre le menu ⋮.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Barre de saisie inférieure */}
       {ecritureImpossible ? (
         <View style={{ padding: sp[4], backgroundColor: "#FFFFFF" }}>
           <Text style={{ textAlign: "center", color: colors.textMuted, fontSize: 14 }}>
             {conversation.data.status === "read_only"
               ? "Cette conversation est en lecture seule."
-              : "Cette conversation est bloquée."}
+              : `${autreNom} a bloqué cette conversation.`}
           </Text>
         </View>
       ) : (

@@ -106,6 +106,16 @@ export function useBloquer(conversationId: string, bloquer: boolean) {
   });
 }
 
+/** Sourdine : jusqu'à une date (8 h, 1 semaine, « toujours » = 10 ans), ou `null` pour réactiver. */
+export function useSourdine(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (jusqua: Date | null) =>
+      unwrap(api.PATCH("/v1/conversations/{conversation_id}", { params: { path: { conversation_id: conversationId } }, body: { muted_until: jusqua ? jusqua.toISOString() : null } })),
+    onSuccess: () => void Promise.all([qc.invalidateQueries({ queryKey: qk.conversation(conversationId) }), qc.invalidateQueries({ queryKey: qk.conversations })]),
+  });
+}
+
 /** Première prise de contact : ouvre la conversation de l'annonce et envoie le premier message (idempotent). */
 export function useOuvrirConversation() {
   return useMutation({
