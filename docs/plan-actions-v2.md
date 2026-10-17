@@ -83,7 +83,7 @@ Le web (Django) et le mobile (Expo) restent deux clients séparés, mais **une s
 | P0.4 | ✅ **Fait (2026-10-17).** Textes rédigés depuis le CDC (`apps/core/textes_legaux/*.md`), identité de l'éditeur **fictive provisoire** dans les paramètres `LEGAL_*` (bandeau « Version provisoire » tant que `LEGAL_PROVISIONAL` est vrai), pages web `/conditions` et `/confidentialite` au style des captures, `GET /v1/legal/{slug}` et écran mobile ; liens depuis le Profil, l'Aide et l'inscription (case d'acceptation désormais décochée par défaut et obligatoire). **Avant l'ouverture** : vraies valeurs `LEGAL_*`, relecture par un juriste (CDC §8.4), `LEGAL_PROVISIONAL` à faux. | S W M | ✅ |
 | P0.5 | ✅ FAQ (D16) : question retirée (voir P0.9). | W | ✅ |
 | P0.6 | Bouton « Voir les chambres » de l'accueil non responsive. | W | Lisible et pleine largeur sous 400 px |
-| P0.7 | Inscription mobile (D13) : ne plus perdre de saisie ; un seul champ nom. | M | Ce qui est saisi est stocké ou n'est pas demandé |
+| P0.7 | ✅ **Fait (2026-10-17), avec V2.** Étape 1 : numéro et acceptation des conditions (obligatoire avant le SMS). Étape 2 : « Nom complet » demandé une seule fois, « Tu es » facultatif (colonne `users.occupation`, migration `accounts.0005` avec le droit `UPDATE (occupation)` du rôle `app`), mot de passe. Plus aucune saisie perdue : le prénom et le statut de l'étape 1 n'étaient jamais envoyés. « Tu es » aussi sur le site (inscription, page compte) et dans le profil mobile. Vérifié en direct. | S W M | ✅ 862 tests serveur verts |
 
 ---
 

@@ -358,4 +358,15 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   importance ; il faut réinstaller l'app pour voir les nouveaux réglages de canal.
 - **Pages légales (P0.4)** : `/conditions`, `/confidentialite`, `GET /v1/legal/{slug}`, écran mobile ; identité de
   l'éditeur fictive provisoire (`LEGAL_*`). 853 tests serveur verts (seul `/readyz` échoue, préexistant).
-
+- **Décisions V1 à V11 prises** (voir le tableau §2 du plan) : types de chambre avec validation, « Tu es » et nom
+  unique, gérant-locataire reporté, empreinte et « se souvenir de moi », éditeur sans souligné, latitude et
+  longitude retirées, photos téléchargées par le porteur (13, liste au §8, dossier `photos-brutes/` non versionné),
+  KKiaPay plus tard, prix plus tard.
+- **À confirmer** : le CDC (§ design, « aucune image externe, ni banque d'images ») interdit les photos de banque
+  d'images ; la décision V9 s'en écarte. Les photos seront servies depuis nos fichiers statiques (aucun CDN).
+- **Inscription (P0.7 + V2)** : numéro et conditions à l'étape 1, nom complet unique, « Tu es » facultatif et mot de
+  passe à l'étape 2 ; colonne `users.occupation` (migration `accounts.0005`, droit colonne `UPDATE (occupation)` pour
+  `app`, sinon le profil n'était pas modifiable). Site et profil mobile aussi. 862 tests serveur verts (seul `/readyz`
+  échoue, préexistant), 97 tests mobile, 0 erreur de type.
+- **Piège** : la pile Docker exécute le code de l'image, pas celui du dépôt ; après un changement serveur, `make up`
+  (reconstruction) avant toute vérification en direct.
