@@ -278,6 +278,70 @@ le SDK 53, ce qui levait une erreur fatale et empêchait de compiler/tester. Cor
 builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Reste : `react-native-compressor`
 (Nitro) exige aussi un dev build pour l'étape médias.
 
+## Mise à jour — 2026-10-16 (mobile : connexion bloquée, logo, thème clair)
 
+- **Connexion et inscription qui tournaient sans fin sous Expo Go.** Deux causes : `mobile/.env` pointait
+  vers une IP périmée (`192.168.0.195`, l'ordinateur est passé en `192.168.100.14`) et aucune requête
+  n'avait de délai, donc `fetch` attendait sans jamais échouer. Correctifs : en développement,
+  `config/env.ts` déduit l'URL de l'API de l'IP de Metro (`hostUri`) et du port `EXPO_PUBLIC_API_PORT`
+  (8080 par défaut) quand `EXPO_PUBLIC_API_URL` est vide ; `api/client.ts` coupe toute requête après
+  20 s (`NetworkError` affichée) ; les mutations d'authentification passent en `networkMode: "always"`
+  (NetInfo pouvait les suspendre indéfiniment).
+- **Logo unifié.** Composant `Logotype` (`ui/components/Logo.tsx`, icône officielle + « Logeo » + point
+  solaire, comme `web/base.html`) utilisé sur Bienvenue, Connexion (glyphe `⌂` supprimé), Inscription,
+  Mot de passe, Accueil, Tableau de bord gérant, Compte gérant, Maintenance et Mise à jour.
+- **Thème clair uniquement.** Le mode sombre rendait des textes illisibles (couleurs `colors.night` en dur
+  sur fond sombre) : `ThemeProvider` sert toujours la palette `clair`, palette `sombre` supprimée,
+  `userInterfaceStyle: "light"` et écran de démarrage blanc dans `app.config.ts`.
+- **Piège** : `GET /v1/app-config` répond 404 côté serveur (route absente) ; `AppGate` l'ignore, mais la
+  barrière maintenance / mise à jour n'est donc pas pilotée tant que la route n'existe pas.
+- **Validation** : `jest` 92/92 au vert ; `tsc` sans nouvelle erreur (82 erreurs préexistantes, contre 84).
 
+## Mise à jour — 2026-10-16 (mobile : recherche, plantages d'écrans)
+
+- **Plantage de la fiche** (`Cannot read property 'split' of undefined`) : `FicheScreen` lisait des champs
+  inventés (`gerant.full_name`, `avg_response_h`, `cover_url`, `video_duration_s`, `description_text`).
+  Réécrite sur `FicheOut` : médias réels (vidéo lisible avec `expo-video`, galerie de vignettes), conditions
+  (caution, avance, frais d'agence, disponibilité), eau et compteur, délai médian du gérant, icônes Lucide.
+- **Audit de tous les écrans contre l'OpenAPI** : 82 erreurs `tsc` → **0**. Corrigés à l'exécution :
+  - Alertes : le corps envoyé (`district`, `type`, `rent_max`…) était ignoré par le serveur ; passage à
+    `district_ids` (UUID), `room_types`, `max_rent`, `private_bathroom_required`, `max_distance_m`. Éditeur
+    de critères commun (`alerts/EditeurCriteres.tsx`) ; « Créer une alerte » reprend la recherche en cours.
+  - Signalement : motifs alignés sur l'enum serveur (`fake_listing`, `price_mismatch`, `contact_leak`, `scam`…).
+  - Conversation : `other` (et non `other_party`), prix et image lus depuis la fiche de l'annonce.
+  - Tableau de bord gérant : métriques réelles (`conversations_30d`, `listings_by_status`, `to_confirm`).
+  - Mot de passe : `current_password` (et non `old_password`).
+  - **Tunnel de publication** : l'étape Équipements était un squelette (impasse) → construite (douche,
+    clôture, eau, compteur) ; la localisation envoie l'UUID du quartier et ses coordonnées (au lieu du slug et
+    de 0,0) ; la description fait un PATCH si l'annonce existe et renvoie à l'étape manquante sinon ; l'envoi
+    des médias déclare d'abord le média (`POST …/media` → `upload_url`) puis envoie en tus avec progression ;
+    étapes numérotées 1 à 6.
+  - Médias : les URL `/media/…` du serveur sont rattachées à l'hôte de l'API (`lib/media.ts`).
+- **Recherche refondue** : `BarreRecherche` (saisie directe avec résultats en direct après 450 ms, bouton
+  effacer, bouton Filtres avec compteur), raccourcis cumulables, filtres actifs retirables + « Tout effacer »
+  (`FiltresActifs`), tri en pastilles, feuille de filtres en brouillon avec budgets prédéfinis, filtre eau et
+  nombre réel de résultats sur le bouton. Filtres factices retirés (voir `docs/design/ECARTS.md` §4).
+- **Validation** : `tsc` 0 erreur, `jest` 97/97, `expo export --platform android` compile, paramètres de
+  recherche vérifiés contre l'API locale.
+
+## Mise à jour — 2026-10-17 (photos refusées, plan d'actions v2)
+
+- **Photos refusées (web et mobile) : corrigé.** Cause : `select_related("gerant…")` et l'accès `annonce.gerant` (qui passe
+  par le gestionnaire de base de Django) chargeaient toutes les colonnes de `gerant_profiles`, dont celles que le rôle
+  PostgreSQL `app` ne peut pas lire → `permission denied` dans `worker-media` → média `erreur_interne`. Correctif :
+  `GerantProfile.Meta.base_manager_name = "objects"` (migration d'options sans SQL `accounts.0004`) et retrait des deux
+  `select_related`. Tests de régression sous `SET LOCAL ROLE app` (`test_medias.py::TestDroitsRoleApp`), qui reproduisent
+  l'erreur exacte sans le correctif. Migration appliquée sur la pile locale, conteneurs relancés, vérifié en direct.
+- **Piège de test** : la suite serveur se lance contre le PostgreSQL de Docker avec `DB_HOST=<ip du conteneur>
+  DB_USER=postgres DB_STATEMENT_TIMEOUT_MS=120000` (la création de la base de test dépasse 5 s). 831 tests verts ;
+  seul `test_readyz_ok_quand_tout_repond` échoue (file Redis non joignable depuis l'hôte, préexistant).
+- **Plan d'actions v2** : `docs/plan-actions-v2.md` (diagnostic D1–D25, décisions V1–V11, phases). Décisions prises :
+  identité légale fictive provisoire, avis reportés en V2.
+- **Mobile « Écrire au gérant » (P0.8)** : l'écran était un squelette, aucun locataire ne pouvait contacter un gérant
+  depuis l'app. Livré (`NouvelleConversationScreen`) et vérifié contre l'API locale. Le test a créé un compte locataire
+  d'essai (`+229 01 97 12 34 56`) et une conversation dans la base locale.
+- **Paiement débranché totalement en V1 (P0.9, décision du porteur)** : écrans Abonnement et Paiement et leurs routes
+  supprimés de l'app (récupérables depuis `10f7333`), question tarifaire retirée de la FAQ web. Rebranchement public
+  avec l'application `billing` au lancement payant.
+- **Trou découvert** : `GET /v1/app-config` n'existe pas côté serveur (P0.10 du plan).
 

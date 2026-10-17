@@ -33,3 +33,15 @@ Ce document consigne les éléments présents sur les maquettes de référence (
 |---|---|---|
 | **Téléphone direct ou WhatsApp du gérant** | Strictement interdit par le CDC (§5 de `AGENTS.md`) : zéro contact hors plateforme, masquage des coordonnées. | Aucun numéro de gérant n'est affiché. Les échanges passent exclusivement par la messagerie Logeo (`/compte/messages`). |
 | **Paiement direct en ligne** | Le module `billing` est reporté/désactivé au lancement (`SUBSCRIPTION_ENABLED=False`). | Aucun formulaire de paiement fictif. Des messages d'information clairs sont affichés. |
+
+---
+
+## 4. Application mobile (recherche et fiche)
+
+| Élément maquette | État dans la base / serveur | Traitement retenu |
+|---|---|---|
+| **Filtres « Gérant vérifié » et « Avec vidéo »** (Mobile · Filtres, section Confiance) | `GET /v1/listings` n'accepte aucun paramètre pour ces critères (paramètres : `q`, `district`, `type`, `rent_min/max`, `bathroom`, `water`, `meter`, `fenced`, `max_distance_m`, `available_before`, `sort`). | Section masquée dans l'app (elle n'avait aucun effet). À ajouter côté serveur si le besoin est validé. |
+| **Pastille « Eau + électricité »** | Pas de booléen : `water_source` (`running`, `well`, `borehole`) et `electricity_meter` (`individual`, `shared`). | Filtre « Eau » (Eau courante, Puits, Forage) via le paramètre `water`. |
+| **Budget en curseur** | Aucun composant curseur sans dépendance native. | Pastilles de budget (≤ 10 000 à ≤ 30 000 F) + champ « Autre montant ». |
+| **« Voir 34 chambres »** | `FilOut` ne renvoie pas de total (pagination par curseur). | Aperçu réel : « Voir N chambres » sur la première page, « Voir plus de N chambres » s'il y a une page suivante. |
+| **Durée vidéo sur la carte du fil** | `CarteOut` (schéma OpenAPI) n'expose pas la durée. | Durée affichée sur la fiche seulement (`media[].duration_s`) ; le « 0:24 » inventé de la carte est supprimé. |

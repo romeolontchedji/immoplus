@@ -298,7 +298,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - **Page introuvable** : `Cette page n'existe pas (ou plus).` — bouton `Voir les chambres`
 - **Chambre retirée** : `Cette chambre n'est plus disponible.` — `Voir des chambres similaires`
 - **Succès génériques** : `C'est fait.` / `Modifications enregistrées.`
-- **Suppression** : `Supprimer cette chambre ? Cette action est définitive.` — `Supprimer` / `Annuler`
+- **Suppression** : `Supprimer cette chambre ? Cette action est d7bWUg5kvKDrKA8Cx1AQz227du4naINI4zZepy70i7xrTAO9b#QpZ2ZlQxLOCCk54j04RlbRvd25pGhctsSP-f5Rv0elgéfinitive.` — `Supprimer` / `Annuler`
 - **Déconnexion** : `Tu es déconnecté. À bientôt.`
 
 ---
