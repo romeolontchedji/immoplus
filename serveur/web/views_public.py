@@ -464,6 +464,8 @@ def _lien_notification(n: dict) -> str | None:
         return f"/compte/messages/{data['conversation_id']}"
     if data.get("slug"):
         return f"/annonces/{data['slug']}"
+    if data.get("alert_id"):
+        return "/compte/alertes"  # récapitulatif d'alerte (plan v2, A2)
     return None
 
 

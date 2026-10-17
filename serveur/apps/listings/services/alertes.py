@@ -6,6 +6,7 @@ from django.db.models import Count
 
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
+from apps.notifications import selectors as notif_selectors
 from apps.notifications import services as notifications
 from apps.notifications import textes
 
@@ -169,6 +170,32 @@ def supprimer(utilisateur, alerte_id) -> None:
     _trouver(utilisateur, alerte_id).delete()
 
 
+PLAFOND_ALERTE_PAR_JOUR = 3
+
+
+def _recapitulatif(alerte_id, utilisateur_id, nom: str) -> int:
+    """4e chambre du jour : un récapitulatif (« 4 nouvelles chambres… ») ; les suivantes l'incrémentent en silence."""
+    from django.utils import timezone
+
+    cle = f"alert-digest:{alerte_id}:{timezone.localdate().isoformat()}"
+    precedent = notif_selectors.donnees_par_cle(cle)
+    compte = (
+        int(precedent.get("count", PLAFOND_ALERTE_PAR_JOUR)) + 1
+        if precedent
+        else PLAFOND_ALERTE_PAR_JOUR + 1
+    )
+    titre = f"{compte} nouvelles chambres pour ton alerte « {nom} »"
+    corps_recap = "Elles correspondent à tes critères. Ouvre tes alertes pour les voir toutes."
+    data = {"alert_id": str(alerte_id), "count": compte}
+    if precedent is not None:
+        notifications.mettre_a_jour_en_silence(cle, titre, corps_recap, data)
+        return 0
+    n = notifications.creer(
+        utilisateur_id, "alert.digest", titre, corps_recap, data=data, dedupe_key=cle
+    )
+    return 1 if n else 0
+
+
 def notifier_correspondances(annonce_id) -> int:
     """À la publication : une notification par couple alerte/annonce (clé d'unicité), jamais deux (EF-ALR-03)."""
     annonce = Listing.objects.filter(pk=annonce_id, status="published").first()
@@ -182,7 +209,20 @@ def notifier_correspondances(annonce_id) -> int:
         f"à {loin} de l'UP" if loin else None,
     ]
     corps = " · ".join(d for d in details if d) + ". Vois-la avant les autres."
-    for alerte_id, utilisateur_id in selectors.alertes_correspondantes(annonce_id):
+    correspondances = list(selectors.alertes_correspondantes(annonce_id))
+    libelles = dict(
+        Alert.objects.filter(pk__in=[a for a, _ in correspondances]).values_list("pk", "label")
+    )
+    for alerte_id, utilisateur_id in correspondances:
+        deja = notif_selectors.nombre_du_jour(
+            utilisateur_id, "alert.match", "alert_id", str(alerte_id)
+        )
+        if deja >= PLAFOND_ALERTE_PAR_JOUR:
+            # Plan v2, A2 : au-delà de 3 chambres dans la journée, un seul récapitulatif qui grossit sans re-sonner.
+            creees += _recapitulatif(
+                alerte_id, utilisateur_id, libelles.get(alerte_id) or annonce.district.name
+            )
+            continue
         n = notifications.creer(
             utilisateur_id,
             "alert.match",

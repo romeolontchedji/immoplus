@@ -26,6 +26,7 @@ CATEGORIES = {
     "message.unanswered_reminder": "rappels",
     "listing.reminder": "rappels",
     "alert.match": "alertes",
+    "alert.digest": "alertes",
     "favorite.unavailable": "alertes",
 }
 NON_DESACTIVABLES = {"account.sanction"}
@@ -36,6 +37,7 @@ CANAUX = {
     "message.received": "messages",
     "message.unanswered_reminder": "messages",
     "alert.match": "alertes",
+    "alert.digest": "alertes",
     "favorite.unavailable": "alertes",
     "listing.reminder": "rappels",
     "listing.reported_rented": "rappels",
@@ -117,6 +119,21 @@ def creer(
         return None
     transaction.on_commit(lambda: _apres_creation(notification.pk, motif))
     return notification
+
+
+def mettre_a_jour_en_silence(dedupe_key: str, titre: str, corps: str, data: dict) -> bool:
+    """Réécrit une notification existante sans nouveau push (récapitulatif qui grossit) ; faux si elle n'existe pas."""
+    n = Notification.objects.filter(dedupe_key=dedupe_key).first()
+    if n is None:
+        return False
+    n.title, n.body, n.data, n.read_at = titre[:120], corps[:255], data, None
+    n.save(update_fields=["title", "body", "data", "read_at"])
+    temps_reel.diffuser(
+        n.user_id,
+        "notification.new",
+        {"unread_count": selectors.non_lues(n.user_id), "notification": _jsonable(resume(n))},
+    )
+    return True
 
 
 def _apres_creation(notification_id, motif: str | None) -> None:

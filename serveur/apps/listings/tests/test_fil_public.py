@@ -467,6 +467,50 @@ class TestAlertes:
         assert alertes.notifier_correspondances(a.pk) == 0
         assert Notification.objects.filter(kind="alert.match").count() == 1
 
+    def test_plafond_quotidien_et_recapitulatif(self):
+        """Plan v2, A2 : 3 notifications par alerte et par jour, puis un seul récapitulatif qui grossit."""
+        u = ClientFactory()
+        alerte = Alert.objects.create(user=u, label="Banikanni pas cher")
+        for _ in range(6):
+            alertes.notifier_correspondances(ListingFactory().pk)
+        assert Notification.objects.filter(user=u, kind="alert.match").count() == 3
+        recap = Notification.objects.get(user=u, kind="alert.digest")
+        assert recap.data == {"alert_id": str(alerte.pk), "count": 6}
+        assert recap.title == "6 nouvelles chambres pour ton alerte « Banikanni pas cher »"
+
+    def test_bout_en_bout_alerte_api_puis_publication(self, django_capture_on_commit_callbacks):
+        """Plan v2, A1 et A4 : alerte créée par l'API, publication, notification vers la bonne fiche ; en pause, rien."""
+        from rest_framework.test import APIClient
+
+        from apps.accounts.services import appareils, jetons
+
+        u = ClientFactory()
+        d, _ = appareils.ouvrir(u, installation_id="installation-alerte-1", platform="android")
+        c = APIClient()
+        c.credentials(HTTP_AUTHORIZATION=f"Bearer {jetons.emettre_acces(u, d)}")
+        q = DistrictFactory()
+        r = c.post("/v1/me/alerts", {"district_ids": [str(q.pk)], "max_rent": 30000}, format="json")
+        assert r.status_code == 201, r.content
+        p = gerant_verifie()
+        a = ListingFactory(
+            gerant=p, district=q, rent_amount=25000, status="draft", published_at=None
+        )
+        medias_prets(a)
+        with django_capture_on_commit_callbacks(execute=True):
+            annonces.mettre_en_ligne(a, acteur=p.user)
+        n = Notification.objects.get(user=u, kind="alert.match")
+        assert n.data["slug"] == a.slug and q.name in n.title
+        # Pause : plus aucune correspondance ; reprise : de nouveau.
+        c.patch(f"/v1/me/alerts/{r.json()['id']}", {"is_active": False}, format="json")
+        b = ListingFactory(district=q, rent_amount=20000)
+        assert alertes.notifier_correspondances(b.pk) == 0
+        c.patch(f"/v1/me/alerts/{r.json()['id']}", {"is_active": True}, format="json")
+        assert alertes.notifier_correspondances(b.pk) == 1
+        assert c.delete(f"/v1/me/alerts/{r.json()['id']}").status_code == 204
+        assert (
+            alertes.notifier_correspondances(ListingFactory(district=q, rent_amount=20000).pk) == 0
+        )
+
     def test_pas_de_notification_pour_une_annonce_non_publiee(self):
         a = ListingFactory(status="draft", published_at=None)
         Alert.objects.create(user=ClientFactory())

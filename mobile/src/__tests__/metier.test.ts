@@ -15,6 +15,7 @@ describe("routage des notifications", () => {
     ["message.unanswered_reminder", { conversation_id: "c2" }, "gerant", { pathname: "/conversation/[id]", params: { id: "c2" } }],
     ["alert.match", { slug: "chambre-abc", listing_id: "L" }, "client", { pathname: "/annonces/[ident]", params: { ident: "chambre-abc" } }],
     ["favorite.unavailable", { slug: "x" }, "client", { pathname: "/annonces/[ident]", params: { ident: "x" } }],
+    ["alert.digest", { alert_id: "A1", count: 5 }, "client", "/alertes"],
     ["listing.hidden", { listing_id: "L1" }, "gerant", { pathname: "/pro/annonce/[id]", params: { id: "L1" } }],
     ["listing.media_failed", { listing_id: "L2" }, "gerant", { pathname: "/pro/annonce/[id]", params: { id: "L2" } }],
     ["listing.hidden", { listing_id: "L1" }, "client", "/notifications"], // un locataire n'a pas d'espace annonce

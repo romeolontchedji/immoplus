@@ -289,10 +289,10 @@ maximale d'un titre de notification) et sont copiés dans `docs/design/COPYWRITI
 
 | # | Action |
 |---|---|
-| A1 | Test de bout en bout : alerte créée (web et mobile) → annonce publiée → notification reçue → appui → bonne fiche. |
-| A2 | Plafond : au-delà de 3 correspondances dans la journée pour une même alerte, un seul récapitulatif (« 5 nouvelles chambres correspondent à ton alerte Banikanni »). |
+| A1 | ✅ (serveur ; push réel à recetter sur dev build) Test de bout en bout : alerte créée (web et mobile) → annonce publiée → notification reçue → appui → bonne fiche. |
+| A2 | ✅ Plafond : au-delà de 3 correspondances dans la journée pour une même alerte, un seul récapitulatif (« 5 nouvelles chambres correspondent à ton alerte Banikanni »). |
 | A3 | Alerte créée depuis une recherche : mêmes critères sur le web et le mobile (le mobile le fait déjà depuis le 2026-10-16). |
-| A4 | Pause, reprise et suppression testées des deux côtés ; une alerte en pause ne déclenche rien. |
+| A4 | ✅ (serveur) Pause, reprise et suppression testées des deux côtés ; une alerte en pause ne déclenche rien. |
 
 ### 9.6 Matrice de recette
 

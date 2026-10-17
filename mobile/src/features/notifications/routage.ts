@@ -16,6 +16,8 @@ export function destination(kind: string | undefined, data: Record<string, unkno
     case "alert.match":
     case "favorite.unavailable":
       return slug ? { pathname: "/annonces/[ident]", params: { ident: slug } } : "/notifications";
+    case "alert.digest":
+      return "/alertes"; // récapitulatif « N nouvelles chambres » : la liste des alertes et leurs résultats
     case "listing.published":
     case "listing.hidden":
     case "listing.reminder":

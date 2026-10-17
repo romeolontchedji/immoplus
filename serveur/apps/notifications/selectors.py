@@ -25,3 +25,18 @@ def liste(utilisateur_id, *, avant=None, limite: int = 30) -> tuple[list[Notific
         lignes = lignes[:limite]
         suivant = lignes[-1].created_at.astimezone(datetime.UTC).isoformat()
     return lignes, suivant
+
+
+def nombre_du_jour(utilisateur_id, kind: str, cle: str, valeur: str) -> int:
+    """Notifications de ce type reçues aujourd'hui (fuseau de l'application) pour une même valeur de `data[cle]`."""
+    from django.utils import timezone
+
+    debut = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    return Notification.objects.filter(
+        user_id=utilisateur_id, kind=kind, created_at__gte=debut, **{f"data__{cle}": valeur}
+    ).count()
+
+
+def donnees_par_cle(dedupe_key: str) -> dict | None:
+    """Données d'une notification identifiée par sa clé d'unicité, ou None si elle n'existe pas."""
+    return Notification.objects.filter(dedupe_key=dedupe_key).values_list("data", flat=True).first()
