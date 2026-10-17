@@ -56,17 +56,17 @@ Le web (Django) et le mobile (Expo) restent deux clients séparés, mais **une s
 
 | # | Décision | Proposition | Impact |
 |---|---|---|---|
-| V1 | Types de chambre dynamiques | Table `room_types` (libellé, slug, `is_official`, compteur d'usage) remplaçant l'énumération ; un gérant peut proposer un type absent, visible tout de suite pour lui, et dans les filtres après validation par la modération (évite les doublons « Entrée coucher » / « entrée-coucher »). | Migration en deux temps, API additive |
-| V2 | Profil « Tu es » | Champ `occupation` (étudiant UP, autre étudiant, salarié, indépendant, autre) sur `users`, facultatif. Le prénom n'est **plus demandé à part** : un seul champ « Nom complet » (prénom extrait pour la salutation). | Migration |
-| V3 | Gérant qui loue | Rôles cumulables (`is_tenant` en plus de `role`) **ou** reporter en v2. Recommandation : reporter (touche une vingtaine de contrôles et la modération). | Gros chantier |
+| V1 | Types de chambre dynamiques | ✅ **Décidé (2026-10-17) : avec validation.** Table `room_types` (libellé, slug, `is_official`, compteur d'usage) remplaçant l'énumération ; un gérant peut proposer un type absent, visible tout de suite pour lui, et dans les filtres après validation par la modération (évite les doublons « Entrée coucher » / « entrée-coucher »). | Migration en deux temps, API additive |
+| V2 | Profil « Tu es » | ✅ **Décidé (2026-10-17) : oui (champ `occupation` et « Nom complet » unique).** Champ `occupation` (étudiant UP, autre étudiant, salarié, indépendant, autre) sur `users`, facultatif. Le prénom n'est **plus demandé à part** : un seul champ « Nom complet » (prénom extrait pour la salutation). | Migration |
+| V3 | Gérant qui loue | ✅ **Décidé (2026-10-17) : reporté en V2.** Rôles cumulables (`is_tenant` en plus de `role`) **ou** reporter en v2. Recommandation : reporter (touche une vingtaine de contrôles et la modération). | Gros chantier |
 | V4 | Avis / réactions | ✅ **Décidé (2026-10-17) : reporté en V2.** Avis après une conversation réelle (note 1–5 + commentaire modéré). | — |
-| V5 | Empreinte digitale + « Se souvenir de moi » | Mobile : la session est **déjà** persistante (jeton de renouvellement). On ajoute un **verrou biométrique** à l'ouverture (`expo-local-authentication`, dépendance → **ADR 0005**). Web : case « Se souvenir de moi » = durée de session 30 jours au lieu de la fermeture du navigateur. | Dépendance + ADR |
-| V6 | Éditeur riche (gras, souligné, listes) | Web : barre d'outils Markdown en JavaScript natif (pas de framework, CSP respectée), aperçu via l'endpoint existant. Mobile : même barre au-dessus du champ. Le souligné n'existe pas en Markdown : à remplacer par le gras, ou à accepter en extension contrôlée. | Aucune dépendance |
-| V7 | Latitude / longitude | Retirées de l'interface ; le serveur les déduit du centre du quartier (ou du GPS du téléphone si autorisé). L'API les rend **facultatives** (changement additif). | API |
+| V5 | Empreinte digitale + « Se souvenir de moi » | ✅ **Décidé (2026-10-17) : oui pour les deux (ADR 0005 à rédiger).** Mobile : la session est **déjà** persistante (jeton de renouvellement). On ajoute un **verrou biométrique** à l'ouverture (`expo-local-authentication`, dépendance → **ADR 0005**). Web : case « Se souvenir de moi » = durée de session 30 jours au lieu de la fermeture du navigateur. | Dépendance + ADR |
+| V6 | Éditeur riche (gras, souligné, listes) | ✅ **Décidé (2026-10-17) : sans souligné (gras, italique, listes).** Web : barre d'outils Markdown en JavaScript natif (pas de framework, CSP respectée), aperçu via l'endpoint existant. Mobile : même barre au-dessus du champ. Le souligné n'existe pas en Markdown : à remplacer par le gras, ou à accepter en extension contrôlée. | Aucune dépendance |
+| V7 | Latitude / longitude | ✅ **Décidé (2026-10-17) : oui, retirées de l'interface.** Retirées de l'interface ; le serveur les déduit du centre du quartier (ou du GPS du téléphone si autorisé). L'API les rend **facultatives** (changement additif). | API |
 | V8 | Identité légale | ✅ **Décidé (2026-10-17) : valeurs fictives provisoires**, centralisées dans un seul fichier de paramètres (`LEGAL_*` dans `app_settings`) et marquées « provisoire » dans les textes, à remplacer avant la mise en ligne publique (point bloquant de la check-list de lancement). | Contenu |
-| V10 | Fournisseur de paiement | FedaPay ou KKiaPay (les deux gèrent MTN MoMo et Moov au Bénin) : squelettes pour les deux, choix au moment de l'activation selon les frais et le contrat. | Aucun tant que le drapeau est faux |
-| V11 | Plans et prix | Grille du §7 bis (prix à fixer) ; seul « Gratuit V1 » est actif au lancement. | Paramètres, pas de migration |
-| V9 | Images réelles | Images libres (voir §8) : tu télécharges, on les place dans `serveur/web/static/design/photos/` et `mobile/assets/photos/`, compressées en WebP. | Contenu |
+| V10 | Fournisseur de paiement | ✅ **Décidé (2026-10-17) : KKiaPay, intégration plus tard** (un seul adaptateur, plus de squelette FedaPay). FedaPay ou KKiaPay (les deux gèrent MTN MoMo et Moov au Bénin) : squelettes pour les deux, choix au moment de l'activation selon les frais et le contrat. | Aucun tant que le drapeau est faux |
+| V11 | Plans et prix | ✅ **Reporté (2026-10-17) : grille fixée au moment de l'activation.** Grille du §7 bis (prix à fixer) ; seul « Gratuit V1 » est actif au lancement. | Paramètres, pas de migration |
+| V9 | Images réelles | ✅ **Décidé (2026-10-17) : le porteur télécharge les 13 photos listées au §8** et les dépose dans `photos-brutes/` (non versionné). Images libres (voir §8) : tu télécharges, on les place dans `serveur/web/static/design/photos/` et `mobile/assets/photos/`, compressées en WebP. | Contenu |
 
 ---
 
@@ -210,12 +210,24 @@ valides et invalides de la machine à états, idempotence des webhooks, signatur
 Sources à licence libre, utilisables sans attribution obligatoire (créditer reste apprécié) :
 **Unsplash** (unsplash.com/license), **Pexels** (pexels.com/license), **Pixabay** (pixabay.com/service/license-summary).
 
-| Usage | Recherches conseillées | Format |
-|---|---|---|
-| Bannière accueil web (3–5) | `west africa house`, `benin cotonou street`, `african student`, `modern african apartment`, `tropical house courtyard` | Paysage, ≥ 1920 px de large |
-| Cartes et fiches sans média | `small bedroom`, `student room`, `simple bedroom africa`, `studio apartment interior` | 4:3, ≥ 1200 px |
-| Onboarding mobile (4) | `phone video call`, `handshake africa`, `young african woman phone`, `keys new home` | Portrait, ≥ 1080 × 1350 |
-| Bienvenue mobile | `african city aerial`, `parakou` (si disponible), `benin landscape` | Portrait |
+**13 photos à télécharger** (décision V9). Dépose-les dans `photos-brutes/` à la racine du dépôt (non versionné),
+en les nommant comme ci-dessous ; l'extension n'a pas d'importance (JPG, PNG…).
+
+| Fichier | Où elle sert | Ce qu'on doit voir | Recherches conseillées | Format |
+|---|---|---|---|---|
+| `accueil-1` | Bannière d'accueil du site (diaporama) | Rue résidentielle d'Afrique de l'Ouest : maisons basses, murs clairs, arbres, lumière du jour | `west africa street houses`, `benin street`, `african residential street` | Paysage, ≥ 1920 px de large |
+| `accueil-2` | Bannière d'accueil du site | Jeune étudiant ou étudiante africain(e) souriant(e), téléphone en main, en extérieur | `african student phone`, `young african smiling phone` | Paysage, ≥ 1920 px |
+| `accueil-3` | Bannière d'accueil du site | Cour intérieure d'une maison ou d'une petite résidence, avec plantes | `african house courtyard`, `tropical house courtyard` | Paysage, ≥ 1920 px |
+| `type-single` | Fiche sans photo : chambre simple | Petite chambre propre : lit, moustiquaire ou ventilateur, fenêtre | `simple bedroom africa`, `small bedroom mosquito net` | 4:3, ≥ 1200 px |
+| `type-entree-coucher` | Fiche sans photo : entrée-coucher | Petite pièce d'entrée avec une porte ouverte sur la chambre | `small apartment entrance bedroom`, `small living room door bedroom` | 4:3, ≥ 1200 px |
+| `type-chambre-salon` | Fiche sans photo : chambre-salon | Salon simple (canapé, table basse) | `simple living room africa`, `small living room sofa` | 4:3, ≥ 1200 px |
+| `type-studio` | Fiche sans photo : studio | Studio avec lit et coin cuisine dans la même pièce | `studio apartment kitchenette`, `small studio interior` | 4:3, ≥ 1200 px |
+| `onboarding-1` | Présentation mobile : « Cherche » | Personne qui fait défiler son téléphone, assise | `african woman scrolling phone`, `young african man phone` | Portrait, ≥ 1080 × 1350 |
+| `onboarding-2` | Présentation mobile : « Vois en vidéo » | Main qui filme une pièce avec un téléphone | `filming room with phone`, `phone recording video interior` | Portrait, ≥ 1080 × 1350 |
+| `onboarding-3` | Présentation mobile : « Discute » | Deux jeunes qui discutent, ou gros plan d'une messagerie | `african friends talking`, `phone chat close up` | Portrait, ≥ 1080 × 1350 |
+| `onboarding-4` | Présentation mobile : « Emménage » | Clés remises de main en main, ou personne qui porte des cartons | `handing over keys`, `moving in boxes african` | Portrait, ≥ 1080 × 1350 |
+| `bienvenue` | Écran de bienvenue mobile | Ville ouest-africaine vue d'en haut, ou paysage du Bénin au coucher du soleil | `african city aerial`, `benin landscape`, `parakou` | Portrait, ≥ 1080 × 1920 |
+| `gerant` | Page « Publie ta chambre » (site et app) | Propriétaire adulte devant une maison ou un portail | `african man in front of house`, `african landlord` | Paysage, ≥ 1600 px |
 
 Critères : lumière naturelle, personnes et lieux d'Afrique de l'Ouest de préférence, aucune marque ni plaque
 visible, aucun visage reconnaissable sans autorisation de modèle (*model release*, indiqué sur Unsplash/Pexels).
