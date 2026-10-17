@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Bell, Home, Mail, MessageSquare } from "lucide-react-native";
-import { dateCourte } from "@/lib/format";
+import { heure, jourRelatif } from "@/lib/format";
 import { useSession } from "@/state/session";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { AuthRequired } from "@/features/auth/AuthRequired";
@@ -107,7 +107,7 @@ export function NotificationsScreen() {
                     style={{ alignSelf: "flex-start" }}
                   >
                     <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
-                      ✓ Tout marquer comme lu
+                      Tout marquer comme lu
                     </Text>
                   </Pressable>
                 ) : null}
@@ -160,9 +160,15 @@ export function NotificationsScreen() {
               />
             }
             onEndReached={() => requete.hasNextPage && void requete.fetchNextPage()}
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const nonLue = !item.read_at;
+              // Regroupement par jour (plan v2, MM9) : en-tête quand le jour change d'une notification à l'autre.
+              const jour = jourRelatif(item.created_at);
+              const precedente = itemsFiltres[index - 1];
+              const enTete = !precedente || jourRelatif(precedente.created_at) !== jour;
               return (
+                <View style={{ gap: sp[2] }}>
+                {enTete ? <Text variante="label" muted style={{ marginTop: index ? sp[3] : 0 }}>{jour}</Text> : null}
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => {
@@ -230,7 +236,7 @@ export function NotificationsScreen() {
                         marginTop: 2,
                       }}
                     >
-                      {dateCourte(item.created_at)} {nonLue ? "· Non lue" : "· Lue ✓"}
+                      {heure(item.created_at)} {nonLue ? "· Non lue" : "· Lue"}
                     </Text>
                   </View>
 
@@ -247,6 +253,7 @@ export function NotificationsScreen() {
                     />
                   ) : null}
                 </Pressable>
+                </View>
               );
             }}
           />
