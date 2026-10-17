@@ -313,6 +313,8 @@ Livrable : `docs/verification-notifications.md` (résultat par événement × ca
 
 ## 10. Phase 6 — Vérification des filtres et recette
 
+✅ **Points 1 à 3 faits (2026-10-17)** : `apps/listings/tests/test_recette_filtres.py` (chaque filtre seul et à ses limites, combinaisons, tris, erreurs lisibles, accents et fautes, parité site/API). Point 4 : recette visuelle web faite pour les écrans modifiés ; mobile à faire sur téléphone.
+
 1. Jeu de données de test couvrant chaque critère (quartier, type, loyer min/max, douche, eau, compteur, clôture, distance, disponibilité, tri).
 2. Tests serveur paramétrés : chaque filtre seul, combinés deux à deux, valeurs limites, valeurs invalides (erreur 400 lisible), recherche avec fautes et accents.
 3. Test de parité : la même recherche sur le web et l'API renvoie les mêmes annonces dans le même ordre.

@@ -444,4 +444,9 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   **Écarts au CDC** (consignés dans `docs/design/ECARTS.md`) : écrans « Mon abonnement » et « Choisir un plan »
   (EF-ABO-07) non développés, par décision du porteur (aucun écran de paiement en V1) ; squelette FedaPay non livré
   (V10 : KKiaPay seul) ; masquage des annonces 7 jours après expiration non appliqué (« règle à valider »).
+- **Chambres similaires (S3)** : `selectors.similaires` (score quartier/voisin, type, loyer ± 25 %, distance),
+  `GET /v1/listings/{ident}/similar`, fiche du site et bandeau sur la fiche mobile.
+- **Alertes (A1, A2, A4)** : 3 notifications par alerte et par jour, puis un récapitulatif `alert.digest` mis à jour
+  sans re-sonner ; tests de bout en bout (API → publication → notification), pause, reprise, suppression.
+- **Recette des filtres (phase 6)** : 38 cas dont la parité site/API. Suite serveur complète verte (seul `/readyz`).
 
