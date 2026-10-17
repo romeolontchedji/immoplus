@@ -2,6 +2,8 @@
 
 import uuid
 
+from django.db.models import Count
+
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
@@ -20,6 +22,65 @@ CHAMPS = (
     "max_distance_m",
     "is_active",
 )
+
+
+BUDGETS_DE_BASE = (10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 75_000)
+BUDGETS_MAX = 8
+
+
+def _budgets_frequents() -> list[int]:
+    """Plafonds proposés : quartiles des loyers publiés (arrondis aux 5 000 F supérieurs), complétés par les
+    paliers courants, sans doublon, du plus petit au plus grand."""
+    loyers = sorted(
+        Listing.objects.filter(status="published", deleted_at__isnull=True).values_list(
+            "rent_amount", flat=True
+        )
+    )
+    reperes = set()
+    if loyers:
+        for q in (0.25, 0.5, 0.75, 0.9):
+            loyer = loyers[min(len(loyers) - 1, int(q * len(loyers)))]
+            reperes.add(-(-loyer // 5_000) * 5_000)
+    for b in BUDGETS_DE_BASE:
+        if len(reperes) >= BUDGETS_MAX:
+            break
+        reperes.add(b)
+    return sorted(reperes)[:BUDGETS_MAX]
+
+
+def options() -> dict:
+    """Listes de l'éditeur d'alerte (plan v2, M5) : quartiers les plus demandés d'abord (alertes actives qui les
+    citent, puis annonces publiées), budgets fréquents. Même source pour le site et le mobile."""
+    from django.db import connection
+
+    with connection.cursor() as c:
+        c.execute(
+            "SELECT unnest(district_ids) AS d, count(*) FROM alerts WHERE is_active GROUP BY d"
+        )
+        demandes = {str(d): n for d, n in c.fetchall()}
+    offres = {
+        str(d): n
+        for d, n in Listing.objects.filter(status="published", deleted_at__isnull=True)
+        .values_list("district_id")
+        .annotate(n=Count("id"))
+        .values_list("district_id", "n")
+    }
+    quartiers = [
+        {
+            "id": q.pk,
+            "name": q.name,
+            "slug": q.slug,
+            "alerts": demandes.get(str(q.pk), 0),
+            "listings": offres.get(str(q.pk), 0),
+            "ordre": q.sort_order,
+        }
+        for q in District.objects.filter(is_active=True)
+    ]
+    quartiers.sort(key=lambda q: (-q["alerts"], -q["listings"], q["ordre"], q["name"]))
+    return {
+        "districts": [{k: v for k, v in q.items() if k != "ordre"} for q in quartiers],
+        "budgets": _budgets_frequents(),
+    }
 
 
 def _valider(d: dict) -> dict:

@@ -138,6 +138,18 @@ def _alerte_out(a) -> dict:
     return s.AlerteOut(a).data
 
 
+class OptionsAlerte(_Public):
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=TAG_LOC,
+        summary="Listes de l'éditeur d'alerte (quartiers les plus demandés, budgets fréquents)",
+        responses={200: s.OptionsAlerteOut},
+    )
+    def get(self, request):
+        return Response(s.OptionsAlerteOut(alertes.options()).data)
+
+
 class Alertes(_Client):
     @extend_schema(tags=TAG_LOC, summary="Mes alertes", responses={200: s.AlerteOut(many=True)})
     def get(self, request):

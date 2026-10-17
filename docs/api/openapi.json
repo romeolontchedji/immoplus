@@ -50,6 +50,33 @@
                 }
             }
         },
+        "/v1/alert-options": {
+            "get": {
+                "operationId": "v1_alert_options_retrieve",
+                "summary": "Listes de l'éditeur d'alerte (quartiers les plus demandés, budgets fréquents)",
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OptionsAlerteOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/app-config": {
             "get": {
                 "operationId": "app_config",
@@ -4445,6 +4472,29 @@
                 "type": "string",
                 "description": "* `student_up` - student_up\n* `student_other` - student_other\n* `employee` - employee\n* `self_employed` - self_employed\n* `other` - other"
             },
+            "OptionsAlerteOut": {
+                "type": "object",
+                "properties": {
+                    "districts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuartierFrequenceOut"
+                        },
+                        "description": "Les plus demandés d'abord."
+                    },
+                    "budgets": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "Plafonds proposés, en F."
+                    }
+                },
+                "required": [
+                    "budgets",
+                    "districts"
+                ]
+            },
             "OtpDemandeIn": {
                 "type": "object",
                 "properties": {
@@ -4771,6 +4821,36 @@
                 ],
                 "type": "string",
                 "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone"
+            },
+            "QuartierFrequenceOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "alerts": {
+                        "type": "integer",
+                        "description": "Alertes actives qui citent ce quartier."
+                    },
+                    "listings": {
+                        "type": "integer",
+                        "description": "Annonces publiées dans ce quartier."
+                    }
+                },
+                "required": [
+                    "alerts",
+                    "id",
+                    "listings",
+                    "name",
+                    "slug"
+                ]
             },
             "QuartierRefOut": {
                 "type": "object",

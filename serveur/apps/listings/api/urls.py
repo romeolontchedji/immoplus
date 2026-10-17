@@ -15,6 +15,7 @@ urlpatterns = [
     path("listings/<str:ident>/views", p.Vue.as_view(), name="listing-views"),
     path("me/favorites", p.Favoris.as_view(), name="favorites"),
     path("me/favorites/<uuid:annonce_id>", p.FavoriDetail.as_view(), name="favorite"),
+    path("alert-options", p.OptionsAlerte.as_view(), name="alert-options"),
     path("me/alerts", p.Alertes.as_view(), name="alerts"),
     path("me/alerts/<str:alerte_id>", p.AlerteDetail.as_view(), name="alert"),
     path("pro/listings", v.AnnoncesPro.as_view(), name="pro-listings"),

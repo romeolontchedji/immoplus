@@ -214,3 +214,21 @@ def test_site_les_onglets_de_l_accueil_viennent_de_la_base():
     ListingFactory.create_batch(3, room_type="single")
     page = Client().get("/").content.decode()
     assert 'data-type="single"' in page
+
+
+class TestOptionsAlerte:
+    """Plan v2, M5 : quartiers les plus demandés d'abord, budgets tirés des loyers publiés."""
+
+    def test_quartiers_les_plus_demandes_d_abord(self):
+        calme, demande = DistrictFactory(name="Calme"), DistrictFactory(name="Demandé")
+        Alert.objects.create(user=ClientFactory(), district_ids=[demande.pk])
+        ListingFactory(district=calme)
+        noms = [q["name"] for q in Client().get("/v1/alert-options").json()["districts"]]
+        assert noms.index("Demandé") < noms.index("Calme")
+
+    def test_budgets_tires_des_loyers(self):
+        for loyer in (12_000, 18_000, 23_000, 61_000):
+            ListingFactory(rent_amount=loyer)
+        budgets = Client().get("/v1/alert-options").json()["budgets"]
+        assert budgets == sorted(budgets) and len(budgets) <= 8
+        assert 20_000 in budgets and 65_000 in budgets  # quartiles arrondis aux 5 000 F supérieurs

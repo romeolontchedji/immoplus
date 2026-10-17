@@ -125,3 +125,18 @@ class AlerteOut(serializers.Serializer):
     max_distance_m = serializers.IntegerField(allow_null=True)
     is_active = serializers.BooleanField()
     created_at = serializers.DateTimeField()
+
+
+class QuartierFrequenceOut(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    slug = serializers.CharField()
+    alerts = serializers.IntegerField(help_text="Alertes actives qui citent ce quartier.")
+    listings = serializers.IntegerField(help_text="Annonces publiées dans ce quartier.")
+
+
+class OptionsAlerteOut(serializers.Serializer):
+    districts = QuartierFrequenceOut(many=True, help_text="Les plus demandés d'abord.")
+    budgets = serializers.ListField(
+        child=serializers.IntegerField(), help_text="Plafonds proposés, en F."
+    )

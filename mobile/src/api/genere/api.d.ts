@@ -24,6 +24,23 @@ export interface paths {
         patch: operations["uploads_partial_update"];
         trace?: never;
     };
+    "/v1/alert-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listes de l'éditeur d'alerte (quartiers les plus demandés, budgets fréquents) */
+        get: operations["v1_alert_options_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/app-config": {
         parameters: {
             query?: never;
@@ -1480,6 +1497,12 @@ export interface components {
          * @enum {string}
          */
         OccupationEnum: "student_up" | "student_other" | "employee" | "self_employed" | "other";
+        OptionsAlerteOut: {
+            /** @description Les plus demandés d'abord. */
+            districts: components["schemas"]["QuartierFrequenceOut"][];
+            /** @description Plafonds proposés, en F. */
+            budgets: number[];
+        };
         OtpDemandeIn: {
             phone: string;
             purpose: components["schemas"]["PurposeEnum"];
@@ -1589,6 +1612,16 @@ export interface components {
          * @enum {string}
          */
         PurposeEnum: "signup" | "reset_password" | "change_phone";
+        QuartierFrequenceOut: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            /** @description Alertes actives qui citent ce quartier. */
+            alerts: number;
+            /** @description Annonces publiées dans ce quartier. */
+            listings: number;
+        };
         QuartierRefOut: {
             name: string;
             slug: string;
@@ -1778,6 +1811,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_alert_options_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionsAlerteOut"];
+                };
             };
         };
     };
