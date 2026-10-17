@@ -311,10 +311,27 @@ def espace_compte(request):
             )
     from apps.chat import selectors as chat_selectors
     from apps.listings import selectors as listing_selectors
+    from apps.listings.services import types as types_chambre
+    from apps.notifications import selectors as notif_selectors
 
-    total_favoris = len(listing_selectors.favoris_de(u.pk)) if u.role == "client" else 0
-    total_alertes = len(listing_selectors.alertes_de(u.pk)) if u.role == "client" else 0
+    favoris = listing_selectors.favoris_de(u.pk) if u.role == "client" else []
+    alertes = listing_selectors.alertes_de(u.pk) if u.role == "client" else []
+    total_favoris, total_alertes = len(favoris), len(alertes)
     non_lus = chat_selectors.total_non_lus(u.pk, u.role)
+    # Tableau de bord du locataire (plan v2, W6) : alertes actives résumées, derniers favoris.
+    quartiers = {str(q.pk): q.name for q in listing_selectors.quartiers_actifs()}
+    libelles = types_chambre.libelles()
+    alertes_actives = [
+        {
+            "id": a.pk,
+            "titre": a.label or " · ".join(
+                filter(None, [", ".join(quartiers.get(str(d), "") for d in a.district_ids or []),
+                              ", ".join(libelles.get(t, t) for t in a.room_types or [])])
+            ) or "Toutes les chambres",
+            "budget": a.max_rent,
+        }
+        for a in alertes if a.is_active
+    ][:3]  # fmt: skip
     return render(
         request,
         "web/auth/compte.html",
@@ -328,6 +345,9 @@ def espace_compte(request):
             "total_favoris": total_favoris,
             "total_alertes": total_alertes,
             "non_lus": non_lus,
+            "notifs_non_lues": notif_selectors.non_lues(u.pk),
+            "alertes_actives": alertes_actives,
+            "derniers_favoris": favoris[:3],
         },
     )
 
