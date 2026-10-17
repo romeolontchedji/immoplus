@@ -37,6 +37,11 @@
           <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Logeo.</p>
         </div>
       {% endif %}
+      {% if message %}
+        <div class="alerte alerte--danger" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
       {# ── Métriques ────────────────────────────────────────────────────────── #}
       <div class="pro-metriques-grille">
         <div class="pro-metrique-carte">
@@ -53,7 +58,7 @@
         </div>
         <div class="pro-metrique-carte">
           <p class="pro-metrique-valeur pro-metrique-valeur--vert">{{ donnees.listings_by_status.rented|default:"—" }}</p>
-          <p class="pro-metrique-label">Chambre louée</p>
+          <p class="pro-metrique-label">Louées</p>
         </div>
       </div>
       {# ── Répartition par statut ───────────────────────────────────────────── #}
@@ -62,17 +67,6 @@
           {% for s in statuts %}
             <span class="pro-statut-chip"><strong>{{ s.nombre }}</strong> {{ s.libelle }}</span>
           {% endfor %}
-        </div>
-      {% endif %}
-      {# ── Incitation vidéo ─────────────────────────────────────────────────── #}
-      {% if annonce_sans_video %}
-        <div class="alerte alerte--incitation" role="status">
-          <div class="alerte__texte">
-            <strong>Ta chambre de {{ annonce_sans_video.district.name }} n'a aucune vue.</strong>
-            <p class="mb-0">Les annonces avec vidéo donnent plus envie de contacter. Ajoute une visite de 20 secondes.</p>
-          </div>
-          <a class="bouton bouton--primaire"
-             href="/pro/annonces/{{ annonce_sans_video.slug }}/modifier">Ajouter une vidéo</a>
         </div>
       {% endif %}
       {# ── Grille principale : tableau + contacts ────────────────────────────── #}
@@ -88,53 +82,66 @@
               <table class="tableau-pro">
                 <thead>
                   <tr>
-                    <th>CHAMBRE</th>
-                    <th>LOYER</th>
-                    <th>STATUT</th>
-                    <th>VUES</th>
-                    <th>CONTACTS</th>
+                    <th>Chambre</th>
+                    <th>Loyer</th>
+                    <th>Statut</th>
+                    <th>Vues</th>
+                    <th>Contacts</th>
+                    <th>Disponible</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for r in recentes %}
                     <tr>
-                      <td>
+                      <td data-libelle="Chambre">
                         <div class="cellule-chambre">
                           <span class="cellule-chambre__initiale">{{ r.annonce.district.name|slice:":2"|upper }}</span>
                           <div>
-                            <a class="cellule-chambre__titre" href="{{ r.url }}">{{ r.annonce.district.name }}</a>
-                            <span class="cellule-chambre__type">{{ r.annonce.get_room_type_display }}</span>
+                            <a class="cellule-chambre__titre" href="{{ r.url }}">{{ r.annonce.title }}</a>
+                            <span class="cellule-chambre__type">{{ r.type_label }} · {{ r.annonce.district.name }}</span>
                           </div>
                         </div>
                       </td>
-                      <td><strong>{{ r.annonce.rent_amount|fcfa }} F</strong></td>
-                      <td>
-                        {% if r.annonce.status == "published" %}
-                          {% if r.annonce.has_video %}
-                            <span class="statut-active">Active</span>
-                          {% else %}
-                            <span class="statut-sans-video">Sans vidéo</span>
-                          {% endif %}
-                        {% elif r.annonce.status == "rented" %}
-                          <span class="statut-louee">Louée</span>
-                        {% elif r.annonce.status == "draft" %}
-                          <span class="statut-attente">Brouillon</span>
-                        {% elif r.annonce.status == "suspended" %}
-                          <span class="statut-suspendu">Suspendu</span>
-                        {% else %}
-                          <span class="statut-attente">{{ r.annonce.get_status_display }}</span>
-                        {% endif %}
+                      <td data-libelle="Loyer">
+                        <strong>{{ r.annonce.rent_amount|fcfa }} F</strong>
                       </td>
-                      <td>
-                        {% if r.annonce.status == "published" %}
-                          <span class="fw-700">{{ r.stats.views|default:0 }}</span>
-                        {% else %}
-                          <span class="texte-doux">—</span>
-                        {% endif %}
+                      <td data-libelle="Statut">
+                        <span class="{{ r.statut.1 }}">{{ r.statut.0 }}</span>
                       </td>
-                      <td>
-                        {% if r.annonce.status == "published" %}
-                          <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
+                      <td data-libelle="Vues">
+                        <span class="fw-700">{{ r.stats.views|default:0 }}</span>
+                      </td>
+                      <td data-libelle="Contacts">
+                        <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
+                      </td>
+                      <td data-libelle="Encore disponible">
+                        {% if r.annonce.status == "published" or r.annonce.status == "rented" %}
+                          <form method="post" class="interrupteur-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="disponible">
+                            <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
+                            {% if r.annonce.status == "published" %}
+                              <button class="interrupteur interrupteur--actif"
+                                      type="submit"
+                                      name="disponible"
+                                      value="0"
+                                      role="switch"
+                                      aria-checked="true"
+                                      aria-label="« {{ r.annonce.title }} » est disponible. Décoche si elle est louée.">
+                                <span class="interrupteur__curseur"></span>
+                              </button>
+                            {% else %}
+                              <button class="interrupteur"
+                                      type="submit"
+                                      name="disponible"
+                                      value="1"
+                                      role="switch"
+                                      aria-checked="false"
+                                      aria-label="« {{ r.annonce.title }} » est louée. Coche pour la remettre en ligne.">
+                                <span class="interrupteur__curseur"></span>
+                              </button>
+                            {% endif %}
+                          </form>
                         {% else %}
                           <span class="texte-doux">—</span>
                         {% endif %}
@@ -176,17 +183,16 @@
           {% if derniers_contacts %}
             <ul class="pro-contacts-liste">
               {% for c in derniers_contacts %}
-                <li class="pro-contact-ligne">
-                  <div class="navigation__avatar pro-contact__avatar" aria-hidden="true">
-                    {{ c.locataire.full_name|default:c.locataire.phone|slice:":2"|upper }}
-                  </div>
-                  <div class="pro-contact__infos">
-                    <strong>{{ c.locataire.full_name|default:c.locataire.phone }}</strong>
-                    <span class="pro-contact__meta">{{ c.annonce.get_room_type_display }} · {{ c.date_relative }}</span>
-                  </div>
-                  {% if c.nouveau %}
-                    <span class="badge badge--information">Nouveau</span>
-                  {% endif %}
+                <li>
+                  <a class="pro-contact-ligne" href="/compte/messages/{{ c.id }}">
+                    <span class="navigation__avatar pro-contact__avatar"
+                          aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
+                    <span class="pro-contact__infos">
+                      <strong>{{ c.other.name|default:"Locataire" }}</strong>
+                      <span class="pro-contact__meta">{{ c.listing.title }} · {{ c.last_message_at|horodatage_court }}</span>
+                    </span>
+                    {% if c.unread_count %}<span class="badge badge--information">{{ c.unread_count }} non lu{{ c.unread_count|pluralize }}</span>{% endif %}
+                  </a>
                 </li>
               {% endfor %}
             </ul>

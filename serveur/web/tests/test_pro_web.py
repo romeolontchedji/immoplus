@@ -275,3 +275,32 @@ def test_apercu_refuse_a_un_locataire_connecte_sur_le_site():
     c.post("/connexion", {"phone": "97616161", "password": MOT_DE_PASSE})
     r = c.post("/v1/pro/markdown/preview", {"markdown": "x"}, content_type="application/json")
     assert r.status_code == 403
+
+
+def test_interrupteur_encore_disponible(session_gerant):
+    """Plan v2, W4 : décocher = louée (retirée du fil), recocher = remise en ligne."""
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="published")
+    medias_prets(a)  # sans vidéo prête, une annonce remise en ligne repasse en brouillon
+    page = c.get("/pro/dashboard").content.decode()
+    assert 'role="switch"' in page and 'aria-checked="true"' in page and a.title in page
+    r = c.post(
+        "/pro/dashboard", {"action": "disponible", "annonce_id": str(a.pk), "disponible": "0"}
+    )
+    assert r.status_code == 302
+    a.refresh_from_db()
+    assert a.status == "rented"
+    c.post("/pro/dashboard", {"action": "disponible", "annonce_id": str(a.pk), "disponible": "1"})
+    a.refresh_from_db()
+    assert a.status == "published"
+
+
+def test_interrupteur_refuse_l_annonce_d_un_autre(session_gerant):
+    c, _ = session_gerant
+    autre = ListingFactory(status="published")
+    r = c.post(
+        "/pro/dashboard", {"action": "disponible", "annonce_id": str(autre.pk), "disponible": "0"}
+    )
+    assert r.status_code == 200 and "introuvable" in r.content.decode().lower()
+    autre.refresh_from_db()
+    assert autre.status == "published"

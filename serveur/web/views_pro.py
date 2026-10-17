@@ -38,6 +38,16 @@ TITRES_STATUTS = {
     StatutAnnonce.ARCHIVED: "Archivées",
     StatutAnnonce.REMOVED: "Retirées",
 }
+# Statut d'une ligne : (libellé, classe de pastille).
+STATUT_LIGNE = {
+    StatutAnnonce.DRAFT: ("Brouillon", "statut-attente"),
+    StatutAnnonce.PROCESSING: ("En traitement", "statut-attente"),
+    StatutAnnonce.PUBLISHED: ("En ligne", "statut-active"),
+    StatutAnnonce.HIDDEN: ("Masquée", "statut-sans-video"),
+    StatutAnnonce.RENTED: ("Louée", "statut-louee"),
+    StatutAnnonce.ARCHIVED: ("Archivée", "statut-attente"),
+    StatutAnnonce.REMOVED: ("Retirée", "statut-suspendu"),
+}
 
 
 def commandes_autorisees(annonce) -> list[dict]:
@@ -63,6 +73,17 @@ def commandes_autorisees(annonce) -> list[dict]:
 
 @gerant_obligatoire
 def tableau_de_bord(request, profil):
+    message = None
+    if request.method == "POST" and request.POST.get("action") == "disponible":
+        # Plan v2, W4 : décocher « encore disponible » = louée (retirée du fil) ; recocher = remise en ligne.
+        try:
+            if request.POST.get("disponible") == "1":
+                annonces.annuler_louee(profil, request.POST.get("annonce_id"))
+            else:
+                annonces.marquer_louee(profil, request.POST.get("annonce_id"))
+            return redirect("/pro/dashboard")
+        except ErreurMetier as erreur:
+            message = erreur.message
     donnees = selectors.tableau_de_bord_gerant(profil)
     taux = comptes.taux_de_reponse(request.user.pk)
     statuts = [
@@ -76,12 +97,16 @@ def tableau_de_bord(request, profil):
     recentes = [
         {
             "annonce": a,
+            "type_label": types.libelle(a.room_type),
+            "statut": STATUT_LIGNE.get(a.status, (a.status, "statut-attente")),
             "commandes": commandes_autorisees(a),
             "url": f"/pro/annonces/{a.pk}",
             "stats": stats_annonces.get(a.pk, {"views": 0, "contacts": 0}),
         }
         for a in recentes_objets
     ]
+    lignes, _ = chat_selectors.liste(request.user.pk, role="gerant")
+    derniers_contacts = chat_selectors.decrire(lignes[:4], request.user.pk)
     return render(
         request,
         "web/pro/tableau.html",
@@ -94,6 +119,8 @@ def tableau_de_bord(request, profil):
             "titre": "Tableau de bord",
             "recentes": recentes,
             "total_annonces": len(toutes),
+            "derniers_contacts": derniers_contacts,
+            "message": message,
         },
     )
 
