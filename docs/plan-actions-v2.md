@@ -80,7 +80,7 @@ Le web (Django) et le mobile (Expo) restent deux clients séparés, mais **une s
 | P0.10 | ✅ **Fait (2026-10-17).** `GET /v1/app-config` livré (public, cache 60 s) : version minimale, maintenance, avis, drapeaux (`subscription` forcé à faux en V1), limites déclarées par chaque application au démarrage (registre `apps.core.configuration`), temps réel, contact. OpenAPI régénéré (ajouts seulement), client TypeScript mobile régénéré. **Reste** : le serveur ne renvoie pas encore `426` sous la version minimale ni `503 maintenance` (le mobile s'appuie sur `app-config`). | S M | ✅ |
 | P0.2 | Vérifier pourquoi `beat`, `worker`, `worker-media` sont *unhealthy* (pool PostgreSQL saturé : `couldn't get a connection after 5 s`). | infra | 3 conteneurs *healthy*, vues versées |
 | P0.3 | ✅ **Fait (2026-10-17).** Numéro de l'équipe dans un seul paramètre (`TEAM_PHONE`, modifiable dans l'administration) servi au site (processeur de contexte `contact`, liens `tel:` et WhatsApp corrigés) et au mobile (`/v1/app-config` → `contact`, repli local). | S W M | ✅ |
-| P0.4 | Pages Conditions et Confidentialité (D11) : rédaction à partir du CDC (voir §6), page web + écran mobile. | S W M | Plus de 404 ; même texte sur les deux |
+| P0.4 | ✅ **Fait (2026-10-17).** Textes rédigés depuis le CDC (`apps/core/textes_legaux/*.md`), identité de l'éditeur **fictive provisoire** dans les paramètres `LEGAL_*` (bandeau « Version provisoire » tant que `LEGAL_PROVISIONAL` est vrai), pages web `/conditions` et `/confidentialite` au style des captures, `GET /v1/legal/{slug}` et écran mobile ; liens depuis le Profil, l'Aide et l'inscription (case d'acceptation désormais décochée par défaut et obligatoire). **Avant l'ouverture** : vraies valeurs `LEGAL_*`, relecture par un juriste (CDC §8.4), `LEGAL_PROVISIONAL` à faux. | S W M | ✅ |
 | P0.5 | ✅ FAQ (D16) : question retirée (voir P0.9). | W | ✅ |
 | P0.6 | Bouton « Voir les chambres » de l'accueil non responsive. | W | Lisible et pleine largeur sous 400 px |
 | P0.7 | Inscription mobile (D13) : ne plus perdre de saisie ; un seul champ nom. | M | Ce qui est saisi est stocké ou n'est pas demandé |
@@ -245,6 +245,8 @@ vers le bon écran (`routage.ts`, testé). Correspondance des alertes correcte (
 | N6 | Rattrapage : à la reconnexion, les messages manqués arrivent sans doublon (déjà prévu par `seq`) ; test de recette dédié. | S M |
 
 ### 9.3 Demande d'autorisation (au bon moment, avec explication)
+
+✅ **Fait (2026-10-17)** : N1 (canaux + priorité), N2 (titre « Nom · chambre »), N4 (pastille), §9.3 (feuille d'explication après le premier message et la première alerte), §9.4 (textes). Corrigé au passage : les préférences de notification du mobile étaient toutes refusées par le serveur (format). **Reste** : N3 (répondre depuis la notification, tâche d'arrière-plan, à tester sur dev build), N5, N6, §9.5 A2 (récapitulatif quotidien), recette §9.6 sur dev build.
 
 Le système ne permet de demander qu'une fois (Android 13+, iOS) : un refus est presque définitif. On affiche donc d'abord
 **notre propre écran d'explication**, puis la demande système seulement si la personne accepte :

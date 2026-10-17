@@ -351,4 +351,11 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   désormais par le conteneur `admin`.
 - **Piège** : le script `outils/exporter_client_ts.sh` prévu par le CDC n'existe pas ; le client mobile a été
   régénéré avec `npx openapi-typescript@7.4.4 docs/api/openapi.json -o mobile/src/api/genere/api.d.ts`.
+- **Notifications (§9 du plan)** : canal Android et priorité envoyés par le serveur (sans eux tout tombait dans le canal
+  par défaut), pastille de non-lus, textes réécrits (`apps/notifications/textes.py`), feuille d'explication avant la
+  demande d'autorisation sur mobile. **Bug corrigé** : les préférences de notification du mobile étaient toutes
+  refusées (400) — schéma OpenAPI vide masqué par un `as any`. Attention : un canal Android déjà créé garde son
+  importance ; il faut réinstaller l'app pour voir les nouveaux réglages de canal.
+- **Pages légales (P0.4)** : `/conditions`, `/confidentialite`, `GET /v1/legal/{slug}`, écran mobile ; identité de
+  l'éditeur fictive provisoire (`LEGAL_*`). 853 tests serveur verts (seul `/readyz` échoue, préexistant).
 
