@@ -227,11 +227,9 @@ def _suite_de_publication(annonce_id, *, echec: bool = False) -> None:
     """Une annonce en attente de traitement repasse en brouillon si un média échoue (CDC §11.1)."""
     from . import annonces
 
-    annonce = (
-        Listing.objects.filter(pk=annonce_id, status=StatutAnnonce.PROCESSING)
-        .select_related("gerant__user")
-        .first()
-    )
+    # Pas de `select_related("gerant")` : il charge toutes les colonnes de `gerant_profiles`, y compris celles que le
+    # rôle `app` ne peut pas lire. L'accès `annonce.gerant` passe par le gestionnaire qui les laisse de côté.
+    annonce = Listing.objects.filter(pk=annonce_id, status=StatutAnnonce.PROCESSING).first()
     if annonce is None:
         return
     if echec:

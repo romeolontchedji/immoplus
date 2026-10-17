@@ -455,3 +455,45 @@ class TestVideo:
 
 def test_dossier_district_inutilise():
     assert DistrictFactory  # (fabrique importée pour les autres modules)
+
+
+class TestDroitsRoleApp:
+    """Régression : sous le rôle PostgreSQL `app`, charger le gérant d'une annonce ne doit jamais lire les colonnes
+    réservées à l'administration (`permission denied for table gerant_profiles` faisait échouer toute photo
+    envoyée sur une annonce en attente de publication)."""
+
+    @staticmethod
+    def _en_tant_que_app():
+        from contextlib import contextmanager
+
+        from django.db import connection
+
+        @contextmanager
+        def bloc():
+            with connection.cursor() as c:
+                c.execute("SET LOCAL ROLE app")
+            try:
+                yield
+            finally:
+                with connection.cursor() as c:
+                    c.execute("RESET ROLE")
+
+        return bloc()
+
+    def test_photo_sur_annonce_en_traitement(self, pro, gerant, django_capture_on_commit_callbacks):
+        from apps.listings.models import Listing
+
+        annonce = ListingFactory(gerant=gerant, status="processing", published_at=None)
+        with self._en_tant_que_app():
+            mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+            assert ListingMedia.objects.get(pk=mid).status == "ready"
+            assert Listing.objects.get(pk=annonce.pk).status in ("processing", "draft", "published")
+
+    def test_manques_a_la_publication_lisible_par_app(self, gerant):
+        from apps.listings.models import Listing
+        from apps.listings.services import annonces
+
+        annonce = ListingFactory(gerant=gerant, status="draft", published_at=None)
+        with self._en_tant_que_app():
+            manques = annonces.manques_a_la_publication(Listing.objects.get(pk=annonce.pk))
+        assert "gerant_non_verifie" not in manques

@@ -425,7 +425,7 @@ def remettre_apres_suspension(gerant_user_id, *, acteur) -> int:
     remises = 0
     for annonce in Listing.objects.filter(
         gerant_id=gerant_user_id, status=StatutAnnonce.HIDDEN, hidden_reason="gerant_suspended"
-    ).select_related("gerant"):
+    ):  # pas de select_related("gerant") : colonnes réservées illisibles pour le rôle `app`
         perimee = annonce.last_confirmed_at is None or annonce.last_confirmed_at < delai
         if perimee or manques_a_la_publication(annonce):
             Listing.objects.filter(pk=annonce.pk).update(hidden_reason="stale")

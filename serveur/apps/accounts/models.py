@@ -292,6 +292,9 @@ class GerantProfile(models.Model):
 
     class Meta:
         db_table = "gerant_profiles"
+        # `annonce.gerant` (clé étrangère) passe par le gestionnaire de base : il doit lui aussi laisser de côté les
+        # colonnes réservées, sinon le rôle `app` reçoit « permission denied for table gerant_profiles ».
+        base_manager_name = "objects"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(verification_status__in=[s.value for s in StatutVerification]),
