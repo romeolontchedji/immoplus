@@ -4,7 +4,7 @@ COMPOSE := docker compose --env-file .env -f infra/compose/docker-compose.yml --
 PYTHON := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 PYTEST := cd serveur && ../$(PYTHON) -m pytest
 
-.PHONY: aide installer env hooks up down migrate seed css vendor shell \
+.PHONY: aide installer env hooks up down migrate seed css jetons vendor shell \
         test test-unitaires test-integration test-securite couverture \
         lint verifier openapi docs fumee diagnostic nettoyer test-outils tester-hooks
 
@@ -37,7 +37,10 @@ migrate: ## Applique les migrations (rôle PostgreSQL `migrate`)
 seed: ## Paramètres et quartiers de Parakou ; ajouter DEMO=1 pour des annonces d'exemple (développement)
 	$(COMPOSE) run --rm admin python manage.py seed $(if $(DEMO),--demo,)  # la commande vit dans adminsite
 
-css: ## Assemble, minifie et empreinte le CSS
+jetons: ## Génère les jetons du site et du mobile depuis docs/design/tokens.json
+	$(PYTHON) outils/construire_tokens.py
+
+css: jetons ## Assemble, minifie et empreinte le CSS
 	$(PYTHON) outils/construire_css.py
 
 deployer-css: css ## Construit le CSS et le déploie dans le volume statique Docker (Caddy)

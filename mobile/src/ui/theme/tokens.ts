@@ -1,34 +1,39 @@
+import { jetons } from "./jetons.genere";
+
 /**
  * Jetons de design de l'application Logeo.
- * Source unique de vérité : docs/design/DESIGN.md §3 et serveur/web/static/css/tokens.css.
+ * Source unique : docs/design/tokens.json → jetons.genere.ts (couleurs, espaces, rayons, tailles), partagée avec le site.
  */
 
+const c = jetons.couleurs;
+
+/** Couleurs : générées depuis docs/design/tokens.json (outils/construire_tokens.py), noms historiques conservés. */
 export const colors = {
-  primary: "#1B44D6",
-  blue: "#1B44D6",
-  blueHover: "#1538B8",
-  blueSoft: "#EAF0FF",
-  sun: "#FFB429",
-  sunHover: "#E8A320",
-  night: "#0F1B3D",
-  sable300: "#94A3B8",
-  sable600: "#4A5373",
-  sable950: "#0B132B",
-  textMuted: "#4A5373",
-  bg: "#F5F6FA",
-  surface: "#FFFFFF",
-  border: "#D5DAEA",
-  divider: "#EDEFF6",
-  success: "#12805C",
-  successBg: "#DDF3EA",
-  successText: "#0C6B4A",
-  warning: "#8A5300",
-  warningBg: "#FFF0D2",
-  warningText: "#8A5300",
-  danger: "#A32218",
-  dangerBg: "#FBE1DE",
-  dangerText: "#A32218",
-  white: "#FFFFFF",
+  primary: c.blue,
+  blue: c.blue,
+  blueHover: c.blueHover,
+  blueSoft: c.blueSoft,
+  sun: c.sun,
+  sunHover: c.sunHover,
+  night: c.night,
+  sable300: c.sable300,
+  sable600: c.sable600,
+  sable950: c.sable950,
+  textMuted: c.sable600,
+  bg: c.bg,
+  surface: c.surface,
+  border: c.border,
+  divider: c.divider,
+  success: c.success,
+  successBg: c.successBg,
+  successText: c.success,
+  warning: c.warning,
+  warningBg: c.warningBg,
+  warningText: c.warning,
+  danger: c.danger,
+  dangerBg: c.dangerBg,
+  dangerText: c.danger,
+  white: c.white,
 } as const;
 
 export type Palette = {
@@ -72,7 +77,7 @@ export const clair: Palette = {
   surfaceRaised: colors.surface,
   surfaceSunken: colors.bg,
   border: colors.border,
-  borderStrong: "#B8C4D9",
+  borderStrong: c.borderStrong,
   divider: colors.divider,
   text: colors.night,
   textMuted: colors.textMuted,
@@ -102,48 +107,24 @@ export const clair: Palette = {
 };
 
 /** Grille de 4 dp. */
-export const sp = {
-  1: 4,
-  2: 8,
-  3: 12,
-  4: 16,
-  5: 20,
-  6: 24,
-  8: 32,
-  10: 40,
-  12: 48,
-  14: 56,
-} as const;
+export const sp = jetons.espaces;
 
 /** Rayons conformes à DESIGN.md §3 */
 export const rayon = {
-  field: 14,
-  card: 20,
-  cardL: 24,
-  sheet: 28,
-  pilule: 999,
+  field: jetons.rayons.field,
+  card: jetons.rayons.card,
+  cardL: jetons.rayons.cardL,
+  sheet: jetons.rayons.sheet,
+  pilule: jetons.rayons.pill,
   // Alias de compatibilité
   1: 8,
-  2: 14,
-  3: 20,
-  4: 24,
+  2: jetons.rayons.field,
+  3: jetons.rayons.card,
+  4: jetons.rayons.cardL,
 } as const;
 
 /** Typographie (DESIGN.md §3) */
-export const fs = {
-  12: 12,
-  13: 13,
-  14: 14,
-  15: 15,
-  16: 16,
-  17: 17,
-  18: 18,
-  20: 20,
-  24: 24,
-  26: 26,
-  28: 28,
-  30: 30,
-} as const;
+export const fs = jetons.tailles;
 
 /** Ombres subtiles */
 export const ombre = {

@@ -3,31 +3,67 @@
    Points de rupture : 360 (base), 640, 768, 1024, 1280. */
 
 :root {
-  /* Palette principale (DESIGN.md §3) */
-  --blue:       #1B44D6;
-  --blue-soft:  #EAF0FF;
-  --sun:        #FFB429;
-  --night:      #0F1B3D;
+  /* <jetons-generes> ne pas modifier : docs/design/tokens.json, make jetons */
+  --blue: #1B44D6;
+  --blue-hover: #1538B8;
+  --blue-soft: #EAF0FF;
+  --blue-soft-hover: #D4E3FF;
+  --sun: #FFB429;
+  --sun-hover: #E8A320;
+  --night: #0F1B3D;
+  --white: #FFFFFF;
   --sable-300: #94A3B8;
   --sable-600: #4A5373;
   --sable-950: #0B132B;
-  --text-muted: var(--sable-600);
-  --bg:         #F5F6FA;
-  --surface:    #FFFFFF;
-  --border:     #D5DAEA;
-  --divider:    #EDEFF6;
-  --success:    #0C6B4A;
+  --bg: #F5F6FA;
+  --surface: #FFFFFF;
+  --border: #D5DAEA;
+  --border-strong: #B8C4D9;
+  --divider: #EDEFF6;
+  --success: #0C6B4A;
   --success-bg: #DDF3EA;
-  --warning:    #8A5300;
+  --warning: #8A5300;
   --warning-bg: #FFF0D2;
-  --danger:     #A32218;
-  --danger-bg:  #FBE1DE;
+  --danger: #A32218;
+  --danger-bg: #FBE1DE;
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-14: 3.5rem;
+  --sp-16: 4rem;
+  --sp-20: 5rem;
+  --r-field: 14px;
+  --r-card: 20px;
+  --r-card-l: 24px;
+  --r-sheet: 28px;
+  --r-pill: 999px;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-15: 0.9375rem;
+  --fs-16: 1rem;
+  --fs-17: 1.0625rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-26: 1.625rem;
+  --fs-28: 1.75rem;
+  --fs-30: 1.875rem;
+  --fs-36: 2.25rem;
+  --fs-40: 2.5rem;
+  --fs-48: 3rem;
+  --fs-60: 3.75rem;
+  /* </jetons-generes> */
+  /* Palette principale (DESIGN.md §3) */
+  --text-muted: var(--sable-600);
 
   /* Teintes et nuances dérivées */
-  --white:      #FFFFFF;
-  --sun-hover:  #E8A320;
-  --blue-hover: #1538B8;
-  --blue-soft-hover: #D4E3FF;
   --danger-hover: #F5CBC8;
   --switch-off: #C5CAD9;
 
@@ -100,13 +136,11 @@
   --text:             var(--night);
   --surface-raised:   var(--surface);
   --surface-sunken:   var(--bg);
-  --border-strong:    #B8C4D9;
   --border-subtle:    var(--divider);
   --succes-bg:        #DDF3EA;
   --succes-text:      #0C6B4A;
   --avertissement-bg: #FFF0D2;
   --avertissement-text: #8A5300;
-  --danger-bg:        #FBE1DE;
   --danger-text:      #A32218;
   --information-bg:   #EAF0FF;
   --information-text: #1B44D6;
@@ -147,10 +181,6 @@
   --police-texte:  "Plus Jakarta Sans", system-ui, sans-serif;
   --police-titre:  "Plus Jakarta Sans", system-ui, sans-serif;
   --police-corps:  "Plus Jakarta Sans", system-ui, sans-serif;
-  --fs-12: 0.75rem;  --fs-13: 0.8125rem; --fs-14: 0.875rem; --fs-15: 0.9375rem;
-  --fs-16: 1rem;     --fs-17: 1.0625rem; --fs-18: 1.125rem; --fs-20: 1.25rem;
-  --fs-24: 1.5rem;   --fs-28: 1.75rem;   --fs-30: 1.875rem; --fs-36: 2.25rem;
-  --fs-40: 2.5rem;   --fs-48: 3rem;      --fs-60: 3.75rem;
   --lh-texte: 1.55;
   --lh-titre: 1.2;
   --lh-titre-serre: 1.05;
@@ -159,16 +189,8 @@
   --mesure: 70ch;
 
   /* Espacement (grille 4 px) */
-  --sp-1: 0.25rem;  --sp-2: 0.5rem;  --sp-3: 0.75rem; --sp-4: 1rem;
-  --sp-5: 1.25rem;  --sp-6: 1.5rem;  --sp-8: 2rem;    --sp-10: 2.5rem;
-  --sp-12: 3rem;    --sp-14: 3.5rem; --sp-16: 4rem;   --sp-20: 5rem;
 
   /* Formes (DESIGN.md §3 : rayons) */
-  --r-field:  14px;   /* champs, boutons */
-  --r-card:   20px;   /* cartes */
-  --r-card-l: 24px;   /* grandes cartes */
-  --r-pill:   999px;  /* pastilles */
-  --r-sheet:  28px;   /* feuilles modales */
 
   /* Alias compatibilité */
   --rayon-1: 0.5rem;   --rayon-2: 0.875rem;  --rayon-3: 1rem;

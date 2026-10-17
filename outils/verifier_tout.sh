@@ -30,6 +30,7 @@ optionnelle ruff "ruff check (serveur)" ruff check serveur
 optionnelle ruff "ruff check (outils)" ruff check --config outils/ruff.toml outils
 optionnelle ruff "ruff format --check" bash -c 'ruff format --check serveur && ruff format --check --config outils/ruff.toml outils'
 [ -d serveur/web ] && optionnelle djlint "djlint --check" djlint --check serveur/web
+[ -f docs/design/tokens.json ] && etape "jetons de design synchronisés (site et mobile)" python3 outils/construire_tokens.py --verifier
 [ -f serveur/web/static/css/tokens.css ] && etape "contrastes WCAG des jetons" python3 outils/contraste.py
 [ -d outils/tests ] && etape "tests des outils" python3 -m unittest discover -s outils/tests -q
 
