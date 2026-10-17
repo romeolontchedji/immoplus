@@ -6,9 +6,9 @@ from django.utils import timezone
 
 
 class AppSetting(models.Model):
-    key = models.CharField(max_length=64, primary_key=True)
-    value = models.JSONField()
-    description = models.CharField(max_length=255)
+    key = models.CharField(max_length=64, primary_key=True, verbose_name="clé")
+    value = models.JSONField(verbose_name="valeur")
+    description = models.CharField(max_length=255, verbose_name="description")
     updated_by = models.ForeignKey(
         "accounts.User",
         on_delete=models.PROTECT,
@@ -16,11 +16,19 @@ class AppSetting(models.Model):
         blank=True,
         related_name="+",
         db_column="updated_by",
+        verbose_name="modifié par",
     )
-    updated_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    updated_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="modifié le"
+    )
+
+    def __str__(self) -> str:
+        return self.key
 
     class Meta:
         db_table = "app_settings"
+        verbose_name = "paramètre"
+        verbose_name_plural = "paramètres"
 
 
 class DailyStat(models.Model):

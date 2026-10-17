@@ -1,148 +1,142 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
-{% block extrastyle %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static "admin/css/dashboard.css" %}">
-{% endblock %}
-{% block coltype %}colMS{% endblock %}
-{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block coltype %}colM{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard lg-accueil{% endblock %}
 {% block nav-breadcrumbs %}{% endblock %}
-
+{% block content_title %}{% endblock %}
 {% block content %}
   <div id="content-main">
-    {% if vue_ensemble %}
-      <div class="mb-6">
-        <h1 class="mb-1">Vue d'ensemble</h1>
-        <p class="texte-doux mb-4">Console d'administration et de modération de la plateforme Logeo</p>
-
-        {# ── 4 Cartes Métriques Clés ────────────────────────────────────────── #}
-        <div class="lg-dashboard">
-          <div class="lg-carte">
-            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.locataires_total }}</p>
-            <p class="lg-etiquette">Locataires</p>
-            <p class="help">
-              <a href="{% url 'admin:accounts_user_changelist' %}">Examiner</a>
-            </p>
-          </div>
-
-          <div class="lg-carte">
-            <p class="lg-valeur lg-valeur--vert">{{ vue_ensemble.annonces_publiees }}</p>
-            <p class="lg-etiquette">Chambres en ligne</p>
-            <p class="help">
-              {% if vue_ensemble.taux_reponse is not None %}Taux de réponse moyen {{ vue_ensemble.taux_reponse }}%{% else %}Parakou, Bénin{% endif %}
-            </p>
-          </div>
-
-          <div class="lg-carte">
-            <p class="lg-valeur {% if vue_ensemble.moderation.ouverts %}lg-valeur--ambre{% endif %}">{{ vue_ensemble.moderation.ouverts }}</p>
-            <p class="lg-etiquette">Dossiers de modération</p>
-            <p class="help">
-              {{ vue_ensemble.moderation.hors_delai }} hors délai (24h) ·
-              <a href="{% url 'admin:moderation_report_changelist' %}">Traiter</a>
-            </p>
-          </div>
-
-          <div class="lg-carte">
-            <p class="lg-valeur lg-valeur--bleu">{{ vue_ensemble.compteurs_jour.messages }}</p>
-            <p class="lg-etiquette">Messages aujourd'hui</p>
-            <p class="help">
-              {{ vue_ensemble.compteurs_jour.conversations_started }} conversations ·
-              {{ vue_ensemble.comptes_total }} comptes actifs
-            </p>
-          </div>
+    {% with v=vue_ensemble %}
+      <header class="lg-entete-page">
+        <div>
+          <h1>Bonjour {{ request.user.get_short_name }}</h1>
+          <p>Voici ce qui demande ton attention sur Logeo aujourd'hui.</p>
         </div>
-
-        {# ── Section Gérants : création de compte ──────────────────────────── #}
-        {% if vue_ensemble.role == "admin" %}
-          <div class="module lg-section-module">
-            <h2>Gérants</h2>
-            <div class="lg-section">
-              <p class="lg-section__texte">
-                Crée un compte gérant après vérification des pièces et l'entretien. Un mot de passe lui
-                est attribué puis transmis hors plateforme ; il pourra le modifier ensuite.
-              </p>
-              <div class="lg-section__actions">
-                <a class="button" href="{% url 'admin:accounts_user_nouveau_gerant' %}">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                  Créer un gérant
-                </a>
-                <a class="button" href="{% url 'admin:accounts_gerantprofile_changelist' %}">Voir les gérants</a>
-              </div>
-            </div>
-          </div>
+        {% if v.role == "admin" %}
+          <a class="lg-bouton lg-bouton--soleil"
+             href="{% url 'admin:accounts_user_nouveau_gerant' %}">{% include "admin/includes_icone.html" with nom="plus" %} Créer un gérant</a>
         {% endif %}
-
-        {# ── Section Alertes / Actions prioritaires ────────────────────────── #}
-        {% if vue_ensemble.moderation.hors_delai %}
-          <div class="module p-4 mb-6">
-            <h2 class="mb-3">Actions prioritaires requises</h2>
-            <div class="d-flex gap-4 flex-wrap">
-
-              {% if vue_ensemble.moderation.ouverts %}
-                <div class="d-flex align-items-center gap-3">
-                  <span class="badge badge--avertissement d-inline-flex align-items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    {{ vue_ensemble.moderation.ouverts }} signalement(s)
-                  </span>
-                  <span>en attente d'examen</span>
-                  <a class="button" href="{% url 'admin:moderation_report_changelist' %}">Modérer</a>
-                </div>
-              {% endif %}
-            </div>
-          </div>
+      </header>
+      {% if v.maintenance %}
+        <p class="lg-bandeau lg-bandeau--alerte">
+          {% include "admin/includes_icone.html" with nom="alert" %}
+          Le site et les applications sont en <strong>maintenance</strong>. <a href="{% url 'admin:core_appsetting_changelist' %}#application">Désactiver</a>
+        </p>
+      {% endif %}
+      {% if v.parametres_provisoires and v.role == "admin" %}
+        <p class="lg-bandeau">
+          {% include "admin/includes_icone.html" with nom="file" %}
+          L'identité légale affichée est <strong>provisoire</strong> (valeurs fictives).
+          <a href="{% url 'admin:core_appsetting_changelist' %}#contact">La compléter</a>
+        </p>
+      {% endif %}
+      <h2 class="lg-titre-section">À traiter</h2>
+      <div class="lg-grille lg-grille--4">
+        <a class="lg-tuile{% if v.moderation.hors_delai %} lg-tuile--urgent{% endif %}"
+           href="{% url 'admin:moderation_report_changelist' %}">
+          <span class="lg-tuile__icone lg-tuile__icone--rouge">{% include "admin/includes_icone.html" with nom="flag" %}</span>
+          <span class="lg-tuile__nombre">{{ v.moderation.ouverts }}</span>
+          <span class="lg-tuile__libelle">Signalements ouverts</span>
+          <span class="lg-tuile__aide">
+            {% if v.moderation.hors_delai %}
+              {{ v.moderation.hors_delai }} hors délai de 24 h
+            {% else %}
+              Tous dans les délais
+            {% endif %}
+          </span>
+        </a>
+        <a class="lg-tuile"
+           href="{% url 'admin:accounts_gerantprofile_changelist' %}?verification_status__exact=pending">
+          <span class="lg-tuile__icone lg-tuile__icone--soleil">
+            {% include "admin/includes_icone.html" with nom="user-check" %}
+          </span>
+          <span class="lg-tuile__nombre">{{ v.gerants_a_verifier }}</span>
+          <span class="lg-tuile__libelle">Gérants à vérifier</span>
+          <span class="lg-tuile__aide">sur {{ v.gerants_total }} gérant{{ v.gerants_total|pluralize }}</span>
+        </a>
+        <a class="lg-tuile"
+           href="{% url 'admin:listings_roomtype_changelist' %}?status__exact=pending">
+          <span class="lg-tuile__icone">{% include "admin/includes_icone.html" with nom="tag" %}</span>
+          <span class="lg-tuile__nombre">{{ v.types_proposes }}</span>
+          <span class="lg-tuile__libelle">Types proposés</span>
+          <span class="lg-tuile__aide">à valider ou rattacher</span>
+        </a>
+        <a class="lg-tuile"
+           href="{% url 'admin:listings_listing_changelist' %}?status__exact=processing">
+          <span class="lg-tuile__icone lg-tuile__icone--vert">{% include "admin/includes_icone.html" with nom="eye" %}</span>
+          <span class="lg-tuile__nombre">{{ v.annonces_en_relecture }}</span>
+          <span class="lg-tuile__libelle">Annonces en relecture</span>
+          <span class="lg-tuile__aide">première publication</span>
+        </a>
+      </div>
+      <h2 class="lg-titre-section">Activité</h2>
+      <div class="lg-grille lg-grille--4">
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.locataires_total }}</span>
+          <span class="lg-chiffre__libelle">Locataires actifs</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.annonces_publiees }}</span>
+          <span class="lg-chiffre__libelle">Chambres en ligne</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.compteurs_jour.messages }}</span>
+          <span class="lg-chiffre__libelle">Messages aujourd'hui · {{ v.compteurs_jour.conversations_started }} conversation{{ v.compteurs_jour.conversations_started|pluralize }}</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">
+            {% if v.taux_reponse is not None %}
+              {{ v.taux_reponse }} %
+            {% else %}
+              —
+            {% endif %}
+          </span>
+          <span class="lg-chiffre__libelle">Taux de réponse moyen des gérants</span>
+        </div>
+      </div>
+      <h2 class="lg-titre-section">Gérer</h2>
+      <div class="lg-grille lg-grille--3">
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="users" %} Comptes</h3>
+          <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Gérants</a>
+          <a href="{% url 'admin:accounts_user_changelist' %}">Tous les comptes</a>
+          {% if v.role == "admin" %}<a href="{% url 'admin:accounts_user_nouveau_gerant' %}">Créer un gérant</a>{% endif %}
+        </section>
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="house" %} Annonces</h3>
+          <a href="{% url 'admin:listings_listing_changelist' %}">Toutes les annonces</a>
+          <a href="{% url 'admin:listings_roomtype_changelist' %}">Types de logement</a>
+          {% if v.role == "admin" %}<a href="{% url 'admin:listings_district_changelist' %}">Quartiers</a>{% endif %}
+        </section>
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="shield" %} Modération</h3>
+          <a href="{% url 'admin:moderation_report_changelist' %}">Signalements</a>
+          <a href="{% url 'admin:moderation_moderationaction_changelist' %}">Décisions et sanctions</a>
+          {% if v.sanctions_actives %}<span class="lg-domaine__note">{{ v.sanctions_actives }} sanction{{ v.sanctions_actives|pluralize }} en cours</span>{% endif %}
+        </section>
+        {% if v.role == "admin" %}
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="settings" %} Configuration</h3>
+            <a href="{% url 'admin:core_appsetting_changelist' %}">Paramètres</a>
+            <a href="{% url 'admin:core_appsetting_changelist' %}#application">Maintenance et version de l'app</a>
+            <a href="{% url 'admin:core_appsetting_changelist' %}#contact">Contact et identité légale</a>
+          </section>
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="card" %} Abonnement</h3>
+            <a href="{% url 'admin:billing_subscription_changelist' %}">Abonnements</a>
+            <a href="{% url 'admin:billing_payment_changelist' %}">Paiements</a>
+            <span class="lg-domaine__note">Désactivé en V1 : plan Gratuit pour tous</span>
+          </section>
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="file" %} Journal</h3>
+            <a href="{% url 'admin:audit_auditlog_changelist' %}">Journal d'activité</a>
+            <span class="lg-domaine__note">
+              {% if v.audit_aujourdhui is not None %}{{ v.audit_aujourdhui }} entrée{{ v.audit_aujourdhui|pluralize }} aujourd'hui{% endif %}
+            </span>
+          </section>
         {% endif %}
       </div>
-    {% endif %}
-
-    {# Applications et Tables Django #}
-    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+    {% endwith %}
   </div>
 {% endblock %}
-
-{% block sidebar %}
-  <div id="content-related">
-    <div class="module" id="recent-actions-module">
-      <h2>Accès rapides</h2>
-      <ul class="actionlist">
-        <li>
-          <a href="{% url 'admin:accounts_gerantprofile_changelist' %}" class="d-inline-flex align-items-center gap-2">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Gérants à vérifier
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'admin:listings_listing_changelist' %}" class="d-inline-flex align-items-center gap-2">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            Toutes les chambres
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'admin:moderation_report_changelist' %}" class="d-inline-flex align-items-center gap-2">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Signalements & Modération
-          </a>
-        </li>
-        {% if vue_ensemble.role == "admin" %}
-          <li>
-            <a href="{% url 'admin:accounts_user_nouveau_gerant' %}" class="d-inline-flex align-items-center gap-2">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
-              Créer un gérant
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'admin:audit_auditlog_changelist' %}" class="d-inline-flex align-items-center gap-2">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              Journal d'audit
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'admin:accounts_user_changelist' %}" class="d-inline-flex align-items-center gap-2">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Utilisateurs
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
-  </div>
-{% endblock %}
+{% block sidebar %}{% endblock %}

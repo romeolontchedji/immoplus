@@ -68,7 +68,26 @@ def _vue_ensemble(utilisateur) -> dict:
         ),
         "comptes_total": User.objects.filter(status="active").count(),
         "locataires_total": User.objects.filter(status="active", role="client").count(),
+        **_a_traiter(),
     }  # fmt: skip
+
+
+def _a_traiter() -> dict:
+    """Files de travail de l'équipe, en tête du tableau de bord."""
+    from apps.accounts.models import GerantProfile
+    from apps.core import parametres
+    from apps.listings.models import Listing, RoomType
+
+    return {
+        "gerants_a_verifier": GerantProfile.complets.filter(
+            verification_status__in=["pending", "interview"]
+        ).count(),
+        "gerants_total": GerantProfile.complets.count(),
+        "types_proposes": RoomType.objects.filter(status="pending").count(),
+        "annonces_en_relecture": Listing.objects.filter(status="processing").count(),
+        "maintenance": bool(parametres.lire("MAINTENANCE_ENABLED")),
+        "parametres_provisoires": bool(parametres.lire("LEGAL_PROVISIONAL")),
+    }
 
 
 def _taux_reponse_moyen():

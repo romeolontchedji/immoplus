@@ -5,6 +5,7 @@ class BillingConfig(AppConfig):
     """Abonnement : architecture prête, non activée (CDC §7.11). Rien n'est visible tant que le drapeau est faux."""
 
     name = "apps.billing"
+    verbose_name = "Abonnement"
     label = "billing"
     default_auto_field = "django.db.models.BigAutoField"
 

@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from apps.accounts.models import GerantProfile, User
@@ -253,6 +254,56 @@ class AppSettingAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def get_urls(self):
+        from django.urls import path
+
+        return [
+            path(
+                "",
+                self.admin_site.admin_view(self.page_parametres),
+                name="core_appsetting_changelist",
+            ),
+            *super().get_urls(),
+        ]
+
+    def page_parametres(self, request):
+        """Réglages rangés par thème (adminsite/parametres_page.py) ; une section s'enregistre à la fois."""
+        from django.shortcuts import redirect, render
+
+        from .parametres_page import SectionForm, sections
+
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        modifiable = self.has_change_permission(request)
+        cible = request.POST.get("section") if request.method == "POST" else None
+        blocs = []
+        for code, titre, aide, cles in sections():
+            form = SectionForm(cles, request.POST if code == cible else None, prefix=code)
+            if code == cible and modifiable and form.is_valid():
+                changements = form.changements()
+                for cle, (avant, apres) in changements.items():
+                    parametres.definir(cle, apres, par=request.user)
+                    audit.enregistrer(
+                        "parametre.modifie", acteur=request.user, cible_type="parametre",
+                        metadata={"cle": cle, "avant": avant, "apres": apres},
+                    )  # fmt: skip
+                self.message_user(
+                    request,
+                    f"{titre} : {len(changements)} réglage(s) enregistré(s)."
+                    if changements
+                    else f"{titre} : aucun changement.",
+                )
+                return redirect(f"{request.path}#{code}")
+            blocs.append({"code": code, "titre": titre, "aide": aide, "form": form})
+        contexte = {
+            **self.admin_site.each_context(request),
+            "title": "Paramètres",
+            "blocs": blocs,
+            "modifiable": modifiable,
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/parametres.html", contexte)
+
     def save_model(self, request, obj, form, change):
         if obj.key not in parametres.DEFAUTS:
             raise PermissionDenied
@@ -283,4 +334,8 @@ class PaymentAdmin(LectureSeule):
     exclude = ("payer_phone_e164",)  # numéro du payeur jamais affiché en liste ni en détail
 
 
-from . import admin_moderation  # noqa: E402,F401  (annonces, signalements, sanctions)
+from . import admin_moderation, admin_referentiels  # noqa: E402,F401  (modération, quartiers)
+
+# Les droits du personnel viennent du rôle (apps/accounts/permissions_personnel.py) : les groupes ne servent à rien.
+if admin.site.is_registered(Group):
+    admin.site.unregister(Group)

@@ -56,12 +56,16 @@ class ListingAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         # L'adresse précise et la description brute ne sont pas des champs d'examen : on les masque ici.
         return [
-            "title", "status", "hidden_reason", "gerant", "district", "room_type", "rent_amount",
+            "title", "status", "hidden_reason", "gerant", "district", "type_de_logement", "rent_amount",
             "landmark_text", "available_from", "published_at", "last_confirmed_at", "rented_at", "created_at",
         ]  # fmt: skip
 
     def get_readonly_fields(self, request, obj=None):
         return self.get_fields(request, obj)
+
+    @admin.display(description="Type de logement")
+    def type_de_logement(self, obj):
+        return types_chambre.libelle(obj.room_type)
 
     @admin.action(description="Approuver et publier (première annonce)")
     def approuver(self, request, queryset):

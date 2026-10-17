@@ -44,26 +44,44 @@ class User(AbstractBaseUser):
     """Locataires, gérants et personnel dans une seule table ; le personnel n'ouvre que l'administration."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone_e164 = models.CharField(max_length=16, unique=True, null=True, blank=True)
-    email = models.EmailField(max_length=254, unique=True, null=True, blank=True)
-    phone_verified_at = models.DateTimeField(null=True, blank=True)
-    password = models.CharField("password", max_length=255, db_column="password_hash")
-    full_name = models.CharField(max_length=120)
-    occupation = models.CharField(max_length=16, choices=Occupation.choices, null=True, blank=True)
-    role = models.CharField(max_length=12, choices=Role.choices)
-    status = models.CharField(
-        max_length=12, choices=Statut.choices, default=Statut.ACTIVE, db_default="active"
+    phone_e164 = models.CharField(
+        max_length=16, unique=True, null=True, blank=True, verbose_name="téléphone"
     )
-    suspended_until = models.DateTimeField(null=True, blank=True)
-    avatar_path = models.CharField(max_length=255, null=True, blank=True)
-    token_version = models.IntegerField(default=0, db_default=0)
-    terms_version = models.CharField(max_length=16, null=True, blank=True)
-    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    email = models.EmailField(
+        max_length=254, unique=True, null=True, blank=True, verbose_name="e-mail"
+    )
+    phone_verified_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="numéro vérifié le"
+    )
+    password = models.CharField("password", max_length=255, db_column="password_hash")
+    full_name = models.CharField(max_length=120, verbose_name="nom complet")
+    occupation = models.CharField(
+        max_length=16, choices=Occupation.choices, null=True, blank=True, verbose_name="tu es"
+    )
+    role = models.CharField(max_length=12, choices=Role.choices, verbose_name="rôle")
+    status = models.CharField(
+        max_length=12,
+        choices=Statut.choices,
+        default=Statut.ACTIVE,
+        db_default="active",
+        verbose_name="statut",
+    )
+    suspended_until = models.DateTimeField(null=True, blank=True, verbose_name="suspendu jusqu'au")
+    avatar_path = models.CharField(max_length=255, null=True, blank=True, verbose_name="photo")
+    token_version = models.IntegerField(default=0, db_default=0, verbose_name="version de sécurité")
+    terms_version = models.CharField(
+        max_length=16, null=True, blank=True, verbose_name="version des conditions"
+    )
+    terms_accepted_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="conditions acceptées le"
+    )
     notif_prefs = models.JSONField(default=dict, db_default={})
-    last_seen_at = models.DateTimeField(null=True, blank=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+    last_seen_at = models.DateTimeField(null=True, blank=True, verbose_name="dernière activité")
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="supprimé le")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
 
     last_login = None  # supprimé : voir `last_seen_at`
     USERNAME_FIELD = "id"
@@ -72,6 +90,8 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = "users"
+        verbose_name = "compte"
+        verbose_name_plural = "comptes"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(role__in=[r.value for r in Role]), name="users_role_valide"
@@ -99,6 +119,13 @@ class User(AbstractBaseUser):
 
     def __str__(self) -> str:
         return self.full_name or str(self.id)
+
+    def get_full_name(self) -> str:
+        return self.full_name or self.email or ""
+
+    def get_short_name(self) -> str:
+        """Salutation de l'administration (« Bienvenue, Awa ») au lieu de l'identifiant technique."""
+        return self.prenom or self.get_full_name()
 
     # --- Droits : déduits du rôle, jamais d'un champ modifiable par l'application publique ---
     @property
@@ -262,17 +289,24 @@ class GerantProfile(models.Model):
     """Extension 1-1 d'un compte gérant. Pièces chiffrées lisibles depuis l'administration seulement."""
 
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, primary_key=True, related_name="gerant_profile"
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="gerant_profile",
+        verbose_name="compte",
     )
-    display_name = models.CharField(max_length=120, null=True, blank=True)
-    zone = models.CharField(max_length=160)
+    display_name = models.CharField(
+        max_length=120, null=True, blank=True, verbose_name="nom affiché"
+    )
+    zone = models.CharField(max_length=160, verbose_name="zone")
     verification_status = models.CharField(
         max_length=12,
         choices=StatutVerification.choices,
         default=StatutVerification.PENDING,
         db_default="pending",
+        verbose_name="vérification",
     )
-    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name="vérifié le")
     verified_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -280,25 +314,41 @@ class GerantProfile(models.Model):
         blank=True,
         related_name="+",
         db_column="verified_by",
+        verbose_name="vérifié par",
     )
     interview_notes = models.TextField(null=True, blank=True)
     id_doc_type = models.CharField(max_length=20, choices=TypePiece.choices, null=True, blank=True)
     id_doc_path = models.CharField(max_length=255, null=True, blank=True)
     extra_doc_path = models.CharField(max_length=255, null=True, blank=True)
     docs_retain_until = models.DateField(null=True, blank=True)
-    response_rate_30d = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    median_response_min = models.IntegerField(null=True, blank=True)
-    created_by = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="+", db_column="created_by"
+    response_rate_30d = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="taux de réponse (30 j)"
     )
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+    median_response_min = models.IntegerField(
+        null=True, blank=True, verbose_name="délai médian de réponse (min)"
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="created_by",
+        verbose_name="créé par",
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
+
+    def __str__(self) -> str:
+        return self.display_name or getattr(self.user, "full_name", "") or "Gérant"
 
     objects = GerantProfileManager()
     complets = models.Manager()  # administration : toutes les colonnes
 
     class Meta:
         db_table = "gerant_profiles"
+        verbose_name = "gérant"
+        verbose_name_plural = "gérants"
         # `annonce.gerant` (clé étrangère) passe par le gestionnaire de base : il doit lui aussi laisser de côté les
         # colonnes réservées, sinon le rôle `app` reçoit « permission denied for table gerant_profiles ».
         base_manager_name = "objects"

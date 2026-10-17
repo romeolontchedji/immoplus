@@ -22,16 +22,18 @@ from .enums import (
 
 class District(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=80)
-    slug = models.CharField(max_length=80, unique=True)
+    name = models.CharField(max_length=80, verbose_name="nom")
+    slug = models.CharField(max_length=80, unique=True, verbose_name="identifiant d'URL")
     city = models.CharField(max_length=40, default="Parakou", db_default="Parakou")
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    sort_order = models.SmallIntegerField(default=0, db_default=0)
-    is_active = models.BooleanField(default=True, db_default=True)
+    sort_order = models.SmallIntegerField(default=0, db_default=0, verbose_name="ordre")
+    is_active = models.BooleanField(default=True, db_default=True, verbose_name="actif")
 
     class Meta:
         db_table = "districts"
+        verbose_name = "quartier"
+        verbose_name_plural = "quartiers"
         ordering = ["sort_order", "name"]
 
     def __str__(self) -> str:
@@ -44,15 +46,16 @@ class RoomType(models.Model):
     `listings.room_type` et `alerts.room_types` portent le `slug` : un rattachement réécrit ces valeurs.
     """
 
-    slug = models.CharField(max_length=40, unique=True)
-    label = models.CharField(max_length=40)
+    slug = models.CharField(max_length=40, unique=True, verbose_name="identifiant d'URL")
+    label = models.CharField(max_length=40, verbose_name="libellé")
     status = models.CharField(
         max_length=10,
         choices=StatutTypeChambre.choices,
         default=StatutTypeChambre.PENDING,
         db_default="pending",
+        verbose_name="statut",
     )
-    sort_order = models.SmallIntegerField(default=100, db_default=100)
+    sort_order = models.SmallIntegerField(default=100, db_default=100, verbose_name="ordre")
     proposed_by = models.ForeignKey(
         "accounts.GerantProfile",
         on_delete=models.SET_NULL,
@@ -60,6 +63,7 @@ class RoomType(models.Model):
         blank=True,
         related_name="+",
         db_column="proposed_by",
+        verbose_name="proposé par",
     )
     reviewed_by = models.ForeignKey(
         "accounts.User",
@@ -68,9 +72,12 @@ class RoomType(models.Model):
         blank=True,
         related_name="+",
         db_column="reviewed_by",
+        verbose_name="examiné par",
     )
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="examiné le")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
 
     class Meta:
         db_table = "room_types"
@@ -98,26 +105,36 @@ class Listing(models.Model):
         on_delete=models.PROTECT,
         related_name="listings",
         db_column="gerant_id",
+        verbose_name="gérant",
     )
-    slug = models.CharField(max_length=160, unique=True)
-    title = models.CharField(max_length=120)
-    room_type = models.CharField(max_length=40)  # slug d'un `RoomType` (contrôlé par le service)
-    district = models.ForeignKey(District, on_delete=models.PROTECT, related_name="listings")
-    landmark_text = models.CharField(max_length=160)
-    address_private = models.CharField(max_length=255, blank=True, default="")
+    slug = models.CharField(max_length=160, unique=True, verbose_name="identifiant d'URL")
+    title = models.CharField(max_length=120, verbose_name="titre")
+    # Slug d'un `RoomType` (contrôlé par le service).
+    room_type = models.CharField(max_length=40, verbose_name="type de logement")
+    district = models.ForeignKey(
+        District, on_delete=models.PROTECT, related_name="listings", verbose_name="quartier"
+    )
+    landmark_text = models.CharField(max_length=160, verbose_name="repère")
+    address_private = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="adresse privée"
+    )
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    distance_to_campus_m = models.IntegerField()
-    rent_amount = models.IntegerField()
-    deposit_months = models.SmallIntegerField()
-    advance_months = models.SmallIntegerField()
-    agent_fee_amount = models.IntegerField(default=0, db_default=0)
-    available_from = models.DateField()
-    has_private_bathroom = models.BooleanField()
-    is_fenced = models.BooleanField()
-    water_source = models.CharField(max_length=10, choices=Eau.choices)
-    electricity_meter = models.CharField(max_length=10, choices=Compteur.choices)
-    description_md = models.TextField(default="", db_default="")
+    distance_to_campus_m = models.IntegerField(verbose_name="distance à l'UP (m)")
+    rent_amount = models.IntegerField(verbose_name="loyer (F)")
+    deposit_months = models.SmallIntegerField(verbose_name="caution (mois)")
+    advance_months = models.SmallIntegerField(verbose_name="avance (mois)")
+    agent_fee_amount = models.IntegerField(
+        default=0, db_default=0, verbose_name="frais de démarcheur (F)"
+    )
+    available_from = models.DateField(verbose_name="disponible le")
+    has_private_bathroom = models.BooleanField(verbose_name="douche interne")
+    is_fenced = models.BooleanField(verbose_name="clôturée")
+    water_source = models.CharField(max_length=10, choices=Eau.choices, verbose_name="eau")
+    electricity_meter = models.CharField(
+        max_length=10, choices=Compteur.choices, verbose_name="compteur"
+    )
+    description_md = models.TextField(default="", db_default="", verbose_name="description")
     description_html = models.TextField(default="", db_default="")
     search_vector = SearchVectorField(null=True, blank=True)
     status = models.CharField(
@@ -125,20 +142,32 @@ class Listing(models.Model):
         choices=StatutAnnonce.choices,
         default=StatutAnnonce.DRAFT,
         db_default="draft",
+        verbose_name="statut",
     )
     hidden_reason = models.CharField(
-        max_length=16, choices=RaisonMasquage.choices, null=True, blank=True
+        max_length=16,
+        choices=RaisonMasquage.choices,
+        null=True,
+        blank=True,
+        verbose_name="raison du masquage",
     )
-    published_at = models.DateTimeField(null=True, blank=True)
-    rented_at = models.DateTimeField(null=True, blank=True)
-    last_confirmed_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True, verbose_name="publiée le")
+    rented_at = models.DateTimeField(null=True, blank=True, verbose_name="louée le")
+    last_confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name="confirmée le")
     reminder_stage = models.SmallIntegerField(default=0, db_default=0)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="supprimé le")
+
+    def __str__(self) -> str:
+        return self.title
 
     class Meta:
         db_table = "listings"
+        verbose_name = "annonce"
+        verbose_name_plural = "annonces"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(rent_amount__gt=0), name="listings_loyer_positif"

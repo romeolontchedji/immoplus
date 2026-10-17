@@ -340,16 +340,16 @@ class TestTableauDeBord:
         r = c.get("/")
         assert r.status_code == 200
         html = r.content.decode()
-        assert "Vue d'ensemble" in html
-        assert "Dossiers de modération" in html and ">1<" in html
+        assert "À traiter" in html
+        assert "Signalements ouverts" in html and ">1<" in html
         assert ">4<" in html  # compteur messages du jour
         assert reverse("admin:moderation_report_changelist") in html
 
     def test_le_moderateur_ne_voit_pas_le_journal_ni_le_lien_admin(self):
         c, _ = se_connecter(personnel(PersonnelFactory))
         html = c.get("/").content.decode()
-        assert "Vue d'ensemble" in html
-        assert "Journal d'activité" not in html
+        assert "À traiter" in html
+        assert "Journal d'activité" not in html and "Paramètres" not in html
 
 
 def test_les_controles_systeme_de_django_sont_sans_erreur():
@@ -358,3 +358,62 @@ def test_les_controles_systeme_de_django_sont_sans_erreur():
 
     erreurs = [e for e in checks.run_checks() if e.level >= checks.ERROR]
     assert erreurs == [], erreurs
+
+
+class TestParametresParTheme:
+    """Page « Paramètres » : réglages rangés par thème, champs typés, journalisés avec l'avant et l'après."""
+
+    def test_modifier_la_maintenance(self):
+        from apps.audit.models import AuditLog
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        page = c.get(reverse("admin:core_appsetting_changelist")).content.decode()
+        assert "Application et maintenance" in page and "Contact et identité légale" in page
+        r = c.post(
+            reverse("admin:core_appsetting_changelist"),
+            {"section": "application", "application-MAINTENANCE_ENABLED": "on", "application-MAINTENANCE_MESSAGE": "Travaux",
+             "application-APP_NOTICE": "", "application-MIN_SUPPORTED_VERSION": "1.2.0"},
+        )  # fmt: skip
+        assert r.status_code == 302
+        assert (
+            parametres.lire("MAINTENANCE_ENABLED") is True
+            and parametres.lire("MIN_SUPPORTED_VERSION") == "1.2.0"
+        )
+        ligne = AuditLog.objects.filter(
+            action="parametre.modifie", metadata__cle="MAINTENANCE_ENABLED"
+        ).get()
+        assert ligne.metadata["avant"] is False and ligne.metadata["apres"] is True
+        parametres.definir("MAINTENANCE_ENABLED", False)
+
+    def test_json_invalide_refuse(self):
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        avant = parametres.lire("PLANS")
+        r = c.post(
+            reverse("admin:core_appsetting_changelist"),
+            {
+                "section": "abonnement",
+                "abonnement-SUBSCRIPTION_GRACE_DAYS": "7",
+                "abonnement-PLANS": "[pas du json",
+            },
+        )
+        assert r.status_code == 200 and parametres.lire("PLANS") == avant
+
+    def test_un_moderateur_ne_voit_pas_les_parametres(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get(reverse("admin:core_appsetting_changelist")).status_code in (302, 403)
+
+
+def test_quartiers_geres_sans_suppression():
+    from apps.listings.models import District
+
+    c, _ = se_connecter(personnel())
+    r = c.post(
+        reverse("admin:listings_district_add"),
+        {"name": "Kpébié Nord", "slug": "kpebie-nord", "latitude": "9.35", "longitude": "2.62", "sort_order": "40", "is_active": "on"},
+    )  # fmt: skip
+    assert r.status_code == 302 and District.objects.filter(slug="kpebie-nord").exists()
+    d = District.objects.get(slug="kpebie-nord")
+    assert c.get(reverse("admin:listings_district_delete", args=[d.pk])).status_code == 403

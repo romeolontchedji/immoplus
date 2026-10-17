@@ -14,20 +14,33 @@ NON_EXPIRES = [s.value for s in StatutAbonnement if s != StatutAbonnement.EXPIRE
 class Subscription(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     gerant = models.ForeignKey(
-        "accounts.GerantProfile", on_delete=models.CASCADE, related_name="+", db_column="gerant_id"
+        "accounts.GerantProfile",
+        on_delete=models.CASCADE,
+        related_name="+",
+        db_column="gerant_id",
+        verbose_name="gérant",
     )
-    plan_code = models.CharField(max_length=32)  # code d'un plan de app_settings.PLANS
-    status = models.CharField(max_length=10, choices=StatutAbonnement.choices)
-    current_period_start = models.DateTimeField()
-    current_period_end = models.DateTimeField()
-    cancel_at_period_end = models.BooleanField(default=False, db_default=False)
-    canceled_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+    plan_code = models.CharField(
+        max_length=32, verbose_name="formule"
+    )  # code d'un plan de app_settings.PLANS
+    status = models.CharField(
+        max_length=10, choices=StatutAbonnement.choices, verbose_name="statut"
+    )
+    current_period_start = models.DateTimeField(verbose_name="début de période")
+    current_period_end = models.DateTimeField(verbose_name="fin de période")
+    cancel_at_period_end = models.BooleanField(
+        default=False, db_default=False, verbose_name="annulé en fin de période"
+    )
+    canceled_at = models.DateTimeField(null=True, blank=True, verbose_name="annulé le")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
 
     class Meta:
         db_table = "subscriptions"
         verbose_name = "abonnement"
+        verbose_name_plural = "abonnements"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(status__in=[s.value for s in StatutAbonnement]),
@@ -50,29 +63,41 @@ class Payment(models.Model):
         Subscription, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments"
     )
     gerant = models.ForeignKey(
-        "accounts.GerantProfile", on_delete=models.CASCADE, related_name="+", db_column="gerant_id"
+        "accounts.GerantProfile",
+        on_delete=models.CASCADE,
+        related_name="+",
+        db_column="gerant_id",
+        verbose_name="gérant",
     )
-    plan_code = models.CharField(max_length=32)
-    amount = models.IntegerField()
+    plan_code = models.CharField(max_length=32, verbose_name="formule")
+    amount = models.IntegerField(verbose_name="montant (F)")
     currency = models.CharField(max_length=3, default="XOF", db_default="XOF")
-    provider = models.CharField(max_length=10, choices=Fournisseur.choices)
+    provider = models.CharField(
+        max_length=10, choices=Fournisseur.choices, verbose_name="fournisseur"
+    )
     provider_ref = models.CharField(max_length=120, unique=True, null=True, blank=True)
-    method = models.CharField(max_length=12, choices=Methode.choices)
+    method = models.CharField(
+        max_length=12, choices=Methode.choices, verbose_name="moyen de paiement"
+    )
     payer_phone_e164 = models.CharField(max_length=16)
     status = models.CharField(
         max_length=10,
         choices=StatutPaiement.choices,
         default=StatutPaiement.PENDING,
         db_default="pending",
+        verbose_name="statut",
     )
     idempotency_key = models.CharField(max_length=64, unique=True)
     webhook_events = models.JSONField(default=list, db_default=[])
-    paid_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name="payé le")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
 
     class Meta:
         db_table = "payments"
         verbose_name = "paiement"
+        verbose_name_plural = "paiements"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(amount__gte=0), name="payments_montant_positif"

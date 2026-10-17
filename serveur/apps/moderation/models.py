@@ -6,35 +6,91 @@ from django.db import models
 from django.db.models.functions import Now
 from django.utils import timezone
 
-from .enums import ACTIONS, CIBLES, ETATS, ETATS_OUVERTS, MOTIFS  # noqa: F401
+from .enums import (  # noqa: F401
+    ACTIONS,
+    CIBLES,
+    ETATS,
+    ETATS_OUVERTS,
+    LIBELLES_ACTIONS,
+    LIBELLES_CIBLES,
+    LIBELLES_ETATS,
+    LIBELLES_MOTIFS,
+    LIBELLES_SOURCES,
+    MOTIFS,
+)
 
 
 class Report(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reporter = models.ForeignKey(
-        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="signalé par",
     )
-    source = models.CharField(max_length=10, default="user", db_default="user")
-    target_type = models.CharField(max_length=12)
-    target_id = models.UUIDField()
+    source = models.CharField(
+        max_length=10,
+        default="user",
+        db_default="user",
+        verbose_name="origine",
+        choices=list(LIBELLES_SOURCES.items()),
+    )
+    target_type = models.CharField(
+        max_length=12, verbose_name="type de cible", choices=list(LIBELLES_CIBLES.items())
+    )
+    target_id = models.UUIDField(verbose_name="cible")
     listing = models.ForeignKey(
-        "listings.Listing", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "listings.Listing",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="annonce",
     )
-    reason_code = models.CharField(max_length=24)
-    details = models.CharField(max_length=500, default="", blank=True)
-    status = models.CharField(max_length=18, default="open", db_default="open")
+    reason_code = models.CharField(
+        max_length=24, verbose_name="motif", choices=list(LIBELLES_MOTIFS.items())
+    )
+    details = models.CharField(max_length=500, default="", blank=True, verbose_name="détails")
+    status = models.CharField(
+        max_length=18,
+        default="open",
+        db_default="open",
+        verbose_name="statut",
+        choices=list(LIBELLES_ETATS.items()),
+    )
     assigned_to = models.ForeignKey(
-        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="assigné à",
     )
     resolved_by = models.ForeignKey(
-        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="traité par",
     )
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    resolution_note = models.CharField(max_length=500, default="", blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name="traité le")
+    resolution_note = models.CharField(
+        max_length=500, default="", blank=True, verbose_name="note de traitement"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+
+    def __str__(self) -> str:
+        return f"{self.get_reason_code_display()} · {self.created_at:%d/%m/%Y}"
 
     class Meta:
         db_table = "reports"
+        verbose_name = "signalement"
+        verbose_name_plural = "signalements"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(source__in=["user", "system"]), name="reports_source_valide"
@@ -61,30 +117,61 @@ class Report(models.Model):
 
 class ModerationAction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    actor = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="+")
-    report = models.ForeignKey(
-        Report, on_delete=models.SET_NULL, null=True, blank=True, related_name="actions"
+    actor = models.ForeignKey(
+        "accounts.User", on_delete=models.PROTECT, related_name="+", verbose_name="auteur"
     )
-    action = models.CharField(max_length=20)
+    report = models.ForeignKey(
+        Report,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actions",
+        verbose_name="signalement",
+    )
+    action = models.CharField(
+        max_length=20, verbose_name="action", choices=list(LIBELLES_ACTIONS.items())
+    )
     target_user = models.ForeignKey(
-        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="compte visé",
     )
     target_listing = models.ForeignKey(
-        "listings.Listing", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "listings.Listing",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="annonce visée",
     )
     target_message = models.ForeignKey(
-        "chat.Message", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+        "chat.Message",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="message visé",
     )
-    ends_at = models.DateTimeField(null=True, blank=True)
-    revoked_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True, verbose_name="jusqu'au")
+    revoked_at = models.DateTimeField(null=True, blank=True, verbose_name="levée le")
     revoked_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
-    reason = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    reason = models.TextField(verbose_name="motif")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+
+    def __str__(self) -> str:
+        return f"{self.get_action_display()} · {self.created_at:%d/%m/%Y}"
 
     class Meta:
         db_table = "moderation_actions"
+        verbose_name = "décision de modération"
+        verbose_name_plural = "décisions de modération"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(action__in=ACTIONS), name="moderation_action_valide"
