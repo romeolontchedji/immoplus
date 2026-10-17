@@ -380,3 +380,10 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **Position des annonces (V7)** : plus de latitude ni de longitude à saisir (site et mobile). L'API les rend
   facultatives (changement additif) : centre du quartier par défaut, GPS du téléphone si le gérant le partage depuis
   l'app (`expo-location`, déjà présent). Pas de GPS sur le site : `Permissions-Policy: geolocation=()` en production.
+- **Description enrichie (V6)** : barre de mise en forme sans dépendance, site et mobile, mêmes règles
+  (`web/static/js/mise-en-forme.js` et `mobile/src/lib/miseEnForme.ts`, testé). L'aperçu du site passe par
+  `POST /v1/pro/markdown/preview`, qui accepte désormais aussi la session du site (avec CSRF), comme l'envoi des
+  médias. **Bug corrigé** : la fiche mobile affichait les `**` du Markdown ; elle le rend maintenant.
+- **Reste noté** : `/favicon.ico` répond 404 sur le site (préexistant).
+- **Données locales** : le gérant de démonstration `+229 01 97 00 00 01` a maintenant le mot de passe
+  `GerantEssai2026!` (celui du jeu d'essai ne fonctionnait pas), pour les essais dans le navigateur.
