@@ -12,6 +12,7 @@ import { Screen } from "@/ui/components/Screen";
 import { EmptyState, ErrorState } from "@/ui/components/States";
 import { SkeletonListe } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
+import { BalayageConversation } from "./BalayageConversation";
 import { MenuConversation } from "./MenuConversation";
 import { useConversations } from "./queries";
 
@@ -30,7 +31,7 @@ function Ligne({ item, onPress, onLongPress }: { item: Conversation; onPress: ()
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${nom}, ${item.listing.title ?? ""}${nonLu ? `, ${item.unread_count} non lus` : ""}`}
-      accessibilityHint="Appui long : sourdine, blocage, signalement"
+      accessibilityHint="Balayer vers la gauche : lu, sourdine. Appui long : plus de choix"
       onPress={onPress}
       onLongPress={onLongPress}
       style={({ pressed }) => ({ flexDirection: "row", gap: sp[3], paddingHorizontal: sp[4], paddingVertical: sp[3], backgroundColor: pressed ? colors.divider : colors.surface, opacity: item.muted ? 0.75 : 1 })}
@@ -124,7 +125,9 @@ export function ConversationsScreen({ annonceId }: { annonceId?: string }) {
             refreshControl={<RefreshControl refreshing={requete.isRefetching} onRefresh={() => void requete.refetch()} />}
             onEndReached={() => requete.hasNextPage && void requete.fetchNextPage()}
             renderItem={({ item }) => (
-              <Ligne item={item} onPress={() => router.push({ pathname: "/conversation/[id]", params: { id: item.id } })} onLongPress={() => setMenu(item)} />
+              <BalayageConversation conversation={item}>
+                <Ligne item={item} onPress={() => router.push({ pathname: "/conversation/[id]", params: { id: item.id } })} onLongPress={() => setMenu(item)} />
+              </BalayageConversation>
             )}
           />
         )}

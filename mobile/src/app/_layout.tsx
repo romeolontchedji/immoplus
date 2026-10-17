@@ -2,6 +2,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import * as SplashScreen from "expo-splash-screen";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { VerrouHote } from "@/features/auth/verrou";
 import { BanniereInterne } from "@/features/notifications/BanniereInterne";
@@ -18,31 +19,33 @@ import { DemarrageAnime } from "@/ui/components/DemarrageAnime";
 
 void SplashScreen.preventAutoHideAsync();
 
-/** Ordre des fournisseurs : zone sûre → thème → cache → session → barrière (mise à jour / maintenance) → temps réel → filtres. */
+/** Ordre des fournisseurs : gestes → zone sûre → thème → cache → session → barrière (mise à jour / maintenance) → temps réel → filtres. */
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister,
-            maxAge: 24 * 60 * 60 * 1000,
-            dehydrateOptions: { shouldDehydrateQuery: (q) => q.state.status === "success" && PREFIXES_PERSISTES.has(String(q.queryKey[0])) },
-          }}
-        >
-          <SessionProvider>
-            <AppGate>
-              <RealtimeProvider>
-                <FiltresProvider>
-                  <Racine />
-                </FiltresProvider>
-              </RealtimeProvider>
-            </AppGate>
-          </SessionProvider>
-        </PersistQueryClientProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister,
+              maxAge: 24 * 60 * 60 * 1000,
+              dehydrateOptions: { shouldDehydrateQuery: (q) => q.state.status === "success" && PREFIXES_PERSISTES.has(String(q.queryKey[0])) },
+            }}
+          >
+            <SessionProvider>
+              <AppGate>
+                <RealtimeProvider>
+                  <FiltresProvider>
+                    <Racine />
+                  </FiltresProvider>
+                </RealtimeProvider>
+              </AppGate>
+            </SessionProvider>
+          </PersistQueryClientProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
