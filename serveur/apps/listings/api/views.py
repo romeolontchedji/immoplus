@@ -1,6 +1,7 @@
 """API des quartiers et de l'espace gérant (CDC §10.3, §10.4)."""
 
 from drf_spectacular.utils import extend_schema
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -127,6 +128,9 @@ AnnulerLouee = _action("AnnulerLouee", annonces.annuler_louee, "Annuler « loué
 
 
 class ApercuMarkdown(_Pro):
+    # Aussi depuis l'éditeur du site (barre de mise en forme, session + CSRF), comme l'envoi des médias.
+    authentication_classes = [AuthJwt, SessionAuthentication]
+
     @extend_schema(
         tags=TAG_PRO,
         summary="Aperçu du texte enrichi",

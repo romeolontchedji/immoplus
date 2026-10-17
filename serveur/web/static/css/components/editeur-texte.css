@@ -1,0 +1,34 @@
+/* Description enrichie de l'éditeur d'annonce (décision V6) : barre d'outils collée au champ. */
+.editeur-texte__cadre { display: flex; flex-direction: column; }
+.editeur-texte__barre {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-1); border: 1.5px solid var(--border); border-bottom: none;
+  border-radius: var(--r-field) var(--r-field) 0 0; background: var(--bg);
+}
+.editeur-texte__barre + .champ__saisie,
+.editeur-texte__barre ~ .editeur-texte__rendu { border-top-left-radius: 0; border-top-right-radius: 0; }
+.editeur-texte__outil {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-width: 2.25rem; min-height: 2.5rem; padding: 0 var(--sp-2);
+  border: none; border-radius: var(--r-field); background: transparent; color: var(--night);
+  font-size: var(--fs-14); font-weight: 700; cursor: pointer;
+  transition: background var(--duree-1), color var(--duree-1);
+}
+.editeur-texte__outil:hover { background: var(--blue-soft); color: var(--blue); }
+.editeur-texte__outil:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.editeur-texte__outil[aria-pressed="true"] { background: var(--blue); color: var(--white); }
+.editeur-texte__outil--apercu { margin-left: auto; padding: 0 var(--sp-3); }
+.editeur-texte__outil:disabled { opacity: 0.4; cursor: not-allowed; }
+.editeur-texte__separateur { width: 1px; align-self: stretch; margin: var(--sp-2) var(--sp-1); background: var(--border); }
+.editeur-texte__rendu {
+  min-height: 12rem; padding: var(--sp-4); border: 1.5px solid var(--border);
+  border-radius: var(--r-field); background: var(--surface);
+  font-size: var(--fs-15); line-height: 1.65; color: var(--night);
+}
+.editeur-texte__rendu[hidden],
+.editeur-texte .champ__saisie[hidden] { display: none; }
+.editeur-texte__rendu > :first-child { margin-top: 0; }
+.editeur-texte__rendu h3 { font-size: var(--fs-17); margin: var(--sp-4) 0 var(--sp-2); }
+@media (max-width: 479px) {
+  .editeur-texte__libelle { display: none; }
+}

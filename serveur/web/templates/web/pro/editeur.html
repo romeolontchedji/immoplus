@@ -94,9 +94,7 @@
                   {% include "web/composants/champ.html" %}
                 {% endwith %}
               </div>
-              {% with champ=form.description_md %}
-                {% include "web/composants/champ.html" %}
-              {% endwith %}
+              {% include "web/pro/_editeur_texte.html" with champ=form.description_md %}
             </div>
           </div>
           {# 2. Localisation #}

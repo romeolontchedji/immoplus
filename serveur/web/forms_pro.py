@@ -33,10 +33,15 @@ class AnnonceForm(_Base):
     water_source = forms.ChoiceField(label="Eau", choices=Eau.choices)
     electricity_meter = forms.ChoiceField(label="Compteur d'électricité", choices=Compteur.choices)
     description_md = forms.CharField(
-        label="Description (gras **, italique *, listes -)",
+        label="Description",
         required=False,
         max_length=6000,
-        widget=forms.Textarea(attrs={"rows": 8}),
+        widget=forms.Textarea(
+            attrs={
+                "rows": 8,
+                "placeholder": "Ce qui rend ta chambre agréable : calme, lumière, voisinage…",
+            }
+        ),
     )
 
     def __init__(self, *args, **kwargs):

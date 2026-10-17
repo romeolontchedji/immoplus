@@ -235,3 +235,43 @@ def _jeton(client, url="/connexion"):
         if trouve
         else client.cookies["csrftoken" if "csrftoken" in client.cookies else "lgcsrf"].value
     )
+
+
+# --------------------------------------------------------------- mise en forme de la description (V6)
+def test_l_editeur_propose_la_barre_de_mise_en_forme(session_gerant):
+    c, _ = session_gerant
+    page = c.get("/pro/annonces/nouvelle").content.decode()
+    assert (
+        "data-mise-en-forme" in page
+        and 'data-format="gras"' in page
+        and "js/mise-en-forme.js" in page
+    )
+    assert "Latitude" not in page and "Longitude" not in page  # décision V7
+
+
+def test_apercu_depuis_le_site_avec_session_et_csrf():
+    g = gerant_verifie()
+    connexion = Client()
+    connexion.post("/connexion", {"phone": g.user.phone_e164[4:], "password": MOT_DE_PASSE})
+    c = Client(enforce_csrf_checks=True)
+    c.cookies = connexion.cookies
+    jeton = c.get("/pro/annonces/nouvelle").context["csrf_token"]
+    r = c.post(
+        "/v1/pro/markdown/preview",
+        {"markdown": "Chambre **calme**\n- Douche"},
+        content_type="application/json",
+        HTTP_X_CSRFTOKEN=str(jeton),
+    )
+    assert r.status_code == 200 and "<strong>calme</strong>" in r.json()["html"]
+    sans_csrf = c.post(
+        "/v1/pro/markdown/preview", {"markdown": "x"}, content_type="application/json"
+    )
+    assert sans_csrf.status_code == 403
+
+
+def test_apercu_refuse_a_un_locataire_connecte_sur_le_site():
+    ClientFactory(phone_e164="+2290197616161")
+    c = Client()
+    c.post("/connexion", {"phone": "97616161", "password": MOT_DE_PASSE})
+    r = c.post("/v1/pro/markdown/preview", {"markdown": "x"}, content_type="application/json")
+    assert r.status_code == 403
