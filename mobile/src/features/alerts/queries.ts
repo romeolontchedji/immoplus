@@ -6,6 +6,10 @@ import type { components } from "@/api/genere/api";
 export type Alerte = components["schemas"]["AlerteOut"];
 export type AlerteEntree = components["schemas"]["AlerteIn"];
 
+/** Quartiers les plus demandés d'abord et budgets fréquents (plan v2, M5), même source que le site. */
+export const useOptionsAlerte = () =>
+  useQuery({ queryKey: qk.optionsAlerte, queryFn: () => unwrap(api.GET("/v1/alert-options")), staleTime: 30 * 60_000 });
+
 export const useAlertes = (actif = true) => useQuery({ queryKey: qk.alertes, queryFn: () => unwrap(api.GET("/v1/me/alerts")), enabled: actif });
 
 export function useCreerAlerte() {

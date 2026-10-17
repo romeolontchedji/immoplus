@@ -1,15 +1,17 @@
+import { useState } from "react";
 import { TextInput, View } from "react-native";
 import { francs } from "@/lib/format";
 import { t } from "@/i18n/fr";
 import { Chip } from "@/ui/components/Chip";
-import { QueryState } from "@/ui/components/States";
+import { ListeDeroulante } from "@/ui/components/ListeDeroulante";
 import { Text } from "@/ui/components/Text";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import type { Filtres } from "@/features/listings/filtres";
 import { libelleType, TYPES_OFFICIELS, useDistricts, useTypesChambre, type TypeChambre } from "@/features/listings/queries";
-import type { Alerte, AlerteEntree } from "./queries";
+import { type Alerte, type AlerteEntree, useOptionsAlerte } from "./queries";
 
-const BUDGETS = [10_000, 15_000, 20_000, 30_000] as const;
+const BUDGETS_REPLI = [10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000];
+const AUTRE = "autre";
 const DISTANCES = [500, 1000, 2000] as const;
 
 /** Critères d'une alerte, au format de l'API (`AlerteIn`). */
@@ -67,27 +69,37 @@ function Bloc({ titre, children }: { titre: string; children: React.ReactNode })
   );
 }
 
-/** Éditeur des critères d'alerte : mêmes pastilles que la feuille de filtres. */
+/**
+ * Éditeur des critères d'alerte (plan v2, M5) : quartiers en liste déroulante multiple, les plus demandés d'abord ;
+ * budget en liste déroulante de montants fréquents, avec « Autre montant » qui fait apparaître un champ.
+ */
 export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChange: (c: Criteres) => void }) {
+  const options = useOptionsAlerte();
   const districts = useDistricts();
   const types = useTypesChambre();
   const maj = (p: Partial<Criteres>) => onChange({ ...valeur, ...p });
-  const budgetLibre = valeur.max_rent !== null && !BUDGETS.includes(valeur.max_rent as (typeof BUDGETS)[number]);
+  const budgets = options.data?.budgets?.length ? options.data.budgets : BUDGETS_REPLI;
+  const [autreMontant, setAutreMontant] = useState(valeur.max_rent !== null && !budgets.includes(valeur.max_rent));
+
+  const quartiers = options.data?.districts.map((q) => ({
+    valeur: q.id,
+    libelle: q.name,
+    aide: [q.alerts ? `${q.alerts} alerte${q.alerts > 1 ? "s" : ""}` : null, q.listings ? `${q.listings} chambre${q.listings > 1 ? "s" : ""} en ligne` : null].filter(Boolean).join(" · ") || undefined,
+  })) ?? (districts.data ?? []).map((d) => ({ valeur: d.id, libelle: d.name }));
+
+  const choixBudget = autreMontant ? [AUTRE] : valeur.max_rent !== null ? [String(valeur.max_rent)] : [];
 
   return (
     <View style={{ gap: sp[5] }}>
-      <View style={{ gap: sp[2] }}>
-        <Text variante="label" muted>Quartiers</Text>
-        <QueryState query={districts}>
-          {(liste) => (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-              {liste.map((d) => (
-                <Chip key={d.id} titre={d.name} actif={valeur.district_ids.includes(d.id)} onPress={() => maj({ district_ids: basculer(valeur.district_ids, d.id) })} />
-              ))}
-            </View>
-          )}
-        </QueryState>
-      </View>
+      <ListeDeroulante
+        label="Quartiers"
+        placeholder="Tous les quartiers"
+        multiple
+        recherche
+        options={quartiers}
+        valeurs={valeur.district_ids}
+        onChange={(ids) => maj({ district_ids: ids })}
+      />
 
       <Bloc titre="Type">
         {types.map(({ slug, label }) => (
@@ -96,27 +108,38 @@ export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChan
       </Bloc>
 
       <View style={{ gap: sp[2] }}>
-        <Text variante="label" muted>{valeur.max_rent ? `Budget max · ${francs(valeur.max_rent)}` : "Budget max"}</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {BUDGETS.map((b) => (
-            <Chip key={b} titre={`≤ ${francs(b)}`} actif={valeur.max_rent === b} onPress={() => maj({ max_rent: valeur.max_rent === b ? null : b })} />
-          ))}
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", minHeight: 52, borderWidth: 1.5, borderColor: budgetLibre ? colors.primary : colors.border, borderRadius: rayon.field, backgroundColor: colors.surface, paddingHorizontal: sp[4] }}>
-          <TextInput
-            value={budgetLibre ? String(valeur.max_rent) : ""}
-            onChangeText={(v) => {
-              const chiffres = v.replace(/\D/g, "").slice(0, 7);
-              maj({ max_rent: chiffres ? Number(chiffres) : null });
-            }}
-            keyboardType="number-pad"
-            placeholder="Autre montant"
-            placeholderTextColor={colors.textMuted}
-            accessibilityLabel="Budget maximum en francs CFA"
-            style={{ flex: 1, fontSize: 16, fontWeight: "600", color: colors.night, paddingVertical: 0 }}
-          />
-          <Text variante="corpsGras" muted>F / mois</Text>
-        </View>
+        <ListeDeroulante
+          label="Budget maximum"
+          placeholder="Pas de limite"
+          options={[...budgets.map((b) => ({ valeur: String(b), libelle: `Jusqu'à ${francs(b)} / mois` })), { valeur: AUTRE, libelle: "Autre montant…" }]}
+          valeurs={choixBudget}
+          onChange={([v]) => {
+            if (v === AUTRE) {
+              setAutreMontant(true);
+              return;
+            }
+            setAutreMontant(false);
+            maj({ max_rent: v ? Number(v) : null });
+          }}
+        />
+        {autreMontant ? (
+          <View style={{ flexDirection: "row", alignItems: "center", minHeight: 52, borderWidth: 1.5, borderColor: colors.primary, borderRadius: rayon.field, backgroundColor: colors.surface, paddingHorizontal: sp[4] }}>
+            <TextInput
+              autoFocus
+              value={valeur.max_rent !== null ? String(valeur.max_rent) : ""}
+              onChangeText={(v) => {
+                const chiffres = v.replace(/\D/g, "").slice(0, 7);
+                maj({ max_rent: chiffres ? Number(chiffres) : null });
+              }}
+              keyboardType="number-pad"
+              placeholder="Ton montant"
+              placeholderTextColor={colors.textMuted}
+              accessibilityLabel="Budget maximum en francs CFA"
+              style={{ flex: 1, fontSize: 16, fontWeight: "600", color: colors.night, paddingVertical: 0 }}
+            />
+            <Text variante="corpsGras" muted>F / mois</Text>
+          </View>
+        ) : null}
       </View>
 
       <Bloc titre="Distance de l'UP">

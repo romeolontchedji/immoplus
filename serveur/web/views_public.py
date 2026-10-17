@@ -342,10 +342,13 @@ def mes_alertes(request):
         }
         for a in liste_alertes
     ]
+    options = (
+        alertes.options()
+    )  # plan v2, M5 : quartiers les plus demandés d'abord, budgets fréquents
     return render(
         request,
         "web/public/alertes.html",
-        {"alertes": alertes_vue, "quartiers": quartiers, "types": _types(),
+        {"alertes": alertes_vue, "quartiers": options["districts"], "budgets": options["budgets"], "types": _types(),
          "message": message, "niveau": niveau, "proposition": proposition, "edition": edition},
     )  # fmt: skip
 

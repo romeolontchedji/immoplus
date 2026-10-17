@@ -185,8 +185,13 @@
                    type="number"
                    min="1"
                    step="1000"
-                   placeholder="Ton budget en F"
+                   list="budgets-frequents"
+                   placeholder="Choisis ou écris ton budget en F"
                    value="{{ proposition.rent_max }}">
+            <datalist id="budgets-frequents">
+              {% for b in budgets %}<option value="{{ b }}">Jusqu'à {{ b|fcfa }} F / mois</option>{% endfor %}
+            </datalist>
+            <p class="champ__aide">Montants les plus fréquents à Parakou ; tu peux aussi écrire le tien.</p>
           </div>
           <div class="champ champ--case">
             <input type="checkbox"

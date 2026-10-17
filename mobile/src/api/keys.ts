@@ -4,6 +4,7 @@ export const qk = {
   me: ["me"] as const,
   districts: ["districts"] as const,
   typesChambre: ["types-chambre"] as const,
+  optionsAlerte: ["options-alerte"] as const,
   fil: (filtres: unknown) => ["fil", filtres] as const,
   fiche: (ident: string) => ["fiche", ident] as const,
   favoris: ["favoris"] as const,
