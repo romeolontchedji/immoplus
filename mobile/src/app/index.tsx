@@ -39,7 +39,7 @@ export default function Index() {
   const doitAfficherBienvenue = __DEV__ || !onboardingVu;
 
   if (doitAfficherBienvenue) {
-    return <Redirect href="/bienvenue" />;
+    return <Redirect href="/presentation" />; // présentation en 4 étapes, puis bienvenue (M2)
   }
 
   return <Redirect href="/(locataire)/(onglets)" />;

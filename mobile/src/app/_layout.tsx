@@ -1,7 +1,7 @@
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import * as SplashScreen from "expo-splash-screen";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { VerrouHote } from "@/features/auth/verrou";
 import { AppGate } from "@/features/system/AppGate";
@@ -13,6 +13,7 @@ import { outbox } from "@/storage/outbox";
 import { PREFIXES_PERSISTES, persister, queryClient } from "@/state/queryClient";
 import { SessionProvider, useSession } from "@/state/session";
 import { ThemeProvider } from "@/ui/theme/ThemeProvider";
+import { DemarrageAnime } from "@/ui/components/DemarrageAnime";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +47,8 @@ export default function RootLayout() {
 
 function Racine() {
   const { etat } = useSession();
+  const [animation, setAnimation] = useState(true); // logo animé une fois par lancement, après l'écran natif
+  const finAnimation = useCallback(() => setAnimation(false), []);
   usePushBootstrap();
   useEffect(() => void outbox.precharger(), []);
   useEffect(() => {
@@ -56,6 +59,7 @@ function Racine() {
       <Stack screenOptions={{ headerShown: false }} />
       <DemandeNotificationsHote />
       <VerrouHote />
+      {animation && etat.statut !== "chargement" ? <DemarrageAnime onFin={finAnimation} /> : null}
     </>
   );
 }

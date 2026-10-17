@@ -10,6 +10,8 @@ export default function AuthLayout() {
     <AuthFlowProvider>
       <Stack screenOptions={{ headerShown: true, headerBackTitle: "Retour", title: "" }}>
         <Stack.Screen name="compte-gerant" options={{ headerShown: false }} />
+        <Stack.Screen name="presentation" options={{ headerShown: false }} />
+        <Stack.Screen name="bienvenue" options={{ headerShown: false }} />
       </Stack>
     </AuthFlowProvider>
   );

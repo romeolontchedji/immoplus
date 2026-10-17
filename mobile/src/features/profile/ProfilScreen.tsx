@@ -1,113 +1,43 @@
-import { Alert, Pressable, View } from "react-native";
+import { Alert, Linking, Switch, View } from "react-native";
 import { useRouter } from "expo-router";
+import {
+  Bell,
+  Building2,
+  FileText,
+  Fingerprint,
+  Gauge,
+  Heart,
+  KeyRound,
+  LifeBuoy,
+  LogOut,
+  MessageCircle,
+  ShieldCheck,
+  Smartphone,
+  UserRound,
+  BellRing,
+} from "lucide-react-native";
 import { AuthRequired } from "@/features/auth/AuthRequired";
+import { OCCUPATIONS } from "@/features/auth/ChoixOccupation";
+import { useVerrouBiometrique } from "@/features/auth/verrou";
+import { useContactEquipe } from "@/features/system/useAppConfig";
+import { APP_VERSION } from "@/config/env";
+import { formaterLocal } from "@/lib/phone";
 import { t } from "@/i18n/fr";
 import { useSession } from "@/state/session";
-import { CIBLE_MIN, colors, rayon, sp } from "@/ui/theme/tokens";
-import { useTheme } from "@/ui/theme/ThemeProvider";
-import { Button } from "@/ui/components/Button";
-import { QueryState } from "@/ui/components/States";
+import { colors, sp } from "@/ui/theme/tokens";
+import { Avatar, CarteHero, GroupeListe, LigneListe } from "@/ui/components/Groupe";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
-import { SwitchRow } from "@/ui/components/SwitchRow";
-import { useVerrouBiometrique } from "@/features/auth/verrou";
-import { useMe } from "./queries";
-
-/** Verrou par empreinte (ADR 0005) : proposé seulement si le téléphone a un capteur et une empreinte enregistrée. */
-function ReglageVerrou() {
-  const verrou = useVerrouBiometrique();
-  if (!verrou.disponible) return null;
-  return (
-    <View style={{ backgroundColor: colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.border, paddingHorizontal: sp[4], paddingVertical: sp[2] }}>
-      <SwitchRow
-        titre="Déverrouiller avec l’empreinte"
-        aide="Demandée à l’ouverture de Logeo et après 5 minutes d’absence."
-        valeur={verrou.actif}
-        onChange={(v) => void (v ? verrou.activer() : verrou.desactiver())}
-      />
-    </View>
-  );
-}
-
-// Icônes minimalistes SVG sous forme de caractères unicode Lucide-compatibles
-// (pas d'emoji, conforme AGENTS.md §13 et DESIGN.md)
-// On utilise des formes géométriques car lucide-react-native nécessite un perf check séparé
-function IconeCarree({ couleur, fond, label }: { couleur: string; fond: string; label: string }) {
-  return (
-    <View
-      accessibilityLabel={label}
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: fond,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {/* Placeholder icône – à remplacer par l'icône Lucide une fois lucide-react-native intégré */}
-      <View style={{ width: 18, height: 18, borderRadius: 4, backgroundColor: couleur, opacity: 0.85 }} />
-    </View>
-  );
-}
-
-type LigneMenuProps = {
-  titre: string;
-  aide?: string;
-  href: string;
-  iconeLabel: string;
-};
-
-/** Ligne de menu conforme à la maquette Profil : icône carré arrondi bleu pâle + texte + chevron › */
-function LigneMenu({ titre, aide, href, iconeLabel }: LigneMenuProps) {
-  const { c } = useTheme();
-  const router = useRouter();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => router.push(href as never)}
-      style={({ pressed }) => ({
-        flexDirection: "row",
-        alignItems: "center",
-        gap: sp[4],
-        minHeight: CIBLE_MIN + 8,
-        paddingVertical: sp[3],
-        paddingHorizontal: sp[4],
-        backgroundColor: pressed ? c.divider : c.surface,
-        borderRadius: rayon.card,
-        marginBottom: sp[2],
-        // Ombre subtile comme dans la maquette
-        shadowColor: "#0F1B3D",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 1,
-      })}
-    >
-      <IconeCarree couleur={c.primary} fond={c.primarySoft} label={iconeLabel} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variante="corps">{titre}</Text>
-        {aide ? <Text variante="legende" muted>{aide}</Text> : null}
-      </View>
-      {/* Chevron › */}
-      <Text muted style={{ fontSize: 20, fontWeight: "300", lineHeight: 24 }}>›</Text>
-    </Pressable>
-  );
-}
 
 /**
- * Onglet Profil (EF-CPT-01 à EF-CPT-08).
- * Conforme à la maquette « Mobile · Profil et vérification@1x.png » :
- * - avatar bleu cobalt + initiales, badge statut sous le nom
- * - bandeau vert "Identité vérifiée" si gérant vérifié
- * - lignes de menu en cartes blanches avec icône carrée arrondie
- * - bouton "Se déconnecter" rouge pâle en bas
+ * Onglet Profil (EF-CPT-01 à 08), style « épuré » des captures (plan d'actions v2, M7) : carte d'identité cobalt,
+ * listes groupées « Compte et sécurité », « Mon activité », « Préférences et assistance », « Informations légales ».
  */
 export function ProfilScreen() {
   const { etat, fermer } = useSession();
-  const { c } = useTheme();
-  const requete = useMe();
   const router = useRouter();
+  const equipe = useContactEquipe();
+  const verrou = useVerrouBiometrique(); // ADR 0005 : ligne affichée seulement si le téléphone a une empreinte
 
   if (etat.statut !== "connecte") {
     return (
@@ -118,134 +48,85 @@ export function ProfilScreen() {
   }
 
   const user = etat.user;
-  const initiales = user.full_name
-    .split(" ")
-    .slice(0, 2)
-    .map((m) => m[0]?.toUpperCase() ?? "")
-    .join("");
   const estGerant = user.role === "gerant";
+  const occupation = OCCUPATIONS.find((o) => o.valeur === user.occupation)?.libelle;
+  const aller = (href: string) => () => router.push(href as never);
 
-  const deconnecter = () => {
-    Alert.alert(
-      "Déconnexion",
-      "Tu seras déconnecté de ce compte.",
-      [
-        { text: t.commun.annuler, style: "cancel" },
-        { text: "Se déconnecter", style: "destructive", onPress: () => void fermer() },
-      ],
-    );
-  };
+  const deconnecter = () =>
+    Alert.alert("Déconnexion", "Tu seras déconnecté de ce compte.", [
+      { text: t.commun.annuler, style: "cancel" },
+      { text: "Se déconnecter", style: "destructive", onPress: () => void fermer() },
+    ]);
 
   return (
     <Screen scroll>
-      {/* En-tête : titre + avatar côte à côte comme dans la maquette */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: sp[2] }}>
-        <Text variante="titre">Profil</Text>
-        {/* Avatar compact en haut à droite (maquette) */}
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: c.primary,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text variante="legende" couleur="#FFFFFF" style={{ fontWeight: "800" }}>{initiales}</Text>
-        </View>
-      </View>
+      <Text variante="titre">Profil</Text>
 
-      {/* Identité : nom + rôle */}
-      <QueryState query={requete}>
-        {(me) => (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: sp[3], marginBottom: sp[4] }}>
-            {/* Grand avatar */}
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                backgroundColor: c.primary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text variante="sousTitre" couleur="#FFFFFF" style={{ fontWeight: "800" }}>{initiales}</Text>
-            </View>
-            <View style={{ gap: 2 }}>
-              <Text variante="sousTitre">{me.full_name}</Text>
-              {/* Badge "Gérant vérifié" vert sous le nom, comme dans la maquette */}
-              {estGerant ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.succes }} />
-                  <Text variante="legende" couleur={c.succesText}>Gérant vérifié</Text>
-                </View>
-              ) : (
-                <Text variante="legende" muted>Locataire</Text>
-              )}
-            </View>
+      <CarteHero>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: sp[4] }}>
+          <Avatar nom={user.full_name} id={user.id} taille={60} surFondSombre />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variante="sousTitre" couleur={colors.white}>{user.full_name}</Text>
+            {user.phone ? <Text variante="legende" couleur="rgba(255,255,255,0.82)">+229 {formaterLocal(user.phone.replace(/^\+229/, ""))}</Text> : null}
           </View>
-        )}
-      </QueryState>
-
-      {/* Bandeau "Identité vérifiée" uniquement pour les gérants vérifiés (maquette) */}
-      {estGerant ? (
-        <View
-          style={{
-            padding: sp[4],
-            borderRadius: rayon.card,
-            backgroundColor: c.succesBg,
-            marginBottom: sp[4],
-            gap: 4,
-          }}
-        >
-          <Text variante="corpsGras" couleur={c.succesText}>Identité vérifiée par Logeo</Text>
-          <Text variante="legende" couleur={c.succesText}>
-            Pièces validées. Ce badge rassure les étudiants.
-          </Text>
         </View>
-      ) : null}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: sp[3], paddingVertical: 6, borderRadius: 999 }}>
+            <ShieldCheck size={14} color={colors.white} />
+            <Text variante="legende" couleur={colors.white} style={{ fontWeight: "700" }}>{estGerant ? "Compte gérant" : "Numéro vérifié"}</Text>
+          </View>
+          {occupation ? (
+            <View style={{ backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: sp[3], paddingVertical: 6, borderRadius: 999 }}>
+              <Text variante="legende" couleur={colors.white} style={{ fontWeight: "700" }}>{occupation}</Text>
+            </View>
+          ) : null}
+        </View>
+      </CarteHero>
 
-      {/* Lignes de menu (conforme maquette : cartes blanches individuelles) */}
-      {estGerant ? (
-        <LigneMenu titre="Mes chambres" href="/pro/annonces" iconeLabel="Mes chambres" />
-      ) : (
-        <>
-          <LigneMenu titre="Mon compte" aide="Nom, téléphone, mot de passe" href="/parametres/nom" iconeLabel="Compte" />
-          <LigneMenu titre="Appareils connectés" href="/parametres/appareils" iconeLabel="Appareils" />
-        </>
-      )}
-      <ReglageVerrou />
-      <LigneMenu titre="Notifications" href="/parametres/preferences" iconeLabel="Notifications" />
-      <LigneMenu titre="Aide et contact" href="/parametres/aide" iconeLabel="Aide" />
-      <LigneMenu titre="Conditions d'utilisation" href="/legal/conditions" iconeLabel="Conditions" />
-      <LigneMenu titre="Politique de confidentialité" href="/legal/confidentialite" iconeLabel="Confidentialité" />
+      <GroupeListe titre="Compte et sécurité">
+        <LigneListe titre="Mon profil" sousTitre="Nom, « Tu es »" icone={UserRound} onPress={aller("/parametres/nom")} />
+        <LigneListe titre="Numéro de téléphone" icone={Smartphone} onPress={aller("/parametres/telephone")} />
+        <LigneListe titre="Mot de passe" icone={KeyRound} onPress={aller("/parametres/mot-de-passe")} />
+        <LigneListe titre="Appareils connectés" sousTitre="Déconnecte un téléphone perdu" icone={ShieldCheck} onPress={aller("/parametres/appareils")} />
+        {verrou.disponible ? (
+          <LigneListe
+            titre="Déverrouiller avec l’empreinte"
+            sousTitre="À l’ouverture et après 5 min d’absence"
+            icone={Fingerprint}
+            droite={<Switch accessibilityLabel="Déverrouiller avec l’empreinte" value={verrou.actif} onValueChange={(v) => void (v ? verrou.activer() : verrou.desactiver())} trackColor={{ true: colors.primary, false: colors.border }} />}
+          />
+        ) : null}
+      </GroupeListe>
 
-      {/* Bouton Se déconnecter : rouge pâle, texte rouge (conforme maquette) */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={deconnecter}
-        style={({ pressed }) => ({
-          minHeight: CIBLE_MIN,
-          borderRadius: rayon.card,
-          backgroundColor: pressed ? "#FCCFCF" : "#FFE8E8",
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: sp[2],
-        })}
-      >
-        <Text variante="corpsGras" couleur={c.danger}>Se déconnecter</Text>
-      </Pressable>
+      <GroupeListe titre="Mon activité">
+        {estGerant ? (
+          <LigneListe titre="Mes chambres" icone={Building2} teinte="soleil" onPress={aller("/pro/annonces")} />
+        ) : (
+          <LigneListe titre="Mes favoris" icone={Heart} teinte="rouge" onPress={aller("/favoris")} />
+        )}
+        {estGerant ? null : <LigneListe titre="Mes alertes" icone={BellRing} teinte="soleil" onPress={aller("/alertes")} />}
+      </GroupeListe>
 
-      {/* Lien suppression discret */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push("/parametres/supprimer" as never)}
-        style={{ alignItems: "center", padding: sp[4] }}
-      >
-        <Text variante="legende" couleur={c.danger}>Supprimer mon compte</Text>
-      </Pressable>
+      <GroupeListe titre="Préférences et assistance">
+        <LigneListe titre="Notifications" icone={Bell} onPress={aller("/parametres/preferences")} />
+        <LigneListe titre="Économie de données" icone={Gauge} onPress={aller("/parametres/economie-donnees")} />
+        <LigneListe titre="WhatsApp Logeo" sousTitre={equipe.affiche} icone={MessageCircle} teinte="vert" onPress={() => void Linking.openURL(equipe.whatsapp_url)} />
+        <LigneListe titre="Aide et contact" icone={LifeBuoy} onPress={aller("/parametres/aide")} />
+      </GroupeListe>
+
+      <GroupeListe titre="Informations légales">
+        <LigneListe titre="Conditions d’utilisation" icone={FileText} teinte="gris" onPress={aller("/legal/conditions")} />
+        <LigneListe titre="Politique de confidentialité" icone={ShieldCheck} teinte="gris" onPress={aller("/legal/confidentialite")} />
+      </GroupeListe>
+
+      <GroupeListe>
+        <LigneListe titre="Se déconnecter" icone={LogOut} danger onPress={deconnecter} droite={null} />
+      </GroupeListe>
+
+      <View style={{ alignItems: "center", gap: sp[2], paddingBottom: sp[4] }}>
+        <Text variante="legende" couleur={colors.danger} onPress={aller("/parametres/supprimer")} accessibilityRole="link">Supprimer mon compte</Text>
+        <Text variante="legende" muted>Logeo · version {APP_VERSION}</Text>
+      </View>
     </Screen>
   );
 }
