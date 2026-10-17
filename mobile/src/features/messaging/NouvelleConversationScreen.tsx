@@ -13,6 +13,7 @@ import { messageErreur, t } from "@/i18n/fr";
 import { francs } from "@/lib/format";
 import { urlMedia } from "@/lib/media";
 import { newId } from "@/lib/uuid";
+import { proposerNotifications } from "@/features/notifications/DemandeNotifications";
 import { useSession } from "@/state/session";
 import { Button } from "@/ui/components/Button";
 import { Chip } from "@/ui/components/Chip";
@@ -73,6 +74,7 @@ function Formulaire({ annonceId }: { annonceId?: string }) {
       void qc.invalidateQueries({ queryKey: qk.conversations });
       router.replace({ pathname: "/conversation/[id]", params: { id: r.conversation.id } });
       if (r.warning) Alert.alert("Message envoyé", r.warning);
+      else void proposerNotifications("message"); // le bon moment : on attend maintenant une réponse
     },
   });
 

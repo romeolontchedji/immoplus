@@ -26,4 +26,5 @@ export const CLES_KV = {
   outbox: "logeo.outbox",
   cacheRequetes: "logeo.cache-requetes",
   onboardingVu: "logeo.onboarding-vu",
+  demandeNotifications: "logeo.demande-notifications",
 } as const;

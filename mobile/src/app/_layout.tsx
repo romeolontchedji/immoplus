@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppGate } from "@/features/system/AppGate";
 import { FiltresProvider } from "@/features/listings/filtres";
+import { DemandeNotificationsHote } from "@/features/notifications/DemandeNotifications";
 import { usePushBootstrap } from "@/features/notifications/push";
 import { RealtimeProvider } from "@/realtime/RealtimeProvider";
 import { outbox } from "@/storage/outbox";
@@ -49,5 +50,10 @@ function Racine() {
   useEffect(() => {
     if (etat.statut !== "chargement") void SplashScreen.hideAsync(); // l'écran de démarrage reste tant que la session n'est pas connue
   }, [etat.statut]);
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
+      <DemandeNotificationsHote />
+    </>
+  );
 }

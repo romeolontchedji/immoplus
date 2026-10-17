@@ -5,7 +5,7 @@ import type { components } from "@/api/genere/api";
 import { useSession } from "@/state/session";
 
 export type Appareil = components["schemas"]["AppareilOut"];
-export type PreferencesNotif = { messages: boolean; alerts: boolean; reminders: boolean };
+export type PreferencesNotif = { messages: boolean; apercu: boolean; alertes: boolean; rappels: boolean };
 
 /** Profil courant (cache court : rafraîchi à l'ouverture de l'écran). */
 export const useMe = () => useQuery({ queryKey: qk.me, queryFn: () => unwrap(api.GET("/v1/me")), staleTime: 30_000 });
@@ -50,27 +50,47 @@ export function useRevoquerAppareil() {
   });
 }
 
-/** Préférences de notification (schéma libre côté serveur). */
+/**
+ * Préférences de notification, au format du serveur (`definir_preferences`) :
+ * `{ messages: {push, apercu}, alertes: {push}, rappels: {push} }`. Absent = activé.
+ */
+type Reglage = { push?: boolean; apercu?: boolean };
+type PreferencesServeur = Partial<Record<"messages" | "alertes" | "rappels", Reglage>>;
+
 export const usePreferencesNotif = () =>
   useQuery<PreferencesNotif>({
     queryKey: qk.preferencesNotif,
     queryFn: async () => {
-      const raw = (await unwrap(api.GET("/v1/me/preferences"))) as unknown as Record<string, boolean> | undefined;
+      const brut: PreferencesServeur | undefined = await unwrap(api.GET("/v1/me/preferences"));
       return {
-        messages: raw?.["messages"] ?? true,
-        alerts: raw?.["alerts"] ?? true,
-        reminders: raw?.["reminders"] ?? false,
+        messages: brut?.messages?.push !== false,
+        apercu: brut?.messages?.apercu !== false,
+        alertes: brut?.alertes?.push !== false,
+        rappels: brut?.rappels?.push !== false,
       };
     },
   });
 
-/** Enregistrer les préférences de notification. */
+/** Enregistrer les préférences de notification (seules les catégories envoyées changent côté serveur). */
 export function useEnregistrerPreferences() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (corps: PreferencesNotif) =>
-      unwrap(api.PUT("/v1/me/preferences", { body: corps as any })),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.preferencesNotif }),
+    mutationFn: (p: PreferencesNotif) => {
+      const corps: PreferencesServeur = {
+        messages: { push: p.messages, apercu: p.apercu },
+        alertes: { push: p.alertes },
+        rappels: { push: p.rappels },
+      };
+      return unwrap(api.PUT("/v1/me/preferences", { body: corps }));
+    },
+    onMutate: async (p) => {
+      await qc.cancelQueries({ queryKey: qk.preferencesNotif });
+      const avant = qc.getQueryData<PreferencesNotif>(qk.preferencesNotif);
+      qc.setQueryData(qk.preferencesNotif, p); // l'interrupteur réagit tout de suite
+      return { avant };
+    },
+    onError: (_e, _p, ctx) => ctx?.avant && qc.setQueryData(qk.preferencesNotif, ctx.avant),
+    onSettled: () => void qc.invalidateQueries({ queryKey: qk.preferencesNotif }),
   });
 }
 

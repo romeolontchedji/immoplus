@@ -6,6 +6,7 @@ import { isApiError } from "@/api/errors";
 import { AuthRequired } from "@/features/auth/AuthRequired";
 import { useDistricts } from "@/features/listings/queries";
 import { messageErreur, t } from "@/i18n/fr";
+import { proposerNotifications } from "@/features/notifications/DemandeNotifications";
 import { useSession } from "@/state/session";
 import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
@@ -60,7 +61,7 @@ export function AlertesScreen() {
             {isApiError(creer.error) ? messageErreur(creer.error.code, creer.error.message) : t.erreurs.network}
           </Text>
         ) : null}
-        <Button titre="Créer l'alerte" chargement={creer.isPending} onPress={() => creer.mutate(versCorps(criteres), { onSuccess: () => setCriteres(CRITERES_VIDES) })} />
+        <Button titre="Créer l'alerte" chargement={creer.isPending} onPress={() => creer.mutate(versCorps(criteres), { onSuccess: () => { setCriteres(CRITERES_VIDES); void proposerNotifications("alerte"); } })} />
       </View>
 
       <QueryState query={requete} vide={{ quand: (data) => data.length === 0, titre: "Aucune alerte pour l'instant", texte: "Crée ta première alerte ci-dessus." }}>

@@ -8,6 +8,7 @@ import { Screen } from "@/ui/components/Screen";
 import { SkeletonListe } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
 import { useFiltres } from "@/features/listings/filtres";
+import { proposerNotifications } from "@/features/notifications/DemandeNotifications";
 import { useDistricts } from "@/features/listings/queries";
 import { criteresDe, criteresDepuisFiltres, EditeurCriteres, versCorps, type Criteres } from "./EditeurCriteres";
 import { useAlertes, useCreerAlerte, useModifierAlerte } from "./queries";
@@ -55,7 +56,14 @@ function Formulaire({ id, initiales }: { id?: string; initiales: Criteres }) {
         <Button
           titre={id ? t.commun.enregistrer : "Créer l’alerte"}
           chargement={mutation.isPending}
-          onPress={() => mutation.mutate(versCorps(criteres), { onSuccess: () => router.back() })}
+          onPress={() =>
+            mutation.mutate(versCorps(criteres), {
+              onSuccess: () => {
+                router.back();
+                if (!id) void proposerNotifications("alerte");
+              },
+            })
+          }
         />
       }
     >

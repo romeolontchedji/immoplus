@@ -1391,6 +1391,14 @@ export interface components {
          * @enum {string}
          */
         PlatformEnum: "android" | "ios" | "web";
+        /** @description Forme documentée de `PreferencesIO` (OpenAPI) : seules les catégories envoyées changent. */
+        PreferencesSchema: {
+            messages?: components["schemas"]["ReglageNotification"];
+            alertes?: components["schemas"]["ReglageNotification"];
+            rappels?: components["schemas"]["ReglageNotification"];
+            /** @description Conversations en sourdine. */
+            silence?: string[];
+        };
         /**
          * @description * `signup` - signup
          *     * `reset_password` - reset_password
@@ -1416,6 +1424,12 @@ export interface components {
          * @enum {string}
          */
         ReasonCodeEnum: "fake_listing" | "already_rented" | "price_mismatch" | "contact_leak" | "harassment" | "scam" | "other";
+        ReglageNotification: {
+            /** @description Faux : aucune notification push (absent = activé). */
+            push?: boolean;
+            /** @description Messages : faux = « Nouveau message » sans le texte. */
+            apercu?: boolean;
+        };
         /**
          * @description * `client` - client
          *     * `gerant` - gerant
@@ -2439,12 +2453,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PreferencesSchema"];
+                };
             };
         };
     };
@@ -2455,14 +2470,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PreferencesSchema"];
+                "application/x-www-form-urlencoded": components["schemas"]["PreferencesSchema"];
+                "multipart/form-data": components["schemas"]["PreferencesSchema"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PreferencesSchema"];
+                };
             };
         };
     };

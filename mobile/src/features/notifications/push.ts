@@ -32,7 +32,7 @@ async function chargerNotifications(): Promise<ModuleNotifications | null> {
           handleNotification: async (n) => {
             const data = n.request.content.data as { kind?: string; conversation_id?: string } | undefined;
             const dejaALEcran = data?.kind === "message.received" && data.conversation_id === focusActuel();
-            return { shouldShowBanner: !dejaALEcran, shouldShowList: !dejaALEcran, shouldPlaySound: !dejaALEcran, shouldSetBadge: false };
+            return { shouldShowBanner: !dejaALEcran, shouldShowList: !dejaALEcran, shouldPlaySound: !dejaALEcran, shouldSetBadge: true };
           },
         });
         return notifs;
@@ -43,11 +43,26 @@ async function chargerNotifications(): Promise<ModuleNotifications | null> {
   return moduleNotifications;
 }
 
+/**
+ * Canaux Android : le serveur choisit le canal de chaque push (`channelId`, apps/notifications/services.py CANAUX).
+ * Messages en importance haute : bannière en haut de l'écran, son et vibration, même téléphone en veille.
+ */
 async function creerCanaux(notifs: ModuleNotifications): Promise<void> {
   if (Platform.OS !== "android") return;
-  await notifs.setNotificationChannelAsync("messages", { name: "Messages", importance: notifs.AndroidImportance.HIGH, vibrationPattern: [0, 200, 100, 200] });
-  await notifs.setNotificationChannelAsync("alertes", { name: "Alertes et favoris", importance: notifs.AndroidImportance.DEFAULT });
-  await notifs.setNotificationChannelAsync("rappels", { name: "Rappels", importance: notifs.AndroidImportance.LOW });
+  const prive = notifs.AndroidNotificationVisibility.PRIVATE; // écran verrouillé : pas d'aperçu du contenu
+  await notifs.setNotificationChannelAsync("messages", { name: "Messages", description: "Réponses des gérants et des locataires", importance: notifs.AndroidImportance.MAX, vibrationPattern: [0, 200, 100, 200], lightColor: "#1B44D6", lockscreenVisibility: prive, showBadge: true });
+  await notifs.setNotificationChannelAsync("alertes", { name: "Alertes et favoris", description: "Nouvelles chambres qui correspondent à tes alertes", importance: notifs.AndroidImportance.HIGH, showBadge: true });
+  await notifs.setNotificationChannelAsync("rappels", { name: "Rappels", description: "Disponibilité de tes chambres à confirmer", importance: notifs.AndroidImportance.DEFAULT });
+  await notifs.setNotificationChannelAsync("compte", { name: "Compte et annonces", description: "Publication, modération, sécurité du compte", importance: notifs.AndroidImportance.DEFAULT });
+}
+
+/** État de l'autorisation sans la demander : `indisponible` sous Expo Go, sur émulateur ou si le module manque. */
+export async function etatAutorisation(): Promise<"accordee" | "a_demander" | "refusee" | "indisponible"> {
+  const notifs = await chargerNotifications();
+  if (!notifs || !Device.isDevice) return "indisponible";
+  const { status, canAskAgain } = await notifs.getPermissionsAsync();
+  if (status === "granted") return "accordee";
+  return canAskAgain ? "a_demander" : "refusee";
 }
 
 /** Demande l'autorisation (à appeler au bon moment : après la première conversation, ou depuis les préférences) puis enregistre le jeton. */
