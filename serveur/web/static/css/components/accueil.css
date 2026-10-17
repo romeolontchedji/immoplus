@@ -59,7 +59,8 @@
   background: var(--surface);
 }
 .accueil-recherche__champ {
-  flex: 1; padding: var(--sp-3) var(--sp-4); display: flex; flex-direction: column; gap: 2px;
+  flex: 1; min-width: 0; /* sans min-width, la largeur propre des saisies poussait le bouton hors du cadre */
+  padding: var(--sp-3) var(--sp-4); display: flex; flex-direction: column; gap: 2px;
 }
 .accueil-recherche__label {
   font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
@@ -81,7 +82,7 @@
   border: none; border-radius: 10px; cursor: pointer;
   font-size: var(--fs-15); font-weight: 800;
   transition: background var(--duree-1) var(--courbe), transform var(--duree-1);
-  white-space: nowrap; min-height: 2.75rem; width: 100%;
+  white-space: nowrap; min-height: 2.75rem; flex-shrink: 0;
 }
 .accueil-recherche__bouton:hover { background: var(--sun-hover); }
 .accueil-recherche__bouton:active { transform: scale(0.98); }
@@ -237,7 +238,6 @@
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (min-width: 640px) {
   .accueil-recherche__barre { flex-wrap: nowrap; }
-  .accueil-recherche__bouton { width: auto; }
   .accueil-recherche__separateur { display: block; }
 }
 @media (max-width: 639px) {
@@ -267,9 +267,8 @@
   .accueil-recherche__separateur { display: none; }
   .accueil-recherche__champ { border-bottom: 1px solid var(--border); padding: var(--sp-2) var(--sp-3); }
   .accueil-recherche__champ:last-of-type { border-bottom: none; }
-  .accueil-recherche__bouton {
-    width: 100%; margin: var(--sp-2) 0 0;
-  }
+  .accueil-recherche__bouton { margin: var(--sp-2); }
+  .accueil-hero__actions .bouton { flex: 1 1 100%; }
   .accueil-hero__promesses {
     gap: var(--sp-2) var(--sp-4); font-size: var(--fs-13);
   }
