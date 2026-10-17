@@ -377,3 +377,6 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   **Phase 0 terminée.**
 - **Reste noté** : `realtime` et `admin` journalisent `Control server error: Permission denied: '/app/.gunicorn'`
   au démarrage (socket de contrôle de gunicorn dans le code monté en lecture pour l'utilisateur `logeo`) ; sans effet.
+- **Position des annonces (V7)** : plus de latitude ni de longitude à saisir (site et mobile). L'API les rend
+  facultatives (changement additif) : centre du quartier par défaut, GPS du téléphone si le gérant le partage depuis
+  l'app (`expo-location`, déjà présent). Pas de GPS sur le site : `Permissions-Policy: geolocation=()` en production.
