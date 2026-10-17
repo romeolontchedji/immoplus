@@ -416,3 +416,18 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   **Non vérifié visuellement** : pas d'émulateur ni de cible web Expo (react-native-web absent) ; à regarder sur
   téléphone (Expo Go suffit pour ces écrans).
 - **Reste noté** : `base.css` importe Google Fonts, contraire au CDC (« aucune police externe ») et à la CSP.
+- **Police hébergée** : Plus Jakarta Sans servie depuis `static/fonts/` (licence OFL jointe). Elle était demandée à
+  Google Fonts, interdit par le CDC et **bloqué par la CSP** : le site s'affichait en police système. Icône du site
+  déclarée (`/favicon.ico` répondait 404).
+- **Alertes (M5)** : `GET /v1/alert-options` (quartiers triés par alertes actives puis annonces publiées, budgets tirés
+  des quartiles des loyers). Mobile : composant `ListeDeroulante` (feuille basse, recherche, simple ou multiple),
+  « Autre montant… ». Site : même ordre, budgets en `<datalist>` natif.
+- **Messagerie web (W5)** : `web/public/messagerie.html` remplace `messages.html` et `conversation.html` ; deux panneaux
+  (un seul sous 64rem), bulles compactes, coches envoyé/lu, séparateurs de jour, menu `<details>` (sourdine, signaler,
+  bloquer). Rafraîchissement toutes les 20 s seulement si le champ est vide (pas de temps réel sur le site).
+- **Compte locataire (W6)** et **tableau gérant (W4)** : tableau de bord locataire en tête de « Mon compte » ;
+  interrupteur « Disponible » (louée / remise en ligne) ; bugs corrigés : « Sans vidéo » affiché partout (champ
+  inexistant), type de chambre vide, « Derniers contacts » toujours vides, colonne Chambre montrant le quartier.
+  908 tests serveur verts (seul `/readyz` échoue).
+- **Reste (phase 3 web)** : W1 (photos de la bannière, en attente des fichiers), W3 (zone de dépôt des médias
+  redessinée), W7 (session web dans « Appareils connectés »), W8 (changement de numéro en 2 étapes).
