@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% block titre %}Maintenance — Logeo{% endblock %}
+{% block navigation %}{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur conteneur--texte">
+      <div class="etat-vide">
+        <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="shield-check" taille=32 %}</span>
+        <h1 class="etat-vide__titre">Logeo revient tout de suite</h1>
+        <p class="etat-vide__texte">{{ message }}</p>
+        <p class="etat-vide__texte">Tes favoris, alertes et messages sont en sécurité.</p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

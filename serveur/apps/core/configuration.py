@@ -41,8 +41,8 @@ def configuration_app() -> dict:
         },
         "notice": parametres.lire("APP_NOTICE") or "",
         "flags": {
-            # Paiement débranché en V1 (docs/plan-actions-v2.md §7 bis) : le drapeau reste faux tant que `billing`
-            # n'est pas livré, quelle que soit la valeur du paramètre.
+            # Décision du porteur (2026-10-17) : aucun écran de paiement en V1, même si le serveur `billing` est prêt ;
+            # le drapeau des apps reste faux quelle que soit la valeur du paramètre.
             "subscription": False,
             "contact_leak_block": parametres.lire("CONTACT_LEAK_MODE") == "block",
         },

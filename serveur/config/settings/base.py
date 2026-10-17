@@ -47,6 +47,7 @@ MIDDLEWARE = [
 MIDDLEWARE_SITE = [
     *MIDDLEWARE[: MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1],
     "web.middleware.VersionDeSessionMiddleware",
+    "apps.core.acces_application.AccesApplicationMiddleware",  # 426 et 503 (le site et l'API, pas l'administration)
 ]
 
 ROOT_URLCONF = "config.urls_public"
