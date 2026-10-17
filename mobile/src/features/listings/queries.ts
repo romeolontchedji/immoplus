@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { qk } from "@/api/keys";
+import { t } from "@/i18n/fr";
 import type { components } from "@/api/genere/api";
 import { versParametres, type Filtres } from "./filtres";
 
@@ -9,6 +10,22 @@ export type Carte = components["schemas"]["CarteOut"];
 
 export function useDistricts() {
   return useQuery({ queryKey: qk.districts, queryFn: () => unwrap(api.GET("/v1/districts")), staleTime: 24 * 60 * 60_000 });
+}
+
+export type TypeChambre = { slug: string; label: string; count?: number };
+
+/** Repli hors ligne : les 4 types officiels (la liste vivante vient du serveur, décision V1). */
+export const TYPES_OFFICIELS: TypeChambre[] = Object.entries(t.typeChambre).map(([slug, label]) => ({ slug, label }));
+
+/** Types validés, les plus courants d'abord ; jamais vide (repli sur les officiels). */
+export function useTypesChambre(): TypeChambre[] {
+  const { data } = useQuery({ queryKey: qk.typesChambre, queryFn: () => unwrap(api.GET("/v1/room-types")), staleTime: 60 * 60_000 });
+  return data?.length ? data : TYPES_OFFICIELS;
+}
+
+/** Libellé d'un type : liste du serveur, puis officiels, sinon le slug. */
+export function libelleType(types: TypeChambre[], slug: string): string {
+  return types.find((x) => x.slug === slug)?.label ?? t.typeChambre[slug] ?? slug;
 }
 
 /** Fil et recherche : pagination par curseur opaque (`next_cursor`), 10 cartes par page. */

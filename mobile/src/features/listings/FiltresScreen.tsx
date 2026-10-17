@@ -12,9 +12,8 @@ import { t } from "@/i18n/fr";
 import { francs } from "@/lib/format";
 import { FILTRES_VIDES, LIBELLES_EAU, LIBELLES_TRI, type Filtres } from "./filtres";
 import { useFiltres } from "./filtres";
-import { useDistricts, useFil } from "./queries";
+import { useDistricts, useFil, useTypesChambre } from "./queries";
 
-const TYPES = ["single", "entree_coucher", "chambre_salon", "studio"] as const;
 const BUDGETS = [10_000, 15_000, 20_000, 30_000] as const;
 const DISTANCES = [
   { val: 500, label: "≤ 500 m" },
@@ -41,6 +40,7 @@ function Section({ titre, children }: { titre: string; children: ReactNode }) {
 export function FiltresScreen() {
   const router = useRouter();
   const { filtres, definir } = useFiltres();
+  const types = useTypesChambre();
   const [brouillon, setBrouillon] = useState<Filtres>({ ...FILTRES_VIDES, ...filtres });
   const [budgetLibre, setBudgetLibre] = useState(
     filtres.rent_max !== undefined && !BUDGETS.includes(filtres.rent_max as (typeof BUDGETS)[number]) ? String(filtres.rent_max) : "",
@@ -152,8 +152,8 @@ export function FiltresScreen() {
         </View>
 
         <Section titre="Type">
-          {TYPES.map((tp) => (
-            <Chip key={tp} titre={t.typeChambre[tp] ?? tp} actif={brouillon.type.includes(tp)} onPress={() => maj({ type: basculerDans(brouillon.type, tp) })} />
+          {types.map(({ slug, label }) => (
+            <Chip key={slug} titre={label} actif={brouillon.type.includes(slug)} onPress={() => maj({ type: basculerDans(brouillon.type, slug) })} />
           ))}
         </Section>
 

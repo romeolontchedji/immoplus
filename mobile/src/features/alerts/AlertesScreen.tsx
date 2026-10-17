@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { BellRing } from "lucide-react-native";
 import { isApiError } from "@/api/errors";
 import { AuthRequired } from "@/features/auth/AuthRequired";
-import { useDistricts } from "@/features/listings/queries";
+import { useDistricts, useTypesChambre } from "@/features/listings/queries";
 import { messageErreur, t } from "@/i18n/fr";
 import { proposerNotifications } from "@/features/notifications/DemandeNotifications";
 import { useSession } from "@/state/session";
@@ -93,7 +93,8 @@ function AlerteCarte({ alerte, noms, onModifier, onSupprimer, suppression }: {
   suppression: boolean;
 }) {
   const modifier = useModifierAlerte(alerte.id);
-  const { titre, details } = resumeCriteres(criteresDe(alerte), noms);
+  const types = useTypesChambre();
+  const { titre, details } = resumeCriteres(criteresDe(alerte), noms, types);
   const actif = modifier.isPending && modifier.variables?.is_active !== undefined ? !!modifier.variables.is_active : alerte.is_active;
 
   return (

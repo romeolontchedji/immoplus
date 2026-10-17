@@ -225,7 +225,7 @@ export function FicheScreen() {
           <View style={{ gap: sp[2] }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: sp[3] }}>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text variante="label" couleur={colors.primary}>{t.typeChambre[fiche.room_type] ?? fiche.room_type}</Text>
+                <Text variante="label" couleur={colors.primary}>{fiche.room_type_label}</Text>
                 <Text variante="titreSection">{fiche.title}</Text>
               </View>
               <View style={{ alignItems: "flex-end" }}>

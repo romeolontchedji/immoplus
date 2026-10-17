@@ -31,3 +31,18 @@ export function useActionAnnonce(id: string) {
 
 /** Aperçu Markdown : rendu par le serveur (même moteur que l'affichage public, HTML déjà assaini). */
 export const useApercuMarkdown = () => useMutation({ mutationFn: (markdown: string) => unwrap(api.POST("/v1/pro/markdown/preview", { body: { markdown } })) });
+
+export type TypeChambrePro = components["schemas"]["TypeChambreProOut"];
+
+/** Types utilisables par le gérant : validés, et ses propositions en attente (décision V1). */
+export const useTypesChambrePro = () =>
+  useQuery({ queryKey: qk.pro.types, queryFn: () => unwrap(api.GET("/v1/pro/room-types")), staleTime: 5 * 60_000 });
+
+/** Proposer un type : le serveur renvoie l'équivalent existant s'il y en a un. */
+export function useProposerType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (label: string) => unwrap(api.POST("/v1/pro/room-types", { body: { label } })),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.pro.types }),
+  });
+}

@@ -36,4 +36,9 @@ describe("recherche", () => {
     expect(c).toEqual({ district_ids: ["uuid-b"], room_types: ["studio"], max_rent: 15000, private_bathroom_required: true, max_distance_m: null });
     expect(resumeCriteres(c, { "uuid-b": "Banikanni" }).titre).toBe("Banikanni · Studio");
   });
+
+  it("affiche le libellé d'un type venu du serveur (décision V1)", () => {
+    const c = { district_ids: [], room_types: ["villa", "inconnu"], max_rent: null, private_bathroom_required: false, max_distance_m: null };
+    expect(resumeCriteres(c, {}, [{ slug: "villa", label: "Villa" }]).titre).toContain("Villa, inconnu");
+  });
 });

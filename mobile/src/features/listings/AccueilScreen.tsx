@@ -10,20 +10,17 @@ import { Text } from "@/ui/components/Text";
 import { LIBELLES_TRI, nombreDeFiltres, useFiltres, type Filtres } from "./filtres";
 import { FiltresActifs } from "./FiltresActifs";
 import { ListeAnnonces } from "./ListeAnnonces";
-import { useFil } from "./queries";
+import { useFil, useTypesChambre } from "./queries";
 
 type Raccourci = { titre: string; actif: (f: Filtres) => boolean; basculer: (f: Filtres) => Filtres };
 
 const basculerDans = (liste: string[], v: string) => (liste.includes(v) ? liste.filter((x) => x !== v) : [...liste, v]);
 
 /** Raccourcis de la maquette : chacun s'ajoute aux autres critères au lieu de les écraser. */
-const RACCOURCIS: Raccourci[] = [
-  { titre: "Près de l'UP", actif: (f) => f.sort === "distance", basculer: (f) => ({ ...f, sort: f.sort === "distance" ? "recent" : "distance" }) },
-  { titre: "≤ 15 000 F", actif: (f) => f.rent_max === 15000, basculer: (f) => ({ ...f, rent_max: f.rent_max === 15000 ? undefined : 15000 }) },
-  { titre: "Entrée-coucher", actif: (f) => f.type.includes("entree_coucher"), basculer: (f) => ({ ...f, type: basculerDans(f.type, "entree_coucher") }) },
-  { titre: "Chambre-salon", actif: (f) => f.type.includes("chambre_salon"), basculer: (f) => ({ ...f, type: basculerDans(f.type, "chambre_salon") }) },
-  { titre: "Douche interne", actif: (f) => f.bathroom === true, basculer: (f) => ({ ...f, bathroom: f.bathroom ? undefined : true }) },
-];
+const PRES_UP: Raccourci = { titre: "Près de l'UP", actif: (f) => f.sort === "distance", basculer: (f) => ({ ...f, sort: f.sort === "distance" ? "recent" : "distance" }) };
+const BUDGET: Raccourci = { titre: "≤ 15 000 F", actif: (f) => f.rent_max === 15000, basculer: (f) => ({ ...f, rent_max: f.rent_max === 15000 ? undefined : 15000 }) };
+const DOUCHE: Raccourci = { titre: "Douche interne", actif: (f) => f.bathroom === true, basculer: (f) => ({ ...f, bathroom: f.bathroom ? undefined : true }) };
+const raccourciType = (slug: string, titre: string): Raccourci => ({ titre, actif: (f) => f.type.includes(slug), basculer: (f) => ({ ...f, type: basculerDans(f.type, slug) }) });
 
 /**
  * Accueil locataire (maquette Mobile · Accueil) : logo + cloche, « Où veux-tu habiter ? », barre de recherche où l'on
@@ -33,6 +30,8 @@ export function AccueilScreen() {
   const router = useRouter();
   const { filtres, definir } = useFiltres();
   const requete = useFil(filtres);
+  const types = useTypesChambre(); // les deux types les plus courants en raccourci (décision V1)
+  const raccourcis = [PRES_UP, BUDGET, ...types.slice(0, 2).map((tp) => raccourciType(tp.slug, tp.label)), DOUCHE];
   const nb = nombreDeFiltres(filtres);
   const recherche = filtres.q.trim() !== "" || nb > 0;
 
@@ -70,7 +69,7 @@ export function AccueilScreen() {
             />
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2], paddingRight: sp[2] }}>
-              {RACCOURCIS.map((r) => (
+              {raccourcis.map((r) => (
                 <Chip key={r.titre} titre={r.titre} actif={r.actif(filtres)} onPress={() => definir(r.basculer(filtres))} />
               ))}
             </ScrollView>

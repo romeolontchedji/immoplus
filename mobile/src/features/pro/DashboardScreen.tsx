@@ -185,7 +185,7 @@ export function DashboardScreen() {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variante="corpsGras" numberOfLines={1}>{annonce.title}</Text>
                   <Text variante="legende" muted numberOfLines={1}>
-                    {[t.typeChambre[annonce.room_type] ?? annonce.room_type, annonce.district_name].filter(Boolean).join(" · ")}
+                    {[annonce.room_type_label, annonce.district_name].filter(Boolean).join(" · ")}
                   </Text>
                   <Text variante="legende" couleur={c.primary} style={{ fontWeight: "700" }}>
                     {francs(annonce.rent_amount)}

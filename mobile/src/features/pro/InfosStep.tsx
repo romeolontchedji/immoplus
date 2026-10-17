@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
@@ -11,16 +12,18 @@ import { Screen } from "@/ui/components/Screen";
 import { SwitchRow } from "@/ui/components/SwitchRow";
 import { TextField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
-import { t } from "@/i18n/fr";
+import { isApiError } from "@/api/errors";
+import { messageErreur, t } from "@/i18n/fr";
+import { TYPES_OFFICIELS } from "@/features/listings/queries";
 import { useBrouillon } from "./brouillon";
+import { useProposerType, useTypesChambrePro } from "./queries";
 import { EntetePublication } from "./EntetePublication";
 
-const TYPES = ["single", "entree_coucher", "chambre_salon", "studio"] as const;
 const CAUTIONS = ["1", "2", "3"] as const;
 
 const schema = z.object({
   title: z.string().trim().min(3, "Au moins 3 caractères.").max(120, "120 caractères au plus."),
-  room_type: z.enum(TYPES, { error: "Choisis un type." }),
+  room_type: z.string({ error: "Choisis un type." }).min(1, "Choisis un type."),
   rent_amount: z.coerce.number({ error: "Obligatoire." }).min(1000, "1 000 F minimum.").max(999_999, "Trop élevé."),
   deposit_months: z.coerce.number().min(1).max(6),
   is_available: z.boolean(),
@@ -44,7 +47,7 @@ export function InfosStep() {
     resolver: zodResolver(schema),
     defaultValues: {
       title: brouillon.title ?? "",
-      room_type: (brouillon.room_type as typeof TYPES[number]) ?? undefined,
+      room_type: brouillon.room_type ?? "",
       rent_amount: brouillon.rent_amount ?? (undefined as unknown as number),
       deposit_months: brouillon.deposit_months ?? 2,
       is_available: !brouillon.available_from || brouillon.available_from <= new Date().toISOString().slice(0, 10),
@@ -52,6 +55,20 @@ export function InfosStep() {
   });
 
   const typeSel = watch("room_type");
+  const typesPro = useTypesChambrePro();
+  const types = typesPro.data ?? TYPES_OFFICIELS.map((x) => ({ ...x, status: "approved" as const }));
+  const proposer = useProposerType();
+  const [autre, setAutre] = useState<string | null>(null); // champ « Autre type » ouvert
+
+  const ajouterType = () => {
+    if (!autre?.trim()) return;
+    proposer.mutate(autre.trim(), {
+      onSuccess: (tp) => {
+        setValue("room_type", tp.slug, { shouldValidate: true });
+        setAutre(null);
+      },
+    });
+  };
   const caution = watch("deposit_months");
 
   const suivant = (v: Valeurs) => {
@@ -92,15 +109,31 @@ export function InfosStep() {
       <View style={{ gap: sp[2] }}>
         <Text variante="label">Type</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {TYPES.map((tp) => (
+          {types.map((tp) => (
             <Chip
-              key={tp}
-              titre={t.typeChambre[tp] ?? tp}
-              actif={typeSel === tp}
-              onPress={() => setValue("room_type", tp)}
+              key={tp.slug}
+              titre={tp.status === "pending" ? `${tp.label} (en validation)` : tp.label}
+              actif={typeSel === tp.slug}
+              onPress={() => setValue("room_type", tp.slug, { shouldValidate: true })}
             />
           ))}
+          <Chip titre="Autre…" actif={autre !== null} onPress={() => setAutre(autre === null ? "" : null)} />
         </View>
+        {autre !== null ? (
+          <View style={{ gap: sp[2] }}>
+            <TextField
+              label="Nouveau type"
+              value={autre}
+              onChangeText={setAutre}
+              placeholder="Ex. appartement meublé"
+              maxLength={40}
+              autoFocus
+              aide="Tu peux l'utiliser tout de suite ; l'équipe le valide avant qu'il apparaisse dans les filtres."
+              erreur={proposer.error ? (isApiError(proposer.error) ? messageErreur(proposer.error.code, proposer.error.message) : t.erreurs.network) : undefined}
+            />
+            <Button titre="Ajouter ce type" variante="secondaire" taille="compacte" chargement={proposer.isPending} disabled={(autre ?? "").trim().length < 3} onPress={ajouterType} />
+          </View>
+        ) : null}
         {errors.room_type ? <Text variante="legende" couleur={c.danger}>{errors.room_type.message}</Text> : null}
       </View>
 

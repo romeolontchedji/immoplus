@@ -6,10 +6,9 @@ import { QueryState } from "@/ui/components/States";
 import { Text } from "@/ui/components/Text";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import type { Filtres } from "@/features/listings/filtres";
-import { useDistricts } from "@/features/listings/queries";
+import { libelleType, TYPES_OFFICIELS, useDistricts, useTypesChambre, type TypeChambre } from "@/features/listings/queries";
 import type { Alerte, AlerteEntree } from "./queries";
 
-const TYPES = ["single", "entree_coucher", "chambre_salon", "studio"] as const;
 const BUDGETS = [10_000, 15_000, 20_000, 30_000] as const;
 const DISTANCES = [500, 1000, 2000] as const;
 
@@ -46,9 +45,9 @@ export function criteresDepuisFiltres(f: Filtres, quartiers: { id: string; slug:
 }
 
 /** Résumé lisible : « Banikanni, Titirou · Entrée-coucher · ≤ 15 000 F ». */
-export function resumeCriteres(c: Criteres, noms: Record<string, string>): { titre: string; details: string } {
+export function resumeCriteres(c: Criteres, noms: Record<string, string>, typesConnus: TypeChambre[] = TYPES_OFFICIELS): { titre: string; details: string } {
   const lieux = c.district_ids.map((id) => noms[id]).filter(Boolean).join(", ");
-  const types = c.room_types.map((tp) => t.typeChambre[tp] ?? tp).join(", ");
+  const types = c.room_types.map((tp) => libelleType(typesConnus, tp)).join(", ");
   const details = [
     c.max_rent ? `≤ ${francs(c.max_rent)}` : null,
     c.max_distance_m ? `≤ ${c.max_distance_m} m de l'UP` : null,
@@ -71,6 +70,7 @@ function Bloc({ titre, children }: { titre: string; children: React.ReactNode })
 /** Éditeur des critères d'alerte : mêmes pastilles que la feuille de filtres. */
 export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChange: (c: Criteres) => void }) {
   const districts = useDistricts();
+  const types = useTypesChambre();
   const maj = (p: Partial<Criteres>) => onChange({ ...valeur, ...p });
   const budgetLibre = valeur.max_rent !== null && !BUDGETS.includes(valeur.max_rent as (typeof BUDGETS)[number]);
 
@@ -90,8 +90,8 @@ export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChan
       </View>
 
       <Bloc titre="Type">
-        {TYPES.map((tp) => (
-          <Chip key={tp} titre={t.typeChambre[tp] ?? tp} actif={valeur.room_types.includes(tp)} onPress={() => maj({ room_types: basculer(valeur.room_types, tp) })} />
+        {types.map(({ slug, label }) => (
+          <Chip key={slug} titre={label} actif={valeur.room_types.includes(slug)} onPress={() => maj({ room_types: basculer(valeur.room_types, slug) })} />
         ))}
       </Bloc>
 

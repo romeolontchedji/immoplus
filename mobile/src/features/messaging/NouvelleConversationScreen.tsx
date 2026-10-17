@@ -28,7 +28,7 @@ const REPONSES_RAPIDES = ["Est-elle toujours libre ?", "Puis-je visiter aujourd'
 
 /** Message d'ouverture suggéré (COPYWRITING §6 Conversation) : « Bonjour, la {type} à {quartier} est-elle toujours libre ? » */
 function messageSuggere(f: Fiche): string {
-  const type = (t.typeChambre[f.room_type] ?? "chambre").toLowerCase();
+  const type = (f.room_type_label || "chambre").toLowerCase();
   return `Bonjour, la ${type} à ${f.district.name} est-elle toujours libre ?`;
 }
 

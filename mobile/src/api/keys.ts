@@ -3,6 +3,7 @@ export const qk = {
   appConfig: ["app-config"] as const,
   me: ["me"] as const,
   districts: ["districts"] as const,
+  typesChambre: ["types-chambre"] as const,
   fil: (filtres: unknown) => ["fil", filtres] as const,
   fiche: (ident: string) => ["fiche", ident] as const,
   favoris: ["favoris"] as const,
@@ -19,5 +20,6 @@ export const qk = {
     annonces: ["pro", "annonces"] as const,
     annonce: (id: string) => ["pro", "annonce", id] as const,
     medias: (id: string) => ["pro", "medias", id] as const,
+    types: ["pro", "types"] as const,
   },
 };

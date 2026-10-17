@@ -27,7 +27,7 @@ export const queryClient = new QueryClient({
 export const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: CLES_KV.cacheRequetes, throttleTime: 2000 });
 
 /** Seules les lectures publiques sont persistées : jamais de messages ni de données personnelles sur le disque en clair. */
-export const PREFIXES_PERSISTES = new Set(["fil", "fiche", "districts", "app-config"]);
+export const PREFIXES_PERSISTES = new Set(["fil", "fiche", "districts", "types-chambre", "app-config"]);
 
 export function estSessionPerdue(erreur: unknown): boolean {
   return isApiError(erreur) && erreur.status === 401;
