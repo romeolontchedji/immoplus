@@ -63,6 +63,10 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "Plans d'abonnement des gérants (CDC §9.19) ; prix à fixer avant activation (décision V11).",
     ),
     "SUBSCRIPTION_GRACE_DAYS": (7, "Jours de grâce d'un abonnement impayé avant expiration."),
+    "PAID_ALERTS_ENABLED": (
+        False,
+        "Alerte prioritaire payante des locataires (SMS en plus du push) : désactivée en V1.",
+    ),
     "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
     "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),
     "NEW_CONVERSATIONS_PER_DAY": (20, "Nouvelles conversations par jour et par locataire."),

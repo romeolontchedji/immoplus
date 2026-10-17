@@ -29,7 +29,7 @@ SECTIONS = [
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
     ("abonnement", "Abonnement (désactivé en V1)", "Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.",
-     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "PLANS"]),
+     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "PLANS", "PAID_ALERTS_ENABLED"]),
 ]  # fmt: skip
 
 CHOIX = {

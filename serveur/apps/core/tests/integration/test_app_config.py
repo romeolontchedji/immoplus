@@ -15,6 +15,7 @@ def test_app_config_publique_et_complete():
     assert corps["min_supported_version"] == "1.0.0"
     assert corps["maintenance"] == {"active": False, "message": ""}
     assert corps["flags"]["subscription"] is False  # paiement débranché en V1
+    assert corps["flags"]["paid_alerts"] is False  # alertes payantes des locataires : désactivées en V1
     assert corps["limits"]["photos_max"] == 10 and corps["limits"]["message_max_length"] == 2000
     assert corps["realtime"]["path"] == "/ws/v1/"
     assert corps["contact"] == {
@@ -48,3 +49,13 @@ def test_pied_de_page_utilise_le_bon_numero():
     html = Client().get("/").content.decode()
     assert 'href="https://wa.me/2290156201400"' in html
     assert "22901562014000" not in html  # ancien lien avec un 0 de trop
+
+
+def test_alertes_payantes_restent_cachees_meme_si_le_parametre_est_active():
+    from apps.core import parametres
+
+    parametres.definir("PAID_ALERTS_ENABLED", True)
+    try:
+        assert Client().get("/v1/app-config").json()["flags"]["paid_alerts"] is False
+    finally:
+        parametres.definir("PAID_ALERTS_ENABLED", False)
