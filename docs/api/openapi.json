@@ -979,6 +979,41 @@
                 }
             }
         },
+        "/v1/legal/{slug}": {
+            "get": {
+                "operationId": "legal_document",
+                "description": "GET /v1/legal/{slug} : conditions d'utilisation ou politique de confidentialité, même texte que le site.",
+                "summary": "Texte légal (conditions, confidentialité)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "slug",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Application"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentLegalOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/listings": {
             "get": {
                 "operationId": "listings_list",
@@ -3001,6 +3036,25 @@
                     "platform"
                 ]
             },
+            "BlocLegalOut": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/TypeEnum"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string",
+                        "description": "Début en gras d'une puce (« Compte »)."
+                    }
+                },
+                "required": [
+                    "text",
+                    "type"
+                ]
+            },
             "CarteOut": {
                 "type": "object",
                 "properties": {
@@ -3335,6 +3389,81 @@
                     "longitude",
                     "name",
                     "slug"
+                ]
+            },
+            "DocumentLegalOut": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "$ref": "#/components/schemas/SlugEnum"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "provisional": {
+                        "type": "boolean",
+                        "description": "Vrai : identité de l'éditeur provisoire (fictive)."
+                    },
+                    "editor": {
+                        "$ref": "#/components/schemas/EditeurOut"
+                    },
+                    "sections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SectionLegaleOut"
+                        }
+                    }
+                },
+                "required": [
+                    "editor",
+                    "provisional",
+                    "sections",
+                    "slug",
+                    "summary",
+                    "title",
+                    "updated_at",
+                    "version"
+                ]
+            },
+            "EditeurOut": {
+                "type": "object",
+                "properties": {
+                    "company": {
+                        "type": "string"
+                    },
+                    "rccm": {
+                        "type": "string"
+                    },
+                    "ifu": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "address",
+                    "company",
+                    "email",
+                    "ifu",
+                    "phone",
+                    "rccm"
                 ]
             },
             "ElectricityMeterEnum": {
@@ -4390,6 +4519,29 @@
                 "type": "string",
                 "description": "* `single` - single\n* `entree_coucher` - entree_coucher\n* `chambre_salon` - chambre_salon\n* `studio` - studio"
             },
+            "SectionLegaleOut": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "blocks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BlocLegalOut"
+                        }
+                    },
+                    "html": {
+                        "type": "string",
+                        "description": "Même contenu rendu en HTML (site)."
+                    }
+                },
+                "required": [
+                    "blocks",
+                    "html",
+                    "title"
+                ]
+            },
             "SessionOut": {
                 "type": "object",
                 "properties": {
@@ -4454,6 +4606,14 @@
                     "id",
                     "status"
                 ]
+            },
+            "SlugEnum": {
+                "enum": [
+                    "conditions",
+                    "confidentialite"
+                ],
+                "type": "string",
+                "description": "* `conditions` - conditions\n* `confidentialite` - confidentialite"
             },
             "StatusEnum": {
                 "enum": [
@@ -4575,6 +4735,14 @@
                 "required": [
                     "updated"
                 ]
+            },
+            "TypeEnum": {
+                "enum": [
+                    "p",
+                    "li"
+                ],
+                "type": "string",
+                "description": "* `p` - p\n* `li` - li"
             },
             "UtilisateurOut": {
                 "type": "object",

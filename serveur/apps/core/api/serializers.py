@@ -42,3 +42,39 @@ class AppConfigOut(serializers.Serializer):
     limits = LimitesOut()
     realtime = TempsReelOut()
     contact = ContactOut()
+
+
+class BlocLegalOut(serializers.Serializer):
+    type = serializers.ChoiceField(choices=["p", "li"])
+    text = serializers.CharField()
+    label = serializers.CharField(
+        required=False, help_text="Début en gras d'une puce (« Compte »)."
+    )
+
+
+class SectionLegaleOut(serializers.Serializer):
+    title = serializers.CharField()
+    blocks = BlocLegalOut(many=True)
+    html = serializers.CharField(help_text="Même contenu rendu en HTML (site).")
+
+
+class EditeurOut(serializers.Serializer):
+    company = serializers.CharField()
+    rccm = serializers.CharField()
+    ifu = serializers.CharField()
+    address = serializers.CharField()
+    email = serializers.CharField()
+    phone = serializers.CharField()
+
+
+class DocumentLegalOut(serializers.Serializer):
+    slug = serializers.ChoiceField(choices=["conditions", "confidentialite"])
+    title = serializers.CharField()
+    summary = serializers.CharField()
+    version = serializers.CharField()
+    updated_at = serializers.DateField()
+    provisional = serializers.BooleanField(
+        help_text="Vrai : identité de l'éditeur provisoire (fictive)."
+    )
+    editor = EditeurOut()
+    sections = SectionLegaleOut(many=True)

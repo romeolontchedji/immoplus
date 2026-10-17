@@ -69,6 +69,8 @@
   --info-border:    rgba(27, 68, 214, 0.15);
   --focus-ring:     rgba(27, 68, 214, 0.12);
   --blue-focus-ring: rgba(27, 68, 214, 0.18);
+  --legal-hero-pastille: rgba(255, 255, 255, 0.14); /* pastilles sur la carte cobalt des pages légales */
+  --legal-hero-bord:     rgba(255, 255, 255, 0.28);
   --danger-soft:    #FDEDED;
 
   /* Alias sémantiques pour les composants existants */

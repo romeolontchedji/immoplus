@@ -4,9 +4,19 @@ from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
 
+from apps.core import legal
+
 
 def accueil(request):
     return render(request, "web/accueil.html")
+
+
+def conditions(request):
+    return render(request, "web/public/legal.html", {"doc": legal.document("conditions")})
+
+
+def confidentialite(request):
+    return render(request, "web/public/legal.html", {"doc": legal.document("confidentialite")})
 
 
 def styleguide(request):
