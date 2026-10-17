@@ -35,7 +35,7 @@ migrate: ## Applique les migrations (rôle PostgreSQL `migrate`)
 	$(COMPOSE) run --rm migrer
 
 seed: ## Paramètres et quartiers de Parakou ; ajouter DEMO=1 pour des annonces d'exemple (développement)
-	$(COMPOSE) run --rm web-api python manage.py seed $(if $(DEMO),--demo,)
+	$(COMPOSE) run --rm admin python manage.py seed $(if $(DEMO),--demo,)  # la commande vit dans adminsite
 
 css: ## Assemble, minifie et empreinte le CSS
 	$(PYTHON) outils/construire_css.py
