@@ -1,4 +1,5 @@
 import { Linking, ScrollView, View } from "react-native";
+import { useRouter } from "expo-router";
 import { sp } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Screen } from "@/ui/components/Screen";
@@ -38,6 +39,7 @@ const SECTIONS: Section[] = [
 /** Aide et conditions d'utilisation (statique). */
 export function AideScreen() {
   const { c } = useTheme();
+  const router = useRouter();
 
   return (
     <Screen scroll>
@@ -69,12 +71,12 @@ export function AideScreen() {
         <Button
           titre="Conditions d'utilisation"
           variante="secondaire"
-          onPress={() => void Linking.openURL("https://logeo.example/cgu")}
+          onPress={() => router.push("/legal/conditions")}
         />
         <Button
           titre="Politique de confidentialité"
           variante="fantome"
-          onPress={() => void Linking.openURL("https://logeo.example/confidentialite")}
+          onPress={() => router.push("/legal/confidentialite")}
         />
       </View>
 

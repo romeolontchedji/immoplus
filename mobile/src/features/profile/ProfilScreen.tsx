@@ -200,6 +200,8 @@ export function ProfilScreen() {
       )}
       <LigneMenu titre="Notifications" href="/parametres/preferences" iconeLabel="Notifications" />
       <LigneMenu titre="Aide et contact" href="/parametres/aide" iconeLabel="Aide" />
+      <LigneMenu titre="Conditions d'utilisation" href="/legal/conditions" iconeLabel="Conditions" />
+      <LigneMenu titre="Politique de confidentialité" href="/legal/confidentialite" iconeLabel="Confidentialité" />
 
       {/* Bouton Se déconnecter : rouge pâle, texte rouge (conforme maquette) */}
       <Pressable

@@ -386,6 +386,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/legal/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Texte légal (conditions, confidentialité)
+         * @description GET /v1/legal/{slug} : conditions d'utilisation ou politique de confidentialité, même texte que le site.
+         */
+        get: operations["legal_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/listings": {
         parameters: {
             query?: never;
@@ -1031,6 +1051,12 @@ export interface components {
             created_at: string;
             current: boolean;
         };
+        BlocLegalOut: {
+            type: components["schemas"]["TypeEnum"];
+            text: string;
+            /** @description Début en gras d'une puce (« Compte »). */
+            label?: string;
+        };
         CarteOut: {
             /** Format: uuid */
             id: string;
@@ -1123,6 +1149,26 @@ export interface components {
             latitude: number;
             /** Format: double */
             longitude: number;
+        };
+        DocumentLegalOut: {
+            slug: components["schemas"]["SlugEnum"];
+            title: string;
+            summary: string;
+            version: string;
+            /** Format: date */
+            updated_at: string;
+            /** @description Vrai : identité de l'éditeur provisoire (fictive). */
+            provisional: boolean;
+            editor: components["schemas"]["EditeurOut"];
+            sections: components["schemas"]["SectionLegaleOut"][];
+        };
+        EditeurOut: {
+            company: string;
+            rccm: string;
+            ifu: string;
+            address: string;
+            email: string;
+            phone: string;
         };
         /**
          * @description * `individual` - individual
@@ -1444,6 +1490,12 @@ export interface components {
          * @enum {string}
          */
         RoomTypeEnum: "single" | "entree_coucher" | "chambre_salon" | "studio";
+        SectionLegaleOut: {
+            title: string;
+            blocks: components["schemas"]["BlocLegalOut"][];
+            /** @description Même contenu rendu en HTML (site). */
+            html: string;
+        };
         SessionOut: {
             user: components["schemas"]["UtilisateurOut"];
             tokens: components["schemas"]["JetonsOut"];
@@ -1464,6 +1516,12 @@ export interface components {
             status: string;
             created: boolean;
         };
+        /**
+         * @description * `conditions` - conditions
+         *     * `confidentialite` - confidentialite
+         * @enum {string}
+         */
+        SlugEnum: "conditions" | "confidentialite";
         /**
          * @description * `draft` - draft
          *     * `processing` - processing
@@ -1510,6 +1568,12 @@ export interface components {
         ToutLuOut: {
             updated: number;
         };
+        /**
+         * @description * `p` - p
+         *     * `li` - li
+         * @enum {string}
+         */
+        TypeEnum: "p" | "li";
         UtilisateurOut: {
             /** Format: uuid */
             id: string;
@@ -2084,6 +2148,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DistrictOut"][];
+                };
+            };
+        };
+    };
+    legal_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentLegalOut"];
                 };
             };
         };

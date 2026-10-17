@@ -42,7 +42,7 @@ export function TelephoneStep({
   const demander = useDemanderCode(objet);
   const [prenom, setPrenom] = useState("");
   const [statutEtudiant, setStatutEtudiant] = useState<"up" | "autre" | "non">("up");
-  const [cguAcceptees, setCguAcceptees] = useState(true);
+  const [cguAcceptees, setCguAcceptees] = useState(false); // acceptation active, jamais précochée
 
   const {
     control,
@@ -183,6 +183,8 @@ export function TelephoneStep({
           {estInscription ? (
             <Pressable
               onPress={() => setCguAcceptees(!cguAcceptees)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: cguAcceptees }}
               style={{
                 flexDirection: "row",
                 alignItems: "flex-start",
@@ -206,7 +208,15 @@ export function TelephoneStep({
                 {cguAcceptees ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : null}
               </View>
               <Text style={{ flex: 1, fontSize: 13, color: colors.night, lineHeight: 18 }}>
-                J’accepte les conditions d’utilisation et la politique de confidentialité de Logeo.
+                J’accepte les{" "}
+                <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }} onPress={() => router.push("/legal/conditions")}>
+                  conditions d’utilisation
+                </Text>{" "}
+                et la{" "}
+                <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }} onPress={() => router.push("/legal/confidentialite")}>
+                  politique de confidentialité
+                </Text>{" "}
+                de Logeo.
               </Text>
             </Pressable>
           ) : null}
@@ -247,6 +257,7 @@ export function TelephoneStep({
           <Button
             titre="Recevoir le code"
             chargement={demander.isPending}
+            disabled={estInscription && !cguAcceptees}
             onPress={handleSubmit((v) =>
               demander.mutate(v.phone, {
                 onSuccess: (r) => {
