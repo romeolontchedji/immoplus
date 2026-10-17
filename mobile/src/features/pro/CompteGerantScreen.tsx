@@ -5,6 +5,7 @@ import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
 import { Text } from "@/ui/components/Text";
 import { Logotype } from "@/ui/components/Logo";
+import { useContactEquipe } from "@/features/system/useAppConfig";
 
 /**
  * CompteGerantScreen conforme à la maquette Mobile · Compte gérant@1x.png :
@@ -14,10 +15,11 @@ import { Logotype } from "@/ui/components/Logo";
  * - Sous-titre : pas d'inscription automatique (protège les locataires, valorise le badge Vérifié)
  * - Carte blanche 4 étapes numérotées
  * - Note sur les identifiants transmis par l'administrateur, puis bouton « J'ai déjà un compte, me connecter »
- * - Boutons « Écrire sur WhatsApp » et « Appeler +229 01 56 20 14 00 ».
+ * - Boutons « Écrire sur WhatsApp » et « Appeler » : numéro servi par GET /v1/app-config (`TEAM_PHONE`).
  */
 export function CompteGerantScreen() {
   const router = useRouter();
+  const contact = useContactEquipe();
   const etapes = [
     {
       num: 1,
@@ -189,7 +191,7 @@ export function CompteGerantScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Écrire sur WhatsApp"
-            onPress={() => void Linking.openURL("https://wa.me/2290156201400")}
+            onPress={() => void Linking.openURL(contact.whatsapp_url)}
             style={{
               minHeight: 52,
               borderRadius: 16,
@@ -206,7 +208,7 @@ export function CompteGerantScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Appeler le numéro"
-            onPress={() => void Linking.openURL("tel:+2290156201400")}
+            onPress={() => void Linking.openURL(contact.telUrl)}
             style={{
               minHeight: 52,
               borderRadius: 16,
@@ -218,7 +220,7 @@ export function CompteGerantScreen() {
             }}
           >
             <Text style={{ fontSize: 15, fontWeight: "700", color: colors.primary }}>
-              Appeler +229 01 56 20 14 00
+              Appeler {contact.affiche}
             </Text>
           </Pressable>
         </View>

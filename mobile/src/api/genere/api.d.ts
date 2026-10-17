@@ -31,8 +31,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Configuration distante de l'application */
-        get: operations["v1_app_config_retrieve"];
+        /**
+         * Configuration distante
+         * @description GET /v1/app-config : version minimale, maintenance, avis, drapeaux, limites, temps réel, contact de l'équipe.
+         */
+        get: operations["app_config"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1014,6 +1017,7 @@ export interface components {
             };
             limits: components["schemas"]["LimitesOut"];
             realtime: components["schemas"]["TempsReelOut"];
+            contact: components["schemas"]["ContactOut"];
         };
         AppareilOut: {
             /** Format: uuid */
@@ -1067,6 +1071,11 @@ export interface components {
             label?: string;
             phone: string;
             password: string;
+        };
+        ContactOut: {
+            phone: string;
+            /** Format: uri */
+            whatsapp_url: string;
         };
         ConversationDetailOut: {
             /** Format: uuid */
@@ -1540,7 +1549,7 @@ export interface operations {
             };
         };
     };
-    v1_app_config_retrieve: {
+    app_config: {
         parameters: {
             query?: never;
             header?: never;
@@ -1569,6 +1578,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ConnexionIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConnexionIn"];
+                "multipart/form-data": components["schemas"]["ConnexionIn"];
             };
         };
         responses: {
@@ -1610,6 +1621,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["OtpDemandeIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["OtpDemandeIn"];
+                "multipart/form-data": components["schemas"]["OtpDemandeIn"];
             };
         };
         responses: {
@@ -1633,6 +1646,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["OtpVerificationIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["OtpVerificationIn"];
+                "multipart/form-data": components["schemas"]["OtpVerificationIn"];
             };
         };
         responses: {
@@ -1656,6 +1671,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChangementMotDePasseIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangementMotDePasseIn"];
+                "multipart/form-data": components["schemas"]["ChangementMotDePasseIn"];
             };
         };
         responses: {
@@ -1678,6 +1695,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MotDePasseOublieIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["MotDePasseOublieIn"];
+                "multipart/form-data": components["schemas"]["MotDePasseOublieIn"];
             };
         };
         responses: {
@@ -1700,6 +1719,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RafraichissementIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["RafraichissementIn"];
+                "multipart/form-data": components["schemas"]["RafraichissementIn"];
             };
         };
         responses: {
@@ -1723,6 +1744,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["InscriptionIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["InscriptionIn"];
+                "multipart/form-data": components["schemas"]["InscriptionIn"];
             };
         };
         responses: {
@@ -1770,6 +1793,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ConversationOuvertureIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConversationOuvertureIn"];
+                "multipart/form-data": components["schemas"]["ConversationOuvertureIn"];
             };
         };
         responses: {
@@ -1824,6 +1849,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["PatchedSilenceIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSilenceIn"];
+                "multipart/form-data": components["schemas"]["PatchedSilenceIn"];
             };
         };
         responses: {
@@ -1894,6 +1921,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MessageIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["MessageIn"];
+                "multipart/form-data": components["schemas"]["MessageIn"];
             };
         };
         responses: {
@@ -1927,6 +1956,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LectureIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["LectureIn"];
+                "multipart/form-data": components["schemas"]["LectureIn"];
             };
         };
         responses: {
@@ -2010,6 +2041,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["JetonPushIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["JetonPushIn"];
+                "multipart/form-data": components["schemas"]["JetonPushIn"];
             };
         };
         responses: {
@@ -2207,6 +2240,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["PatchedProfilIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProfilIn"];
+                "multipart/form-data": components["schemas"]["PatchedProfilIn"];
             };
         };
         responses: {
@@ -2249,6 +2284,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["AlerteIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["AlerteIn"];
+                "multipart/form-data": components["schemas"]["AlerteIn"];
             };
         };
         responses: {
@@ -2294,6 +2331,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["PatchedAlerteIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAlerteIn"];
+                "multipart/form-data": components["schemas"]["PatchedAlerteIn"];
             };
         };
         responses: {
@@ -2376,6 +2415,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChangementNumeroIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangementNumeroIn"];
+                "multipart/form-data": components["schemas"]["ChangementNumeroIn"];
             };
         };
         responses: {
@@ -2555,6 +2596,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AnnonceIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["AnnonceIn"];
+                "multipart/form-data": components["schemas"]["AnnonceIn"];
             };
         };
         responses: {
@@ -2621,6 +2664,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["PatchedAnnonceIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAnnonceIn"];
+                "multipart/form-data": components["schemas"]["PatchedAnnonceIn"];
             };
         };
         responses: {
@@ -2730,6 +2775,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MediaIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["MediaIn"];
+                "multipart/form-data": components["schemas"]["MediaIn"];
             };
         };
         responses: {
@@ -2776,6 +2823,8 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["PatchedOrdreMediasIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOrdreMediasIn"];
+                "multipart/form-data": components["schemas"]["PatchedOrdreMediasIn"];
             };
         };
         responses: {
@@ -2841,6 +2890,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ApercuIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["ApercuIn"];
+                "multipart/form-data": components["schemas"]["ApercuIn"];
             };
         };
         responses: {
@@ -2864,6 +2915,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SignalementIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["SignalementIn"];
+                "multipart/form-data": components["schemas"]["SignalementIn"];
             };
         };
         responses: {
