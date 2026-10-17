@@ -11,7 +11,10 @@
 - Dernières chambres consultées : bandeau sur l'accueil mobile (stockage local), section du tableau locataire web
   (session, relue à l'affichage).
 - Mobile : balayage d'une conversation (« Lu », sourdine 8 h, réactiver) ; `GestureHandlerRootView` à la racine.
-- Reste : photos d'ambiance (W1/M6, dès qu'elles sont dans `photos-brutes/`), recette sur dev build (push, N3,
+- Photos d'ambiance (W1/M6, ADR 0006) : diaporama de 3 photos sur l'accueil du site, photo du gérant sur sa carte,
+  photos de la présentation et de la bienvenue mobile ; `outils/construire_photos.py`. Quatre images de banque payante
+  écartées et remplacées par des images générées par IA à partir d'un texte (règle dans `docs/design/credits-photos.md`).
+- Reste : site d'origine des 5 photos libres à noter dans les crédits, recette sur dev build (push, N3,
   biométrie, GPS, balayage), KKiaPay et prix au lancement payant.
 
 **Chantier précédent : refonte générale de l'interface et messagerie mobile.**
