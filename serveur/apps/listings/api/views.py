@@ -12,7 +12,7 @@ from apps.core.api.throttles import LimiteCompte, LimiteParIp
 from apps.core.errors import ErreurMetier
 
 from .. import selectors
-from ..services import annonces, contenu
+from ..services import annonces, contenu, types
 from . import serializers as s
 
 TAG_PRO = ["Espace gérant"]
@@ -52,6 +52,43 @@ class Quartiers(_Public):
     )
     def get(self, request):
         return Response(s.DistrictOut(selectors.quartiers_actifs(), many=True).data)
+
+
+class TypesChambre(_Public):
+    @extend_schema(
+        tags=["Référentiels"],
+        summary="Types de logement (validés, les plus courants d'abord)",
+        responses={200: s.TypeChambreOut(many=True)},
+    )
+    def get(self, request):
+        return Response(s.TypeChambreOut(types.publics(), many=True).data)
+
+
+class TypesChambrePro(_Pro):
+    @extend_schema(
+        tags=TAG_PRO,
+        summary="Types utilisables par le gérant (validés et ses propositions)",
+        responses={200: s.TypeChambreProOut(many=True)},
+    )
+    def get(self, request):
+        return Response(
+            s.TypeChambreProOut(types.pour_gerant(self.profil(request)), many=True).data
+        )
+
+    @extend_schema(
+        tags=TAG_PRO,
+        summary="Proposer un type de logement",
+        description="Renvoie le type équivalent s'il existe déjà (accents et casse ignorés), sinon le crée en "
+        "attente de validation. Utilisable tout de suite par le gérant ; dans les filtres après validation.",
+        request=s.PropositionTypeIn,
+        responses={200: s.TypeChambreProOut, 201: s.TypeChambreProOut},
+    )
+    def post(self, request):
+        d = _donnees(s.PropositionTypeIn, request)
+        avant = types.libelles()
+        t = types.proposer(self.profil(request), d["label"])
+        corps = {"slug": t.slug, "label": t.label, "status": t.status}
+        return Response(s.TypeChambreProOut(corps).data, status=200 if t.slug in avant else 201)
 
 
 class AnnoncesPro(_Pro):

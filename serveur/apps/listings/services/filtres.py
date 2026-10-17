@@ -5,7 +5,8 @@ from collections.abc import Mapping
 
 from apps.core.errors import ErreurMetier
 
-from ..enums import Compteur, Eau, TypeChambre
+from ..enums import Compteur, Eau
+from . import types
 
 TRIS = ("recent", "rent_asc", "rent_desc", "distance")
 LIMITE_DEFAUT = 10
@@ -82,7 +83,9 @@ def normaliser(params: Mapping) -> dict:
     return {
         "q": q,
         "districts": _liste(params.get("district")),
-        "types": _liste(params.get("type"), TypeChambre.values, "type"),
+        "types": _liste(
+            params.get("type"), types.slugs_valides() if params.get("type") else None, "type"
+        ),
         "rent_min": loyer_min,
         "rent_max": loyer_max,
         "bathroom": _booleen(params.get("bathroom"), "bathroom"),

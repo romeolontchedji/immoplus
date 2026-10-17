@@ -7,8 +7,10 @@ from django.shortcuts import redirect, render
 from django.urls import path, reverse
 
 from apps.core.errors import ErreurMetier
-from apps.listings.models import Listing
+from apps.listings.enums import StatutTypeChambre
+from apps.listings.models import Listing, RoomType
 from apps.listings.services import annonces
+from apps.listings.services import types as types_chambre
 from apps.moderation import services
 from apps.moderation.models import ModerationAction, Report
 
@@ -90,6 +92,109 @@ class ListingAdmin(admin.ModelAdmin):
                 )
         if faites:
             self.message_user(request, f"{faites} annonce(s) refusée(s).")
+
+
+class RattachementForm(forms.Form):
+    cible = forms.ModelChoiceField(
+        label="Rattacher à",
+        queryset=RoomType.objects.filter(status=StatutTypeChambre.APPROVED),
+        help_text="Les annonces et les alertes qui portent ce type passent sur le type choisi ; la proposition disparaît.",
+    )
+
+
+@admin.register(RoomType)
+class RoomTypeAdmin(admin.ModelAdmin):
+    """Types de logement (décision V1) : les propositions des gérants se valident ou se rattachent à un type validé."""
+
+    list_display = ("label", "slug", "status", "annonces", "proposed_by", "created_at")
+    list_filter = ("status",)
+    search_fields = ("label", "slug")
+    ordering = ("-status", "sort_order", "label")  # « pending » d'abord
+    actions = ["valider"]
+    fields = (
+        "label",
+        "slug",
+        "status",
+        "sort_order",
+        "proposed_by",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+    )
+    readonly_fields = ("slug", "status", "proposed_by", "reviewed_by", "reviewed_at", "created_at")
+
+    def has_add_permission(self, request):
+        return False  # les types naissent d'une proposition de gérant (ou des 4 officiels)
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # « Rattacher » remplace la suppression : aucune annonce ne perd son type
+
+    @admin.display(description="Annonces")
+    def annonces(self, obj):
+        return Listing.objects.filter(room_type=obj.slug, deleted_at__isnull=True).count()
+
+    def save_model(self, request, obj, form, change):
+        _exiger_personnel(request)  # seuls le libellé et l'ordre sont modifiables ici
+        super().save_model(request, obj, form, change)
+        types_chambre.vider_cache()
+
+    @admin.action(description="Valider (visible dans les filtres et les alertes)")
+    def valider(self, request, queryset):
+        _exiger_personnel(request)
+        faits = 0
+        for t in queryset.filter(status=StatutTypeChambre.PENDING):
+            types_chambre.valider(t, acteur=request.user)
+            faits += 1
+        self.message_user(request, f"{faits} type(s) validé(s).")
+
+    def get_urls(self):
+        return [
+            path(
+                "<int:type_id>/rattacher/",
+                self.admin_site.admin_view(self.rattacher),
+                name="listings_roomtype_rattacher",
+            ),
+            *super().get_urls(),
+        ]
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = {
+            **(extra_context or {}),
+            "lien_rattacher": reverse("admin:listings_roomtype_rattacher", args=[object_id]),
+        }
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def rattacher(self, request, type_id):
+        _exiger_personnel(request)
+        t = RoomType.objects.filter(pk=type_id).first()
+        if t is None:
+            raise PermissionDenied
+        formulaire = RattachementForm(request.POST or None)
+        formulaire.fields["cible"].queryset = RoomType.objects.filter(
+            status=StatutTypeChambre.APPROVED
+        ).exclude(pk=t.pk)
+        if request.method == "POST" and formulaire.is_valid():
+            try:
+                n = types_chambre.rattacher(
+                    t, formulaire.cleaned_data["cible"], acteur=request.user
+                )
+            except ErreurMetier as erreur:
+                formulaire.add_error(None, erreur.message)
+            else:
+                cible = formulaire.cleaned_data["cible"]
+                self.message_user(
+                    request, f"« {t.label} » rattaché à « {cible.label} » ({n} annonce(s))."
+                )
+                return redirect("admin:listings_roomtype_changelist")
+        contexte = {
+            **self.admin_site.each_context(request),
+            "title": f"Rattacher « {t.label} »",
+            "form": formulaire,
+            "type_chambre": t,
+            "annonces": Listing.objects.filter(room_type=t.slug, deleted_at__isnull=True).count(),
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/rattacher-type.html", contexte)
 
 
 class LectureConversationForm(forms.Form):

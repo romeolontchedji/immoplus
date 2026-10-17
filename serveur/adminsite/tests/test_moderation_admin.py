@@ -196,3 +196,39 @@ class TestDecisions:
             == 403
         )
         assert Listing.objects.count() == 0 and Report.objects.count() == 0
+
+
+class TestTypesDeLogement:
+    """Décision V1 : valider une proposition, ou la rattacher à un type validé."""
+
+    def test_valider(self, mod):
+        from apps.listings.models import RoomType
+        from apps.listings.services import types
+
+        _, c = mod
+        t = types.proposer(gerant_verifie(), "Villa")
+        lancer(c, "listings_roomtype", "valider", [t.pk])
+        t.refresh_from_db()
+        assert t.status == "approved"
+        assert AuditLog.objects.filter(action="room_type.valide").exists()
+        assert RoomType.objects.filter(slug="villa", status="approved").exists()
+
+    def test_rattacher(self, mod):
+        from apps.listings.models import RoomType
+        from apps.listings.services import types
+
+        _, c = mod
+        t = types.proposer(gerant_verifie(), "Studette")
+        a = ListingFactory(room_type=t.slug)
+        url = reverse("admin:listings_roomtype_rattacher", args=[t.pk])
+        page = c.get(url)
+        assert page.status_code == 200 and "1 annonce(s)" in page.content.decode()
+        cible = RoomType.objects.get(slug="studio")
+        r = c.post(url, {"cible": cible.pk})
+        assert r.status_code == 302
+        a.refresh_from_db()
+        assert a.room_type == "studio" and not RoomType.objects.filter(pk=t.pk).exists()
+
+    def test_pas_de_suppression_ni_d_ajout(self, mod):
+        _, c = mod
+        assert c.get(reverse("admin:listings_roomtype_add")).status_code == 403

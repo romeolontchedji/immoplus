@@ -234,7 +234,10 @@ def test_connexion_sans_se_souvenir_session_de_navigateur():
     assert "Se souvenir de moi" in page and 'name="se_souvenir"' in page and "checked" not in page
     c.post("/connexion", {"phone": "97626262", "password": MOT_DE_PASSE})
     assert c.session.get_expire_at_browser_close()
-    assert c.cookies[settings.SESSION_COOKIE_NAME]["expires"] == "" and c.cookies[settings.SESSION_COOKIE_NAME]["max-age"] == ""
+    assert (
+        c.cookies[settings.SESSION_COOKIE_NAME]["expires"] == ""
+        and c.cookies[settings.SESSION_COOKIE_NAME]["max-age"] == ""
+    )
 
 
 def test_connexion_avec_se_souvenir_trente_jours():

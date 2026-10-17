@@ -5,10 +5,12 @@ from django.http import Http404
 from django.shortcuts import render
 
 from apps.core import legal
+from apps.listings.services import types
 
 
 def accueil(request):
-    return render(request, "web/accueil.html")
+    # Onglets de la recherche : les 3 types validés les plus courants (décision V1).
+    return render(request, "web/accueil.html", {"types_accueil": types.publics()[:3]})
 
 
 def conditions(request):

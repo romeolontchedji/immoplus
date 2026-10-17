@@ -7,6 +7,8 @@ from . import views_tableau as t
 
 urlpatterns = [
     path("districts", v.Quartiers.as_view(), name="districts"),
+    path("room-types", v.TypesChambre.as_view(), name="room-types"),
+    path("pro/room-types", v.TypesChambrePro.as_view(), name="pro-room-types"),
     path("pro/dashboard", t.Tableau.as_view(), name="pro-dashboard"),
     path("listings", p.Fil.as_view(), name="listings"),
     path("listings/<str:ident>", p.Fiche.as_view(), name="listing"),

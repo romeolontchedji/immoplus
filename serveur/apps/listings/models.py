@@ -9,7 +9,15 @@ from django.db import models
 from django.db.models.functions import Now
 from django.utils import timezone
 
-from .enums import Compteur, Eau, RaisonMasquage, StatutAnnonce, StatutMedia, TypeChambre, TypeMedia
+from .enums import (
+    Compteur,
+    Eau,
+    RaisonMasquage,
+    StatutAnnonce,
+    StatutMedia,
+    StatutTypeChambre,
+    TypeMedia,
+)
 
 
 class District(models.Model):
@@ -30,6 +38,59 @@ class District(models.Model):
         return self.name
 
 
+class RoomType(models.Model):
+    """Type de logement (décision V1) : officiel, ou proposé par un gérant puis validé ou rattaché par la modération.
+
+    `listings.room_type` et `alerts.room_types` portent le `slug` : un rattachement réécrit ces valeurs.
+    """
+
+    slug = models.CharField(max_length=40, unique=True)
+    label = models.CharField(max_length=40)
+    status = models.CharField(
+        max_length=10,
+        choices=StatutTypeChambre.choices,
+        default=StatutTypeChambre.PENDING,
+        db_default="pending",
+    )
+    sort_order = models.SmallIntegerField(default=100, db_default=100)
+    proposed_by = models.ForeignKey(
+        "accounts.GerantProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        db_column="proposed_by",
+    )
+    reviewed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        db_column="reviewed_by",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+
+    class Meta:
+        db_table = "room_types"
+        ordering = ["sort_order", "label"]
+        verbose_name = "type de logement"
+        verbose_name_plural = "types de logement"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(status__in=[s.value for s in StatutTypeChambre]),
+                name="room_types_statut_valide",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(slug__regex=r"^[a-z0-9_]{2,40}$"), name="room_types_slug_valide"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.label
+
+
 class Listing(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     gerant = models.ForeignKey(
@@ -40,7 +101,7 @@ class Listing(models.Model):
     )
     slug = models.CharField(max_length=160, unique=True)
     title = models.CharField(max_length=120)
-    room_type = models.CharField(max_length=16, choices=TypeChambre.choices)
+    room_type = models.CharField(max_length=40)  # slug d'un `RoomType` (contrôlé par le service)
     district = models.ForeignKey(District, on_delete=models.PROTECT, related_name="listings")
     landmark_text = models.CharField(max_length=160)
     address_private = models.CharField(max_length=255, blank=True, default="")
@@ -95,10 +156,6 @@ class Listing(models.Model):
             ),
             models.CheckConstraint(
                 condition=models.Q(title__regex=r"^.{5,}$"), name="listings_titre_5_caracteres"
-            ),
-            models.CheckConstraint(
-                condition=models.Q(room_type__in=[t.value for t in TypeChambre]),
-                name="listings_type_valide",
             ),
             models.CheckConstraint(
                 condition=models.Q(status__in=[s.value for s in StatutAnnonce]),
@@ -224,7 +281,7 @@ class Alert(models.Model):
     user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="+")
     label = models.CharField(max_length=80, default="", blank=True)
     district_ids = ArrayField(models.UUIDField(), default=list, db_default=[])
-    room_types = ArrayField(models.CharField(max_length=16), default=list, db_default=[])
+    room_types = ArrayField(models.CharField(max_length=40), default=list, db_default=[])
     max_rent = models.IntegerField(null=True, blank=True)
     private_bathroom_required = models.BooleanField(default=False, db_default=False)
     max_distance_m = models.IntegerField(null=True, blank=True)

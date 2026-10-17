@@ -3,7 +3,14 @@
 from django.db import models
 
 
+class StatutTypeChambre(models.TextChoices):
+    APPROVED = "approved", "Validé"
+    PENDING = "pending", "Proposé, à valider"
+
+
 class TypeChambre(models.TextChoices):
+    """Types officiels de départ (décision V1) : la liste vivante est la table `room_types`."""
+
     SINGLE = "single", "Chambre simple"
     ENTREE_COUCHER = "entree_coucher", "Entrée-coucher"
     CHAMBRE_SALON = "chambre_salon", "Chambre-salon"

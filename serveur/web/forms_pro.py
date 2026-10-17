@@ -1,14 +1,22 @@
 from django import forms
 
 from apps.listings import selectors
-from apps.listings.enums import Compteur, Eau, TypeChambre
+from apps.listings.enums import Compteur, Eau
+from apps.listings.services import types
 
 from .forms import _Base
 
 
 class AnnonceForm(_Base):
     title = forms.CharField(label="Titre", max_length=120)
-    room_type = forms.ChoiceField(label="Type de logement", choices=TypeChambre.choices)
+    room_type = forms.ChoiceField(label="Type de logement", required=False)
+    nouveau_type = forms.CharField(
+        label="Ou un autre type",
+        max_length=40,
+        required=False,
+        help_text="Absent de la liste ? Écris-le : tu peux l'utiliser tout de suite, l'équipe le valide pour les filtres.",
+        widget=forms.TextInput(attrs={"placeholder": "Ex. appartement meublé"}),
+    )
     district = forms.ChoiceField(label="Quartier")
     landmark_text = forms.CharField(
         label="Repère public (ex. derrière la pharmacie)", max_length=160
@@ -44,17 +52,34 @@ class AnnonceForm(_Base):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, gerant=None, **kwargs):
         super().__init__(*args, **kwargs)
+        proposes = types.pour_gerant(gerant) if gerant is not None else []
+        self.fields["room_type"].choices = [("", "Choisis un type")] + [
+            (
+                t["slug"],
+                t["label"] if t["status"] == "approved" else f"{t['label']} (en validation)",
+            )
+            for t in proposes
+        ]
         self.fields["district"].choices = [
             (str(q.pk), q.name) for q in selectors.quartiers_actifs()
         ]
         for nom in ("has_private_bathroom", "is_fenced"):
             self.fields[nom].widget.attrs.pop("class", None)
 
+    def clean(self):
+        d = super().clean()
+        if not d.get("room_type") and not d.get("nouveau_type"):
+            self.add_error("room_type", "Choisis un type, ou écris-en un nouveau.")
+        return d
+
     def donnees(self) -> dict:
         d = dict(self.cleaned_data)
         d["agent_fee_amount"] = d.get("agent_fee_amount") or 0
         d["address_private"] = d.get("address_private") or ""
         d["description_md"] = d.get("description_md") or ""
+        d.pop(
+            "nouveau_type", None
+        )  # traité par la vue (proposition du type), pas un champ d'annonce
         return d

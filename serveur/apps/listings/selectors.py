@@ -17,7 +17,7 @@ from apps.media import stockage
 
 from .enums import StatutAnnonce, StatutMedia, TypeMedia
 from .models import Alert, District, Favorite, Listing, ListingMedia
-from .services import geo
+from .services import geo, types
 
 
 def quartiers_actifs():
@@ -180,6 +180,7 @@ def _carte(annonce: Listing, medias: list, gerants: dict) -> dict:
         "slug": annonce.slug,
         "title": annonce.title,
         "room_type": annonce.room_type,
+        "room_type_label": types.libelle(annonce.room_type),
         "district": {"name": annonce.district.name, "slug": annonce.district.slug},
         "landmark_text": annonce.landmark_text,
         "rent_amount": annonce.rent_amount,
@@ -341,6 +342,7 @@ def fiche_publique(ident) -> dict | None:
         "slug": annonce.slug,
         "title": annonce.title,
         "room_type": annonce.room_type,
+        "room_type_label": types.libelle(annonce.room_type),
         "district": {"name": annonce.district.name, "slug": annonce.district.slug},
         "landmark_text": annonce.landmark_text,
         "latitude": geo.arrondir_position(annonce.latitude),

@@ -1,6 +1,9 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ..enums import Compteur, Eau, StatutAnnonce, TypeChambre
+from ..enums import Compteur, Eau, StatutAnnonce, StatutTypeChambre
+from ..services import types
 
 
 class DistrictOut(serializers.Serializer):
@@ -13,7 +16,9 @@ class DistrictOut(serializers.Serializer):
 
 class AnnonceIn(serializers.Serializer):
     title = serializers.CharField(max_length=120)
-    room_type = serializers.ChoiceField(choices=[t.value for t in TypeChambre])
+    room_type = serializers.CharField(
+        max_length=40, help_text="Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé)."
+    )
     district = serializers.UUIDField()
     landmark_text = serializers.CharField(max_length=160)
     address_private = serializers.CharField(max_length=255, required=False, allow_blank=True)
@@ -44,6 +49,7 @@ class AnnonceProOut(serializers.Serializer):
     slug = serializers.CharField()
     title = serializers.CharField()
     room_type = serializers.CharField()
+    room_type_label = serializers.SerializerMethodField()
     district = serializers.UUIDField(source="district_id")
     district_name = serializers.CharField(source="district.name")
     landmark_text = serializers.CharField()
@@ -67,6 +73,10 @@ class AnnonceProOut(serializers.Serializer):
     last_confirmed_at = serializers.DateTimeField(allow_null=True)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+
+    @extend_schema_field(OpenApiTypes.STR)
+    def get_room_type_label(self, annonce) -> str:
+        return types.libelle(annonce.room_type) or annonce.room_type
 
 
 class ApercuIn(serializers.Serializer):
@@ -104,3 +114,22 @@ class MediaOut(serializers.Serializer):
 class OrdreMediasIn(serializers.Serializer):
     order = serializers.ListField(child=serializers.UUIDField(), allow_empty=False, max_length=20)
     cover = serializers.UUIDField(required=False, allow_null=True)
+
+
+class TypeChambreOut(serializers.Serializer):
+    slug = serializers.CharField()
+    label = serializers.CharField()
+    count = serializers.IntegerField(help_text="Annonces publiées de ce type.")
+
+
+class TypeChambreProOut(serializers.Serializer):
+    slug = serializers.CharField()
+    label = serializers.CharField()
+    status = serializers.ChoiceField(
+        choices=StatutTypeChambre.values,
+        help_text="`pending` : utilisable par toi tout de suite, visible dans les filtres après validation.",
+    )
+
+
+class PropositionTypeIn(serializers.Serializer):
+    label = serializers.CharField(max_length=40, help_text="Nom du type, 3 à 40 caractères.")

@@ -2488,6 +2488,9 @@
                 "security": [
                     {
                         "BearerJwt": []
+                    },
+                    {
+                        "cookieAuth": []
                     }
                 ],
                 "responses": {
@@ -2496,6 +2499,90 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ApercuOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/pro/room-types": {
+            "get": {
+                "operationId": "v1_pro_room_types_list",
+                "summary": "Types utilisables par le gérant (validés et ses propositions)",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TypeChambreProOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pro_room_types_create",
+                "description": "Renvoie le type équivalent s'il existe déjà (accents et casse ignorés), sinon le crée en attente de validation. Utilisable tout de suite par le gérant ; dans les filtres après validation.",
+                "summary": "Proposer un type de logement",
+                "tags": [
+                    "Espace gérant"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PropositionTypeIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PropositionTypeIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PropositionTypeIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TypeChambreProOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TypeChambreProOut"
                                 }
                             }
                         },
@@ -2560,6 +2647,33 @@
                 }
             }
         },
+        "/v1/room-types": {
+            "get": {
+                "operationId": "v1_room_types_list",
+                "summary": "Types de logement (validés, les plus courants d'abord)",
+                "tags": [
+                    "Référentiels"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TypeChambreOut"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/ws-ticket": {
             "post": {
                 "operationId": "v1_ws_ticket_create",
@@ -2611,9 +2725,10 @@
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "maxLength": 16
+                            "maxLength": 40
                         },
-                        "maxItems": 4
+                        "description": "Slugs de `GET /v1/room-types` (types validés).",
+                        "maxItems": 10
                     },
                     "max_rent": {
                         "type": "integer",
@@ -2695,7 +2810,9 @@
                         "maxLength": 120
                     },
                     "room_type": {
-                        "$ref": "#/components/schemas/RoomTypeEnum"
+                        "type": "string",
+                        "description": "Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé).",
+                        "maxLength": 40
                     },
                     "district": {
                         "type": "string",
@@ -2792,6 +2909,10 @@
                     "room_type": {
                         "type": "string"
                     },
+                    "room_type_label": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "district": {
                         "type": "string",
                         "format": "uuid"
@@ -2848,7 +2969,7 @@
                         "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "$ref": "#/components/schemas/AnnonceProOutStatusEnum"
                     },
                     "hidden_reason": {
                         "type": "string",
@@ -2896,12 +3017,26 @@
                     "published_at",
                     "rent_amount",
                     "room_type",
+                    "room_type_label",
                     "slug",
                     "status",
                     "title",
                     "updated_at",
                     "water_source"
                 ]
+            },
+            "AnnonceProOutStatusEnum": {
+                "enum": [
+                    "draft",
+                    "processing",
+                    "published",
+                    "hidden",
+                    "rented",
+                    "archived",
+                    "removed"
+                ],
+                "type": "string",
+                "description": "* `draft` - draft\n* `processing` - processing\n* `published` - published\n* `hidden` - hidden\n* `rented` - rented\n* `archived` - archived\n* `removed` - removed"
             },
             "AnnonceResumeOut": {
                 "type": "object",
@@ -3072,6 +3207,10 @@
                     "room_type": {
                         "type": "string"
                     },
+                    "room_type_label": {
+                        "type": "string",
+                        "description": "Libellé à afficher (types gérés par l'équipe)."
+                    },
                     "district": {
                         "$ref": "#/components/schemas/QuartierRefOut"
                     },
@@ -3139,6 +3278,7 @@
                     "published_at",
                     "rent_amount",
                     "room_type",
+                    "room_type_label",
                     "slug",
                     "status",
                     "title",
@@ -3507,6 +3647,10 @@
                     "room_type": {
                         "type": "string"
                     },
+                    "room_type_label": {
+                        "type": "string",
+                        "description": "Libellé à afficher (types gérés par l'équipe)."
+                    },
                     "district": {
                         "$ref": "#/components/schemas/QuartierRefOut"
                     },
@@ -3607,6 +3751,7 @@
                     "published_at",
                     "rent_amount",
                     "room_type",
+                    "room_type_label",
                     "slug",
                     "status",
                     "title",
@@ -4305,9 +4450,10 @@
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "maxLength": 16
+                            "maxLength": 40
                         },
-                        "maxItems": 4
+                        "description": "Slugs de `GET /v1/room-types` (types validés).",
+                        "maxItems": 10
                     },
                     "max_rent": {
                         "type": "integer",
@@ -4335,7 +4481,9 @@
                         "maxLength": 120
                     },
                     "room_type": {
-                        "$ref": "#/components/schemas/RoomTypeEnum"
+                        "type": "string",
+                        "description": "Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé).",
+                        "maxLength": 40
                     },
                     "district": {
                         "type": "string",
@@ -4483,6 +4631,19 @@
                     }
                 }
             },
+            "PropositionTypeIn": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "description": "Nom du type, 3 à 40 caractères.",
+                        "maxLength": 40
+                    }
+                },
+                "required": [
+                    "label"
+                ]
+            },
             "PurposeEnum": {
                 "enum": [
                     "signup",
@@ -4552,16 +4713,6 @@
                 ],
                 "type": "string",
                 "description": "* `client` - client\n* `gerant` - gerant"
-            },
-            "RoomTypeEnum": {
-                "enum": [
-                    "single",
-                    "entree_coucher",
-                    "chambre_salon",
-                    "studio"
-                ],
-                "type": "string",
-                "description": "* `single` - single\n* `entree_coucher` - entree_coucher\n* `chambre_salon` - chambre_salon\n* `studio` - studio"
             },
             "SectionLegaleOut": {
                 "type": "object",
@@ -4658,19 +4809,6 @@
                 ],
                 "type": "string",
                 "description": "* `conditions` - conditions\n* `confidentialite` - confidentialite"
-            },
-            "StatusEnum": {
-                "enum": [
-                    "draft",
-                    "processing",
-                    "published",
-                    "hidden",
-                    "rented",
-                    "archived",
-                    "removed"
-                ],
-                "type": "string",
-                "description": "* `draft` - draft\n* `processing` - processing\n* `published` - published\n* `hidden` - hidden\n* `rented` - rented\n* `archived` - archived\n* `removed` - removed"
             },
             "TableauOut": {
                 "type": "object",
@@ -4779,6 +4917,58 @@
                 "required": [
                     "updated"
                 ]
+            },
+            "TypeChambreOut": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "description": "Annonces publiées de ce type."
+                    }
+                },
+                "required": [
+                    "count",
+                    "label",
+                    "slug"
+                ]
+            },
+            "TypeChambreProOut": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/TypeChambreProOutStatusEnum"
+                            }
+                        ],
+                        "description": "`pending` : utilisable par toi tout de suite, visible dans les filtres après validation.\n\n* `approved` - approved\n* `pending` - pending"
+                    }
+                },
+                "required": [
+                    "label",
+                    "slug",
+                    "status"
+                ]
+            },
+            "TypeChambreProOutStatusEnum": {
+                "enum": [
+                    "approved",
+                    "pending"
+                ],
+                "type": "string",
+                "description": "* `approved` - approved\n* `pending` - pending"
             },
             "TypeEnum": {
                 "enum": [

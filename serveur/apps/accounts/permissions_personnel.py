@@ -11,6 +11,8 @@ PERMISSIONS_MODERATEUR = frozenset(
         "moderation.add_moderationaction",
         "listings.view_listing",
         "listings.change_listing",
+        "listings.view_roomtype",  # décision V1 : valider ou rattacher les types proposés
+        "listings.change_roomtype",
         "accounts.view_gerantprofile",
     }
 )

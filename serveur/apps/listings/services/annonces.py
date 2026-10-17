@@ -16,9 +16,9 @@ from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
 
 from .. import selectors, signals
-from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeChambre, TypeMedia
+from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import District, Listing, ListingMedia
-from . import contenu, geo
+from . import contenu, geo, types
 
 journal = logging.getLogger(__name__)
 
@@ -48,8 +48,8 @@ def _valider(d: dict) -> None:
     """Contrôles de valeur sur les champs présents (la base garde en plus ses contraintes)."""
     if "title" in d and len((d["title"] or "").strip()) < 5:
         raise _champ("title", "Le titre doit faire au moins 5 caractères.")
-    if "room_type" in d and d["room_type"] not in TypeChambre.values:
-        raise _champ("room_type", "Type de logement inconnu.")
+    if "room_type" in d:
+        types.verifier_pour_annonce(d["room_type"])
     if "water_source" in d and d["water_source"] not in Eau.values:
         raise _champ("water_source", "Source d'eau inconnue.")
     if "electricity_meter" in d and d["electricity_meter"] not in Compteur.values:

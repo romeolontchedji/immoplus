@@ -18,6 +18,9 @@ class CarteOut(serializers.Serializer):
     slug = serializers.CharField()
     title = serializers.CharField()
     room_type = serializers.CharField()
+    room_type_label = serializers.CharField(
+        help_text="Libellé à afficher (types gérés par l'équipe)."
+    )
     district = QuartierRefOut()
     landmark_text = serializers.CharField()
     rent_amount = serializers.IntegerField()
@@ -64,6 +67,9 @@ class FicheOut(serializers.Serializer):
     slug = serializers.CharField()
     title = serializers.CharField()
     room_type = serializers.CharField()
+    room_type_label = serializers.CharField(
+        help_text="Libellé à afficher (types gérés par l'équipe)."
+    )
     district = QuartierRefOut()
     landmark_text = serializers.CharField()
     latitude = serializers.FloatField()
@@ -98,7 +104,10 @@ class AlerteIn(serializers.Serializer):
         child=serializers.UUIDField(), required=False, max_length=30
     )
     room_types = serializers.ListField(
-        child=serializers.CharField(max_length=16), required=False, max_length=4
+        child=serializers.CharField(max_length=40),
+        required=False,
+        max_length=10,
+        help_text="Slugs de `GET /v1/room-types` (types validés).",
     )
     max_rent = serializers.IntegerField(min_value=1, required=False, allow_null=True)
     private_bathroom_required = serializers.BooleanField(required=False)

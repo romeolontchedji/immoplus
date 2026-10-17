@@ -16,13 +16,13 @@ from apps.chat import selectors as chat_selectors
 from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
-from apps.listings.enums import Compteur, Eau, TypeChambre
+from apps.listings.enums import Compteur, Eau
 from apps.listings.services import alertes, favoris, fil, vues
+from apps.listings.services import types as types_chambre
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
 from apps.notifications import services as notifications
 
-TYPES = list(TypeChambre.choices)
 TRIS = [
     ("recent", "Plus récentes"),
     ("rent_asc", "Loyer croissant"),
@@ -53,8 +53,13 @@ def _message(erreur: ErreurMetier) -> str:
 
 
 # --------------------------------------------------------------- fil et recherche
+def _types() -> list[tuple[str, str]]:
+    """Types validés (décision V1), les plus courants d'abord."""
+    return [(t["slug"], t["label"]) for t in types_chambre.publics()]
+
+
 def _libelle_type(valeur: str) -> str:
-    return dict(TYPES).get(valeur, valeur)
+    return types_chambre.libelle(valeur) or valeur
 
 
 def _recapitulatif(request, action: str, quartier) -> list:
@@ -122,7 +127,7 @@ def _liste(request, *, quartier=None, action="/annonces"):
         "web/public/annonces.html",
         {
             "resultat": resultat, "params": {**request.GET.dict(), "district": params.get("district", "")},
-            "quartiers": _quartiers(), "quartier": quartier, "types": TYPES, "tris": TRIS, "action": action,
+            "quartiers": _quartiers(), "quartier": quartier, "types": _types(), "tris": TRIS, "action": action,
             "erreur": erreur, "suite": suite, "requete_alerte": urlencode(critere_alerte),
             "actifs": _recapitulatif(request, action, quartier),
         },
@@ -176,7 +181,7 @@ def _rendre_fiche(request, f, **extra):
         "f": {
             **f,
             "is_favorite": favori,
-            "type_label": dict(TypeChambre.choices).get(f["room_type"], f["room_type"]),
+            "type_label": _libelle_type(f["room_type"]),
             "eau_label": dict(Eau.choices).get(f["water_source"] or "", ""),
             "compteur_label": dict(Compteur.choices).get(f["electricity_meter"] or "", ""),
         },
@@ -326,7 +331,7 @@ def mes_alertes(request):
             }
     quartiers = _quartiers()
     noms_quartiers = {str(q.id): q.name for q in quartiers}
-    libelles_types = dict(TYPES)
+    libelles_types = types_chambre.libelles()
     alertes_vue = [
         {
             "objet": a,
@@ -340,7 +345,7 @@ def mes_alertes(request):
     return render(
         request,
         "web/public/alertes.html",
-        {"alertes": alertes_vue, "quartiers": quartiers, "types": TYPES,
+        {"alertes": alertes_vue, "quartiers": quartiers, "types": _types(),
          "message": message, "niveau": niveau, "proposition": proposition, "edition": edition},
     )  # fmt: skip
 

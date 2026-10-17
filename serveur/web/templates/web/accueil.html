@@ -21,18 +21,12 @@
                     role="tab"
                     aria-selected="true"
                     data-type="">Toutes</button>
-            <button class="accueil-recherche__onglet"
-                    role="tab"
-                    aria-selected="false"
-                    data-type="entree_coucher">Entrée-coucher</button>
-            <button class="accueil-recherche__onglet"
-                    role="tab"
-                    aria-selected="false"
-                    data-type="chambre_salon">Chambre-salon</button>
-            <button class="accueil-recherche__onglet"
-                    role="tab"
-                    aria-selected="false"
-                    data-type="studio">Studio</button>
+            {% for t in types_accueil %}
+              <button class="accueil-recherche__onglet"
+                      role="tab"
+                      aria-selected="false"
+                      data-type="{{ t.slug }}">{{ t.label }}</button>
+            {% endfor %}
           </div>
           <form class="accueil-recherche__barre"
                 method="get"

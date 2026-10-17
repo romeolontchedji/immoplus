@@ -893,6 +893,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pro/room-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Types utilisables par le gérant (validés et ses propositions) */
+        get: operations["v1_pro_room_types_list"];
+        put?: never;
+        /**
+         * Proposer un type de logement
+         * @description Renvoie le type équivalent s'il existe déjà (accents et casse ignorés), sinon le crée en attente de validation. Utilisable tout de suite par le gérant ; dans les filtres après validation.
+         */
+        post: operations["v1_pro_room_types_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reports": {
         parameters: {
             query?: never;
@@ -904,6 +925,23 @@ export interface paths {
         put?: never;
         /** Signaler une annonce, un message, une conversation ou un utilisateur */
         post: operations["v1_reports_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/room-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Types de logement (validés, les plus courants d'abord) */
+        get: operations["v1_room_types_list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -934,6 +972,7 @@ export interface components {
         AlerteIn: {
             label?: string;
             district_ids?: string[];
+            /** @description Slugs de `GET /v1/room-types` (types validés). */
             room_types?: string[];
             max_rent?: number | null;
             private_bathroom_required?: boolean;
@@ -955,7 +994,8 @@ export interface components {
         };
         AnnonceIn: {
             title: string;
-            room_type: components["schemas"]["RoomTypeEnum"];
+            /** @description Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé). */
+            room_type: string;
             /** Format: uuid */
             district: string;
             landmark_text: string;
@@ -985,6 +1025,7 @@ export interface components {
             slug: string;
             title: string;
             room_type: string;
+            readonly room_type_label: string;
             /** Format: uuid */
             district: string;
             district_name: string;
@@ -1006,7 +1047,7 @@ export interface components {
             water_source: string;
             electricity_meter: string;
             description_md: string;
-            status: components["schemas"]["StatusEnum"];
+            status: components["schemas"]["AnnonceProOutStatusEnum"];
             hidden_reason: string | null;
             /** Format: date-time */
             published_at: string | null;
@@ -1017,6 +1058,17 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        /**
+         * @description * `draft` - draft
+         *     * `processing` - processing
+         *     * `published` - published
+         *     * `hidden` - hidden
+         *     * `rented` - rented
+         *     * `archived` - archived
+         *     * `removed` - removed
+         * @enum {string}
+         */
+        AnnonceProOutStatusEnum: "draft" | "processing" | "published" | "hidden" | "rented" | "archived" | "removed";
         AnnonceResumeOut: {
             /** Format: uuid */
             id: string | null;
@@ -1066,6 +1118,8 @@ export interface components {
             slug: string;
             title: string;
             room_type: string;
+            /** @description Libellé à afficher (types gérés par l'équipe). */
+            room_type_label: string;
             district: components["schemas"]["QuartierRefOut"];
             landmark_text: string;
             rent_amount: number;
@@ -1189,6 +1243,8 @@ export interface components {
             slug: string;
             title: string;
             room_type: string;
+            /** @description Libellé à afficher (types gérés par l'équipe). */
+            room_type_label: string;
             district: components["schemas"]["QuartierRefOut"];
             landmark_text: string;
             /** Format: double */
@@ -1411,6 +1467,7 @@ export interface components {
         PatchedAlerteIn: {
             label?: string;
             district_ids?: string[];
+            /** @description Slugs de `GET /v1/room-types` (types validés). */
             room_types?: string[];
             max_rent?: number | null;
             private_bathroom_required?: boolean;
@@ -1419,7 +1476,8 @@ export interface components {
         };
         PatchedAnnonceIn: {
             title?: string;
-            room_type?: components["schemas"]["RoomTypeEnum"];
+            /** @description Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé). */
+            room_type?: string;
             /** Format: uuid */
             district?: string;
             landmark_text?: string;
@@ -1478,6 +1536,10 @@ export interface components {
             /** @description Conversations en sourdine. */
             silence?: string[];
         };
+        PropositionTypeIn: {
+            /** @description Nom du type, 3 à 40 caractères. */
+            label: string;
+        };
         /**
          * @description * `signup` - signup
          *     * `reset_password` - reset_password
@@ -1515,14 +1577,6 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "client" | "gerant";
-        /**
-         * @description * `single` - single
-         *     * `entree_coucher` - entree_coucher
-         *     * `chambre_salon` - chambre_salon
-         *     * `studio` - studio
-         * @enum {string}
-         */
-        RoomTypeEnum: "single" | "entree_coucher" | "chambre_salon" | "studio";
         SectionLegaleOut: {
             title: string;
             blocks: components["schemas"]["BlocLegalOut"][];
@@ -1555,17 +1609,6 @@ export interface components {
          * @enum {string}
          */
         SlugEnum: "conditions" | "confidentialite";
-        /**
-         * @description * `draft` - draft
-         *     * `processing` - processing
-         *     * `published` - published
-         *     * `hidden` - hidden
-         *     * `rented` - rented
-         *     * `archived` - archived
-         *     * `removed` - removed
-         * @enum {string}
-         */
-        StatusEnum: "draft" | "processing" | "published" | "hidden" | "rented" | "archived" | "removed";
         TableauOut: {
             listings_by_status: {
                 [key: string]: number;
@@ -1601,6 +1644,27 @@ export interface components {
         ToutLuOut: {
             updated: number;
         };
+        TypeChambreOut: {
+            slug: string;
+            label: string;
+            /** @description Annonces publiées de ce type. */
+            count: number;
+        };
+        TypeChambreProOut: {
+            slug: string;
+            label: string;
+            /** @description `pending` : utilisable par toi tout de suite, visible dans les filtres après validation.
+             *
+             *     * `approved` - approved
+             *     * `pending` - pending */
+            status: components["schemas"]["TypeChambreProOutStatusEnum"];
+        };
+        /**
+         * @description * `approved` - approved
+         *     * `pending` - pending
+         * @enum {string}
+         */
+        TypeChambreProOutStatusEnum: "approved" | "pending";
         /**
          * @description * `p` - p
          *     * `li` - li
@@ -3046,6 +3110,58 @@ export interface operations {
             };
         };
     };
+    v1_pro_room_types_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeChambreProOut"][];
+                };
+            };
+        };
+    };
+    v1_pro_room_types_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropositionTypeIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["PropositionTypeIn"];
+                "multipart/form-data": components["schemas"]["PropositionTypeIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeChambreProOut"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeChambreProOut"];
+                };
+            };
+        };
+    };
     v1_reports_create: {
         parameters: {
             query?: never;
@@ -3075,6 +3191,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignalementOut"];
+                };
+            };
+        };
+    };
+    v1_room_types_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeChambreOut"][];
                 };
             };
         };

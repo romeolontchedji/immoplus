@@ -10,7 +10,7 @@ from apps.chat import selectors as chat_selectors
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
 from apps.listings.enums import StatutAnnonce, StatutMedia
-from apps.listings.services import annonces, medias
+from apps.listings.services import annonces, medias, types
 from apps.media import stockage
 
 from .forms_pro import AnnonceForm
@@ -202,15 +202,22 @@ def editeur(request, profil, annonce_id=None):
             raise Http404
     action = request.POST.get("action", "enregistrer")
     form = AnnonceForm(request.POST if request.method == "POST" and action == "enregistrer" else None,
-                       initial=_initial(annonce) if annonce else None)  # fmt: skip
+                       initial=_initial(annonce) if annonce else None, gerant=profil)  # fmt: skip
     message, manques, erreur_media = None, [], None
     if request.method == "POST":
         try:
             if action == "enregistrer" and form.is_valid():
+                donnees = form.donnees()
+                if form.cleaned_data.get(
+                    "nouveau_type"
+                ):  # décision V1 : type proposé (ou équivalent existant)
+                    donnees["room_type"] = types.proposer(
+                        profil, form.cleaned_data["nouveau_type"]
+                    ).slug
                 if annonce is None:
-                    annonce = annonces.creer_brouillon(profil, form.donnees())
+                    annonce = annonces.creer_brouillon(profil, donnees)
                     return redirect(f"/pro/annonces/{annonce.pk}")
-                annonce = annonces.modifier(profil, annonce.pk, form.donnees())
+                annonce = annonces.modifier(profil, annonce.pk, donnees)
                 message = "Annonce enregistrée."
             elif action == "supprimer" and annonce:
                 annonces.supprimer_brouillon(profil, annonce.pk)

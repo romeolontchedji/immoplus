@@ -8,8 +8,8 @@ from apps.notifications import services as notifications
 from apps.notifications import textes
 
 from .. import selectors
-from ..enums import TypeChambre
 from ..models import Alert, District, Listing
+from . import types as types_chambre
 
 CHAMPS = (
     "label",
@@ -39,12 +39,7 @@ def _valider(d: dict) -> dict:
             )
         propre["district_ids"] = ids
     if "room_types" in d:
-        types = list(d["room_types"] or [])
-        if any(t not in TypeChambre.values for t in types):
-            raise ErreurMetier(
-                "validation_error", "Type inconnu.", champs={"room_types": ["Type inconnu"]}
-            )
-        propre["room_types"] = types
+        propre["room_types"] = types_chambre.verifier_valides(d["room_types"])
     for nom in ("max_rent", "max_distance_m"):
         if nom in d:
             valeur = d[nom]
@@ -121,7 +116,7 @@ def notifier_correspondances(annonce_id) -> int:
     creees = 0
     loin = textes.distance(annonce.distance_to_campus_m)
     details = [
-        TypeChambre(annonce.room_type).label if annonce.room_type in TypeChambre.values else None,
+        types_chambre.libelle(annonce.room_type),
         f"{textes.francs(annonce.rent_amount)}/mois",
         f"à {loin} de l'UP" if loin else None,
     ]
