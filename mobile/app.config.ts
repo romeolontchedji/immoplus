@@ -44,6 +44,7 @@ const config: ExpoConfig = {
     ["expo-notifications", { color: "#117853" }],
     ["expo-image-picker", { photosPermission: "Logeo accède à tes photos pour illustrer ton annonce.", cameraPermission: "Logeo utilise la caméra pour filmer ta chambre." }],
     ["expo-location", { locationWhenInUsePermission: "Logeo utilise ta position pour situer ta chambre sur la carte." }],
+    ["expo-local-authentication", { faceIDPermission: "Logeo utilise Face ID pour déverrouiller l'application." }], // ADR 0005
     "react-native-compressor",
   ],
   experiments: { reactCompiler: false },

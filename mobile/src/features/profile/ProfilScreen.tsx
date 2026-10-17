@@ -9,7 +9,25 @@ import { Button } from "@/ui/components/Button";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
+import { SwitchRow } from "@/ui/components/SwitchRow";
+import { useVerrouBiometrique } from "@/features/auth/verrou";
 import { useMe } from "./queries";
+
+/** Verrou par empreinte (ADR 0005) : proposé seulement si le téléphone a un capteur et une empreinte enregistrée. */
+function ReglageVerrou() {
+  const verrou = useVerrouBiometrique();
+  if (!verrou.disponible) return null;
+  return (
+    <View style={{ backgroundColor: colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.border, paddingHorizontal: sp[4], paddingVertical: sp[2] }}>
+      <SwitchRow
+        titre="Déverrouiller avec l’empreinte"
+        aide="Demandée à l’ouverture de Logeo et après 5 minutes d’absence."
+        valeur={verrou.actif}
+        onChange={(v) => void (v ? verrou.activer() : verrou.desactiver())}
+      />
+    </View>
+  );
+}
 
 // Icônes minimalistes SVG sous forme de caractères unicode Lucide-compatibles
 // (pas d'emoji, conforme AGENTS.md §13 et DESIGN.md)
@@ -198,6 +216,7 @@ export function ProfilScreen() {
           <LigneMenu titre="Appareils connectés" href="/parametres/appareils" iconeLabel="Appareils" />
         </>
       )}
+      <ReglageVerrou />
       <LigneMenu titre="Notifications" href="/parametres/preferences" iconeLabel="Notifications" />
       <LigneMenu titre="Aide et contact" href="/parametres/aide" iconeLabel="Aide" />
       <LigneMenu titre="Conditions d'utilisation" href="/legal/conditions" iconeLabel="Conditions" />

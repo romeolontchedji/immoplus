@@ -3,6 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { VerrouHote } from "@/features/auth/verrou";
 import { AppGate } from "@/features/system/AppGate";
 import { FiltresProvider } from "@/features/listings/filtres";
 import { DemandeNotificationsHote } from "@/features/notifications/DemandeNotifications";
@@ -54,6 +55,7 @@ function Racine() {
     <>
       <Stack screenOptions={{ headerShown: false }} />
       <DemandeNotificationsHote />
+      <VerrouHote />
     </>
   );
 }

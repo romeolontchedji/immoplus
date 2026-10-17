@@ -27,4 +27,5 @@ export const CLES_KV = {
   cacheRequetes: "logeo.cache-requetes",
   onboardingVu: "logeo.onboarding-vu",
   demandeNotifications: "logeo.demande-notifications",
+  verrouBiometrique: "logeo.verrou-biometrique",
 } as const;
