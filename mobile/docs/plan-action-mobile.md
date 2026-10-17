@@ -84,8 +84,9 @@ Ce document décrit la stratégie d'implémentation et de refonte visuelle de l'
   - Étape 4 : Description, équipements chips et aperçu final avec bouton jaune "Publier la chambre".
 - [x] **Gestion des annonces & profil gérant (`Mobile · Compte gérant@1x.png`, `Abonnement@1x.png`, `Paiement@1x.png`) :**
   - Écran `CompteGerantScreen` : explications anti-arnaque, 4 étapes numérotées, boutons WhatsApp et Appel direct.
-  - Écran `AbonnementScreen` : bandeau gratuité, carte offre gérant 2 000 F/mois avec bordure cobalt, bouton jaune Mobile Money.
-  - Écran `PaiementMobileMoneyScreen` : opérateurs MTN MoMo, Moov, Celtiis, numéro et validation sécurisée.
+  - Écrans `AbonnementScreen` et `PaiementMobileMoneyScreen` : **retirés le 2026-10-17** (paiement débranché pour la
+    V1, tout est gratuit). Récupérables depuis le commit `10f7333` ; à rebrancher sur l'API `billing`
+    (`docs/plan-actions-v2.md` §7 bis) le jour du lancement payant.
 
 ---
 
