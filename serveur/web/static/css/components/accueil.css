@@ -327,3 +327,10 @@
   .accueil-piliers__grille { grid-template-columns: repeat(3, 1fr); }
   .accueil-prevention__reflexes { grid-template-columns: 1fr 1fr; }
 }
+
+/* Téléphone : photo du gérant en 480 px (après la règle de base, qu'elle remplace) */
+@media (max-width: 767px) {
+  .accueil-comment__carte--sombre {
+    background: var(--voile-gerant), url("../../design/photos/gerant-480.webp") center top / cover no-repeat, var(--night);
+  }
+}

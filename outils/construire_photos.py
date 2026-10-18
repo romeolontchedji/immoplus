@@ -20,6 +20,8 @@ MOBILE = RACINE / "mobile/assets/photos"
 LARGEURS_SITE = (480, 960, 1600)
 LARGEUR_MOBILE = 960
 QUALITE = 70
+# Photos très détaillées (vue aérienne) : sous le voile sombre, une qualité plus basse ne se voit pas.
+QUALITE_PAR_PHOTO = {"accueil-1": 55}
 
 # nom : (destination, proportion largeur/hauteur, point d'intérêt x, y entre 0 et 1)
 RECETTES = {
@@ -73,7 +75,8 @@ def main() -> int:
             SITE.mkdir(parents=True, exist_ok=True)
             for cible in LARGEURS_SITE:  # jamais agrandie : sous la cible, la taille d'origine
                 sortie = SITE / f"{nom}-{cible}.webp"
-                reduire(image, cible).save(sortie, "WEBP", quality=QUALITE, method=6)
+                qualite = QUALITE_PAR_PHOTO.get(nom, QUALITE)
+                reduire(image, cible).save(sortie, "WEBP", quality=qualite, method=6)
         else:
             MOBILE.mkdir(parents=True, exist_ok=True)
             reduire(image, LARGEUR_MOBILE).save(
