@@ -2,6 +2,17 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-18 (fin) : prêt pour l'hébergement.**
+- Médias derrière `StorageProvider` (ADR 0007) : disque local par défaut, squelette S3/R2 ; aucune migration.
+- CI : nouvelle tâche « mobile » (types, lint, tests, client d'API comparé au contrat) ; TypeScript 6 (attendu par
+  Expo 57) ; `verifier_tout.sh` lance aussi ces contrôles quand `mobile/node_modules` existe.
+- Production réparée avant tout déploiement : `ALLOWED_HOSTS` réglé sur le domaine (sinon tout en 400), réglages
+  `taches` pour beat et worker-media, realtime sans clé OTP ; test qui démarre chaque processus avec son modèle d'env.
+- `outils/creer_env.py --services` (régénère les fichiers des services sans changer les secrets), réglages de
+  l'agrégateur SMS dans les modèles, redirection du domaine nu vers `www`.
+- `infra/vps/bootstrap.sh` et `docs/deploiement-vps-pas-a-pas.md`. Restent : copie des sauvegardes hors du serveur
+  (restic), double authentification de l'administration, agrégateur SMS.
+
 **2026-10-18 (suite) : retours sur l'application mobile.**
 - Clavier : l'écran commun et la conversation font de la place au clavier sur Android « bord à bord » et iOS.
 - Code OTP : envoi au 6e chiffre, vibration et cases vidées en cas de refus ; remplissage SMS déclaré
