@@ -14,7 +14,7 @@ type Etape = { icone: LucideIcon; titre: string; texte: string; teinte: string; 
 const ETAPES: Etape[] = [
   { icone: Video, titre: "Des vraies chambres, en vidéo", texte: "Chaque annonce a une vidéo tournée sur place. Tu vois la chambre avant de te déplacer.", teinte: colors.blue, photo: require("../../../assets/photos/onboarding-2.webp") },
   { icone: ShieldCheck, titre: "Des gérants vérifiés", texte: "L'équipe Logeo vérifie l'identité de chaque gérant avant qu'il publie.", teinte: "#0E7C66", photo: require("../../../assets/photos/onboarding-4.webp") },
-  { icone: MessageCircle, titre: "Écris sans donner ton numéro", texte: "Tu discutes dans Logeo. Ton numéro reste privé, tant que tu ne décides pas de le partager.", teinte: "#6A3FC8", photo: require("../../../assets/photos/onboarding-3.webp") },
+  { icone: MessageCircle, titre: "Discute directement avec le gérant", texte: "Écris-lui dans Logeo. Ton numéro reste privé tant que tu ne décides pas de le donner.", teinte: "#6A3FC8", photo: require("../../../assets/photos/onboarding-3.webp") },
   { icone: BellRing, titre: "Sois prévenu le premier", texte: "Crée une alerte : on te prévient dès qu'une chambre correspond à ton budget et à ton quartier.", teinte: "#B4471F", photo: require("../../../assets/photos/onboarding-1.webp") },
 ];
 

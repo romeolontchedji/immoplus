@@ -301,6 +301,11 @@ class TestMessagesWeb:
         )
 
     def test_rappel_affiche_quand_une_coordonnee_est_masquee(self):
+        from apps.core import parametres
+
+        parametres.definir(
+            "CONTACT_LEAK_MODE", "mask"
+        )  # éteint par défaut : on vérifie le mode activable
         p, a, locataire, conversation = self.mise_en_place()
         r = connecte(locataire).post(
             f"/compte/messages/{conversation.pk}",

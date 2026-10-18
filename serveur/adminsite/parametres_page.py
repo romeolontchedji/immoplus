@@ -34,6 +34,7 @@ SECTIONS = [
 
 CHOIX = {
     "CONTACT_LEAK_MODE": [
+        ("off", "Aucun filtrage : numéros et liens s'échangent librement"),
         ("mask", "Masquer les coordonnées"),
         ("flag", "Signaler à la modération"),
         ("block", "Bloquer le message"),

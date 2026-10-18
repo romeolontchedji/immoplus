@@ -97,7 +97,13 @@ def _nettoyer(corps) -> str:
 
 
 def _analyser_coordonnees(texte: str) -> dict:
-    """Applique `CONTACT_LEAK_MODE` : retourne {masque, motif, avertir} ou refuse en mode `block` (CDC §11.7)."""
+    """Applique `CONTACT_LEAK_MODE` : retourne {masque, motif, avertir} ou refuse en mode `block` (CDC §11.7).
+
+    Par défaut `off` (décision du 2026-10-18) : locataire et gérant échangent librement numéros et liens, sans
+    masquage, rappel ni signalement automatique. Les autres modes restent disponibles dans les paramètres.
+    """
+    if parametres.lire("CONTACT_LEAK_MODE") == "off":
+        return {"masque": None, "motif": None, "avertir": False, "motifs": []}
     d = contenu.detecter(texte)
     if not d.forts and not d.faibles:
         return {"masque": None, "motif": None, "avertir": False, "motifs": []}

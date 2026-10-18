@@ -208,8 +208,33 @@ class TestEnvoi:
             services.bloquer(decor.locataire, conversation.pk)
 
 
+@pytest.fixture
+def filtrage_actif():
+    """Le filtrage est éteint par défaut (échange libre) ; ces tests vérifient le mode « masquer » activable."""
+    parametres.definir("CONTACT_LEAK_MODE", "mask")
+
+
+class TestEchangeLibre:
+    def test_par_defaut_numeros_et_liens_passent_sans_masque_ni_signalement(
+        self, decor, django_capture_on_commit_callbacks
+    ):
+        recus = []
+        signals.contact_detecte.connect(lambda **kw: recus.append(kw), weak=False)
+        texte = "Appelle-moi au 97 12 34 56 ou sur WhatsApp, https://wa.me/22997123456"
+        with django_capture_on_commit_callbacks(execute=True):
+            conversation, message, _, info = services.ouvrir(
+                decor.locataire, decor.annonce.pk, texte, uuid.uuid4()
+            )
+        message.refresh_from_db()
+        assert message.body_masked is None and message.flag_reason is None
+        assert info["warning"] is None and recus == []
+        vu_par_gerant = services.message_pour(message, decor.gerant.user_id)
+        assert vu_par_gerant["body"] == texte
+
+
+@pytest.mark.usefixtures("filtrage_actif")
 class TestCoordonnees:
-    def test_masque_par_defaut_original_garde_rappel_et_signal(
+    def test_masque_original_garde_rappel_et_signal(
         self, decor, django_capture_on_commit_callbacks
     ):
         conversation, *_ = ouvrir(decor)
@@ -445,6 +470,7 @@ class TestNotificationsDeMessage:
         assert services.notifier(m.pk) == "lu"
         assert services.notifier(uuid.uuid4()) == "absent"
 
+    @pytest.mark.usefixtures("filtrage_actif")
     def test_apercu_masque_dans_la_notification(self, decor, django_capture_on_commit_callbacks):
         with django_capture_on_commit_callbacks(execute=True):
             ouvrir(decor, "Mon numéro : 97 12 34 56")
@@ -636,6 +662,7 @@ class TestApi:
         )
         assert gerant_seul.status_code == 403
 
+    @pytest.mark.usefixtures("filtrage_actif")
     def test_rappel_a_l_expediteur_dans_la_reponse(self, decor):
         loc = client_de(decor.locataire)
         r = _ouvrir_api(loc, decor.annonce, "Écris-moi : moi@exemple.com")

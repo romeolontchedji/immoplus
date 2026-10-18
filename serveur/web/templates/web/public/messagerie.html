@@ -169,7 +169,7 @@
         </header>
         <div class="msg-fil" id="conv-fil">
           <p class="msg-securite" role="note">
-            Ne paie jamais avant d'avoir visité. Ton numéro reste privé ; signale tout message suspect.
+            Ne paie jamais avant d'avoir visité. Partage ton numéro seulement si tu le souhaites ; signale tout message suspect.
           </p>
           {% if adresse %}<p class="msg-systeme">Adresse privée de la chambre : {{ adresse }}</p>{% endif %}
           {% if c.listing.status == "rented" %}<p class="msg-systeme">Cette chambre est désormais louée.</p>{% endif %}
@@ -248,7 +248,7 @@
         <div class="msg__accueil">
           <span class="msg__accueil-icone">{% include "web/composants/icone.html" with nom="message-circle" taille=40 %}</span>
           <p class="msg__accueil-titre">Choisis une conversation</p>
-          <p class="texte-doux">Tes échanges restent dans Logeo : ton numéro n'est jamais partagé.</p>
+          <p class="texte-doux">Discute ici avec le gérant ; tu choisis de donner ton numéro ou non.</p>
         </div>
       {% endif %}
     </section>

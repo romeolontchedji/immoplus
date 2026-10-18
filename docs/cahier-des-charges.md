@@ -16,7 +16,7 @@ Chaque exigence du CDC porte une priorité : **M** (obligatoire), **S** (à fair
 
 1. **Une seule base PostgreSQL, un seul code** : monolithe modulaire Django ; l'API (mobile) et les vues du site appellent **les mêmes services**. Aucune règle métier dans une vue, un sérialiseur, un consommateur WebSocket ou une tâche.
 2. **Administration complètement séparée** : autre hôte, autre processus, autres réglages, autre clé secrète, autre cookie, autre rôle PostgreSQL (`admin_app`), autre fichier d'environnement ; aucune route d'administration sur le site public et aucune route publique sur l'hôte d'administration. 2FA TOTP obligatoire, verrouillage par compte (django-axes), accès réservé à une liste d'adresses ou à un VPN. Détail : CDC §5.1.
-3. **Aucun contact hors plateforme** : le numéro du gérant n'est **jamais** exposé (API, pages, aperçus de lien, journaux). Messagerie en **texte seul**. Détection des coordonnées (CDC §11.7) avec mode par défaut `mask`.
+3. **Le numéro n'est jamais exposé par Logeo** : le numéro du gérant n'apparaît ni dans l'API, ni dans les pages, ni dans les aperçus de lien, ni dans les journaux. Messagerie en **texte seul**. **Amendé le 2026-10-18 (décision du porteur)** : dans la messagerie, locataire et gérant peuvent s'échanger librement numéros et liens et poursuivre hors plateforme ; le revenu vient de l'abonnement des gérants et des alertes payantes des locataires, pas du maintien des échanges. Détection des coordonnées (§11.7) en mode `off` par défaut dans la messagerie ; les annonces restent sans coordonnées.
 4. **Pas de Node en production** ni dans les images de production. Pas de Next.js. Site rendu par Django (gabarits) + HTMX + Alpine.js (build compatible CSP) + **CSS maison en CSS pur** (sans Tailwind : voir §4), assemblé par un script Python. Node n'est utilisé nulle part dans cette partie 1 (au plus pour récupérer des fichiers JS figés pendant la génération).
 5. **Sécurité par conception** (CDC §5) : CSP stricte sans script ni style en ligne, cookies `__Host-`, CSRF, Argon2id, JWT court + rafraîchissement opaque à rotation, ticket WebSocket à usage unique, anti-pompage SMS, journal d'audit résistant à la modification, pièces d'identité chiffrées, rôles de base séparés.
 6. **Mobile first** : toutes les pages se conçoivent d'abord à 360 px sur 3G, puis s'élargissent. Budgets : HTML < 30 Ko compressés, JavaScript initial < 60 Ko compressés, LCP < 2,5 s en 4G.
@@ -973,7 +973,7 @@ Chaque exigence indique ses surfaces (APP, WEB, ADM, §3.1) et sa priorité. « 
 | EF-MSG-07 | Accusés de lecture par position de lecture. | Toutes | M |
 | EF-MSG-08 | En-tête avec carte de l'annonce et son statut ; bandeau si louée ; lecture seule 30 jours après la location. | Toutes | S |
 | EF-MSG-09 | Bloquer une conversation (le participant qui bloque empêche l'autre d'écrire) ; signaler un message ou une conversation. | Toutes | M |
-| EF-MSG-10 | Détection des coordonnées : message enregistré et marqué, rappel à l'expéditeur, dossier automatique pour la modération ; modes masquer (par défaut), signaler, bloquer (§11.7). | Back | M |
+| EF-MSG-10 | Détection des coordonnées : message enregistré et marqué, rappel à l'expéditeur, dossier automatique pour la modération ; modes aucun filtrage (par défaut depuis le 2026-10-18), masquer, signaler, bloquer (§11.7). | Back | M |
 | EF-MSG-11 | Limites : 30 messages par minute et par utilisateur ; 20 nouvelles conversations par jour et par locataire. | Back | M |
 | EF-MSG-12 | Premier message proposé et modifiable (« Bonjour, la chambre est-elle toujours disponible ? »). | Toutes | S |
 | EF-MSG-13 | Indicateur « est en train d'écrire ». | Toutes | C |
@@ -1705,6 +1705,10 @@ trialing → active ; active → past_due (grâce de 7 jours) → active ou expi
 
 ### 11.7 Détection des coordonnées
 
+> **Amendement du 2026-10-18.** Dans la **messagerie**, le mode par défaut est `off` : aucun masquage, rappel ni
+> signalement automatique ; les modes `mask`, `flag` et `block` restent activables dans les paramètres. Les **annonces**
+> (titre, repère, description) continuent de refuser les coordonnées (EF-ANN-05).
+
 But : garder les échanges dans Logeo sans gêner les conversations normales (les prix contiennent des chiffres). S'applique aux messages, titres, repères, adresses privées et descriptions. Produit un motif ; pour les signaux forts, l'action dépend de `CONTACT_LEAK_MODE` ; les mots-clés sont toujours seulement signalés.
 
 | Signal | Règle | Poids |
@@ -1873,7 +1877,7 @@ cd mobile && npx expo start    # application (appareil réel ou émulateur)
 | SMS_PROVIDER · PUSH_PROVIDER | console · console | agrégateur retenu · expo ou fcm |
 | OTP_ALLOWED_COUNTRIES · OTP_DAILY_BUDGET | BJ · 300 | BJ · valeur validée avec le devis SMS |
 | PAYMENT_PROVIDER · SUBSCRIPTION_ENABLED | sandbox · false | fedapay ou kkiapay · false jusqu'au lancement |
-| CONTACT_LEAK_MODE | mask | mask (modifiable ensuite en base) |
+| CONTACT_LEAK_MODE | off | off (modifiable ensuite en base) |
 | OTP_DEBUG_CODE | 123456 (local seulement) | interdit : le démarrage échoue s'il est défini |
 | SENTRY_DSN · TURNSTILE_SECRET | vides | valeurs de production |
 | EXPO_PUBLIC_API_URL | http://192.168.x.x:8000/v1 | https://api.<domaine>/v1 |
@@ -2032,7 +2036,7 @@ Valeurs de départ. Celles marquées « base » sont lues dans `app_settings` et
 | WebSocket : connexions par utilisateur · trame · événements | 5 · 8 Ko · 30 par minute | code | §10.8 |
 | Rappel au gérant pour message non lu | 2 h | base | EF-NTF-08 |
 | SMS de repli au gérant | désactivé | base | `SMS_FALLBACK_ENABLED` |
-| Détection des coordonnées | mask | base | `CONTACT_LEAK_MODE` : mask, flag, block |
+| Détection des coordonnées | off | base | `CONTACT_LEAK_MODE` : off, mask, flag, block |
 | Pré-modération des annonces | désactivée | base | `LISTING_PREMODERATION` |
 | Lectures de conversation par jour avant alerte | 20 par compte | base | §11.11 |
 | Suspension maximale par un modérateur | 30 jours | base | Au-delà : administrateur |

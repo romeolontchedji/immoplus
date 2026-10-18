@@ -177,7 +177,7 @@ function Formulaire({ annonceId }: { annonceId?: string }) {
         <View style={{ flexDirection: "row", gap: sp[3], padding: sp[4], borderRadius: rayon.card, backgroundColor: colors.warningBg }}>
           <ShieldAlert size={20} color={colors.warningText} />
           <Text variante="legende" couleur={colors.warningText} style={{ flex: 1, lineHeight: 19 }}>
-            Ne paie jamais avant d’avoir visité. Garde les échanges dans Logeo : les numéros et liens sont masqués pour te protéger.
+            Ne paie jamais avant d’avoir visité. Tu choisis de partager ton numéro ou non ; signale tout message suspect.
           </Text>
         </View>
       </ScrollView>

@@ -39,7 +39,10 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         {"latitude": 9.337, "longitude": 2.6303},
         "Point de référence du campus (Université de Parakou) : coordonnées à relever.",
     ),
-    "CONTACT_LEAK_MODE": ("mask", "Détection des coordonnées : mask, flag ou block."),
+    "CONTACT_LEAK_MODE": (
+        "off",
+        "Coordonnées dans la messagerie : off (échange libre), mask, flag ou block.",
+    ),
     "SUBSCRIPTION_ENABLED": (False, "Abonnement des gérants (désactivé au lancement)."),
     "PLANS": (
         [

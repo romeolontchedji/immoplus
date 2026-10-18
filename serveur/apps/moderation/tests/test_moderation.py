@@ -132,6 +132,7 @@ class TestAutomatique:
     def test_coordonnees_detectees_creent_un_signalement_systeme(
         self, decor, django_capture_on_commit_callbacks
     ):
+        parametres.definir("CONTACT_LEAK_MODE", "mask")  # éteint par défaut (échange libre)
         with django_capture_on_commit_callbacks(execute=True):
             m, *_ = chat.envoyer(
                 decor.locataire, decor.conversation.pk, "Appelle le 97 12 34 56", str(uuid.uuid4())
