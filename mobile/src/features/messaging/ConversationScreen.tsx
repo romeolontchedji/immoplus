@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, TextInput, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BadgeCheck, BellOff, EllipsisVertical, Send } from "lucide-react-native";
 import { Image } from "expo-image";
@@ -35,6 +36,7 @@ import {
  */
 export function ConversationScreen() {
   const router = useRouter();
+  const marges = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { etat, role } = useSession();
   const moi = etat.statut === "connecte" ? etat.user.id : "";
@@ -62,7 +64,7 @@ export function ConversationScreen() {
 
   if (!conversation.data || !messages.data) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, padding: sp[4], gap: sp[3], paddingTop: 60 }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg, padding: sp[4], gap: sp[3], paddingTop: marges.top + sp[4] }}>
         <Skeleton hauteur={50} />
         <Skeleton hauteur={80} />
         <Skeleton hauteur={150} />
@@ -92,15 +94,16 @@ export function ConversationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Barre supérieure */}
+    // Le champ de saisie remonte avec le clavier (iOS et Android « bord à bord ») : on voit ce qu'on écrit.
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      {/* Barre supérieure : collée sous la barre d'état, sans en-tête natif au-dessus */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           gap: 14,
           paddingHorizontal: sp[4],
-          paddingTop: 54,
+          paddingTop: marges.top + sp[2],
           paddingBottom: sp[3],
           backgroundColor: "#FFFFFF",
           borderBottomWidth: 1,
@@ -312,7 +315,8 @@ export function ConversationScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: sp[4],
-            paddingVertical: 12,
+            paddingTop: 12,
+            paddingBottom: Math.max(marges.bottom, 12),
             backgroundColor: "#FFFFFF",
             borderTopWidth: 1,
             borderTopColor: "rgba(15, 27, 61, 0.06)",
@@ -366,6 +370,6 @@ export function ConversationScreen() {
           </Pressable>
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

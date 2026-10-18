@@ -19,7 +19,12 @@ type Props = {
 export function Screen({ children, scroll = false, refreshControl, flush = false, footer }: Props) {
   const { c } = useTheme();
   const corps = scroll ? (
-    <ScrollView contentContainerStyle={{ padding: flush ? 0 : sp[4], gap: sp[4], flexGrow: 1 }} keyboardShouldPersistTaps="handled" refreshControl={refreshControl}>
+    <ScrollView
+      contentContainerStyle={{ padding: flush ? 0 : sp[4], gap: sp[4], flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      refreshControl={refreshControl}
+    >
       {children}
     </ScrollView>
   ) : (
@@ -28,7 +33,8 @@ export function Screen({ children, scroll = false, refreshControl, flush = false
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={["top", "left", "right", "bottom"]}>
       <OfflineBanner />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      {/* Android « bord à bord » (Expo 57) ne redimensionne plus l'écran sous le clavier : on fait de la place aux deux. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         {corps}
         {footer ? <View style={{ padding: sp[4], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>{footer}</View> : null}
       </KeyboardAvoidingView>
