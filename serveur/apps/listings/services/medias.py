@@ -151,16 +151,19 @@ def traiter(media_id) -> None:
             meta = traitement.traiter_photo(source, destination)
             champs = {"variants": meta["variants"], "playback_path": None}
             principale = meta["variants"][max(meta["variants"], key=int)]
-            champs["poster_path"] = stockage.relatif(destination / principale)
+            champs["poster_path"] = stockage.cle(media.listing_id, media.pk, principale)
         else:
             meta = traitement.traiter_video(source, destination)
             champs = {
-                "playback_path": stockage.relatif(destination / meta["playback"]),
-                "poster_path": stockage.relatif(destination / meta["poster"])
+                "playback_path": stockage.cle(media.listing_id, media.pk, meta["playback"]),
+                "poster_path": stockage.cle(media.listing_id, media.pk, meta["poster"])
                 if meta["poster"]
                 else None,
                 "variants": {"mp4": meta["playback"]},
             }
+        stockage.publier(
+            media.listing_id, media.pk, destination
+        )  # disque : rien à faire ; S3 : envoi
         ListingMedia.objects.filter(pk=media.pk).update(
             status=StatutMedia.READY, sha256=empreinte, mime_type=meta["mime"], size_bytes=source.stat().st_size,
             width=meta["width"], height=meta["height"], duration_s=meta.get("duration_s"), error_code=None,

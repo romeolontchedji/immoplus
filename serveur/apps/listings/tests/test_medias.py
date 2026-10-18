@@ -161,6 +161,48 @@ class TestPhotos:
         assert ListingMedia.objects.get(pk=r["id"]).status == "ready"
 
 
+class TestFournisseurDeStockage:
+    """Un autre fournisseur se branche par réglage : le code métier, la base et l'API ne changent pas."""
+
+    def test_un_fournisseur_objet_recoit_les_derives_et_donne_les_url(
+        self, pro, annonce, settings, monkeypatch, tmp_path, django_capture_on_commit_callbacks
+    ):
+        from apps.core.providers import stockage as fournisseurs
+
+        publies, supprimes = {}, []
+
+        class Objet(fournisseurs.StorageProvider):
+            def dossier_de_travail(self, prefixe):
+                d = tmp_path / "travail" / prefixe
+                d.mkdir(parents=True, exist_ok=True)
+                return d
+
+            def publier(self, prefixe, dossier):
+                publies[prefixe] = sorted(f.name for f in dossier.iterdir())
+
+            def url_publique(self, cle):
+                return f"https://cdn.exemple.bj/{cle}" if cle else None
+
+            def supprimer(self, prefixe):
+                supprimes.append(prefixe)
+
+            def espace_suffisant(self):
+                return True
+
+        monkeypatch.setitem(fournisseurs.FOURNISSEURS, "objet", Objet)
+        settings.STORAGE_PROVIDER = "objet"
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        prefixe = f"listings/{annonce.pk}/{mid}"
+        assert m.status == "ready" and m.poster_path.startswith(prefixe)
+        assert publies[prefixe] == ["w480.webp", "w960.webp"]
+        assert not (settings.MEDIA_ROOT / "listings").exists()  # rien sur le disque public
+        liste = pro.get(f"/v1/pro/listings/{annonce.pk}/media").json()
+        assert liste[0]["poster_url"] == f"https://cdn.exemple.bj/{m.poster_path}"
+        assert pro.delete(f"/v1/pro/listings/{annonce.pk}/media/{mid}").status_code == 204
+        assert supprimes == [prefixe]
+
+
 class TestProtocole:
     @pytest.fixture
     def envoi(self, pro, annonce):

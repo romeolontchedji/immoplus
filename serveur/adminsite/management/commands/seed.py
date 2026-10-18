@@ -132,10 +132,11 @@ def _generer_photo_demo(media: ListingMedia, teinte: str) -> None:
     destination = stockage.dossier_public(media.listing_id, media.pk)
     meta = traitement.traiter_photo(source, destination)
     principale = meta["variants"][max(meta["variants"], key=int)]
+    stockage.publier(media.listing_id, media.pk, destination)
     ListingMedia.objects.filter(pk=media.pk).update(
         status="ready",
         variants=meta["variants"],
-        poster_path=stockage.relatif(destination / principale),
+        poster_path=stockage.cle(media.listing_id, media.pk, principale),
         mime_type=meta["mime"],
         width=meta["width"],
         height=meta["height"],
