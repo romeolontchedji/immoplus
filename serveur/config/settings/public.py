@@ -18,12 +18,24 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
+# Hôtes servis : le site et l'API du domaine, plus l'adresse interne des contrôles de santé (curl 127.0.0.1).
+# Sans cette liste, Django répondrait 400 à toute requête en production.
+_DOMAINE = env.texte("DOMAIN")
+if not _DOMAINE or _DOMAINE == "localhost":
+    raise ImproperlyConfigured("DOMAIN de production absent (ex. logeo.bj).")
+ALLOWED_HOSTS = [f"www.{_DOMAINE}", f"api.{_DOMAINE}", "127.0.0.1", "localhost"]
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
 OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY")
-for _nom, _valeur in (("JWT_SIGNING_KEY", JWT_SIGNING_KEY), ("OTP_HMAC_KEY", OTP_HMAC_KEY)):
+# `realtime` (WebSocket) vérifie les jetons mais n'émet aucun code OTP : il ne reçoit pas cette clé (moindre privilège).
+_TEMPS_REEL = env.texte("LOGEO_PROCESSUS") == "realtime"
+_EXIGEES = [("JWT_SIGNING_KEY", JWT_SIGNING_KEY)] + (
+    [] if _TEMPS_REEL else [("OTP_HMAC_KEY", OTP_HMAC_KEY)]
+)
+for _nom, _valeur in _EXIGEES:
     if not _valeur or _valeur.startswith("dev-"):
         raise ImproperlyConfigured(f"{_nom} de production absente ou de développement.")
-if len({SECRET_KEY, JWT_SIGNING_KEY, OTP_HMAC_KEY}) != 3:
+_CLES = [c for c in (SECRET_KEY, JWT_SIGNING_KEY, OTP_HMAC_KEY) if c]
+if len(set(_CLES)) != len(_CLES):
     raise ImproperlyConfigured(
         "SECRET_KEY, JWT_SIGNING_KEY et OTP_HMAC_KEY doivent être trois clés différentes."
     )

@@ -16,6 +16,12 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
+# Seul l'hôte d'administration, plus l'adresse interne du contrôle de santé.
+_DOMAINE = env.texte("DOMAIN")
+if not _DOMAINE or _DOMAINE == "localhost":
+    raise ImproperlyConfigured("DOMAIN de production absent (ex. logeo.bj).")
+ALLOWED_HOSTS = [f"pilotage.{_DOMAINE}", "127.0.0.1", "localhost"]
+CSRF_TRUSTED_ORIGINS = [f"https://pilotage.{_DOMAINE}"]
 ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")  # vide = tout refuser
 PRIVATE_FILES_KEY = env.texte("PRIVATE_FILES_KEY")  # injectée uniquement dans admin et backup
 

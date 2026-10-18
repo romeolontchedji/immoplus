@@ -15,19 +15,29 @@ def importer(module: str, **env) -> subprocess.CompletedProcess:
     propre = {
         k: v
         for k, v in os.environ.items()
-        if k not in {"SECRET_KEY", "DEBUG", "OTP_DEBUG_CODE", "JWT_SIGNING_KEY", "OTP_HMAC_KEY"}
+        if k
+        not in {
+            "SECRET_KEY",
+            "DEBUG",
+            "OTP_DEBUG_CODE",
+            "JWT_SIGNING_KEY",
+            "OTP_HMAC_KEY",
+            "DOMAIN",
+        }
     }
     return subprocess.run(
         [sys.executable, "-c", f"import {module}"],
         cwd=SERVEUR,
-        env={**propre, **env},
+        env={**propre, "DOMAIN": "logeo.exemple.bj", **env},
         capture_output=True,
         text=True,
         check=False,
     )
 
 
-@pytest.mark.parametrize("module", ["config.settings.public", "config.settings.admin"])
+@pytest.mark.parametrize(
+    "module", ["config.settings.public", "config.settings.admin", "config.settings.taches"]
+)
 class TestRefusEnProduction:
     def test_secret_absent(self, module):
         r = importer(module)
@@ -50,6 +60,27 @@ class TestRefusEnProduction:
         assert r.returncode == 0, r.stderr
 
 
+@pytest.mark.parametrize("module", ["config.settings.public", "config.settings.admin"])
+@pytest.mark.parametrize("domaine", ["", "localhost"])
+def test_domaine_de_production_obligatoire(module, domaine):
+    r = importer(
+        module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60, DOMAIN=domaine
+    )
+    assert r.returncode != 0 and "DOMAIN" in r.stderr
+
+
+def test_le_temps_reel_demarre_sans_la_cle_des_codes():
+    r = importer(
+        "config.settings.public",
+        SECRET_KEY="x" * 60,
+        JWT_SIGNING_KEY="y" * 60,
+        LOGEO_PROCESSUS="realtime",
+    )
+    assert r.returncode == 0, r.stderr
+    r = importer("config.settings.public", SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
+    assert r.returncode != 0 and "OTP_HMAC_KEY" in r.stderr
+
+
 def test_cookies_distincts_site_et_administration():
     site = importer(
         "config.settings.public",
@@ -68,6 +99,7 @@ def test_cookies_distincts_site_et_administration():
         cwd=SERVEUR,
         env={
             **os.environ,
+            "DOMAIN": "logeo.exemple.bj",
             "SECRET_KEY": "a" * 60,
             "JWT_SIGNING_KEY": "b" * 60,
             "OTP_HMAC_KEY": "c" * 60,

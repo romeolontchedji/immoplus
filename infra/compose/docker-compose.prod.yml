@@ -17,6 +17,7 @@ services:
   realtime:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
+      LOGEO_PROCESSUS: realtime
       LOGEO_RELOAD: "0"
     volumes: !override []
   admin:
@@ -32,13 +33,13 @@ services:
     volumes: !override []
   worker-media:
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.public
+      DJANGO_SETTINGS_MODULE: config.settings.taches
     volumes: !override
       - media_tmp:/var/lib/logeo/media_tmp
       - media_public:/var/lib/logeo/media_public
   beat:
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.public
+      DJANGO_SETTINGS_MODULE: config.settings.taches
     volumes: !override
       - beat_data:/var/lib/logeo
   caddy:
