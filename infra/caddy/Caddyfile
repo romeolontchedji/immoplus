@@ -34,6 +34,12 @@
 	}
 }
 
+# Domaine nu : redirection permanente vers le site.
+{$DOMAIN} {
+	import en_tetes_securite
+	redir https://www.{$DOMAIN}{uri} permanent
+}
+
 www.{$DOMAIN} {
 	encode zstd gzip
 	import en_tetes_securite

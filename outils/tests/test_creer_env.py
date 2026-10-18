@@ -69,6 +69,33 @@ class TestCreerEnv(unittest.TestCase):
             finally:
                 creer_env.RACINE, creer_env.MODELE_RACINE, creer_env.DOSSIER_ENV = avant
 
+    def test_services_regeneres_sans_changer_les_secrets(self):
+        with tempfile.TemporaryDirectory() as d:
+            racine = Path(d)
+            (racine / "infra" / "compose" / "env").mkdir(parents=True)
+            (racine / ".env.example").write_text(
+                "DOMAIN=localhost\nSITE_SECRET_KEY=\n", encoding="utf-8"
+            )
+            (racine / "infra/compose/env/x.env.example").write_text(
+                "K={{SITE_SECRET_KEY}}\nD={{DOMAIN}}\n", encoding="utf-8"
+            )
+            avant = (creer_env.RACINE, creer_env.MODELE_RACINE, creer_env.DOSSIER_ENV)
+            creer_env.RACINE = racine
+            creer_env.MODELE_RACINE = racine / ".env.example"
+            creer_env.DOSSIER_ENV = racine / "infra" / "compose" / "env"
+            try:
+                creer_env.main([])
+                secret = creer_env.lire_valeurs(racine / ".env")["SITE_SECRET_KEY"]
+                self.assertGreaterEqual(len(secret), 48)  # écrit dans .env dès le premier passage
+                env = racine / ".env"
+                env.write_text(env.read_text().replace("DOMAIN=localhost", "DOMAIN=logeo.bj"))
+                self.assertEqual(creer_env.main(["--services"]), 0)
+                rendu = (racine / "infra/compose/env/x.env").read_text()
+                self.assertIn("D=logeo.bj", rendu)
+                self.assertIn(f"K={secret}", rendu)
+            finally:
+                creer_env.RACINE, creer_env.MODELE_RACINE, creer_env.DOSSIER_ENV = avant
+
 
 if __name__ == "__main__":
     unittest.main()

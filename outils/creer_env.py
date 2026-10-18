@@ -2,6 +2,11 @@
 """Crée `.env` (secrets générés) puis un fichier d'environnement par service à partir des modèles.
 
 Idempotent : un fichier existant n'est jamais écrasé sans `--force`. Bibliothèque standard seulement.
+
+    python3 outils/creer_env.py             # premier passage : .env (secrets générés) et fichiers des services
+    python3 outils/creer_env.py --services  # après avoir modifié .env : régénère les fichiers des services
+                                            # sans toucher aux secrets (la base existante reste accessible)
+    python3 outils/creer_env.py --force     # repart du modèle : NOUVEAUX secrets (seulement sur un serveur vierge)
 """
 
 import argparse
@@ -48,7 +53,14 @@ def generer(valeurs: dict[str, str]) -> dict[str, str]:
 def ecrire_racine(force: bool) -> dict[str, str]:
     cible = RACINE / ".env"
     if cible.exists() and not force:
-        valeurs = generer(lire_valeurs(cible))
+        actuelles = lire_valeurs(cible)
+        # Une variable ajoutée au modèle après la création de .env prend la valeur du modèle.
+        valeurs = generer({**lire_valeurs(MODELE_RACINE), **actuelles})
+        manquants = [n for n in (*SECRETS_TEXTE, *SECRETS_FERNET) if not actuelles.get(n)]
+        if (
+            manquants
+        ):  # un secret généré est écrit dans .env : il ne change plus d'un passage à l'autre
+            completer(cible, {n: valeurs[n] for n in manquants})
         return valeurs
     valeurs = generer(lire_valeurs(MODELE_RACINE))
     lignes = []
@@ -72,6 +84,19 @@ def rendre(modele: str, valeurs: dict[str, str]) -> str:
     return MARQUEUR.sub(remplacer, modele)
 
 
+def completer(cible: Path, ajouts: dict[str, str]) -> None:
+    """Renseigne dans `cible` les variables vides ou absentes de `ajouts`, sans toucher aux autres lignes."""
+    lignes, vus = [], set()
+    for ligne in cible.read_text(encoding="utf-8").splitlines():
+        nom = ligne.partition("=")[0].strip()
+        if "=" in ligne and not ligne.lstrip().startswith("#") and nom in ajouts:
+            ligne, _ = f"{nom}={ajouts[nom]}", vus.add(nom)
+        lignes.append(ligne)
+    lignes += [f"{nom}={valeur}" for nom, valeur in ajouts.items() if nom not in vus]
+    cible.write_text("\n".join(lignes) + "\n", encoding="utf-8")
+    cible.chmod(0o600)
+
+
 def ecrire_services(valeurs: dict[str, str], force: bool) -> list[Path]:
     crees = []
     for modele in sorted(DOSSIER_ENV.glob("*.env.example")):
@@ -87,9 +112,17 @@ def ecrire_services(valeurs: dict[str, str], force: bool) -> list[Path]:
 def main(argv: list[str] | None = None) -> int:
     parseur = argparse.ArgumentParser(description=__doc__)
     parseur.add_argument("--force", action="store_true", help="écrase les fichiers existants")
+    parseur.add_argument(
+        "--services",
+        action="store_true",
+        help="régénère les fichiers des services depuis .env, sans changer les secrets",
+    )
     args = parseur.parse_args(argv)
-    valeurs = ecrire_racine(args.force)
-    crees = ecrire_services(valeurs, args.force)
+    if args.services and not (RACINE / ".env").exists():
+        sys.stderr.write("✗ .env absent : lance d'abord le premier passage (sans option).\n")
+        return 1
+    valeurs = ecrire_racine(args.force and not args.services)
+    crees = ecrire_services(valeurs, args.force or args.services)
     sys.stdout.write(
         f"✔ .env prêt ; {len(crees)} fichier(s) de service créé(s) dans infra/compose/env/.\n"
     )
