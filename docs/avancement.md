@@ -2,6 +2,16 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-18 (suite) : retours sur l'application mobile.**
+- Clavier : l'écran commun et la conversation font de la place au clavier sur Android « bord à bord » et iOS.
+- Code OTP : envoi au 6e chiffre, vibration et cases vidées en cas de refus ; remplissage SMS déclaré
+  (`sms-otp`, `oneTimeCode`) pour les vrais SMS.
+- Mot de passe : erreurs du serveur sous le bon champ (mobile), confirmation demandée sur le site.
+- Police Plus Jakarta Sans embarquée (`mobile/assets/fonts`, une famille par graisse), hauteur de ligne qui suit la
+  taille (jambages du logo et des titres plus coupés), en-tête commun `EnTetePage` sur les onglets et sous-pages.
+- Conversation sans en-tête natif superflu ; réglage de l'empreinte toujours visible dans Profil.
+- En attente d'accord : nouveaux équipements (champ en base).
+
 **2026-10-18 : retours du porteur sur le site et l'administration.**
 - Site : espaces locataire et gérant sur un gabarit commun (`web/espace.html`) avec barre latérale colorée
   (`composants/barre_espace.html`, balise `menu_espace`) et contenu pleine largeur ; rangée d'onglets sur tablette et
