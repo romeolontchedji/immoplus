@@ -109,7 +109,9 @@ class ChangementMotDePasse(_Base):
 
     def clean(self):
         donnees = super().clean()
-        if donnees.get("new_password") and donnees.get("confirmation") != donnees.get("new_password"):
+        if donnees.get("new_password") and donnees.get("confirmation") != donnees.get(
+            "new_password"
+        ):
             self.add_error("confirmation", "Les deux mots de passe ne correspondent pas.")
         return donnees
 
