@@ -122,7 +122,7 @@ class Vue(_Public):
         proprietaire = request.user is not None and request.user.pk == fiche["gerant_user_id"]
         compte = vues.enregistrer(
             fiche["id"], _visiteur(request),
-            user_agent=request.headers.get("User-Agent"), proprietaire=proprietaire,
+            user_agent=request.headers.get("User-Agent"), proprietaire=proprietaire, canal="app",
         )  # fmt: skip
         return Response({"counted": compte})
 

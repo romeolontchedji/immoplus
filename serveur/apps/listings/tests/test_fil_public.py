@@ -307,6 +307,7 @@ class TestApi:
         }
         assert vues.vider_compteurs() == 3
         assert stats.lire("views", sujet=str(a.pk)) == 3
+        assert stats.lire("views", sujet="canal:app") == 3  # provenance : l'API sert l'application
         assert vues.vider_compteurs() == 0  # idempotent
         assert anonyme.post("/v1/listings/inconnue/views").status_code == 404
 

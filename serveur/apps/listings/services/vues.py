@@ -13,6 +13,9 @@ _ROBOTS = re.compile(
 )
 PREFIXE_JOUR = "vues:jour:"
 PREFIXE_VIDAGE = "vues:vidage:"
+# Provenance des vues (tableau de bord de l'administration) : rangée sous un sujet « canal:… » de `daily_stats`.
+CANAUX = ("web", "app")
+SUJET_CANAL = "canal:"
 
 
 def est_robot(user_agent: str | None) -> bool:
@@ -20,9 +23,16 @@ def est_robot(user_agent: str | None) -> bool:
 
 
 def enregistrer(
-    annonce_id, visiteur: str, *, user_agent: str | None = None, proprietaire: bool = False
+    annonce_id,
+    visiteur: str,
+    *,
+    user_agent: str | None = None,
+    proprietaire: bool = False,
+    canal: str = "web",
 ) -> bool:
-    """Compte une vue unique par visiteur, annonce et jour. Propriétaire et robots exclus. Retourne vrai si comptée."""
+    """Compte une vue unique par visiteur, annonce et jour. Propriétaire et robots exclus. Retourne vrai si comptée.
+
+    `canal` (site ou application) alimente aussi le total du jour par provenance."""
     if proprietaire or est_robot(user_agent) or not visiteur:
         return False
     r = redis_file.client()
@@ -30,6 +40,8 @@ def enregistrer(
     if not r.set(f"vue:{jour}:{annonce_id}:{visiteur}", 1, nx=True, ex=EXPIRATION_VISITEUR_S):
         return False
     r.hincrby(f"{PREFIXE_JOUR}{jour}", str(annonce_id), 1)
+    if canal in CANAUX:
+        r.hincrby(f"{PREFIXE_JOUR}{jour}", f"{SUJET_CANAL}{canal}", 1)
     return True
 
 
@@ -59,6 +71,7 @@ def vider_compteurs() -> int:
             stats.incrementer(
                 "views", int(valeur), sujet=annonce_id, jour=datetime.date.fromisoformat(jour)
             )
-            total += int(valeur)
+            if not annonce_id.startswith(SUJET_CANAL):  # le total par provenance double les vues
+                total += int(valeur)
         r.delete(en_cours)
     return total
