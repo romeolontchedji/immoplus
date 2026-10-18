@@ -51,6 +51,58 @@ def nav_courant(context, prefixe: str) -> str:
     return "page" if (chemin == prefixe or chemin.startswith(nettoye + "/")) else ""
 
 
+MENU_LOCATAIRE = (
+    ("Tableau de bord", "/compte", "layout-grid", None, True),
+    ("Mes favoris", "/compte/favoris", "heart", None, False),
+    ("Mes alertes", "/compte/alertes", "bell-ring", None, False),
+    ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
+    ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
+)
+MENU_GERANT = (
+    ("Tableau de bord", "/pro/dashboard", "layout-grid", None, False),
+    ("Mes annonces", "/pro/annonces", "house", None, False),
+    ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
+    ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
+    ("Mon profil", "/compte", "user", None, True),
+)
+MENU_REGLAGES = (
+    ("Préférences", "/compte/preferences", "settings", None, False),
+    ("Appareils connectés", "/compte/appareils", "smartphone", None, False),
+    ("Changer de numéro", "/compte/numero", "phone", None, False),
+)
+
+
+@register.simple_tag(takes_context=True)
+def menu_espace(context) -> dict:
+    """Barre latérale des espaces locataire et gérant : sections, liens, compteur, onglet courant (exact ou sous-page)."""
+    request = context.get("request")
+    chemin = getattr(request, "path", "")
+    gerant = getattr(getattr(request, "user", None), "role", "") == "gerant"
+
+    def liens(entrees):
+        sortie = []
+        for libelle, url, icone, cle_compteur, exact in entrees:
+            actif = chemin == url if exact else (chemin == url or chemin.startswith(url + "/"))
+            compteur = context.get(cle_compteur) if cle_compteur else None
+            sortie.append(
+                {
+                    "libelle": libelle,
+                    "url": url,
+                    "icone": icone,
+                    "actif": actif,
+                    "compteur": compteur,
+                }
+            )
+        return sortie
+
+    return {
+        "chambres": liens((("Chambres", "/annonces", "search", None, False),))[0],
+        "principal": liens(MENU_GERANT if gerant else MENU_LOCATAIRE),
+        "reglages": liens(MENU_REGLAGES),
+        "role": "Espace gérant" if gerant else "Espace locataire",
+    }
+
+
 @register.filter
 def fcfa(montant) -> str:
     """Formate un entier en FCFA : 25000 → « 25 000 » (fine insécable)."""

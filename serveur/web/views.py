@@ -5,12 +5,17 @@ from django.http import Http404
 from django.shortcuts import render
 
 from apps.core import legal
+from apps.listings import selectors as annonces
 from apps.listings.services import types
 
 
 def accueil(request):
     # Onglets de la recherche : les 3 types validés les plus courants (décision V1).
-    return render(request, "web/accueil.html", {"types_accueil": types.publics()[:3]})
+    return render(
+        request,
+        "web/accueil.html",
+        {"types_accueil": types.publics()[:3], "quartiers": annonces.quartiers_avec_chambres()},
+    )
 
 
 def conditions(request):

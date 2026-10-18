@@ -424,3 +424,36 @@ class TestConsultees:
         for x in ListingFactory.create_batch(10):
             c.get(f"/annonces/{x.slug}")
         assert len(c.session["consultees"]) == 8
+
+
+class TestMiseEnPageDesEspaces:
+    def test_barre_laterale_avec_l_onglet_courant(self):
+        c = connecte(ClientFactory())
+        page = html(c.get("/compte/alertes"))
+        assert 'class="espace-barre"' in page
+        courant = re.search(r'espace-barre__lien--actif"\s+href="([^"]+)"', page)
+        assert courant and courant.group(1) == "/compte/alertes"
+
+    def test_le_tableau_de_bord_n_active_pas_les_sous_pages(self):
+        page = html(connecte(ClientFactory()).get("/compte"))
+        assert re.findall(r'espace-barre__lien--actif"\s+href="([^"]+)"', page) == ["/compte"]
+
+    def test_menu_mobile_marque_la_page_courante(self):
+        page = html(connecte(ClientFactory()).get("/compte/favoris"))
+        assert re.search(r'menu-mobile__lien--actif"\s+href="/compte/favoris"', page)
+
+    def test_oeil_sur_les_champs_mot_de_passe(self):
+        page = html(connecte(ClientFactory()).get("/compte"))
+        assert page.count("data-voir-mdp") == 3 and "js/mot-de-passe" in page
+
+
+class TestQuartiersDeLAccueil:
+    def test_quartiers_avec_le_nombre_de_chambres(self):
+        q = DistrictFactory(name="Quartier Témoin")
+        ListingFactory.create_batch(2, district=q)
+        page = html(Client().get("/"))
+        assert (
+            "Cherche par quartier" in page
+            and f"/quartiers/{q.slug}" in page
+            and "2 chambres" in page
+        )

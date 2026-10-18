@@ -89,6 +89,10 @@
   --voile-gerant: linear-gradient(180deg, rgba(15, 27, 61, 0.80), rgba(15, 27, 61, 0.94) 55%);
   /* Photos d'ambiance (ADR 0006) : décor seulement, jamais une chambre */
   --duree-diaporama: 21s;
+  /* Barre latérale des espaces (locataire, gérant) */
+  --espace-barre-fond: linear-gradient(180deg, #0F1B3D 0%, #15296E 60%, #1B3A9E 100%);
+  --espace-barre-largeur: 17rem;
+  --espace-barre-texte: rgba(255, 255, 255, 0.78);
   --voile-catalogue: linear-gradient(180deg, rgba(15, 27, 61, 0.55), rgba(15, 27, 61, 0.85));
   --voile-auth: linear-gradient(180deg, rgba(15, 27, 61, 0.35), rgba(15, 27, 61, 0.90));
 
@@ -221,7 +225,7 @@
   --courbe: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Gabarits */
-  --largeur-page:  72.5rem;   /* 1160px */
+  --largeur-page:  90rem;     /* 1440px : les pages occupent l'écran, marges fluides */
   --largeur-texte: 46rem;
 }
 

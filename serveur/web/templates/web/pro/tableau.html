@@ -1,208 +1,201 @@
-{% extends "web/base.html" %}
+{% extends "web/espace.html" %}
 {% load static logeo %}
 {% block titre %}Tableau de bord — Espace Gérant — Logeo{% endblock %}
-{% block navigation %}{% endblock %}
-{# Sidebar remplace la navbar #}
-{% block contenu %}
-  <div class="pro-layout">
-    {# ── Barre latérale gérant ──────────────────────────────────────────────── #}
-    {% include "web/pro/_sidebar.html" with active_onglet="dashboard" %}
-    {# ── Contenu principal ──────────────────────────────────────────────────── #}
-    <main id="contenu" class="pro-principal">
-      {# En-tête #}
-      <div class="pro-entete">
-        <div>
-          <h1 class="pro-entete__titre">Bonjour {{ profil.user.prenom|default:profil.user.full_name|default:"" }}</h1>
-          <p class="texte-doux mb-0">Voici ce qui se passe sur tes chambres.</p>
+{% block espace %}
+  <div class="pro-principal">
+    {# En-tête #}
+    <div class="pro-entete">
+      <div>
+        <h1 class="pro-entete__titre">Bonjour {{ profil.user.prenom|default:profil.user.full_name|default:"" }}</h1>
+        <p class="texte-doux mb-0">Voici ce qui se passe sur tes chambres.</p>
+      </div>
+      {% if profil.verification_status == "verified" %}
+        <a class="bouton bouton--accent" href="/pro/annonces/nouvelle">
+          <svg width="18"
+               height="18"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2.5"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Publier une chambre
+        </a>
+      {% endif %}
+    </div>
+    {% if profil.verification_status != "verified" %}
+      <div class="alerte alerte--avertissement" role="status">
+        <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Logeo.</p>
+      </div>
+    {% endif %}
+    {% if message %}
+      <div class="alerte alerte--danger" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    {% endif %}
+    {# ── Métriques ────────────────────────────────────────────────────────── #}
+    <div class="pro-metriques-grille">
+      <div class="pro-metrique-carte">
+        <p class="pro-metrique-valeur">{{ donnees.listings_by_status.published|default:"—" }}</p>
+        <p class="pro-metrique-label">Chambres actives</p>
+      </div>
+      <div class="pro-metrique-carte">
+        <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:"—" }}</p>
+        <p class="pro-metrique-label">Vues ce mois</p>
+      </div>
+      <div class="pro-metrique-carte">
+        <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.conversations_30d|default:"—" }}</p>
+        <p class="pro-metrique-label">Contacts reçus</p>
+      </div>
+      <div class="pro-metrique-carte">
+        <p class="pro-metrique-valeur pro-metrique-valeur--vert">{{ donnees.listings_by_status.rented|default:"—" }}</p>
+        <p class="pro-metrique-label">Louées</p>
+      </div>
+    </div>
+    {# ── Répartition par statut ───────────────────────────────────────────── #}
+    {% if statuts %}
+      <div class="pro-statuts-annonces" aria-label="Répartition de tes annonces">
+        {% for s in statuts %}
+          <span class="pro-statut-chip"><strong>{{ s.nombre }}</strong> {{ s.libelle }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {# ── Grille principale : tableau + contacts ────────────────────────────── #}
+    <div class="pro-dashboard-grille">
+      {# Mes annonces #}
+      <div class="pro-section-carte">
+        <div class="pro-section-entete">
+          <h2 class="pro-section-titre">Mes annonces</h2>
+          <a class="bouton bouton--contour bouton--petit" href="/pro/annonces">Voir toutes</a>
         </div>
-        {% if profil.verification_status == "verified" %}
-          <a class="bouton bouton--accent" href="/pro/annonces/nouvelle">
-            <svg width="18"
-                 height="18"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Publier une chambre
-          </a>
+        {% if recentes %}
+          <div class="tableau-defilable">
+            <table class="tableau-pro">
+              <thead>
+                <tr>
+                  <th>Chambre</th>
+                  <th>Loyer</th>
+                  <th>Statut</th>
+                  <th>Vues</th>
+                  <th>Contacts</th>
+                  <th>Disponible</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in recentes %}
+                  <tr>
+                    <td data-libelle="Chambre">
+                      <div class="cellule-chambre">
+                        <span class="cellule-chambre__initiale">{{ r.annonce.district.name|slice:":2"|upper }}</span>
+                        <div>
+                          <a class="cellule-chambre__titre" href="{{ r.url }}">{{ r.annonce.title }}</a>
+                          <span class="cellule-chambre__type">{{ r.type_label }} · {{ r.annonce.district.name }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td data-libelle="Loyer">
+                      <strong>{{ r.annonce.rent_amount|fcfa }} F</strong>
+                    </td>
+                    <td data-libelle="Statut">
+                      <span class="{{ r.statut.1 }}">{{ r.statut.0 }}</span>
+                    </td>
+                    <td data-libelle="Vues">
+                      <span class="fw-700">{{ r.stats.views|default:0 }}</span>
+                    </td>
+                    <td data-libelle="Contacts">
+                      <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
+                    </td>
+                    <td data-libelle="Encore disponible">
+                      {% if r.annonce.status == "published" or r.annonce.status == "rented" %}
+                        <form method="post" class="interrupteur-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="disponible">
+                          <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
+                          {% if r.annonce.status == "published" %}
+                            <button class="interrupteur interrupteur--actif"
+                                    type="submit"
+                                    name="disponible"
+                                    value="0"
+                                    role="switch"
+                                    aria-checked="true"
+                                    aria-label="« {{ r.annonce.title }} » est disponible. Décoche si elle est louée.">
+                              <span class="interrupteur__curseur"></span>
+                            </button>
+                          {% else %}
+                            <button class="interrupteur"
+                                    type="submit"
+                                    name="disponible"
+                                    value="1"
+                                    role="switch"
+                                    aria-checked="false"
+                                    aria-label="« {{ r.annonce.title }} » est louée. Coche pour la remettre en ligne.">
+                              <span class="interrupteur__curseur"></span>
+                            </button>
+                          {% endif %}
+                        </form>
+                      {% else %}
+                        <span class="texte-doux">—</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="etat-vide">
+            <div class="etat-vide__symbole">
+              <svg width="28"
+                   height="28"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="1.5"
+                   stroke-linecap="round"
+                   stroke-linejoin="round"
+                   aria-hidden="true">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </div>
+            <h3 class="etat-vide__titre">Tu n'as pas encore publié de chambre.</h3>
+            <p class="etat-vide__texte">Publie la première : une vidéo, quelques photos, et c'est en ligne.</p>
+            <div class="etat-vide__actions">
+              <a class="bouton bouton--primaire" href="/pro/annonces/nouvelle">Publier une chambre</a>
+            </div>
+          </div>
         {% endif %}
       </div>
-      {% if profil.verification_status != "verified" %}
-        <div class="alerte alerte--avertissement" role="status">
-          <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Logeo.</p>
+      {# Derniers contacts #}
+      <div class="pro-section-carte">
+        <div class="pro-section-entete">
+          <h2 class="pro-section-titre">Derniers contacts</h2>
         </div>
-      {% endif %}
-      {% if message %}
-        <div class="alerte alerte--danger" role="alert">
-          <p>{{ message }}</p>
-        </div>
-      {% endif %}
-      {# ── Métriques ────────────────────────────────────────────────────────── #}
-      <div class="pro-metriques-grille">
-        <div class="pro-metrique-carte">
-          <p class="pro-metrique-valeur">{{ donnees.listings_by_status.published|default:"—" }}</p>
-          <p class="pro-metrique-label">Chambres actives</p>
-        </div>
-        <div class="pro-metrique-carte">
-          <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:"—" }}</p>
-          <p class="pro-metrique-label">Vues ce mois</p>
-        </div>
-        <div class="pro-metrique-carte">
-          <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.conversations_30d|default:"—" }}</p>
-          <p class="pro-metrique-label">Contacts reçus</p>
-        </div>
-        <div class="pro-metrique-carte">
-          <p class="pro-metrique-valeur pro-metrique-valeur--vert">{{ donnees.listings_by_status.rented|default:"—" }}</p>
-          <p class="pro-metrique-label">Louées</p>
-        </div>
+        {% if derniers_contacts %}
+          <ul class="pro-contacts-liste">
+            {% for c in derniers_contacts %}
+              <li>
+                <a class="pro-contact-ligne" href="/compte/messages/{{ c.id }}">
+                  <span class="navigation__avatar pro-contact__avatar"
+                        aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
+                  <span class="pro-contact__infos">
+                    <strong>{{ c.other.name|default:"Locataire" }}</strong>
+                    <span class="pro-contact__meta">{{ c.listing.title }} · {{ c.last_message_at|horodatage_court }}</span>
+                  </span>
+                  {% if c.unread_count %}<span class="badge badge--information">{{ c.unread_count }} non lu{{ c.unread_count|pluralize }}</span>{% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+          <a class="pro-contacts__lien-voir" href="/compte/messages">Ouvrir les messages</a>
+        {% else %}
+          <div class="p-6 texte-doux texte-centre">Aucun contact pour l'instant.</div>
+        {% endif %}
       </div>
-      {# ── Répartition par statut ───────────────────────────────────────────── #}
-      {% if statuts %}
-        <div class="pro-statuts-annonces" aria-label="Répartition de tes annonces">
-          {% for s in statuts %}
-            <span class="pro-statut-chip"><strong>{{ s.nombre }}</strong> {{ s.libelle }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-      {# ── Grille principale : tableau + contacts ────────────────────────────── #}
-      <div class="pro-dashboard-grille">
-        {# Mes annonces #}
-        <div class="pro-section-carte">
-          <div class="pro-section-entete">
-            <h2 class="pro-section-titre">Mes annonces</h2>
-            <a class="bouton bouton--contour bouton--petit" href="/pro/annonces">Voir toutes</a>
-          </div>
-          {% if recentes %}
-            <div class="tableau-defilable">
-              <table class="tableau-pro">
-                <thead>
-                  <tr>
-                    <th>Chambre</th>
-                    <th>Loyer</th>
-                    <th>Statut</th>
-                    <th>Vues</th>
-                    <th>Contacts</th>
-                    <th>Disponible</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for r in recentes %}
-                    <tr>
-                      <td data-libelle="Chambre">
-                        <div class="cellule-chambre">
-                          <span class="cellule-chambre__initiale">{{ r.annonce.district.name|slice:":2"|upper }}</span>
-                          <div>
-                            <a class="cellule-chambre__titre" href="{{ r.url }}">{{ r.annonce.title }}</a>
-                            <span class="cellule-chambre__type">{{ r.type_label }} · {{ r.annonce.district.name }}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td data-libelle="Loyer">
-                        <strong>{{ r.annonce.rent_amount|fcfa }} F</strong>
-                      </td>
-                      <td data-libelle="Statut">
-                        <span class="{{ r.statut.1 }}">{{ r.statut.0 }}</span>
-                      </td>
-                      <td data-libelle="Vues">
-                        <span class="fw-700">{{ r.stats.views|default:0 }}</span>
-                      </td>
-                      <td data-libelle="Contacts">
-                        <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
-                      </td>
-                      <td data-libelle="Encore disponible">
-                        {% if r.annonce.status == "published" or r.annonce.status == "rented" %}
-                          <form method="post" class="interrupteur-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="disponible">
-                            <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
-                            {% if r.annonce.status == "published" %}
-                              <button class="interrupteur interrupteur--actif"
-                                      type="submit"
-                                      name="disponible"
-                                      value="0"
-                                      role="switch"
-                                      aria-checked="true"
-                                      aria-label="« {{ r.annonce.title }} » est disponible. Décoche si elle est louée.">
-                                <span class="interrupteur__curseur"></span>
-                              </button>
-                            {% else %}
-                              <button class="interrupteur"
-                                      type="submit"
-                                      name="disponible"
-                                      value="1"
-                                      role="switch"
-                                      aria-checked="false"
-                                      aria-label="« {{ r.annonce.title }} » est louée. Coche pour la remettre en ligne.">
-                                <span class="interrupteur__curseur"></span>
-                              </button>
-                            {% endif %}
-                          </form>
-                        {% else %}
-                          <span class="texte-doux">—</span>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="etat-vide">
-              <div class="etat-vide__symbole">
-                <svg width="28"
-                     height="28"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.5"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              </div>
-              <h3 class="etat-vide__titre">Tu n'as pas encore publié de chambre.</h3>
-              <p class="etat-vide__texte">Publie la première : une vidéo, quelques photos, et c'est en ligne.</p>
-              <div class="etat-vide__actions">
-                <a class="bouton bouton--primaire" href="/pro/annonces/nouvelle">Publier une chambre</a>
-              </div>
-            </div>
-          {% endif %}
-        </div>
-        {# Derniers contacts #}
-        <div class="pro-section-carte">
-          <div class="pro-section-entete">
-            <h2 class="pro-section-titre">Derniers contacts</h2>
-          </div>
-          {% if derniers_contacts %}
-            <ul class="pro-contacts-liste">
-              {% for c in derniers_contacts %}
-                <li>
-                  <a class="pro-contact-ligne" href="/compte/messages/{{ c.id }}">
-                    <span class="navigation__avatar pro-contact__avatar"
-                          aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
-                    <span class="pro-contact__infos">
-                      <strong>{{ c.other.name|default:"Locataire" }}</strong>
-                      <span class="pro-contact__meta">{{ c.listing.title }} · {{ c.last_message_at|horodatage_court }}</span>
-                    </span>
-                    {% if c.unread_count %}<span class="badge badge--information">{{ c.unread_count }} non lu{{ c.unread_count|pluralize }}</span>{% endif %}
-                  </a>
-                </li>
-              {% endfor %}
-            </ul>
-            <a class="pro-contacts__lien-voir" href="/compte/messages">Ouvrir les messages</a>
-          {% else %}
-            <div class="p-6 texte-doux texte-centre">Aucun contact pour l'instant.</div>
-          {% endif %}
-        </div>
-      </div>
-      {# /pro-dashboard-grille #}
-    </main>
+    </div>
+    {# /pro-dashboard-grille #}
   </div>
 {% endblock %}

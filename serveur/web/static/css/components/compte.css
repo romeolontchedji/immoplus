@@ -1,4 +1,5 @@
 /* ─── Page Mon compte ─────────────────────────────────────────────────────── */
+.compte-reglages { display: grid; gap: var(--sp-6); grid-template-columns: minmax(0, 1fr); }
 .compte-dashboard {
   display: flex; flex-direction: column; gap: var(--sp-6);
 }
@@ -48,11 +49,9 @@
 }
 
 @media (min-width: 768px) {
-  .compte-dashboard {
-    display: grid; grid-template-columns: 16rem minmax(0, 1fr);
-    align-items: start; gap: var(--sp-8);
-  }
-  .compte-sidebar { position: sticky; top: 5rem; }
+  /* Réglages : profil et mot de passe côte à côte, zone de danger sur toute la largeur */
+  .compte-reglages { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .compte-reglages > .compte-section-carte--danger { grid-column: 1 / -1; }
 }
 @media (max-width: 767px) {
   .compte-section-carte { padding: var(--sp-5); }

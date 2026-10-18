@@ -70,3 +70,18 @@ select.champ__saisie { padding-right: var(--sp-8); appearance: none; background-
   background-size: calc(6 * var(--code-case)) 2px; background-repeat: no-repeat;
   background-position: var(--sp-3) calc(100% - var(--sp-2));
 }
+
+/* Mot de passe : œil dans le champ, à droite */
+.champ__groupe-mdp { position: relative; }
+.champ__groupe-mdp .champ__saisie { padding-right: var(--sp-12); }
+.champ__oeil {
+  position: absolute; top: 50%; right: var(--sp-2); transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--sp-10); height: var(--sp-10); padding: 0;
+  border: 0; border-radius: var(--r-field); background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.champ__oeil:hover { color: var(--night); background: var(--divider); }
+.champ__oeil:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.champ__oeil-cacher, .champ__oeil[aria-pressed="true"] .champ__oeil-voir { display: none; }
+.champ__oeil[aria-pressed="true"] .champ__oeil-cacher { display: inline-flex; }
+.champ__oeil-voir { display: inline-flex; }

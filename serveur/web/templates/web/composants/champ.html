@@ -8,7 +8,21 @@
 {% else %}
   <div class="champ">
     <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>
-    {% if champ.field.prefixe %}
+    {% if champ.field.widget.input_type == "password" %}
+      {# Œil pour afficher le mot de passe : le bouton n'agit qu'avec js/mot-de-passe.js (masqué sans script) #}
+      <div class="champ__groupe-mdp">
+        {{ champ }}
+        <button class="champ__oeil"
+                type="button"
+                data-voir-mdp
+                aria-label="Afficher le mot de passe"
+                aria-pressed="false"
+                hidden>
+          <span class="champ__oeil-voir">{% include "web/composants/icone.html" with nom="eye" taille=20 %}</span>
+          <span class="champ__oeil-cacher">{% include "web/composants/icone.html" with nom="eye-off" taille=20 %}</span>
+        </button>
+      </div>
+    {% elif champ.field.prefixe %}
       <div class="champ__groupe-prefixe">
         <span class="champ__prefixe" aria-hidden="true">{{ champ.field.prefixe }}</span>
         {{ champ }}

@@ -66,7 +66,7 @@
 /* ── Métriques 4 colonnes ─────────────────────────────────────────────────── */
 .pro-metriques-grille {
   display: grid; gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
 }
 .pro-metrique-carte {
   background: var(--surface); border-radius: var(--r-card);
@@ -202,7 +202,8 @@
 
 /* Confirmation d'une action destructrice (accordéon sans JS) */
 .confirmation { display: inline-block; }
-.confirmation > summary { display: inline-block; cursor: pointer; list-style: none; }
+/* Le résumé garde la mise en page du bouton (libellé centré) au lieu d'un inline-block. */
+.confirmation > summary { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; list-style: none; }
 .confirmation > summary::-webkit-details-marker { display: none; }
 .confirmation__corps {
   margin-top: var(--sp-2); padding: var(--sp-3) var(--sp-4);
@@ -244,6 +245,6 @@
   .tableau-pro td:first-child { padding-bottom: var(--sp-2); }
   .tableau-pro td:first-child::before { content: none; }
 }
-@media (min-width: 90rem) {
-  .pro-dashboard-grille { grid-template-columns: 1fr 22rem; }
+@media (min-width: 100rem) {
+  .pro-dashboard-grille { grid-template-columns: minmax(0, 1fr) 22rem; }
 }

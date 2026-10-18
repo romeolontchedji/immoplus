@@ -1,307 +1,300 @@
-{% extends "web/base.html" %}
+{% extends "web/espace.html" %}
 {% load static logeo %}
 {% block titre %}{{ titre }} — Espace Gérant — Logeo{% endblock %}
 {% block tete %}
   {% if medias_en_cours %}<meta http-equiv="refresh" content="8">{% endif %}
 {% endblock %}
-{% block navigation %}{% endblock %}
-{# Sidebar remplace la navbar #}
-{% block contenu %}
-  <div class="pro-layout">
-    {# ── Barre latérale gérant ──────────────────────────────────────────────── #}
-    {% include "web/pro/_sidebar.html" with active_onglet="annonces" %}
-    {# ── Contenu principal ──────────────────────────────────────────────────── #}
-    <main id="contenu" class="pro-principal">
-      {# Fil d'ariane & En-tête #}
-      <div class="pro-entete">
-        <div>
-          <nav class="fil-ariane mb-2" aria-label="Fil d'Ariane">
-            <a href="/pro/dashboard">Tableau de bord</a> <span aria-hidden="true">›</span>
-            <a href="/pro/annonces">Mes annonces</a> <span aria-hidden="true">›</span>
-            <span aria-current="page">{{ titre }}</span>
-          </nav>
-          <h1 class="pro-entete__titre">{{ titre }}</h1>
-          <p class="texte-doux mb-0">Remplis les caractéristiques de la chambre, ajoute une vidéo et publie ton annonce.</p>
-        </div>
-        {% if annonce %}
-          <div class="pro-entete__actions">
-            <a class="bouton bouton--contour bouton--petit"
-               href="/annonces/{{ annonce.slug }}"
-               target="_blank"
-               rel="noopener">
-              <svg width="16"
-                   height="16"
-                   viewBox="0 0 24 24"
-                   fill="none"
-                   stroke="currentColor"
-                   stroke-width="2"
-                   stroke-linecap="round"
-                   stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              Voir la fiche publique
-            </a>
-          </div>
-        {% endif %}
+{% block espace %}
+  <div class="pro-principal">
+    {# Fil d'ariane & En-tête #}
+    <div class="pro-entete">
+      <div>
+        <nav class="fil-ariane mb-2" aria-label="Fil d'Ariane">
+          <a href="/pro/dashboard">Tableau de bord</a> <span aria-hidden="true">›</span>
+          <a href="/pro/annonces">Mes annonces</a> <span aria-hidden="true">›</span>
+          <span aria-current="page">{{ titre }}</span>
+        </nav>
+        <h1 class="pro-entete__titre">{{ titre }}</h1>
+        <p class="texte-doux mb-0">Remplis les caractéristiques de la chambre, ajoute une vidéo et publie ton annonce.</p>
       </div>
-      {# Messages et alertes #}
-      {% if message %}
-        <div class="alerte alerte--succes" role="status">
-          <p>{{ message }}</p>
+      {% if annonce %}
+        <div class="pro-entete__actions">
+          <a class="bouton bouton--contour bouton--petit"
+             href="/annonces/{{ annonce.slug }}"
+             target="_blank"
+             rel="noopener">
+            <svg width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            Voir la fiche publique
+          </a>
         </div>
       {% endif %}
-      {% if erreur_media %}
-        <div class="alerte alerte--danger" role="alert">
-          <p>{{ erreur_media }}</p>
+    </div>
+    {# Messages et alertes #}
+    {% if message %}
+      <div class="alerte alerte--succes" role="status">
+        <p>{{ message }}</p>
+      </div>
+    {% endif %}
+    {% if erreur_media %}
+      <div class="alerte alerte--danger" role="alert">
+        <p>{{ erreur_media }}</p>
+      </div>
+    {% endif %}
+    {% if manques %}
+      <div class="alerte alerte--avertissement" role="alert">
+        <div>
+          <p class="alerte__titre">Pour publier cette annonce, il manque :</p>
+          <ul>
+            {% for m in manques %}<li>{{ m|manque_publication }}</li>{% endfor %}
+          </ul>
         </div>
-      {% endif %}
-      {% if manques %}
-        <div class="alerte alerte--avertissement" role="alert">
-          <div>
-            <p class="alerte__titre">Pour publier cette annonce, il manque :</p>
-            <ul>
-              {% for m in manques %}<li>{{ m|manque_publication }}</li>{% endfor %}
-            </ul>
+      </div>
+    {% endif %}
+    {% if form.non_field_errors %}
+      <div class="alerte alerte--danger" role="alert">
+        {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    {# Formulaire principal en cartes #}
+    <div class="pile pile--large">
+      <form method="post" class="pile pile--large" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="enregistrer">
+        {# 1. Informations générales #}
+        <div class="pro-section-carte p-6">
+          <div class="pro-section-entete mb-4 p-0 border-0">
+            <h2 class="pro-section-titre">1. Informations générales</h2>
+          </div>
+          <div class="pile">
+            {% with champ=form.title %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            <div class="grille grille--2">
+              {% with champ=form.room_type %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.nouveau_type %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+            {% with champ=form.available_from %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% include "web/pro/_editeur_texte.html" with champ=form.description_md %}
           </div>
         </div>
-      {% endif %}
-      {% if form.non_field_errors %}
-        <div class="alerte alerte--danger" role="alert">
-          {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+        {# 2. Localisation #}
+        <div class="pro-section-carte p-6">
+          <div class="pro-section-entete mb-4 p-0 border-0">
+            <h2 class="pro-section-titre">2. Localisation à Parakou</h2>
+          </div>
+          <div class="pile">
+            {% with champ=form.district %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.landmark_text %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.address_private %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            <p class="champ__aide">
+              La distance à l'UP est calculée depuis le centre du quartier. Depuis l'application, tu peux utiliser la position
+              exacte de ton téléphone.
+            </p>
+          </div>
         </div>
-      {% endif %}
-      {# Formulaire principal en cartes #}
-      <div class="pile pile--large">
-        <form method="post" class="pile pile--large" novalidate>
-          {% csrf_token %}
-          <input type="hidden" name="action" value="enregistrer">
-          {# 1. Informations générales #}
-          <div class="pro-section-carte p-6">
-            <div class="pro-section-entete mb-4 p-0 border-0">
-              <h2 class="pro-section-titre">1. Informations générales</h2>
+        {# 3. Loyer et conditions #}
+        <div class="pro-section-carte p-6">
+          <div class="pro-section-entete mb-4 p-0 border-0">
+            <h2 class="pro-section-titre">3. Loyer et équipements</h2>
+          </div>
+          <div class="pile">
+            <div class="grille grille--3">
+              {% with champ=form.rent_amount %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.deposit_months %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.advance_months %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
             </div>
-            <div class="pile">
-              {% with champ=form.title %}
+            <div class="grille grille--2">
+              {% with champ=form.agent_fee_amount %}
                 {% include "web/composants/champ.html" %}
               {% endwith %}
-              <div class="grille grille--2">
-                {% with champ=form.room_type %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.nouveau_type %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-              </div>
-              {% with champ=form.available_from %}
+              <div></div>
+            </div>
+            <div class="grille grille--2">
+              {% with champ=form.has_private_bathroom %}
                 {% include "web/composants/champ.html" %}
               {% endwith %}
-              {% include "web/pro/_editeur_texte.html" with champ=form.description_md %}
+              {% with champ=form.is_fenced %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+            </div>
+            <div class="grille grille--2">
+              {% with champ=form.water_source %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
+              {% with champ=form.electricity_meter %}
+                {% include "web/composants/champ.html" %}
+              {% endwith %}
             </div>
           </div>
-          {# 2. Localisation #}
-          <div class="pro-section-carte p-6">
-            <div class="pro-section-entete mb-4 p-0 border-0">
-              <h2 class="pro-section-titre">2. Localisation à Parakou</h2>
-            </div>
-            <div class="pile">
-              {% with champ=form.district %}
-                {% include "web/composants/champ.html" %}
-              {% endwith %}
-              {% with champ=form.landmark_text %}
-                {% include "web/composants/champ.html" %}
-              {% endwith %}
-              {% with champ=form.address_private %}
-                {% include "web/composants/champ.html" %}
-              {% endwith %}
-              <p class="champ__aide">
-                La distance à l'UP est calculée depuis le centre du quartier. Depuis l'application, tu peux utiliser la position
-                exacte de ton téléphone.
+        </div>
+        {# Actions formulaire #}
+        <div class="rangee">
+          <button class="bouton bouton--primaire bouton--grand" type="submit">Enregistrer les informations</button>
+        </div>
+      </form>
+      {# 4. Médias (vidéo & photos) #}
+      {% if annonce %}
+        <div class="pro-section-carte p-6" id="medias">
+          <div class="pro-section-entete mb-4 p-0 border-0">
+            <div>
+              <h2 class="pro-section-titre">4. Visite vidéo et photos</h2>
+              <p class="texte-doux texte-petit mb-0">
+                Ajoute une courte vidéo (10 à 60 s) et jusqu'à 10 photos. Les chambres avec vidéo reçoivent plus de contacts.
               </p>
             </div>
           </div>
-          {# 3. Loyer et conditions #}
+          {# Récapitulatif de ce qu'il faut pour publier (1 vidéo, 3 photos au moins) #}
+          <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
+            <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
+              {% if video_prete %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Vidéo {% if video_prete %}prête{% else %}à ajouter (obligatoire){% endif %}
+            </li>
+            <li class="depot-recap__item{% if photos_pretes >= 3 %} depot-recap__item--ok{% endif %}">
+              {% if photos_pretes >= 3 %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Photos : {{ photos_pretes }}/10 prêtes (3 au minimum)
+            </li>
+          </ul>
+          {# Zone de dépôt : glisser-déposer ou choix de fichiers ; sans JavaScript, le champ reste visible #}
+          <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="depot">
+            <label class="depot__zone" for="envoi-fichiers" id="depot-zone">
+              <span class="depot__icone">{% include "web/composants/icone.html" with nom="upload" taille=28 %}</span>
+              <span class="depot__titre">Glisse ta vidéo et tes photos ici</span>
+              <span class="depot__aide">ou <u>choisis-les sur ton appareil</u> · vidéo de 10 à 60 s (150 Mo max) · photos JPEG, PNG ou HEIC (12 Mo max)</span>
+            </label>
+            <input class="depot__fichier"
+                   id="envoi-fichiers"
+                   type="file"
+                   accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
+                   multiple>
+            <ul class="depot__envois" id="envoi-liste" aria-live="polite">
+            </ul>
+            <p class="depot__etat" id="envoi-etat" role="status"></p>
+          </div>
+          <script src="{% static 'js/envoi.js' %}" defer></script>
+          {% if medias %}
+            <ul class="medias-grille">
+              {% for m in medias %}
+                <li class="media-carte{% if m.erreur %} media-carte--erreur{% endif %}">
+                  <div class="media-carte__vignette">
+                    {% if m.apercu %}
+                      <img src="{{ m.apercu }}"
+                           alt="Aperçu : {{ m.kind_display }}"
+                           loading="lazy"
+                           width="240"
+                           height="160">
+                    {% else %}
+                      <span class="media-carte__vide">{% include "web/composants/icone.html" with nom="eye" taille=24 %}</span>
+                    {% endif %}
+                    <span class="media-carte__genre">{{ m.kind_display }}</span>
+                    {% if m.is_cover %}<span class="media-carte__couverture">Couverture</span>{% endif %}
+                  </div>
+                  <div class="media-carte__corps">
+                    <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
+                      {% if m.en_cours %}
+                        Traitement en cours…
+                      {% else %}
+                        {{ m.status_display }}
+                      {% endif %}
+                    </span>
+                    {% if m.error_detail %}<p class="media-carte__erreur">{{ m.error_detail }}</p>{% endif %}
+                    <div class="media-carte__actions">
+                      {% if m.est_photo and not m.is_cover and m.pret %}
+                        <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="couvrir">
+                          <input type="hidden" name="media_id" value="{{ m.id }}">
+                          <button class="bouton bouton--contour bouton--petit"
+                                  type="submit">Définir en couverture</button>
+                        </form>
+                      {% endif %}
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="monter">
+                        <input type="hidden" name="media_id" value="{{ m.id }}">
+                        <button class="bouton bouton--contour bouton--petit"
+                                type="submit"
+                                aria-label="Monter">
+                          {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
+                        </button>
+                      </form>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="descendre">
+                        <input type="hidden" name="media_id" value="{{ m.id }}">
+                        <button class="bouton bouton--contour bouton--petit"
+                                type="submit"
+                                aria-label="Descendre">
+                          {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
+                        </button>
+                      </form>
+                      {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        {# 5. Publication & Actions #}
+        {% if commandes %}
           <div class="pro-section-carte p-6">
             <div class="pro-section-entete mb-4 p-0 border-0">
-              <h2 class="pro-section-titre">3. Loyer et équipements</h2>
+              <h2 class="pro-section-titre">5. Statut et publication</h2>
             </div>
-            <div class="pile">
-              <div class="grille grille--3">
-                {% with champ=form.rent_amount %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.deposit_months %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.advance_months %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-              </div>
-              <div class="grille grille--2">
-                {% with champ=form.agent_fee_amount %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                <div></div>
-              </div>
-              <div class="grille grille--2">
-                {% with champ=form.has_private_bathroom %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.is_fenced %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-              </div>
-              <div class="grille grille--2">
-                {% with champ=form.water_source %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-                {% with champ=form.electricity_meter %}
-                  {% include "web/composants/champ.html" %}
-                {% endwith %}
-              </div>
+            <div class="rangee">
+              {% for c in commandes %}
+                <form method="post">
+                  {% csrf_token %}
+                  <button class="bouton{% if c.primaire %} bouton--accent bouton--grand{% endif %}{% if c.danger %} bouton--danger{% endif %}"
+                          name="action"
+                          value="{{ c.action }}"
+                          type="submit">{{ c.libelle }}</button>
+                </form>
+              {% endfor %}
             </div>
           </div>
-          {# Actions formulaire #}
-          <div class="rangee">
-            <button class="bouton bouton--primaire bouton--grand" type="submit">Enregistrer les informations</button>
-          </div>
-        </form>
-        {# 4. Médias (vidéo & photos) #}
-        {% if annonce %}
-          <div class="pro-section-carte p-6" id="medias">
+        {% endif %}
+        {# 6. Aperçu carte dans le catalogue #}
+        {% if apercu %}
+          <div class="pro-section-carte p-6">
             <div class="pro-section-entete mb-4 p-0 border-0">
               <div>
-                <h2 class="pro-section-titre">4. Visite vidéo et photos</h2>
-                <p class="texte-doux texte-petit mb-0">
-                  Ajoute une courte vidéo (10 à 60 s) et jusqu'à 10 photos. Les chambres avec vidéo reçoivent plus de contacts.
-                </p>
+                <h2 class="pro-section-titre">Aperçu dans le catalogue</h2>
+                <p class="texte-doux texte-petit mb-0">Voici comment les étudiants verront ta chambre dans la liste.</p>
               </div>
             </div>
-            {# Récapitulatif de ce qu'il faut pour publier (1 vidéo, 3 photos au moins) #}
-            <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
-              <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
-                {% if video_prete %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Vidéo {% if video_prete %}prête{% else %}à ajouter (obligatoire){% endif %}
-              </li>
-              <li class="depot-recap__item{% if photos_pretes >= 3 %} depot-recap__item--ok{% endif %}">
-                {% if photos_pretes >= 3 %}{% include "web/composants/icone.html" with nom="check" taille=16 %}{% else %}{% include "web/composants/icone.html" with nom="x" taille=16 %}{% endif %} Photos : {{ photos_pretes }}/10 prêtes (3 au minimum)
-              </li>
-            </ul>
-            {# Zone de dépôt : glisser-déposer ou choix de fichiers ; sans JavaScript, le champ reste visible #}
-            <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="depot">
-              <label class="depot__zone" for="envoi-fichiers" id="depot-zone">
-                <span class="depot__icone">{% include "web/composants/icone.html" with nom="upload" taille=28 %}</span>
-                <span class="depot__titre">Glisse ta vidéo et tes photos ici</span>
-                <span class="depot__aide">ou <u>choisis-les sur ton appareil</u> · vidéo de 10 à 60 s (150 Mo max) · photos JPEG, PNG ou HEIC (12 Mo max)</span>
-              </label>
-              <input class="depot__fichier"
-                     id="envoi-fichiers"
-                     type="file"
-                     accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/heic"
-                     multiple>
-              <ul class="depot__envois" id="envoi-liste" aria-live="polite">
-              </ul>
-              <p class="depot__etat" id="envoi-etat" role="status"></p>
-            </div>
-            <script src="{% static 'js/envoi.js' %}" defer></script>
-            {% if medias %}
-              <ul class="medias-grille">
-                {% for m in medias %}
-                  <li class="media-carte{% if m.erreur %} media-carte--erreur{% endif %}">
-                    <div class="media-carte__vignette">
-                      {% if m.apercu %}
-                        <img src="{{ m.apercu }}"
-                             alt="Aperçu : {{ m.kind_display }}"
-                             loading="lazy"
-                             width="240"
-                             height="160">
-                      {% else %}
-                        <span class="media-carte__vide">{% include "web/composants/icone.html" with nom="eye" taille=24 %}</span>
-                      {% endif %}
-                      <span class="media-carte__genre">{{ m.kind_display }}</span>
-                      {% if m.is_cover %}<span class="media-carte__couverture">Couverture</span>{% endif %}
-                    </div>
-                    <div class="media-carte__corps">
-                      <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
-                        {% if m.en_cours %}
-                          Traitement en cours…
-                        {% else %}
-                          {{ m.status_display }}
-                        {% endif %}
-                      </span>
-                      {% if m.error_detail %}<p class="media-carte__erreur">{{ m.error_detail }}</p>{% endif %}
-                      <div class="media-carte__actions">
-                        {% if m.est_photo and not m.is_cover and m.pret %}
-                          <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="couvrir">
-                            <input type="hidden" name="media_id" value="{{ m.id }}">
-                            <button class="bouton bouton--contour bouton--petit"
-                                    type="submit">Définir en couverture</button>
-                          </form>
-                        {% endif %}
-                        <form method="post">
-                          {% csrf_token %}
-                          <input type="hidden" name="action" value="monter">
-                          <input type="hidden" name="media_id" value="{{ m.id }}">
-                          <button class="bouton bouton--contour bouton--petit"
-                                  type="submit"
-                                  aria-label="Monter">
-                            {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
-                          </button>
-                        </form>
-                        <form method="post">
-                          {% csrf_token %}
-                          <input type="hidden" name="action" value="descendre">
-                          <input type="hidden" name="media_id" value="{{ m.id }}">
-                          <button class="bouton bouton--contour bouton--petit"
-                                  type="submit"
-                                  aria-label="Descendre">
-                            {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
-                          </button>
-                        </form>
-                        {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
-                      </div>
-                    </div>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
+            <div class="apercu-carte apercu-carte--max">{% include "web/composants/carte.html" with a=apercu %}</div>
           </div>
-          {# 5. Publication & Actions #}
-          {% if commandes %}
-            <div class="pro-section-carte p-6">
-              <div class="pro-section-entete mb-4 p-0 border-0">
-                <h2 class="pro-section-titre">5. Statut et publication</h2>
-              </div>
-              <div class="rangee">
-                {% for c in commandes %}
-                  <form method="post">
-                    {% csrf_token %}
-                    <button class="bouton{% if c.primaire %} bouton--accent bouton--grand{% endif %}{% if c.danger %} bouton--danger{% endif %}"
-                            name="action"
-                            value="{{ c.action }}"
-                            type="submit">{{ c.libelle }}</button>
-                  </form>
-                {% endfor %}
-              </div>
-            </div>
-          {% endif %}
-          {# 6. Aperçu carte dans le catalogue #}
-          {% if apercu %}
-            <div class="pro-section-carte p-6">
-              <div class="pro-section-entete mb-4 p-0 border-0">
-                <div>
-                  <h2 class="pro-section-titre">Aperçu dans le catalogue</h2>
-                  <p class="texte-doux texte-petit mb-0">Voici comment les étudiants verront ta chambre dans la liste.</p>
-                </div>
-              </div>
-              <div class="apercu-carte apercu-carte--max">{% include "web/composants/carte.html" with a=apercu %}</div>
-            </div>
-          {% endif %}
         {% endif %}
-      </div>
-      {# /pile #}
-    </main>
+      {% endif %}
+    </div>
+    {# /pile #}
   </div>
 {% endblock %}

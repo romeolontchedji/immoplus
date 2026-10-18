@@ -1,9 +1,8 @@
-{% extends "web/base.html" %}
+{% extends "web/espace.html" %}
 {% block titre %}Préférences de notification — Logeo{% endblock %}
-{% block contenu %}
+{% block espace %}
   <section class="section">
     <div class="conteneur conteneur--texte pile">
-      <p class="fil-ariane"><a href="/compte">Mon compte</a> <span aria-hidden="true">›</span> Préférences</p>
       <h1>Préférences de notification</h1>
       {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
       <p class="texte-doux">Choisis ce que tu veux recevoir. Les notifications de sécurité ne peuvent pas être désactivées.</p>

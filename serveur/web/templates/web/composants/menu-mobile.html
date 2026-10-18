@@ -1,0 +1,66 @@
+{% load logeo %}
+{# Menu mobile (moins de 768 px) : panneau sous l'en-tête, liens groupés avec icône, page courante colorée. #}
+{% menu_espace as menu %}
+<details class="menu navigation__mobile">
+  <summary class="menu__declencheur menu-mobile__bouton" aria-label="Menu">
+    <span class="menu-mobile__ouvrir">{% include "web/composants/icone.html" with nom="menu" taille=22 %}</span>
+    <span class="menu-mobile__fermer">{% include "web/composants/icone.html" with nom="x" taille=22 %}</span>
+  </summary>
+  <div class="menu-mobile">
+    {% if request.user.is_authenticated %}
+      <div class="menu-mobile__identite">
+        <span class="espace-barre__avatar" aria-hidden="true">{{ request.user.initiales|default:"?" }}</span>
+        <span class="espace-barre__qui">
+          <strong class="menu-mobile__nom">{{ request.user.full_name|default:request.user.phone_e164 }}</strong>
+          <span class="menu-mobile__role">{{ menu.role }}</span>
+        </span>
+      </div>
+      <p class="menu-mobile__section">Navigation</p>
+      <ul class="menu-mobile__liste">
+        {% if request.user.role != "gerant" %}
+          {% with l=menu.chambres %}
+            {% include "web/composants/menu-mobile-lien.html" %}
+          {% endwith %}
+        {% endif %}
+        {% for l in menu.principal %}
+          {% include "web/composants/menu-mobile-lien.html" %}
+        {% endfor %}
+      </ul>
+      <p class="menu-mobile__section">Réglages</p>
+      <ul class="menu-mobile__liste">
+        {% for l in menu.reglages %}
+          {% include "web/composants/menu-mobile-lien.html" %}
+        {% endfor %}
+      </ul>
+      <form class="menu-mobile__sortie" method="post" action="/deconnexion">
+        {% csrf_token %}
+        <button class="menu-mobile__lien menu-mobile__lien--sortie" type="submit">
+          {% include "web/composants/icone.html" with nom="log-out" taille=20 %}
+          <span>Se déconnecter</span>
+        </button>
+      </form>
+    {% else %}
+      <ul class="menu-mobile__liste">
+        {% with l=menu.chambres %}
+          {% include "web/composants/menu-mobile-lien.html" %}
+        {% endwith %}
+        <li>
+          <a class="menu-mobile__lien" href="/#comment-ca-marche">
+            {% include "web/composants/icone.html" with nom="list-ordered" taille=20 %}
+            <span>Comment ça marche</span>
+          </a>
+        </li>
+        <li>
+          <a class="menu-mobile__lien" href="/#faq">
+            {% include "web/composants/icone.html" with nom="circle-help" taille=20 %}
+            <span>Questions fréquentes</span>
+          </a>
+        </li>
+      </ul>
+      <div class="menu-mobile__actions">
+        <a class="bouton bouton--secondaire largeur-pleine" href="/connexion">Se connecter</a>
+        <a class="bouton bouton--primaire largeur-pleine" href="/inscription">Inscris-toi</a>
+      </div>
+    {% endif %}
+  </div>
+</details>

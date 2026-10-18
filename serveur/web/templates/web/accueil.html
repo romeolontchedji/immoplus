@@ -342,6 +342,33 @@
       </div>
     </div>
   </section>
+  {# ═════════════════════════════════════════════════════════ QUARTIERS ═════ #}
+  {% if quartiers %}
+    <section class="section accueil-quartiers" aria-labelledby="quartiers-titre">
+      <div class="conteneur">
+        <div class="accueil-quartiers__entete">
+          <h2 class="accueil-quartiers__titre" id="quartiers-titre">Cherche par quartier</h2>
+          <a class="accueil-quartiers__tout" href="/annonces">Toutes les chambres</a>
+        </div>
+        <ul class="accueil-quartiers__liste">
+          {% for q in quartiers %}
+            <li>
+              <a class="accueil-quartier" href="/quartiers/{{ q.slug }}">
+                <span class="accueil-quartier__nom">{{ q.nom }}</span>
+                <span class="accueil-quartier__nombre">
+                  {% if q.nombre %}
+                    {{ q.nombre }} chambre{{ q.nombre|pluralize }}
+                  {% else %}
+                    Crée une alerte
+                  {% endif %}
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
   {# ══════════════════════════════════════════════════════════ ALERTE ══════ #}
   <section class="section accueil-alerte">
     <div class="conteneur">

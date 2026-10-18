@@ -1,12 +1,9 @@
-{% extends "web/base.html" %}
+{% extends "web/espace.html" %}
 {% block titre %}Appareils connectés — Logeo{% endblock %}
 {# Plan d'actions v2, W7 : expliquer ce qu'est un appareil, montrer la session en cours, tout déconnecter. #}
-{% block contenu %}
+{% block espace %}
   <section class="section">
     <div class="conteneur conteneur--texte pile">
-      <p class="fil-ariane">
-        <a href="/compte">Mon compte</a> <span aria-hidden="true">›</span> Appareils
-      </p>
       <h1>Appareils connectés</h1>
       <div class="appareils-explication">
         <span class="appareils-explication__icone">

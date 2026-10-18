@@ -73,33 +73,7 @@
         </ul>
       </details>
     </div>
-    {# Hamburger mobile gérant #}
-    <details class="menu navigation__mobile">
-      <summary class="menu__declencheur" aria-label="Ouvrir le menu">
-        <svg width="18"
-             height="18"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="2.5"
-             stroke-linecap="round"
-             aria-hidden="true">
-          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </summary>
-      <ul class="navigation__liste">
-        <li><a class="navigation__lien" href="/pro/dashboard">Tableau de bord</a></li>
-        <li><a class="navigation__lien" href="/pro/annonces">Mes annonces</a></li>
-        <li><a class="navigation__lien" href="/compte/messages">Messages{% if non_lus_messages %}<span class="navigation__compteur">{{ non_lus_messages }}</span>{% endif %}</a></li>
-        <li><a class="navigation__lien" href="/compte/notifications">Notifications{% if non_lues_notifications %}<span class="navigation__compteur">{{ non_lues_notifications }}</span>{% endif %}</a></li>
-        <li class="navigation__menu-separateur">
-          <form method="post" action="/deconnexion">
-            {% csrf_token %}
-            <button class="navigation__bouton-deconnexion" type="submit">Se déconnecter</button>
-          </form>
-        </li>
-      </ul>
-    </details>
+    {% include "web/composants/menu-mobile.html" %}
   </nav>
 {% elif request.user.is_authenticated %}
   {# ── LOCATAIRE CONNECTÉ #}
@@ -220,35 +194,7 @@
         </ul>
       </details>
     </div>
-    {# Hamburger mobile locataire #}
-    <details class="menu navigation__mobile">
-      <summary class="menu__declencheur" aria-label="Ouvrir le menu">
-        <svg width="18"
-             height="18"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="2.5"
-             stroke-linecap="round"
-             aria-hidden="true">
-          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </summary>
-      <ul class="navigation__liste">
-        <li><a class="navigation__lien" href="/annonces">Chambres</a></li>
-        <li><a class="navigation__lien" href="/compte/alertes">Mes alertes</a></li>
-        <li><a class="navigation__lien" href="/compte/favoris">Mes favoris</a></li>
-        <li><a class="navigation__lien" href="/compte/messages">Messages{% if non_lus_messages %}<span class="navigation__compteur">{{ non_lus_messages }}</span>{% endif %}</a></li>
-        <li><a class="navigation__lien" href="/compte/notifications">Notifications{% if non_lues_notifications %}<span class="navigation__compteur">{{ non_lues_notifications }}</span>{% endif %}</a></li>
-        <li><a class="navigation__lien" href="/compte">Mon profil</a></li>
-        <li class="navigation__menu-separateur">
-          <form method="post" action="/deconnexion">
-            {% csrf_token %}
-            <button class="navigation__bouton-deconnexion" type="submit">Se déconnecter</button>
-          </form>
-        </li>
-      </ul>
-    </details>
+    {% include "web/composants/menu-mobile.html" %}
   </nav>
 {% else %}
   {# ── VISITEUR NON CONNECTÉ #}
@@ -265,27 +211,6 @@
       <a class="navigation__lien" href="/connexion">Se connecter</a>
       <a class="bouton bouton--primaire" href="/inscription">Inscris-toi</a>
     </div>
-    {# Hamburger mobile visiteur #}
-    <details class="menu navigation__mobile">
-      <summary class="menu__declencheur" aria-label="Ouvrir le menu">
-        <svg width="18"
-             height="18"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="2.5"
-             stroke-linecap="round"
-             aria-hidden="true">
-          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </summary>
-      <ul class="navigation__liste">
-        <li><a class="navigation__lien" href="/annonces">Chambres</a></li>
-        <li><a class="navigation__lien" href="/#comment-ca-marche">Comment ça marche</a></li>
-        <li><a class="navigation__lien" href="/#faq">FAQ</a></li>
-        <li><a class="navigation__lien" href="/connexion">Se connecter</a></li>
-        <li><a class="bouton bouton--primaire largeur-pleine" href="/inscription">Inscris-toi</a></li>
-      </ul>
-    </details>
+    {% include "web/composants/menu-mobile.html" %}
   </nav>
 {% endif %}

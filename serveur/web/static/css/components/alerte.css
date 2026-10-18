@@ -19,3 +19,11 @@
 }
 .alerte--incitation .alerte__texte strong { display: block; font-size: var(--fs-15); font-weight: 700; margin-bottom: var(--sp-1); }
 .alerte--incitation .alerte__texte p { font-size: var(--fs-14); color: var(--text-muted); }
+
+/* Page « Mes alertes » : liste à gauche, formulaire à droite (collant) sur grand écran */
+.alertes-grille { display: grid; gap: var(--sp-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1200px) {
+  .alertes-grille { grid-template-columns: minmax(0, 1.4fr) minmax(22rem, 1fr); }
+  .alertes-grille__formulaire .grille--2 { grid-template-columns: minmax(0, 1fr); }
+  .alertes-grille__formulaire { position: sticky; top: calc(var(--hauteur-entete) + var(--sp-6)); }
+}

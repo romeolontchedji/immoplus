@@ -328,6 +328,34 @@
   .accueil-prevention__reflexes { grid-template-columns: 1fr 1fr; }
 }
 
+/* ── Quartiers : remplit le creux entre prévention et alerte, sections resserrées ── */
+.accueil-prevention { padding-block-end: 0; }
+.accueil-alerte { padding-block-start: 0; }
+.accueil-quartiers { padding-block: var(--sp-10); }
+.accueil-quartiers__entete {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4);
+  flex-wrap: wrap; margin-bottom: var(--sp-5);
+}
+.accueil-quartiers__titre { font-size: var(--fs-24); margin: 0; }
+.accueil-quartiers__tout { font-weight: 700; font-size: var(--fs-15); }
+.accueil-quartiers__liste {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.accueil-quartier {
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-5); border-radius: var(--r-card);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-card);
+  color: var(--night); text-decoration: none;
+  transition: border-color var(--duree-2) var(--courbe), transform var(--duree-2) var(--courbe);
+}
+.accueil-quartier:hover { border-color: var(--blue); transform: translateY(-2px); text-decoration: none; }
+.accueil-quartier__nom { font-weight: 800; font-size: var(--fs-16); }
+.accueil-quartier__nombre { font-size: var(--fs-13); color: var(--text-muted); }
+@media (max-width: 639px) {
+  .accueil-quartiers__liste { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* Téléphone : photo du gérant en 480 px (après la règle de base, qu'elle remplace) */
 @media (max-width: 767px) {
   .accueil-comment__carte--sombre {

@@ -7,7 +7,7 @@ import posixpath
 import uuid
 
 from django.core.cache import cache
-from django.db.models import BooleanField, Q
+from django.db.models import BooleanField, Count, Q
 from django.db.models.expressions import RawSQL
 from django.utils.dateparse import parse_datetime
 
@@ -22,6 +22,23 @@ from .services import geo, types
 
 def quartiers_actifs():
     return District.objects.filter(is_active=True)
+
+
+def quartiers_avec_chambres(limite: int = 12) -> list[dict]:
+    """Quartiers actifs et nombre de chambres publiées, les plus fournis d'abord (raccourcis de l'accueil)."""
+    requete = (
+        quartiers_actifs()
+        .annotate(
+            nombre=Count(
+                "listings",
+                filter=Q(
+                    listings__status=StatutAnnonce.PUBLISHED, listings__deleted_at__isnull=True
+                ),
+            )
+        )
+        .order_by("-nombre", "sort_order", "name")[:limite]
+    )
+    return [{"nom": q.name, "slug": q.slug, "nombre": q.nombre} for q in requete]
 
 
 def annonces_du_gerant(gerant, statut: str | None = None):

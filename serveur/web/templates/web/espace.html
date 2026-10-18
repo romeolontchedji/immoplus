@@ -1,0 +1,11 @@
+{% extends "web/base.html" %}
+{# Pages des espaces connectés : barre latérale colorée + contenu sur toute la largeur. Bloc à remplir : « espace ». #}
+{% block pied %}{% endblock %}
+{% block contenu %}
+  <div class="espace">
+    {% include "web/composants/barre-espace.html" %}
+    <div class="espace__principal">
+      {% block espace %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

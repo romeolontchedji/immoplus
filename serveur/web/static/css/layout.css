@@ -1,7 +1,7 @@
 /* Mise en page mobile first (360 px d'abord), puis 640, 768, 1024, 1280. */
 .page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .page__contenu { flex: 1; }
-.conteneur { width: 100%; max-width: var(--largeur-page); margin-inline: auto; padding-inline: var(--sp-6); }
+.conteneur { width: 100%; max-width: var(--largeur-page); margin-inline: auto; padding-inline: clamp(var(--sp-4), 4vw, var(--sp-12)); }
 .conteneur--texte { max-width: var(--largeur-texte); }
 .section { padding-block: var(--sp-10); }
 .pile { display: flex; flex-direction: column; gap: var(--sp-4); }
@@ -201,7 +201,6 @@ details.menu:not([open]) > .navigation__liste { display: none; }
     background: var(--blue-soft); color: var(--blue); border-bottom: none; border-radius: var(--r-field);
   }
   .entete__barre { position: relative; }
-  .conteneur { padding-inline: var(--sp-4); }
 }
 
 /* ── Menus déroulants et identité ─────────────────────────────────────────── */
@@ -254,7 +253,6 @@ details.menu:not([open]) > .navigation__liste { display: none; }
 }
 
 @media (min-width: 640px) {
-  .conteneur { padding-inline: var(--sp-6); }
   .grille--2 { grid-template-columns: repeat(2, 1fr); }
   .section { padding-block: var(--sp-12); }
 }
