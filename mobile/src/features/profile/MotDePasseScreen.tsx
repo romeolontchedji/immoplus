@@ -28,6 +28,9 @@ export function MotDePasseScreen() {
     defaultValues: { old_password: "", new_password: "", confirmer: "" },
   });
   const erreur = changer.error;
+  // Le serveur précise le champ fautif (ancien mot de passe incorrect, nouveau trop courant…) : on l'affiche dessous.
+  const erreurChamp = (nom: string) => (isApiError(erreur) ? erreur.field(nom) : undefined);
+  const erreurServeurActuel = isApiError(erreur) && erreur.code === "invalid_password" ? "Mot de passe actuel incorrect." : erreurChamp("current_password");
   const succes = isSubmitSuccessful && !changer.isPending && !erreur;
 
   return (
@@ -42,7 +45,7 @@ export function MotDePasseScreen() {
             label="Mot de passe actuel"
             value={field.value}
             onChangeText={field.onChange}
-            erreur={errors.old_password?.message}
+            erreur={errors.old_password?.message ?? erreurServeurActuel}
           />
         )}
       />
@@ -54,7 +57,7 @@ export function MotDePasseScreen() {
             label="Nouveau mot de passe"
             value={field.value}
             onChangeText={field.onChange}
-            erreur={errors.new_password?.message}
+            erreur={errors.new_password?.message ?? erreurChamp("new_password")}
           />
         )}
       />
@@ -63,7 +66,7 @@ export function MotDePasseScreen() {
         name="confirmer"
         render={({ field }) => (
           <PasswordField
-            label="Confirmer le mot de passe"
+            label="Répète le nouveau mot de passe"
             value={field.value}
             onChangeText={field.onChange}
             erreur={errors.confirmer?.message}

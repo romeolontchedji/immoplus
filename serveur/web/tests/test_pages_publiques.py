@@ -444,7 +444,7 @@ class TestMiseEnPageDesEspaces:
 
     def test_oeil_sur_les_champs_mot_de_passe(self):
         page = html(connecte(ClientFactory()).get("/compte"))
-        assert page.count("data-voir-mdp") == 3 and "js/mot-de-passe" in page
+        assert page.count("data-voir-mdp") == 4 and "js/mot-de-passe" in page
 
 
 class TestQuartiersDeLAccueil:

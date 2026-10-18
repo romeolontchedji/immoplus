@@ -100,6 +100,18 @@ class ChangementMotDePasse(_Base):
         strip=False,
         max_length=128,
     )
+    confirmation = forms.CharField(
+        label="Répète le nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        strip=False,
+        max_length=128,
+    )
+
+    def clean(self):
+        donnees = super().clean()
+        if donnees.get("new_password") and donnees.get("confirmation") != donnees.get("new_password"):
+            self.add_error("confirmation", "Les deux mots de passe ne correspondent pas.")
+        return donnees
 
 
 class Suppression(_Base):

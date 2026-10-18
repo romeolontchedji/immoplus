@@ -117,10 +117,33 @@ def test_changement_de_mot_de_passe_deconnecte_les_autres_sessions():
         c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
     a.post(
         "/compte",
-        {"action": "mot-de-passe", "current_password": MOT_DE_PASSE, "new_password": FORT},
+        {
+            "action": "mot-de-passe",
+            "current_password": MOT_DE_PASSE,
+            "new_password": FORT,
+            "confirmation": FORT,
+        },
     )
     assert a.get("/compte").status_code == 200
     assert b.get("/compte").status_code == 302
+
+
+def test_le_nouveau_mot_de_passe_doit_etre_saisi_deux_fois_a_l_identique():
+    ClientFactory(phone_e164="+2290197343434")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    r = c.post(
+        "/compte",
+        {
+            "action": "mot-de-passe",
+            "current_password": MOT_DE_PASSE,
+            "new_password": FORT,
+            "confirmation": FORT + "x",
+        },
+    )
+    assert "Les deux mots de passe ne correspondent pas." in r.content.decode()
+    c.post("/deconnexion")
+    assert c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE}).status_code == 302
 
 
 def test_suppression_du_compte():
@@ -215,7 +238,12 @@ def test_gerant_cree_par_l_administration_se_connecte_puis_change_de_mot_de_pass
     assert c.get("/pro/dashboard").status_code == 200
     r = c.post(
         "/compte",
-        {"action": "mot-de-passe", "current_password": FORT, "new_password": "un-Autre-solide-99"},
+        {
+            "action": "mot-de-passe",
+            "current_password": FORT,
+            "new_password": "un-Autre-solide-99",
+            "confirmation": "un-Autre-solide-99",
+        },
     )
     assert r.status_code == 200 and "mot de passe a été changé" in r.content.decode()
     c2 = Client()

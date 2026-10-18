@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, TextInput, Vibration, View } from "react-native";
 import type { z } from "zod";
 import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
@@ -24,6 +24,8 @@ import { codeSchema } from "./schemas";
  * - Carte informative bleue "Ensuite, ta première alerte"
  * - Bouton primaire cobalt "Créer mon compte" / "Continuer"
  * - Bouton "Modifier mon numéro".
+ * Le code part tout seul au 6e chiffre ; un code refusé fait vibrer le téléphone et les cases se vident
+ * (rien ne reste affiché d'un essai à l'autre). Remplissage automatique du SMS : `sms-otp` / `oneTimeCode`.
  */
 export function CodeStep({
   objet,
@@ -46,6 +48,7 @@ export function CodeStep({
     handleSubmit,
     setValue,
     watch,
+    clearErrors,
     formState: { errors },
   } = useForm<z.infer<typeof codeSchema>>({
     resolver: zodResolver(codeSchema),
@@ -59,6 +62,33 @@ export function CodeStep({
     const m = setTimeout(() => setReste((r) => r - 1), 1000);
     return () => clearTimeout(m);
   }, [reste]);
+
+  const valider = (code: string) => {
+    if (!flow.phone || verifier.isPending) return;
+    verifier.mutate(
+      { phone: flow.phone, code },
+      {
+        onSuccess: (jeton) => {
+          setValue("code", "");
+          flow.definirJeton(jeton);
+          router.push(suivant);
+        },
+        onError: () => {
+          Vibration.vibrate([0, 60, 80, 60]); // deux impulsions brèves : code refusé
+          setValue("code", "");
+          inputRef.current?.focus();
+        },
+      },
+    );
+  };
+
+  const saisir = (brut: string) => {
+    const code = brut.replace(/\D/g, "").slice(0, 6);
+    setValue("code", code);
+    clearErrors("code");
+    if (code.length > 0 && verifier.error) verifier.reset(); // le message de l'essai précédent s'efface dès qu'on retape
+    if (code.length === 6) valider(code);
+  };
 
   const erreur = verifier.error ?? renvoyer.error;
   const minutes = Math.floor(reste / 60);
@@ -169,7 +199,10 @@ export function CodeStep({
               autoComplete="sms-otp"
               textContentType="oneTimeCode"
               value={field.value}
-              onChangeText={field.onChange}
+              onChangeText={saisir}
+              onBlur={field.onBlur}
+              autoFocus
+              editable={!verifier.isPending}
               style={{ position: "absolute", opacity: 0, width: 1, height: 1 }}
             />
           )}
@@ -247,18 +280,7 @@ export function CodeStep({
         <Button
           titre={estInscription ? "Continuer" : t.commun.continuer}
           chargement={verifier.isPending}
-          onPress={handleSubmit((v) => {
-            if (!flow.phone) return;
-            verifier.mutate(
-              { phone: flow.phone, code: v.code },
-              {
-                onSuccess: (jeton) => {
-                  flow.definirJeton(jeton);
-                  router.push(suivant);
-                },
-              },
-            );
-          })}
+          onPress={handleSubmit((v) => valider(v.code))}
           style={{ marginTop: sp[2] }}
         />
 

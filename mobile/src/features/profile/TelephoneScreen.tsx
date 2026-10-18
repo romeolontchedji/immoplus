@@ -1,3 +1,4 @@
+import { Vibration } from "react-native";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -96,6 +97,8 @@ export function TelephoneScreen() {
             onChangeText={field.onChange}
             keyboardType="number-pad"
             maxLength={6}
+            autoComplete="sms-otp"
+            textContentType="oneTimeCode"
             erreur={formeCode.formState.errors.code?.message}
           />
         )}
@@ -126,8 +129,13 @@ export function TelephoneScreen() {
         onPress={formeCode.handleSubmit((v) => {
           verifierCode.mutate({ phone, code: v.code }, {
             onSuccess: (token) => {
+              formeCode.setValue("code", "");
               setOtpToken(token);
               changer.mutate({ otp_token: token, password: v.password });
+            },
+            onError: () => {
+              Vibration.vibrate([0, 60, 80, 60]); // code refusé : on vide la case pour le prochain essai
+              formeCode.setValue("code", "");
             },
           });
         })}
