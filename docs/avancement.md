@@ -2,6 +2,23 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-18 : retours du porteur sur le site et l'administration.**
+- Site : espaces locataire et gérant sur un gabarit commun (`web/espace.html`) avec barre latérale colorée
+  (`composants/barre_espace.html`, balise `menu_espace`) et contenu pleine largeur ; rangée d'onglets sur tablette et
+  téléphone ; conteneur général porté à 1440 px avec marges fluides.
+- Menu mobile du site refait (`composants/menu_mobile.html`) : icônes, groupes, page courante colorée.
+- Œil sur tous les champs mot de passe (`js/mot-de-passe.js`) ; page compte passée au composant de champ commun.
+- Accueil : section « Cherche par quartier » (vrais quartiers et nombre de chambres) entre prévention et alerte.
+- Alertes : bouton « Supprimer » recentré, liste et formulaire côte à côte sur grand écran.
+- Administration : menu coloré ordonné par usage avec titres de rubrique, titres de section marqués, section
+  « Audience » (vues de fiches site/app sur 14 jours, téléphones actifs), tuile « Gérants à vérifier » retirée.
+- Signalements : personne visée (nom, numéro, lien) et accès rapides (compte, annonce, conversation, décision
+  pré-remplie). Décision de modération vérifiée de bout en bout (statut, notification, journal).
+- Connexions à l'administration : historique des échecs activé (`AXES_ENABLE_ACCESS_FAILURE_LOG`), compte lisible
+  dans « Connexions », message d'erreur en clair.
+- Vues de fiches : provenance (site ou application) comptée sous les sujets `canal:web` / `canal:app` de
+  `daily_stats` (sans migration).
+
 **2026-10-17 : notifications, jetons uniques, petits points.**
 - Notifications : réponse et « Marquer comme lu » depuis la notification (N3, à recetter sur dev build), bannière
   interne quand l'app est ouverte (N5), regroupement « N nouveaux messages » (N2), rattrapage (N6).
