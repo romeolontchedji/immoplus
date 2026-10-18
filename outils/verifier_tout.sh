@@ -33,6 +33,16 @@ optionnelle ruff "ruff format --check" bash -c 'ruff format --check serveur && r
 [ -f docs/design/tokens.json ] && etape "jetons de design synchronisés (site et mobile)" python3 outils/construire_tokens.py --verifier
 [ -f serveur/web/static/css/tokens.css ] && etape "contrastes WCAG des jetons" python3 outils/contraste.py
 [ -d outils/tests ] && etape "tests des outils" python3 -m unittest discover -s outils/tests -q
+# Application mobile : seulement si ses dépendances sont installées (sinon sautée, la CI la vérifie).
+if [ -d mobile/node_modules ]; then
+  etape "mobile : types" bash -c 'cd mobile && npx tsc --noEmit'
+  etape "mobile : lint" bash -c 'cd mobile && npx eslint . --quiet'
+  etape "mobile : tests" bash -c 'cd mobile && npx jest --ci --silent'
+elif [ -n "${CI:-}" ]; then
+  echo "  ⏭ mobile — vérifié par la tâche « mobile » de la CI"
+else
+  echo "  ⏭ mobile — sauté (npm ci dans mobile/ pour l'activer)"; saute=$((saute + 1))
+fi
 
 if [ -f serveur/manage.py ] && command -v python3 >/dev/null && python3 -c "import django" 2>/dev/null; then
   optionnelle lint-imports "import-linter" bash -c 'cd serveur && lint-imports'

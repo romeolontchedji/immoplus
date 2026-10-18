@@ -56,6 +56,30 @@ jobs:
       - name: Audit des dépendances
         run: pip-audit -r serveur/requirements/base.txt --strict --no-deps --disable-pip
 
+  mobile:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - name: Types
+        run: npm run typecheck
+      - name: Lint (les erreurs bloquent, les avertissements non)
+        run: npx eslint .
+      - name: Tests
+        run: npm test -- --ci
+      - name: Client d'API à jour avec le contrat du serveur
+        run: |
+          npx --yes openapi-typescript@7.4.4 ../docs/api/openapi.json -o /tmp/api.d.ts
+          diff -q /tmp/api.d.ts src/api/genere/api.d.ts || { echo "Client d'API périmé : régénère-le (npm run api:generer)"; exit 1; }
+
   image:
     runs-on: ubuntu-24.04
     steps:
