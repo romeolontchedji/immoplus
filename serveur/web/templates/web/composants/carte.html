@@ -54,7 +54,7 @@
     </div>
     <div class="annonce__corps">
       <div class="annonce__ligne-titre">
-        <span class="annonce__type-quartier">{{ a.get_room_type_display }} · {{ a.district.name }}</span>
+        <span class="annonce__type-quartier">{{ a.room_type_label }} · {{ a.district.name }}</span>
         <p class="annonce__prix">{{ a.rent_amount|fcfa }} F</p>
       </div>
       <p class="annonce__proximite">

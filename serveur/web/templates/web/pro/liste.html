@@ -83,7 +83,7 @@
                     </div>
                   </td>
                   <td>
-                    <span class="texte-doux">{{ ligne.annonce.get_room_type_display }}</span>
+                    <span class="texte-doux">{{ ligne.annonce.room_type|type_chambre }}</span>
                   </td>
                   <td><strong>{{ ligne.annonce.rent_amount|fcfa }} F</strong></td>
                   <td>
@@ -149,7 +149,7 @@
                 <div>
                   <h2 class="fs-16 fw-700 mb-1"><a href="{{ ligne.url }}"
    class="color-text">{{ ligne.annonce.title }}</a></h2>
-                  <p class="texte-doux texte-petit mb-0">{{ ligne.annonce.district.name }} · {{ ligne.annonce.get_room_type_display }}</p>
+                  <p class="texte-doux texte-petit mb-0">{{ ligne.annonce.district.name }} · {{ ligne.annonce.room_type|type_chambre }}</p>
                 </div>
                 <strong class="color-blue fs-16">{{ ligne.annonce.rent_amount|fcfa }} F</strong>
               </div>

@@ -462,3 +462,25 @@ class TestQuartiersDeLAccueil:
             and f"/quartiers/{q.slug}" in page
             and "2 chambres" in page
         )
+
+
+class TestCartesEtFiche:
+    def test_la_carte_du_catalogue_affiche_le_type_de_chambre(self):
+        ListingFactory(room_type="studio", title="Studio témoin")
+        page = html(Client().get("/annonces"))
+        assert "Studio ·" in page and "> · " not in page
+
+    def test_la_fiche_localise_sans_inventer_de_repere(self):
+        a = ListingFactory(landmark_text="")
+        page = html(Client().get(f"/annonces/{a.slug}"))
+        assert "pharmacie du carrefour" not in page and "openstreetmap.org/?mlat=" in page
+        assert "Position approximative" in page
+
+
+def test_delai_de_reponse_lisible():
+    from web.templatetags.logeo import delai_reponse
+
+    assert delai_reponse(14) == "14 min"
+    assert delai_reponse(889) == "15 h"
+    assert delai_reponse(3000) == "2 j"
+    assert delai_reponse(None) == ""

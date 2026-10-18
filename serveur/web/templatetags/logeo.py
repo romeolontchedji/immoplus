@@ -8,6 +8,7 @@ from django.conf import settings
 from django.templatetags.static import static
 
 from apps.listings.services import annonces
+from apps.listings.services import types as types_chambre
 
 register = template.Library()
 
@@ -133,6 +134,24 @@ STATUTS_CONVERSATION = {
 def statut_conversation(valeur: str) -> str:
     """Statut de conversation technique → libellé français visible."""
     return STATUTS_CONVERSATION.get(valeur, valeur)
+
+
+@register.filter
+def delai_reponse(minutes) -> str:
+    """Délai médian de réponse lisible, comme dans l'application : « 15 min », « 3 h », « 2 j » (environ)."""
+    if minutes is None or minutes == "":
+        return ""
+    minutes = float(minutes)
+    if minutes < 60:
+        return f"{max(1, round(minutes))} min"
+    heures = round(minutes / 60)
+    return f"{heures} h" if heures < 24 else f"{round(heures / 24)} j"
+
+
+@register.filter
+def type_chambre(slug: str | None) -> str:
+    """Libellé d'un type de chambre (table des types, décision V1) : `{{ annonce.room_type|type_chambre }}`."""
+    return types_chambre.libelle(slug) if slug else ""
 
 
 @register.filter

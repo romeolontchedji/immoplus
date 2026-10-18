@@ -136,9 +136,22 @@
               <div class="fiche-similaires-grille">
                 {% for s in similaires %}
                   <a class="fiche-similaire-carte" href="/annonces/{{ s.slug }}">
-                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
-                    <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
-                    <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
+                    {% if s.cover_url %}
+                      <img class="fiche-similaire-carte__image"
+                           src="{{ s.cover_url }}"
+                           alt=""
+                           loading="lazy"
+                           width="480"
+                           height="270">
+                    {% else %}
+                      <span class="fiche-similaire-carte__image fiche-similaire-carte__image--vide"
+                            aria-hidden="true"></span>
+                    {% endif %}
+                    <span class="fiche-similaire-carte__corps">
+                      <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
+                      <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
+                      <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
+                    </span>
                   </a>
                 {% endfor %}
               </div>
@@ -172,7 +185,7 @@
                   {% endif %}
                 </div>
                 <p class="fiche-gerant-delai">
-                  Gérant · {{ f.district.name }}{% if f.gerant.median_response_min %} · répond en moins de {{ f.gerant.median_response_min }} min{% endif %}
+                  Gérant · {{ f.district.name }}{% if f.gerant.median_response_min is not None %} · répond en {{ f.gerant.median_response_min|delai_reponse }} environ{% endif %}
                 </p>
               </div>
             </div>
@@ -207,10 +220,25 @@
             {% else %}
               <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Me prévenir si ça change</a>
             {% endif %}
-            {# Visuel Carte #}
-            <div class="fiche-carte-visuel" aria-hidden="true">Carte · {{ f.district.name }}</div>
-            {# Repère #}
-            <p class="fiche-repere-texte">{{ f.landmark_text|default:"Près de la pharmacie du carrefour." }}</p>
+            {# Localisation : quartier, distance, repère ; carte externe sur la position arrondie (~110 m), jamais l'adresse #}
+            <section class="fiche-localisation" aria-labelledby="titre-localisation">
+              <h2 class="fiche-localisation__titre" id="titre-localisation">
+                {% include "web/composants/icone.html" with nom="map-pin" taille=18 %}
+                {{ f.district.name }}
+              </h2>
+              {% if f.distance_m is not None %}<p class="fiche-localisation__ligne">À {{ f.distance_m }} m de l'Université de Parakou</p>{% endif %}
+              {% if f.landmark_text %}<p class="fiche-localisation__ligne">{{ f.landmark_text }}</p>{% endif %}
+              {% if f.latitude and f.longitude %}
+                <a class="fiche-localisation__lien"
+                   href="https://www.openstreetmap.org/?mlat={{ f.latitude|stringformat:'.3f' }}&amp;mlon={{ f.longitude|stringformat:'.3f' }}#map=16/{{ f.latitude|stringformat:'.3f' }}/{{ f.longitude|stringformat:'.3f' }}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                  Voir sur la carte
+                  {% include "web/composants/icone.html" with nom="external-link" taille=14 %}
+                </a>
+                <p class="fiche-localisation__note">Position approximative ; l'adresse exacte est donnée par le gérant.</p>
+              {% endif %}
+            </section>
             {# Encart de sécurité #}
             <div class="fiche-securite-encart" role="note">
               <strong class="fiche-securite-encart__titre">Avant de payer</strong>

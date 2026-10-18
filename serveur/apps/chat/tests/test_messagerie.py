@@ -707,3 +707,14 @@ class TestApi:
         assert ws.consommer(ticket)["utilisateur_id"] == str(decor.locataire.pk)
         assert ws.consommer(ticket) is None
         assert ws.consommer("") is None and ws.consommer("x" * 500) is None
+
+
+def test_mediane_des_delais_de_reponse_avec_un_nombre_pair(decor):
+    """Deux délais (14 et 889 min) : la médiane est leur moyenne, pas le plus grand."""
+    for minutes in (14, 889):
+        conversation, *_ = services.ouvrir(ClientFactory(), decor.annonce.pk, "Bonjour", mid())
+        Conversation.objects.filter(pk=conversation.pk).update(
+            first_reply_at=conversation.created_at + datetime.timedelta(minutes=minutes)
+        )
+    taux, mediane = services.calculer_indicateurs_gerants()[decor.annonce.gerant.user_id]
+    assert mediane == 452 and taux == 100.0

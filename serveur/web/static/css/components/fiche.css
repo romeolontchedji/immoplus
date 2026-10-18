@@ -111,6 +111,14 @@
 .fiche-similaire-carte:hover {
   transform: translateY(-2px); box-shadow: var(--shadow-pop); border-color: var(--blue);
 }
+/* Image en tête de carte, bord à bord ; le texte a ses propres marges */
+.fiche-similaire-carte { overflow: hidden; padding: 0; }
+.fiche-similaire-carte__image {
+  display: block; width: 100%; max-width: none; height: auto; aspect-ratio: 16 / 9; object-fit: cover;
+  background: var(--blue-soft);
+}
+.fiche-similaire-carte__image--vide { background: var(--blue-soft) var(--motif-clair) center / var(--motif-taille); }
+.fiche-similaire-carte__corps { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4) var(--sp-5) var(--sp-5); flex: 1; }
 .fiche-similaire-carte__titre {
   font-size: var(--fs-15); font-weight: 800; color: var(--night);
 }
@@ -158,12 +166,21 @@
 .bouton--pilule-doux:hover { background: var(--blue-soft-hover); transform: translateY(-1px); }
 
 /* Visuel carte quartier */
-.fiche-carte-visuel {
-  height: 6.5rem; background: var(--blue-soft); border-radius: var(--r-card);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--blue); font-size: var(--fs-15); font-weight: 800;
-  text-align: center; padding: var(--sp-3);
+.fiche-localisation {
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  padding: var(--sp-4); border-radius: var(--r-card); background: var(--blue-soft);
 }
+.fiche-localisation__titre {
+  display: flex; align-items: center; gap: var(--sp-2); margin: 0;
+  font-size: var(--fs-16); font-weight: 800; color: var(--night);
+}
+.fiche-localisation__titre .icone { color: var(--blue); }
+.fiche-localisation__ligne { margin: 0; font-size: var(--fs-14); color: var(--text-muted); }
+.fiche-localisation__lien {
+  display: inline-flex; align-items: center; gap: var(--sp-1); align-self: flex-start;
+  margin-top: var(--sp-2); font-weight: 700; font-size: var(--fs-14);
+}
+.fiche-localisation__note { margin: 0; font-size: var(--fs-12); color: var(--text-muted); }
 .fiche-repere-texte {
   font-size: var(--fs-14); color: var(--text-muted); margin: 0; line-height: 1.4;
 }

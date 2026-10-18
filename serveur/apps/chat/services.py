@@ -1,6 +1,7 @@
 """Messagerie : ouverture, envoi idempotent, lecture, blocage, silence (CDC §7.6, §10.5, §11.7, §11.9)."""
 
 import logging
+import statistics
 
 from django.db import IntegrityError, transaction
 from django.db.models import F
@@ -582,7 +583,7 @@ def calculer_indicateurs_gerants() -> dict:
             delais.append((c.first_reply_at - c.created_at).total_seconds() / 60)
     sortie = {}
     for gerant_id, (total, delais) in par_gerant.items():
-        delais.sort()
-        mediane = int(delais[len(delais) // 2]) if delais else None
+        # Vraie médiane : avec un nombre pair de délais, la moyenne des deux du milieu (pas le plus grand).
+        mediane = round(statistics.median(delais)) if delais else None
         sortie[gerant_id] = (round(100 * len(delais) / total, 2), mediane)
     return sortie
