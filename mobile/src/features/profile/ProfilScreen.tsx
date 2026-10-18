@@ -26,6 +26,7 @@ import { t } from "@/i18n/fr";
 import { useSession } from "@/state/session";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Avatar, CarteHero, GroupeListe, LigneListe } from "@/ui/components/Groupe";
+import { EnTetePage } from "@/ui/components/EnTetePage";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 
@@ -60,7 +61,7 @@ export function ProfilScreen() {
 
   return (
     <Screen scroll>
-      <Text variante="titre">Profil</Text>
+      <EnTetePage titre="Profil" />
 
       <CarteHero>
         <View style={{ flexDirection: "row", alignItems: "center", gap: sp[4] }}>
@@ -94,6 +95,15 @@ export function ProfilScreen() {
             sousTitre="À l’ouverture et après 5 min d’absence"
             icone={Fingerprint}
             droite={<Switch accessibilityLabel="Déverrouiller avec l’empreinte" value={verrou.actif} onValueChange={(v) => void (v ? verrou.activer() : verrou.desactiver())} trackColor={{ true: colors.primary, false: colors.border }} />}
+          />
+        ) : verrou.disponible === false ? (
+          // Ligne visible même sans capteur prêt : on sait que la fonction existe et comment l'obtenir.
+          <LigneListe
+            titre="Déverrouiller avec l’empreinte"
+            sousTitre="Enregistre d’abord une empreinte dans les réglages du téléphone"
+            icone={Fingerprint}
+            teinte="gris"
+            droite={null}
           />
         ) : null}
       </GroupeListe>

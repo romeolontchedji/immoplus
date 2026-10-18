@@ -10,6 +10,7 @@ import { proposerNotifications } from "@/features/notifications/DemandeNotificat
 import { useSession } from "@/state/session";
 import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
+import { EnTetePage } from "@/ui/components/EnTetePage";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
@@ -48,10 +49,7 @@ export function AlertesScreen() {
 
   return (
     <Screen scroll>
-      <View style={{ gap: sp[1] }}>
-        <Text variante="titre">Mes alertes</Text>
-        <Text muted>Sois prévenu dès qu’une chambre correspond, avant qu’elle parte.</Text>
-      </View>
+      <EnTetePage titre="Mes alertes" sousTitre="Sois prévenu dès qu’une chambre correspond, avant qu’elle parte." />
 
       <View style={{ backgroundColor: colors.surface, borderRadius: rayon.cardL, padding: sp[4], gap: sp[4], ...ombre.card }}>
         <Text variante="sousTitre">Nouvelle alerte</Text>

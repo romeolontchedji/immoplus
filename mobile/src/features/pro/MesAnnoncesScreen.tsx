@@ -5,6 +5,7 @@ import { CalendarCheck, Plus } from "lucide-react-native";
 import { francs } from "@/lib/format";
 import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 import { Badge } from "@/ui/components/Card";
+import { EnTetePage } from "@/ui/components/EnTetePage";
 import { Chip } from "@/ui/components/Chip";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
@@ -49,18 +50,20 @@ export function MesAnnoncesScreen() {
   return (
     <Screen flush>
       <View style={{ paddingHorizontal: sp[4], paddingTop: sp[4], gap: sp[3] }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variante="titre">Mes chambres</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Publier une nouvelle chambre"
-            onPress={() => router.push("/pro/nouvelle-annonce/infos" as never)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.sun, paddingHorizontal: sp[4], paddingVertical: sp[2], borderRadius: rayon.pilule }}
-          >
-            <Plus size={18} color={colors.night} />
-            <Text variante="corpsGras">Publier</Text>
-          </Pressable>
-        </View>
+        <EnTetePage
+          titre="Mes chambres"
+          droite={
+            <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Publier une nouvelle chambre"
+                onPress={() => router.push("/pro/nouvelle-annonce/infos" as never)}
+                style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.sun, paddingHorizontal: sp[4], paddingVertical: sp[2], borderRadius: rayon.pilule }}
+              >
+                <Plus size={18} color={colors.night} />
+                <Text variante="corpsGras">Publier</Text>
+              </Pressable>
+          }
+        />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2] }}>
           {ONGLETS.map((o) => {
             const n = (requete.data ?? []).filter((a) => !o.statuts || (o.statuts as readonly string[]).includes(a.status)).length;

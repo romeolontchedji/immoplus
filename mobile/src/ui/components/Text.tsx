@@ -1,4 +1,5 @@
-import { Text as RNText, type TextProps } from "react-native";
+import { StyleSheet, Text as RNText, type TextProps } from "react-native";
+import { familleDe } from "@/ui/theme/polices";
 import { fs } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 
@@ -52,5 +53,16 @@ export function Text({ variante = "corps", muted, couleur, style, ...rest }: Pro
       ? c.textMuted
       : c.text);
 
-  return <RNText {...rest} style={[styles[variante], { color }, style]} />;
+  // Un style qui agrandit le texte sans redonner de hauteur de ligne garderait celle de la variante : les jambages
+  // (g, p, y) seraient coupés. La hauteur suit alors la taille (×1,3).
+  const propre = StyleSheet.flatten(style);
+  const hauteur =
+    propre?.fontSize && propre.lineHeight === undefined && propre.fontSize * 1.25 > styles[variante].lineHeight
+      ? { lineHeight: Math.round(propre.fontSize * 1.3) }
+      : null;
+
+  // Police de l'app : la famille porte la graisse (on n'en demande pas une seconde au système, qui la simulerait).
+  const police = { fontFamily: familleDe(propre?.fontWeight ?? styles[variante].fontWeight), fontWeight: "normal" as const };
+
+  return <RNText {...rest} style={[styles[variante], { color }, style, hauteur, police]} />;
 }

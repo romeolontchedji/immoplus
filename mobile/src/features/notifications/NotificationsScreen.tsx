@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
+import { EnTetePage } from "@/ui/components/EnTetePage";
 import { useRouter } from "expo-router";
 import { Bell, Home, Mail, MessageSquare } from "lucide-react-native";
 import { heure, jourRelatif } from "@/lib/format";
 import { useSession } from "@/state/session";
-import { colors, rayon, sp } from "@/ui/theme/tokens";
+import { colors, sp } from "@/ui/theme/tokens";
 import { AuthRequired } from "@/features/auth/AuthRequired";
 import { Screen } from "@/ui/components/Screen";
 import { EmptyState, ErrorState } from "@/ui/components/States";
@@ -59,7 +60,7 @@ export function NotificationsScreen() {
           requete.isError ? (
             <ErrorState erreur={requete.error} onRetry={() => void requete.refetch()} />
           ) : (
-            <View style={{ padding: sp[4], gap: sp[3], paddingTop: 40 }}>
+            <View style={{ padding: sp[4], gap: sp[3] }}>
               <SkeletonListe />
             </View>
           )
@@ -70,34 +71,11 @@ export function NotificationsScreen() {
             contentContainerStyle={{ padding: sp[4], gap: sp[3], paddingBottom: 40 }}
             ListHeaderComponent={
               <View style={{ gap: sp[3], paddingBottom: sp[2] }}>
-                {/* En-tête : Titre + Badge non lues */}
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Text
-                    style={{
-                      fontSize: 28,
-                      fontWeight: "800",
-                      color: colors.night,
-                      letterSpacing: -0.5,
-                    }}
-                  >
-                    Notifications
-                  </Text>
-
-                  {nonLuesCount > 0 ? (
-                    <View
-                      style={{
-                        backgroundColor: colors.primary,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: rayon.pilule,
-                      }}
-                    >
-                      <Text style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "700" }}>
-                        {nonLuesCount} non lue{nonLuesCount > 1 ? "s" : ""}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
+                <EnTetePage
+                  retour
+                  titre="Notifications"
+                  sousTitre={nonLuesCount > 0 ? `${nonLuesCount} non lue${nonLuesCount > 1 ? "s" : ""}` : "Tout est lu."}
+                />
 
                 {/* Lien Tout marquer comme lu */}
                 {nonLuesCount > 0 ? (

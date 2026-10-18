@@ -1,5 +1,6 @@
 import { forwardRef, useState } from "react";
 import { Pressable, TextInput, View, type TextInputProps } from "react-native";
+import { familleDe } from "@/ui/theme/polices";
 import { colors, fs, rayon, sp } from "@/ui/theme/tokens";
 import { formaterLocal } from "@/lib/phone";
 import { Eye, EyeOff } from "lucide-react-native";
@@ -41,6 +42,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
             borderRadius: 14,
             paddingHorizontal: 16,
             fontSize: fs[16],
+            fontFamily: familleDe("500"),
             color: colors.night,
             backgroundColor: "#FFFFFF",
             borderColor: erreur ? colors.danger : "rgba(15, 27, 61, 0.12)",
@@ -147,7 +149,7 @@ export const PhoneField = forwardRef<
             borderRadius: 14,
             paddingHorizontal: 16,
             fontSize: fs[16],
-            fontWeight: "600",
+            fontFamily: familleDe("600"),
             color: colors.night,
             backgroundColor: "#FFFFFF",
             borderColor: erreur ? colors.danger : "rgba(15, 27, 61, 0.12)",

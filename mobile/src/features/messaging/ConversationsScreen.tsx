@@ -7,6 +7,7 @@ import { useSession } from "@/state/session";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { AuthRequired } from "@/features/auth/AuthRequired";
 import { Chip } from "@/ui/components/Chip";
+import { EnTetePage } from "@/ui/components/EnTetePage";
 import { Avatar } from "@/ui/components/Groupe";
 import { Screen } from "@/ui/components/Screen";
 import { EmptyState, ErrorState } from "@/ui/components/States";
@@ -86,7 +87,7 @@ export function ConversationsScreen({ annonceId }: { annonceId?: string }) {
     <Screen flush>
       <AuthRequired>
         <View style={{ paddingHorizontal: sp[4], paddingTop: sp[4], gap: sp[3], backgroundColor: colors.surface }}>
-          <Text variante="titre">Messages</Text>
+          <EnTetePage titre="Messages" />
           <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2], backgroundColor: colors.bg, borderRadius: rayon.pilule, paddingHorizontal: sp[4], height: 44 }}>
             <Search size={18} color={colors.textMuted} />
             <TextInput

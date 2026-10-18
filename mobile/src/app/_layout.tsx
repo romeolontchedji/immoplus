@@ -1,5 +1,6 @@
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -16,6 +17,7 @@ import { PREFIXES_PERSISTES, persister, queryClient } from "@/state/queryClient"
 import { SessionProvider, useSession } from "@/state/session";
 import { ThemeProvider } from "@/ui/theme/ThemeProvider";
 import { DemarrageAnime } from "@/ui/components/DemarrageAnime";
+import { POLICES } from "@/ui/theme/polices";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -51,20 +53,22 @@ export default function RootLayout() {
 
 function Racine() {
   const { etat } = useSession();
+  const [policesChargees, erreurPolices] = useFonts(POLICES);
+  const pret = etat.statut !== "chargement" && (policesChargees || !!erreurPolices); // sans police : celle du système
   const [animation, setAnimation] = useState(true); // logo animé une fois par lancement, après l'écran natif
   const finAnimation = useCallback(() => setAnimation(false), []);
   usePushBootstrap();
   useEffect(() => void outbox.precharger(), []);
   useEffect(() => {
-    if (etat.statut !== "chargement") void SplashScreen.hideAsync(); // l'écran de démarrage reste tant que la session n'est pas connue
-  }, [etat.statut]);
+    if (pret) void SplashScreen.hideAsync(); // l'écran de démarrage reste tant que la session et la police ne sont pas prêtes
+  }, [pret]);
   return (
     <>
       <Stack screenOptions={{ headerShown: false }} />
       <DemandeNotificationsHote />
       <BanniereInterne />
       <VerrouHote />
-      {animation && etat.statut !== "chargement" ? <DemarrageAnime onFin={finAnimation} /> : null}
+      {animation && pret ? <DemarrageAnime onFin={finAnimation} /> : null}
     </>
   );
 }
