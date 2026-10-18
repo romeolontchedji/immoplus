@@ -5,7 +5,10 @@ from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
+from django.utils.html import format_html, format_html_join
 
+from apps.accounts.models import User
+from apps.chat.models import Conversation, Message
 from apps.core.errors import ErreurMetier
 from apps.listings.enums import StatutTypeChambre
 from apps.listings.models import Listing, RoomType
@@ -18,6 +21,45 @@ from apps.moderation.models import ModerationAction, Report
 def _exiger_personnel(request) -> None:
     if not (request.user.is_active and request.user.role in ("moderator", "admin")):
         raise PermissionDenied
+
+
+def _personne_visee(rapport: Report) -> User | None:
+    """Compte visé par le signalement, quelle que soit la cible : le compte, l'auteur du message, le gérant de
+    l'annonce, ou l'autre participant de la conversation."""
+    if rapport.target_type == "user":
+        return User.objects.filter(pk=rapport.target_id).first()
+    if rapport.target_type == "message":
+        message = Message.objects.select_related("sender").filter(pk=rapport.target_id).first()
+        return message.sender if message else None
+    if rapport.target_type == "listing":
+        annonce = (
+            Listing.objects.select_related("gerant__user").filter(pk=rapport.target_id).first()
+        )
+        return (
+            annonce.gerant.user if annonce else None
+        )  # `gerant` est le profil, le compte est dessous
+    if rapport.target_type == "conversation":
+        c = (
+            Conversation.objects.select_related("client", "gerant")
+            .filter(pk=rapport.target_id)
+            .first()
+        )
+        if c is None:
+            return None
+        return c.gerant if rapport.reporter_id == c.client_id else c.client
+    return None
+
+
+def _compte(utilisateur: User | None):
+    """Nom (lien vers la fiche du compte) et numéro, sur deux lignes."""
+    if utilisateur is None:
+        return "—"
+    return format_html(
+        '<a href="{}"><strong>{}</strong></a><br><span class="lg-discret">{}</span>',
+        reverse("admin:accounts_user_change", args=[utilisateur.pk]),
+        utilisateur.full_name or "Sans nom",
+        utilisateur.phone_e164 or utilisateur.email or "",
+    )
 
 
 def _signaler_erreur(modeladmin, request, erreur: ErreurMetier) -> None:
@@ -215,20 +257,56 @@ class LectureConversationForm(forms.Form):
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "created_at",
-        "source",
-        "target_type",
         "reason_code",
+        "personne_visee",
         "status",
-        "listing",
-        "assigned_to",
-    )
+    )  # « signalé par » : dans la fiche
+    list_select_related = ("reporter", "assigned_to")
     list_filter = ("status", "reason_code", "source", "target_type")
     ordering = ("created_at",)
     actions = ["prendre", "classer"]
     readonly_fields = [
-        "id", "reporter", "source", "target_type", "target_id", "listing", "reason_code", "details", "status",
-        "assigned_to", "resolved_by", "resolved_at", "resolution_note", "created_at",
+        "personne_visee", "acces_rapide", "reason_code", "details", "status", "signale_par",
+        "target_type", "target_id", "listing", "assigned_to", "resolved_by", "resolved_at", "resolution_note",
+        "created_at", "id",
     ]  # fmt: skip
+    fields = readonly_fields  # ordre d'affichage : qui est visé et quoi faire d'abord, le technique en dernier
+
+    @admin.display(description="Personne visée")
+    def personne_visee(self, obj):
+        return _compte(_personne_visee(obj))
+
+    @admin.display(description="Signalé par")
+    def signale_par(self, obj):
+        return _compte(obj.reporter) if obj.reporter_id else "Détection automatique"
+
+    @admin.display(description="Accès rapide")
+    def acces_rapide(self, obj):
+        """Liens vers tout ce qu'il faut pour trancher : compte, annonce, conversation, décision pré-remplie."""
+        liens = []
+        visee = _personne_visee(obj)
+        if visee is not None:
+            liens.append((reverse("admin:accounts_user_change", args=[visee.pk]), "Compte visé"))
+        annonce_id = obj.listing_id or (obj.target_id if obj.target_type == "listing" else None)
+        if annonce_id:
+            liens.append((reverse("admin:listings_listing_change", args=[annonce_id]), "Annonce"))
+        if obj.target_type in ("conversation", "message"):
+            liens.append(
+                (
+                    reverse("admin:moderation_report_conversation", args=[obj.pk]),
+                    "Lire la conversation",
+                )
+            )
+        decision = reverse("admin:moderation_moderationaction_add") + f"?report={obj.pk}"
+        if visee is not None:
+            decision += f"&target_user={visee.pk}"
+        if annonce_id:
+            decision += f"&target_listing={annonce_id}"
+        liens.append((decision, "Prendre une décision"))
+        return format_html(
+            '<span class="lg-liens">{}</span>',
+            format_html_join("", '<a class="lg-lien-action" href="{}">{}</a>', liens),
+        )
 
     def has_add_permission(self, request):
         return False

@@ -339,3 +339,36 @@ from . import admin_moderation, admin_referentiels  # noqa: E402,F401  (modérat
 # Les droits du personnel viennent du rôle (apps/accounts/permissions_personnel.py) : les groupes ne servent à rien.
 if admin.site.is_registered(Group):
     admin.site.unregister(Group)
+
+# Connexions réussies : axes enregistre l'identifiant interne du compte ; on affiche le nom et l'e-mail à la place.
+try:
+    from axes.admin import AccessLogAdmin as _AccessLogAdmin
+    from axes.models import AccessLog
+except ImportError:  # pragma: no cover - axes absent (site public)
+    AccessLog = None
+
+if AccessLog is not None and admin.site.is_registered(AccessLog):
+    admin.site.unregister(AccessLog)
+
+    @admin.register(AccessLog)
+    class AccessLogAdmin(_AccessLogAdmin):
+        list_display = ("attempt_time", "compte", "ip_address", "logout_time", "user_agent")
+
+        @admin.display(description="Compte", ordering="username")
+        def compte(self, obj):
+            utilisateur = (
+                User.objects.filter(pk=obj.username).first() if _uuid(obj.username) else None
+            )
+            if utilisateur is None:
+                return obj.username
+            return f"{utilisateur.full_name or 'Sans nom'} · {utilisateur.email or utilisateur.phone_e164}"
+
+
+def _uuid(valeur) -> bool:
+    import uuid
+
+    try:
+        uuid.UUID(str(valeur))
+    except ValueError:
+        return False
+    return True

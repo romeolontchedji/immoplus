@@ -31,7 +31,7 @@
         </p>
       {% endif %}
       <h2 class="lg-titre-section">À traiter</h2>
-      <div class="lg-grille lg-grille--4">
+      <div class="lg-grille lg-grille--3">
         <a class="lg-tuile{% if v.moderation.hors_delai %} lg-tuile--urgent{% endif %}"
            href="{% url 'admin:moderation_report_changelist' %}">
           <span class="lg-tuile__icone lg-tuile__icone--rouge">{% include "admin/includes_icone.html" with nom="flag" %}</span>
@@ -44,15 +44,6 @@
               Tous dans les délais
             {% endif %}
           </span>
-        </a>
-        <a class="lg-tuile"
-           href="{% url 'admin:accounts_gerantprofile_changelist' %}?verification_status__exact=pending">
-          <span class="lg-tuile__icone lg-tuile__icone--soleil">
-            {% include "admin/includes_icone.html" with nom="user-check" %}
-          </span>
-          <span class="lg-tuile__nombre">{{ v.gerants_a_verifier }}</span>
-          <span class="lg-tuile__libelle">Gérants à vérifier</span>
-          <span class="lg-tuile__aide">sur {{ v.gerants_total }} gérant{{ v.gerants_total|pluralize }}</span>
         </a>
         <a class="lg-tuile"
            href="{% url 'admin:listings_roomtype_changelist' %}?status__exact=pending">
@@ -94,6 +85,69 @@
           <span class="lg-chiffre__libelle">Taux de réponse moyen des gérants</span>
         </div>
       </div>
+      {% with t=v.trafic %}
+        <h2 class="lg-titre-section">
+          Audience <small>site et application, vues de fiches</small>
+        </h2>
+        <div class="lg-audience">
+          <section class="lg-carte lg-audience__graphe" aria-labelledby="graphe-titre">
+            <header class="lg-audience__entete">
+              <h3 id="graphe-titre">14 derniers jours</h3>
+              <ul class="lg-legende">
+                <li>
+                  <span class="lg-legende__puce lg-legende__puce--web"></span>Site
+                </li>
+                <li>
+                  <span class="lg-legende__puce lg-legende__puce--app"></span>Application
+                </li>
+              </ul>
+            </header>
+            {% if not t.web_7j and not t.app_7j and not t.jours_avec_vues %}
+              <p class="lg-audience__vide">
+                Pas encore de vue comptée. Les vues s'affichent ici dès qu'une fiche est ouverte sur le site ou dans l'application.
+              </p>
+            {% endif %}
+            <svg class="lg-barres"
+                 viewBox="0 0 100 {{ t.hauteur }}"
+                 preserveAspectRatio="none"
+                 role="img"
+                 aria-label="Vues de fiches par jour : site {{ t.web_7j }}, application {{ t.app_7j }} sur 7 jours">
+              {% for j in t.jours %}
+                <rect class="lg-barres__app" x="{{ j.x }}" y="{{ j.y_app }}" width="{{ j.largeur }}" height="{{ j.h_app }}">
+                  <title>{{ j.jour|date:"d/m" }} · application {{ j.app }}</title>
+                </rect>
+                <rect class="lg-barres__web" x="{{ j.x }}" y="{{ j.y_web }}" width="{{ j.largeur }}" height="{{ j.h_web }}">
+                  <title>{{ j.jour|date:"d/m" }} · site {{ j.web }}</title>
+                </rect>
+              {% endfor %}
+            </svg>
+            <div class="lg-barres__axe">
+              <span>{{ t.jours.0.jour|date:"d/m" }}</span>
+              <span>Aujourd'hui</span>
+            </div>
+          </section>
+          <div class="lg-audience__chiffres">
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone">{% include "admin/includes_icone.html" with nom="monitor" %}</span>
+              <span class="lg-chiffre__nombre">{{ t.web_7j }}</span>
+              <span class="lg-chiffre__libelle">Vues sur le site · 7 jours</span>
+            </div>
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone lg-chiffre__icone--soleil">{% include "admin/includes_icone.html" with nom="smartphone" %}</span>
+              <span class="lg-chiffre__nombre">{{ t.app_7j }}</span>
+              <span class="lg-chiffre__libelle">
+                Vues dans l'application · 7 jours
+                {% if t.part_app is not None %}({{ t.part_app }} %){% endif %}
+              </span>
+            </div>
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone lg-chiffre__icone--vert">{% include "admin/includes_icone.html" with nom="trending" %}</span>
+              <span class="lg-chiffre__nombre">{{ t.android|add:t.ios }}</span>
+              <span class="lg-chiffre__libelle">Téléphones actifs · 7 jours ({{ t.android }} Android, {{ t.ios }} iOS)</span>
+            </div>
+          </div>
+        </div>
+      {% endwith %}
       <h2 class="lg-titre-section">Gérer</h2>
       <div class="lg-grille lg-grille--3">
         <section class="lg-domaine">

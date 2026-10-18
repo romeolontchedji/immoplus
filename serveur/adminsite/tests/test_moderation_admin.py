@@ -93,6 +93,16 @@ class TestSignalements:
         assert r1.status == "in_review" and r1.assigned_to_id == u.pk
         assert r2.status == "resolved_dismissed"
 
+    def test_la_liste_nomme_la_personne_visee_et_son_numero(self, mod):
+        _, c = mod
+        p = gerant_verifie()
+        a = ListingFactory(gerant=p)
+        r, _ = services.signaler(ClientFactory(), "listing", a.pk, "scam")
+        liste = c.get(reverse("admin:moderation_report_changelist")).content.decode()
+        assert p.user.full_name in liste and p.user.phone_e164 in liste
+        fiche = c.get(reverse("admin:moderation_report_change", args=[r.pk])).content.decode()
+        assert "Prendre une décision" in fiche and f"target_user={p.user.pk}" in fiche
+
     def test_lecture_de_conversation_exige_le_motif_et_se_journalise(self, mod):
         u, c = mod
         gerant = gerant_verifie()

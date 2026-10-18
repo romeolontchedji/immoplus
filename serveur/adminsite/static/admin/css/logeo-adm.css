@@ -110,33 +110,41 @@ div.breadcrumbs {
 }
 div.breadcrumbs a { color: var(--blue); }
 
-/* ── Menu latéral ─────────────────────────────────────────────────────────── */
-#nav-sidebar {
-  background: var(--surface); border-right: 1px solid var(--divider); padding: var(--sp-4) var(--sp-3);
+/* ── Menu latéral : fond coloré (même dégradé que les espaces du site), rubriques titrées ─────── */
+#nav-sidebar.lg-nav {
+  flex-basis: 15rem;
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  height: 100vh; align-self: flex-start; overflow-y: auto;
+  padding: var(--sp-5) var(--sp-3) var(--sp-8);
+  background: var(--espace-barre-fond); border-right: 0; color: var(--espace-barre-texte);
 }
-#nav-filter {
-  width: 100%; margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field);
-  border: 1.5px solid var(--border); background: var(--bg); font: inherit; font-size: var(--fs-14);
+.lg-nav__rubrique { margin-top: var(--sp-4); }
+.lg-nav__titre {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin: 0 0 var(--sp-1); padding: var(--sp-1) var(--sp-3);
+  background: none; border: 0; color: var(--white);
+  font-size: var(--fs-13); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
 }
-#nav-sidebar .module {
-  background: transparent; border: none; box-shadow: none; border-radius: 0; margin: 0 0 var(--sp-3); overflow: visible;
+.lg-nav__titre .lg-icone { width: 16px; height: 16px; color: var(--sun); }
+.lg-nav__liste { list-style: none; margin: 0; padding: 0 0 0 var(--sp-3); border-left: 1px solid var(--white-12); margin-left: var(--sp-5); }
+.lg-nav__liste li { list-style: none; padding: 0; }
+.lg-nav__lien, .lg-nav__lien:link, .lg-nav__lien:visited {
+  position: relative; display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field);
+  color: var(--espace-barre-texte); font-size: var(--fs-14); font-weight: 600; text-decoration: none;
 }
-#nav-sidebar .module caption, #nav-sidebar .module caption a {
-  background: transparent; color: var(--text-muted); padding: var(--sp-2) var(--sp-2) var(--sp-1);
-  font-size: var(--fs-12); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; border: none;
+.lg-nav__lien:hover { background: var(--white-12); color: var(--white); text-decoration: none; }
+.lg-nav__lien--accueil, .lg-nav__lien--accueil:link, .lg-nav__lien--accueil:visited { font-weight: 800; font-size: var(--fs-15); color: var(--white); }
+.lg-nav__lien--actif, .lg-nav__lien--actif:link, .lg-nav__lien--actif:visited, .lg-nav__lien--actif:hover {
+  background: var(--white); color: var(--blue); font-weight: 800;
 }
-#nav-sidebar .module th, #nav-sidebar .module td { background: transparent; border: none; padding: 0; }
-#nav-sidebar .module tr { background: transparent; }
-#nav-sidebar .module th a {
-  display: block; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field);
-  color: var(--night); font-size: var(--fs-14); font-weight: 600; text-decoration: none;
+.lg-nav__lien--actif::before {
+  content: ""; position: absolute; left: calc(-1 * var(--sp-3) - 2px); top: var(--sp-2); bottom: var(--sp-2);
+  width: 3px; border-radius: 3px; background: var(--sun);
 }
-#nav-sidebar .module th a:hover { background: var(--bg); }
-#nav-sidebar .module td a.addlink { display: inline-flex; padding: var(--sp-2); font-size: 0; background-image: none; }
-#nav-sidebar .module td a.addlink::before { content: "+"; font-size: var(--fs-16); font-weight: 800; color: var(--blue); }
-#nav-sidebar .current-model th a, #nav-sidebar .current-model a { background: var(--blue-soft); color: var(--blue); }
-#nav-sidebar .current-app .section:link, #nav-sidebar .current-app .section:visited { color: var(--night); font-weight: 800; }
-.toggle-nav-sidebar { background: var(--surface); border: none; border-right: 1px solid var(--divider); color: var(--text-muted); }
+.lg-nav__lien--accueil.lg-nav__lien--actif::before { display: none; }
+.toggle-nav-sidebar { background: var(--night); border: none; color: var(--white-60); }
+.toggle-nav-sidebar:hover, .toggle-nav-sidebar:focus { background: var(--blue); color: var(--white); }
 
 /* ── Cartes et modules ────────────────────────────────────────────────────── */
 #content .module, .inline-group {
@@ -186,7 +194,7 @@ fieldset.module { padding: 0 0 var(--sp-2); }
 #result_list tbody tr:hover { background: var(--bg); }
 #result_list tbody tr.selected { background: var(--blue-soft); }
 #result_list tbody th a { font-weight: 700; }
-#result_list tbody th { min-width: 12rem; }
+#result_list tbody th { white-space: nowrap; }
 #changelist .paginator {
   background: transparent; border: none; color: var(--text-muted); font-size: var(--fs-14); padding: var(--sp-3) var(--sp-1);
 }
@@ -284,7 +292,15 @@ ul.messagelist li.error { background-color: var(--danger-bg); color: var(--dange
 .lg-entete-page { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-5); }
 .lg-entete-page h1 { margin: 0 !important; }
 .lg-entete-page p { margin: var(--sp-1) 0 0; color: var(--text-muted); }
-.lg-titre-section { margin: var(--sp-6) 0 var(--sp-3); font-size: var(--fs-13); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+/* Titres de section du tableau de bord : nettement au-dessus des cartes (barre colorée, taille de titre) */
+.lg-titre-section {
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin: var(--sp-8) 0 var(--sp-4); padding: 0;
+  font-size: var(--fs-20); font-weight: 800; letter-spacing: -0.01em; text-transform: none; color: var(--night);
+  background: none; border: 0;
+}
+.lg-titre-section::before { content: ""; width: 4px; height: 1.4em; border-radius: 4px; background: var(--blue); }
+.lg-titre-section small { font-size: var(--fs-13); font-weight: 600; color: var(--text-muted); }
 .lg-grille { display: grid; gap: var(--sp-4); }
 .lg-grille--4 { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
 .lg-grille--3 { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
@@ -351,7 +367,8 @@ textarea.lg-json { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
 
 /* ── Téléphone ────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  #header { display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); box-sizing: border-box; }
+  #header { display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); box-sizing: border-box; height: auto; }
+  #header, #header > * { flex-shrink: 0; } /* #container est une colonne de hauteur fixe : sans cela l'en-tête est comprimé */
   #user-tools { flex: 1 1 100%; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); font-size: var(--fs-13); width: auto; margin: 0; padding: 0; justify-content: flex-start; box-sizing: border-box; }
   .lg-utilisateur { flex: 1 1 100%; }
   #header > #branding, #header > div:first-child { flex: 1 1 100%; }
@@ -369,3 +386,59 @@ textarea.lg-json { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
   .object-tools { margin-top: 0; }
   #changelist #toolbar form input[type="text"] { min-width: 0; width: 100%; }
 }
+
+/* ── Audience : graphe en barres empilées (SVG, sans script) et chiffres ──────────────────── */
+.lg-audience { display: grid; gap: var(--sp-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .lg-audience { grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); } }
+.lg-carte {
+  background: var(--surface); border: 1px solid var(--divider); border-radius: var(--r-card);
+  box-shadow: var(--shadow-card); padding: var(--sp-5);
+}
+.lg-audience__entete { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-4); }
+.lg-audience__entete h3 { margin: 0; padding: 0; background: none; font-size: var(--fs-16); font-weight: 800; color: var(--night); text-transform: none; letter-spacing: 0; }
+.lg-legende { display: flex; gap: var(--sp-4); margin: 0; padding: 0; list-style: none; font-size: var(--fs-13); color: var(--text-muted); }
+.lg-legende li { display: inline-flex; align-items: center; gap: var(--sp-2); list-style: none; padding: 0; }
+.lg-legende__puce { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.lg-legende__puce--web, .lg-barres__web { background: var(--blue); fill: var(--blue); }
+.lg-legende__puce--app, .lg-barres__app { background: var(--sun); fill: var(--sun); }
+.lg-barres { display: block; width: 100%; height: 9rem; }
+.lg-audience__vide { margin: 0 0 var(--sp-3); padding: var(--sp-3) var(--sp-4); border-radius: var(--r-field); background: var(--bg); color: var(--text-muted); font-size: var(--fs-14); }
+.lg-barres__axe { display: flex; justify-content: space-between; margin-top: var(--sp-2); font-size: var(--fs-12); color: var(--text-muted); }
+.lg-audience__chiffres { display: grid; gap: var(--sp-4); }
+.lg-chiffre__icone {
+  display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem;
+  border-radius: var(--r-field); background: var(--blue-soft); color: var(--blue); margin-bottom: var(--sp-2);
+}
+.lg-chiffre__icone--soleil { background: var(--warning-bg); color: var(--warning); }
+.lg-chiffre__icone--vert { background: var(--success-bg); color: var(--success); }
+
+/* ── Signalements : personne visée et accès rapides ────────────────────────────────────── */
+.lg-discret { font-size: var(--fs-12); color: var(--text-muted); }
+.lg-liens { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lg-lien-action, .lg-lien-action:link, .lg-lien-action:visited {
+  display: inline-flex; align-items: center; padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
+  background: var(--blue-soft); color: var(--blue); font-weight: 700; font-size: var(--fs-13); text-decoration: none;
+}
+.lg-lien-action:hover { background: var(--blue); color: var(--white); text-decoration: none; }
+
+/* ── Filtres des listes : colonne plus étroite, le tableau garde la place ─────────────────── */
+#changelist-filter { flex: 0 0 14rem; width: 14rem; }
+
+/* ── Tablette et téléphone : le menu devient une rangée de liens défilante sous l'en-tête ──── */
+@media (max-width: 1023px) {
+  #main { flex-direction: column; }
+  .toggle-nav-sidebar { display: none !important; }
+  #nav-sidebar.lg-nav {
+    position: static; left: 0; margin-left: 0; width: 100%; box-sizing: border-box; height: auto; max-height: none; flex: 0 0 auto;
+    flex-direction: row; align-items: center; gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-3); overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  }
+  #nav-sidebar.lg-nav::-webkit-scrollbar { display: none; }
+  .lg-nav__rubrique { margin: 0; display: flex; }
+  .lg-nav__titre { display: none; }
+  .lg-nav__liste { display: flex; gap: var(--sp-1); margin: 0; padding: 0; border: 0; }
+  .lg-nav__lien, .lg-nav__lien:link, .lg-nav__lien:visited { white-space: nowrap; }
+  .lg-nav__lien--actif::before { display: none; }
+  #changelist-filter { width: auto; }
+}
+

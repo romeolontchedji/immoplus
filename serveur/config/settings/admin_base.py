@@ -58,6 +58,8 @@ AXES_IPWARE_PROXY_COUNT = 1  # une seule couche de proxy : Caddy
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 AXES_RESET_ON_SUCCESS = True
 AXES_USERNAME_FORM_FIELD = "username"
+# Historique des échecs (page « Échecs de connexion ») : sans lui, la page reste vide.
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 AXES_VERBOSE = False
 
 # L'administration charge ses feuilles de style depuis son propre domaine ; les styles en ligne du site d'administration

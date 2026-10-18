@@ -87,6 +87,20 @@ class TestConnexion:
         ligne = AuditLog.objects.get(action="admin.connexion_echec")
         assert u.email not in str(ligne.metadata) and ligne.actor_id is None
 
+    def test_l_echec_est_garde_dans_l_historique_avec_un_message_clair(self):
+        from axes.models import AccessFailureLog
+
+        u = personnel()
+        _, r = se_connecter(u, mdp="faux")
+        assert "Adresse e-mail ou mot de passe incorrect." in r.content.decode()
+        assert AccessFailureLog.objects.filter(username=u.email).count() == 1
+
+    def test_les_connexions_affichent_le_compte_et_non_son_identifiant(self):
+        u = personnel()
+        c, _ = se_connecter(u)
+        page = c.get("/axes/accesslog/").content.decode()
+        assert u.email in page
+
     def test_le_cookie_de_session_a_son_propre_nom(self, settings):
         u = personnel()
         c, _ = se_connecter(u)
@@ -417,3 +431,19 @@ def test_quartiers_geres_sans_suppression():
     assert r.status_code == 302 and District.objects.filter(slug="kpebie-nord").exists()
     d = District.objects.get(slug="kpebie-nord")
     assert c.get(reverse("admin:listings_district_delete", args=[d.pk])).status_code == 403
+
+
+class TestAudienceEtMenu:
+    def test_audience_sans_file_des_gerants_et_menu_ordonne(self):
+        from apps.core import stats
+
+        stats.incrementer("views", 4, sujet="canal:web")
+        stats.incrementer("views", 2, sujet="canal:app")
+        c, _ = se_connecter(personnel())
+        page = c.get("/").content.decode()
+        assert (
+            "Audience" in page and "Vues sur le site" in page and "Gérants à vérifier" not in page
+        )
+        menu = page[page.index('id="nav-sidebar"') :]
+        # Rubriques par usage : la modération d'abord, l'abonnement (désactivé) en dernier
+        assert menu.index("Modération") < menu.index("Comptes") < menu.index("Abonnement")
