@@ -15,7 +15,8 @@ def test_app_config_publique_et_complete():
     assert corps["min_supported_version"] == "1.0.0"
     assert corps["maintenance"] == {"active": False, "message": ""}
     assert corps["flags"]["subscription"] is False  # paiement débranché en V1
-    assert corps["flags"]["paid_alerts"] is False  # alertes payantes des locataires : désactivées en V1
+    # Alertes payantes des locataires : désactivées en V1.
+    assert corps["flags"]["paid_alerts"] is False
     assert corps["limits"]["photos_max"] == 10 and corps["limits"]["message_max_length"] == 2000
     assert corps["realtime"]["path"] == "/ws/v1/"
     assert corps["contact"] == {
