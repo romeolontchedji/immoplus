@@ -7,7 +7,7 @@ from django.core import mail
 
 from apps.core import erreurs, redis_file
 
-pytestmark = [pytest.mark.django_db]
+pytestmark = [pytest.mark.pg, pytest.mark.django_db]
 
 
 @pytest.fixture(autouse=True)

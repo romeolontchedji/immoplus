@@ -65,7 +65,7 @@ class JournalErreursHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         try:
             self._enregistrer(record)
-        except Exception:  # noqa: BLE001, S110 - le suivi des erreurs ne doit jamais en créer une autre
+        except Exception:  # noqa: BLE001, S110  # nosec B110 - le suivi des erreurs ne doit jamais en créer une autre
             pass
 
     def _enregistrer(self, record: logging.LogRecord) -> None:
