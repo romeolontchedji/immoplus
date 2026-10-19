@@ -10,7 +10,8 @@
 #   3. un utilisateur `logeo` (sans mot de passe, membre du groupe docker) qui reçoit tes clés SSH ;
 #   4. SSH par clé uniquement, connexion root interdite ;
 #   5. pare-feu : SSH, 80 et 443 (TCP) et 443 (UDP, HTTP/3) seulement ; fail2ban sur SSH ;
-#   6. un fichier d'échange de 2 Go si le serveur n'en a pas (marge pour ffmpeg).
+#   6. un fichier d'échange de 2 Go si le serveur n'en a pas (marge pour ffmpeg) ;
+#   7. une minuterie qui redémarre les conteneurs figés (infra/vps/autoguerison.sh).
 #
 # Variables : UTILISATEUR (défaut logeo), PORT_SSH (défaut 22).
 set -euo pipefail
@@ -113,6 +114,31 @@ if ! swapon --show | grep -q .; then
   swapon /swapfile
   grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
+
+etape "Redémarrage automatique des conteneurs figés (chaque minute)"
+# Le script vit dans le dépôt : la minuterie ne s'exécute qu'une fois le code récupéré (étape 4 du guide).
+cat > /etc/systemd/system/logeo-autoguerison.service <<CONF
+[Unit]
+Description=Logeo : redémarre les conteneurs qui ne répondent plus
+ConditionPathExists=/home/$UTILISATEUR/logeo/infra/vps/autoguerison.sh
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/$UTILISATEUR/logeo/infra/vps/autoguerison.sh
+CONF
+cat > /etc/systemd/system/logeo-autoguerison.timer <<'CONF'
+[Unit]
+Description=Logeo : vérification des conteneurs chaque minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
+CONF
+systemctl daemon-reload
+systemctl enable --now logeo-autoguerison.timer
 
 etape "Terminé"
 cat <<FIN
