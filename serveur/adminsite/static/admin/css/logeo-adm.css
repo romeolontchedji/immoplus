@@ -442,3 +442,14 @@ textarea.lg-json { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
   #changelist-filter { width: auto; }
 }
 
+/* ── Vérification en deux étapes (code par courriel) ─────────────────────────────────────── */
+.lg-double-auth h1 { font-size: var(--fs-24); margin: 0 0 var(--sp-3); }
+.lg-double-auth__texte { color: var(--text-muted); margin: 0 0 var(--sp-4); }
+.lg-double-auth #code { font-size: var(--fs-24); letter-spacing: 0.4em; text-align: center; width: 100%; }
+.lg-double-auth__secondaire { margin-top: var(--sp-3); text-align: center; }
+.lg-lien-bouton {
+  background: none; border: 0; padding: var(--sp-1); cursor: pointer;
+  color: var(--blue); font: inherit; font-size: var(--fs-14); font-weight: 700;
+}
+.lg-lien-bouton:hover { text-decoration: underline; }
+

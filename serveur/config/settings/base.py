@@ -191,6 +191,27 @@ REDIS_QUEUE_FAKE = False
 # --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---
 SUBSCRIPTION_ENABLED = env.booleen("SUBSCRIPTION_ENABLED", False)
 
+# --- Courriels : codes de l'administration et alertes d'erreurs ---
+# N'importe quel serveur SMTP convient. Gratuit pour notre volume : Brevo (300 / jour), Gmail avec un « mot de passe
+# d'application » (500 / jour), ou la messagerie du nom de domaine. Seul le `worker` envoie (il a accès à Internet).
+EMAIL_BACKEND = (
+    env.texte(  # en développement : la console (le courriel s'affiche dans les journaux du worker)
+        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+    )
+)
+EMAIL_HOST = env.texte("EMAIL_HOST", "localhost")  # adresse du serveur SMTP du fournisseur
+EMAIL_PORT = env.entier("EMAIL_PORT", 587)  # 587 avec STARTTLS (le plus courant), 465 avec SSL
+EMAIL_HOST_USER = env.texte("EMAIL_HOST_USER")  # identifiant SMTP (souvent l'adresse d'envoi)
+EMAIL_HOST_PASSWORD = env.texte("EMAIL_HOST_PASSWORD")  # mot de passe ou clé SMTP du fournisseur
+EMAIL_USE_TLS = env.booleen("EMAIL_USE_TLS", True)  # chiffrement STARTTLS (port 587)
+EMAIL_USE_SSL = env.booleen(
+    "EMAIL_USE_SSL", False
+)  # chiffrement SSL direct (port 465) ; jamais avec TLS
+EMAIL_TIMEOUT = 15  # secondes avant d'abandonner un envoi (la tâche réessaie ensuite)
+DEFAULT_FROM_EMAIL = env.texte(
+    "DEFAULT_FROM_EMAIL", "Logeo <no-reply@localhost>"
+)  # expéditeur affiché
+
 # --- Journalisation JSON ---
 LOGGING = {
     "version": 1,

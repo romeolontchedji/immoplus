@@ -22,6 +22,7 @@ if not _DOMAINE or _DOMAINE == "localhost":
     raise ImproperlyConfigured("DOMAIN de production absent (ex. logeo.bj).")
 ALLOWED_HOSTS = [f"pilotage.{_DOMAINE}", "127.0.0.1", "localhost"]
 CSRF_TRUSTED_ORIGINS = [f"https://pilotage.{_DOMAINE}"]
+ADMIN_2FA_ACTIVE = True  # jamais désactivable en production
 ADMIN_ALLOWED_IPS = env.liste("ADMIN_ALLOWED_IPS")  # vide = tout refuser
 PRIVATE_FILES_KEY = env.texte("PRIVATE_FILES_KEY")  # injectée uniquement dans admin et backup
 

@@ -40,9 +40,25 @@ def personnel(fabrique=AdminFactory):
     return fabrique()
 
 
-def se_connecter(u, mdp=MOT_DE_PASSE, client=None):
+def dernier_code(adresse: str) -> str | None:
+    """Code à 6 chiffres du dernier courriel envoyé à `adresse` (tâches exécutées sur place en test)."""
+    import re
+
+    from django.core import mail
+
+    for message in reversed(mail.outbox):
+        if adresse in message.to:
+            trouve = re.search(r"\b(\d{6})\b", message.subject)
+            return trouve.group(1) if trouve else None
+    return None
+
+
+def se_connecter(u, mdp=MOT_DE_PASSE, client=None, *, double_auth=True):
+    """Mot de passe, puis (si accepté) le code reçu par courriel, comme un vrai membre de l'équipe."""
     c = client or Client()
     r = c.post("/login/", {"username": u.email, "password": mdp, "next": "/"})
+    if double_auth and r.status_code == 302 and (code := dernier_code(u.email)):
+        c.post("/verification/", {"code": code, "next": "/"})
     return c, r
 
 
@@ -447,3 +463,55 @@ class TestAudienceEtMenu:
         menu = page[page.index('id="nav-sidebar"') :]
         # Rubriques par usage : la modération d'abord, l'abonnement (désactivé) en dernier
         assert menu.index("Modération") < menu.index("Comptes") < menu.index("Abonnement")
+
+
+class TestDoubleAuthentification:
+    def test_sans_le_code_aucune_page_n_est_accessible(self):
+        u = personnel()
+        c, r = se_connecter(u, double_auth=False)
+        assert r.status_code == 302
+        page = c.get("/")
+        assert page.status_code == 302 and page["Location"].startswith("/verification/")
+        code = dernier_code(u.email)
+        assert code and len(code) == 6
+        from django.core import mail
+
+        assert "valable 10 minutes" in mail.outbox[-1].body
+
+    def test_le_bon_code_ouvre_l_administration_et_se_journalise(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        r = c.post("/verification/", {"code": dernier_code(u.email), "next": "/"})
+        assert r.status_code == 302 and c.get("/").status_code == 200
+        assert AuditLog.objects.filter(action="admin.2fa_reussie", actor_id=u.pk).exists()
+
+    def test_cinq_codes_faux_deconnectent(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        bon = dernier_code(u.email)
+        faux = "000000" if bon != "000000" else "111111"
+        for _ in range(4):
+            assert "Code incorrect" in c.post("/verification/", {"code": faux}).content.decode()
+        r = c.post("/verification/", {"code": faux})
+        assert r.status_code == 302 and "double_auth=bloque" in r["Location"]
+        assert c.get("/").status_code == 302  # plus connecté
+        assert (
+            c.post("/verification/", {"code": bon}).status_code == 302
+        )  # l'ancien code ne vaut plus rien
+        assert c.get("/").status_code == 302
+
+    def test_renvoi_limite_a_une_minute(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        page = c.post("/verification/", {"renvoyer": "1"}).content.decode()
+        assert "Patiente une minute" in page
+
+    def test_code_expire(self):
+        from apps.core import redis_file
+
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        for cle in redis_file.client().scan_iter("admin:2fa:*"):
+            redis_file.client().delete(cle)
+        r = c.post("/verification/", {"code": dernier_code(u.email)})
+        assert "double_auth=expire" in r["Location"]

@@ -64,3 +64,22 @@ class DureeDeSessionMiddleware:
             else:
                 session.set_expiry(int(parametres.lire("ADMIN_SESSION_IDLE_MIN")) * 60)
         return self.get_response(request)
+
+
+class DoubleAuthMiddleware:
+    """Tant que le code reçu par courriel n'est pas saisi, toute page renvoie vers l'écran de vérification."""
+
+    LIBRES = ("/verification/", "/logout/", "/login/", "/static/", "/healthz")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from django.shortcuts import redirect
+        from django.utils.http import urlencode
+
+        from . import double_auth
+
+        if double_auth.en_attente(request) and not request.path.startswith(self.LIBRES):
+            return redirect(f"/verification/?{urlencode({'next': request.get_full_path()})}")
+        return self.get_response(request)

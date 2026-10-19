@@ -2,6 +2,8 @@
 
 import copy
 
+from config import env
+
 from .base import *  # noqa: F403
 from .base import INSTALLED_APPS, MIDDLEWARE
 from .base import TEMPLATES as _TEMPLATES
@@ -26,7 +28,11 @@ MIDDLEWARE_ADMIN = [
 _i = MIDDLEWARE_ADMIN.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1
 MIDDLEWARE_ADMIN[_i:_i] = [
     "adminsite.middleware.DureeDeSessionMiddleware",
+    "adminsite.middleware.DoubleAuthMiddleware",
 ]
+# Double authentification : un code à 6 chiffres envoyé par courriel à chaque connexion (adminsite/double_auth.py).
+# Désactivable en développement seulement (ADMIN_2FA_ACTIVE=0) ; toujours active en production (settings/admin.py).
+ADMIN_2FA_ACTIVE = env.booleen("ADMIN_2FA_ACTIVE", True)
 MIDDLEWARE_ADMIN.append("axes.middleware.AxesMiddleware")
 MIDDLEWARE = MIDDLEWARE_ADMIN
 

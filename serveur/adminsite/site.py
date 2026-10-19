@@ -49,6 +49,64 @@ class AdminLogeo(AdminSite):
     index_title = "Tableau de bord"
     login_form = FormulaireConnexion
 
+    def get_urls(self):
+        from django.urls import path
+
+        return [path("verification/", self.verification, name="verification"), *super().get_urls()]
+
+    def verification(self, request):
+        """Second temps de la connexion : le code reçu par courriel (adminsite/double_auth.py)."""
+        from django.shortcuts import redirect, render
+        from django.utils.http import url_has_allowed_host_and_scheme
+
+        from . import double_auth
+
+        suite = request.POST.get("next") or request.GET.get("next") or "/"
+        if not url_has_allowed_host_and_scheme(suite, allowed_hosts={request.get_host()}):
+            suite = "/"
+        if not request.user.is_authenticated:
+            return redirect("/login/")
+        if not double_auth.en_attente(request):
+            return redirect(suite)
+        message, niveau = None, "info"
+        if request.method == "POST":
+            if "renvoyer" in request.POST:
+                resultat = double_auth.renvoyer(request)
+                message = {
+                    "envoye": "Un nouveau code vient de partir.",
+                    "attendre": "Patiente une minute avant de demander un nouveau code.",
+                    "plafond": "Trop de renvois : reconnecte-toi pour recevoir un nouveau code.",
+                }[resultat]
+            else:
+                resultat = double_auth.verifier(request, request.POST.get("code", ""))
+                if resultat == "ok":
+                    return redirect(suite)
+                if resultat in ("bloque", "expire"):
+                    return redirect("/login/?double_auth=" + resultat)
+                message, niveau = "Code incorrect. Vérifie le dernier courriel reçu.", "erreur"
+        contexte = {
+            **self.each_context(request),
+            "title": "Vérification en deux étapes",
+            "courriel": double_auth.masquer_courriel(request.user.email),
+            "message": message,
+            "niveau": niveau,
+            "next": suite,
+        }
+        return render(request, "admin/verification.html", contexte)
+
+    def login(self, request, extra_context=None):
+        """Explique pourquoi on revient à la connexion après un code bloqué ou expiré."""
+        from django.contrib import messages
+
+        textes = {
+            "bloque": "Trop de codes incorrects : reconnecte-toi pour en recevoir un nouveau.",
+            "expire": "Le code a expiré : reconnecte-toi pour en recevoir un nouveau.",
+        }
+        raison = request.GET.get("double_auth")
+        if request.method == "GET" and raison in textes:
+            messages.warning(request, textes[raison])
+        return super().login(request, extra_context=extra_context)
+
     def get_app_list(self, request, app_label=None):
         rubriques = super().get_app_list(request, app_label)
         rang = {nom: i for i, nom in enumerate(ORDRE_RUBRIQUES)}
