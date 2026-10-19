@@ -453,3 +453,17 @@ textarea.lg-json { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
 }
 .lg-lien-bouton:hover { text-decoration: underline; }
 
+/* ── Suivi des erreurs ───────────────────────────────────────────────────────────────────── */
+.lg-erreur { margin-bottom: var(--sp-3); }
+.lg-erreur__resume { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2) var(--sp-4); cursor: pointer; }
+.lg-erreur__type { font-weight: 800; color: var(--danger); }
+.lg-erreur__lieu { font-family: monospace; font-size: var(--fs-13); }
+.lg-erreur__compte { font-weight: 700; }
+.lg-erreur__message { margin: var(--sp-3) 0; }
+.lg-erreur__detail {
+  max-height: 22rem; overflow: auto; padding: var(--sp-3); border-radius: var(--r-field);
+  background: var(--bg); font-size: var(--fs-12); white-space: pre-wrap;
+}
+.lg-erreurs-resume { margin: 0 0 var(--sp-3); padding: 0; list-style: none; display: grid; gap: var(--sp-2); }
+.lg-erreurs-resume li { list-style: none; padding: 0; }
+

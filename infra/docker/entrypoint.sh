@@ -4,6 +4,7 @@ set -eu
 
 cmd="${1:-web-api}"
 [ "$#" -gt 0 ] && shift
+export LOGEO_SERVICE="$cmd"  # nom du processus, repris par le suivi des erreurs
 reload=""
 [ "${LOGEO_RELOAD:-0}" = "1" ] && reload="--reload"
 

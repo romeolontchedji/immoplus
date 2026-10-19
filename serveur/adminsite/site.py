@@ -52,7 +52,32 @@ class AdminLogeo(AdminSite):
     def get_urls(self):
         from django.urls import path
 
-        return [path("verification/", self.verification, name="verification"), *super().get_urls()]
+        return [
+            path("verification/", self.verification, name="verification"),
+            path("erreurs/", self.admin_view(self.erreurs), name="erreurs"),
+            *super().get_urls(),
+        ]
+
+    def erreurs(self, request):
+        """Suivi des erreurs (apps/core/erreurs.py) : liste regroupée, détail, « corrigée ». Administrateurs seulement."""
+        from django.core.exceptions import PermissionDenied
+        from django.shortcuts import redirect, render
+
+        from apps.audit import services as audit
+        from apps.core import erreurs
+
+        if request.user.role != "admin":
+            raise PermissionDenied
+        if request.method == "POST" and request.POST.get("resoudre"):
+            erreurs.resoudre(request.POST["resoudre"])
+            audit.enregistrer("admin.erreur_resolue", acteur=request.user, cible_type="erreur")
+            return redirect("/erreurs/")
+        contexte = {
+            **self.each_context(request),
+            "title": "Erreurs",
+            "erreurs": erreurs.liste(),
+        }
+        return render(request, "admin/erreurs.html", contexte)
 
     def verification(self, request):
         """Second temps de la connexion : le code reçu par courriel (adminsite/double_auth.py)."""
@@ -126,6 +151,10 @@ class AdminLogeo(AdminSite):
         contexte = extra_context or {}
         if request.user.is_active and request.user.role in ("admin", "moderator"):
             contexte["vue_ensemble"] = _vue_ensemble(request.user)
+        if request.user.is_active and request.user.role == "admin":
+            from apps.core import erreurs
+
+            contexte["erreurs_recentes"] = erreurs.liste(limite=5)
         return super().index(request, extra_context=contexte)
 
 

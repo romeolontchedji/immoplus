@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{# Suivi des erreurs (apps/core/erreurs.py) : erreurs regroupées par type et par endroit du code. #}
+{% block bodyclass %}{{ block.super }} lg-erreurs{% endblock %}
+{% block content %}
+  <div id="content-main">
+    <p class="lg-bandeau">
+      Chaque erreur du site, de l'API, du temps réel ou des tâches est regroupée ici (30 jours, 200 au plus).
+      Un courriel part à sa première apparition, puis au plus une fois par heure.
+      « Corrigée » la retire : si elle revient, elle réapparaît.
+    </p>
+    {% if erreurs %}
+      {% for e in erreurs %}
+        <details class="lg-carte lg-erreur">
+          <summary class="lg-erreur__resume">
+            <span class="lg-erreur__type">{{ e.type }}</span>
+            <span class="lg-erreur__lieu">{{ e.lieu }}</span>
+            <span class="lg-erreur__compte">{{ e.nombre }} fois</span>
+            <span class="lg-discret">{{ e.processus }} · première le {{ e.premiere_le }} · dernière le {{ e.derniere_le }}</span>
+          </summary>
+          <p class="lg-erreur__message">{{ e.message }}</p>
+          <pre class="lg-erreur__detail">{{ e.detail }}</pre>
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="resoudre" value="{{ e.id }}" class="lg-lien-action">Corrigée</button>
+          </form>
+        </details>
+      {% endfor %}
+    {% else %}
+      <p class="lg-carte">Aucune erreur enregistrée. Tout va bien.</p>
+    {% endif %}
+  </div>
+{% endblock %}

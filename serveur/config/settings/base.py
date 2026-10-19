@@ -119,6 +119,9 @@ CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600}
 CELERY_TIMEZONE = "Africa/Porto-Novo"
+CELERY_WORKER_HIJACK_ROOT_LOGGER = (
+    False  # garde la journalisation de Django (et donc le suivi des erreurs)
+)
 
 # --- Authentification ---
 AUTH_USER_MODEL = "accounts.User"
@@ -219,10 +222,15 @@ LOGGING = {
     "filters": {"masque": {"()": "apps.core.logging.FiltreMasque"}},
     "formatters": {"json": {"()": "apps.core.logging.FormateurJson"}},
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["masque"]}
+        "console": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["masque"]},
+        # Suivi des erreurs (apps/core/erreurs.py) : regroupées, visibles dans l'administration, courriel limité.
+        "erreurs": {"class": "apps.core.erreurs.JournalErreursHandler", "level": "ERROR"},
     },
-    "root": {"handlers": ["console"], "level": env.texte("LOG_LEVEL", "INFO")},
+    "root": {"handlers": ["console", "erreurs"], "level": env.texte("LOG_LEVEL", "INFO")},
 }
+# Adresses qui reçoivent un courriel à chaque nouvelle erreur (au plus une fois par heure et par erreur),
+# séparées par des virgules. Vide : les erreurs restent visibles dans l'administration, sans courriel.
+ERREURS_DESTINATAIRES = env.liste("ERREURS_DESTINATAIRES")
 
 # --- En-têtes de sécurité (la CSP est posée par EnTetesSecuriteMiddleware) ---
 CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com"]

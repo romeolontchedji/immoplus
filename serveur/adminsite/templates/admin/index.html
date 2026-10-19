@@ -148,6 +148,26 @@
           </div>
         </div>
       {% endwith %}
+      {% if erreurs_recentes is not None %}
+        <h2 class="lg-titre-section">
+          Erreurs <small>regroupées par type, 30 derniers jours</small>
+        </h2>
+        {% if erreurs_recentes %}
+          <div class="lg-carte">
+            <ul class="lg-erreurs-resume">
+              {% for e in erreurs_recentes %}
+                <li>
+                  <strong>{{ e.type }}</strong> · {{ e.lieu }}
+                  <span class="lg-discret">{{ e.nombre }} fois · dernière le {{ e.derniere_le }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+            <a class="lg-lien-action" href="/erreurs/">Voir le détail</a>
+          </div>
+        {% else %}
+          <p class="lg-carte">Aucune erreur enregistrée. Tout va bien.</p>
+        {% endif %}
+      {% endif %}
       <h2 class="lg-titre-section">Gérer</h2>
       <div class="lg-grille lg-grille--3">
         <section class="lg-domaine">

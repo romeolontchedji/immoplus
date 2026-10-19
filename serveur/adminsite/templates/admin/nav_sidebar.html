@@ -10,6 +10,13 @@
     {% include "admin/includes_icone.html" with nom="grid" %}
     Tableau de bord
   </a>
+  {% if request.user.role == "admin" %}
+    <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == '/erreurs/' %} lg-nav__lien--actif{% endif %}"
+       href="/erreurs/">
+      {% include "admin/includes_icone.html" with nom="alert" %}
+      Erreurs
+    </a>
+  {% endif %}
   {% for rubrique in available_apps %}
     <section class="lg-nav__rubrique{% if rubrique.app_url in request.path %} lg-nav__rubrique--courante{% endif %}">
       <h2 class="lg-nav__titre">

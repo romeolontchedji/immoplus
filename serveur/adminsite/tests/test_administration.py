@@ -515,3 +515,25 @@ class TestDoubleAuthentification:
             redis_file.client().delete(cle)
         r = c.post("/verification/", {"code": dernier_code(u.email)})
         assert "double_auth=expire" in r["Location"]
+
+
+class TestPageErreurs:
+    def test_l_administrateur_voit_et_corrige_les_erreurs(self):
+        import logging
+
+        from apps.core import erreurs
+
+        try:
+            raise KeyError("absent")
+        except KeyError:
+            logging.getLogger("apps.essai").exception("Échec de test")
+        c, _ = se_connecter(personnel())
+        assert "KeyError" in c.get("/").content.decode()
+        page = c.get("/erreurs/").content.decode()
+        assert "KeyError" in page and "Corrigée" in page
+        c.post("/erreurs/", {"resoudre": erreurs.liste()[0]["id"]})
+        assert erreurs.liste() == []
+
+    def test_un_moderateur_n_y_a_pas_acces(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get("/erreurs/").status_code == 403
