@@ -13,6 +13,7 @@ exceptions_jetons = [
   # Chemins de modules imposés par Django (moteurs de base, de session et de cache).
   "django.db.backends.",
   "django.contrib.sessions.backends.",
+  "django.core.mail.backends.",
   "django.core.cache.backends.",
   # Nom de réglage et chemin de module imposés par Django et django-axes.
   "AUTHENTICATION_BACKENDS",

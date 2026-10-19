@@ -32,3 +32,7 @@
 .etat-erreur { display: flex; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--rayon-2); background: var(--danger-bg); color: var(--danger-text); }
 .etat-erreur__titre { margin: 0 0 var(--sp-1); font-weight: 700; }
 .etat-erreur p { margin: 0; }
+
+/* Boîte de développement (développement seulement) */
+.boite-dev__texte { white-space: pre-wrap; font-size: var(--fs-13); margin: var(--sp-2) 0 0; }
+

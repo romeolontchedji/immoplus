@@ -39,3 +39,25 @@ def styleguide(request):
         "semantiques": ["succes", "avertissement", "danger", "information"],
     }
     return render(request, "web/styleguide.html", contexte)
+
+
+def boite_dev(request):
+    """Développement seulement : derniers SMS, courriels et push « envoyés » (rien ne part réellement)."""
+    from django.core.cache import cache
+
+    from apps.core.courriel_dev import CLE_BOITE_COURRIELS
+    from apps.core.providers.push import CLE_BOITE_PUSH_DEV
+    from apps.core.providers.sms import CLE_BOITE_DEV
+
+    if not (settings.DEBUG and getattr(settings, "DEV_INBOX_ENABLED", False)):
+        raise Http404
+    return render(
+        request,
+        "web/boite-dev.html",
+        {
+            "titre": "Boîte de développement",
+            "courriels": cache.get(CLE_BOITE_COURRIELS, []),
+            "sms": cache.get(CLE_BOITE_DEV, []),
+            "push": cache.get(CLE_BOITE_PUSH_DEV, []),
+        },
+    )

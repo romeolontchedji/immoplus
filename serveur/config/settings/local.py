@@ -8,8 +8,9 @@ from .base import INSTALLED_APPS, MIDDLEWARE_SITE
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 OTP_DEBUG_CODE = env.texte("OTP_DEBUG_CODE", "")
-# Développement : les courriels (codes de l'administration…) s'affichent dans `docker compose logs worker`.
-EMAIL_BACKEND = env.texte("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+# Développement : les courriels (codes de l'administration…) sont rangés dans la boîte de développement,
+# lisible sur http://www.localhost:8080/dev/boite (avec les SMS et les push).
+EMAIL_BACKEND = env.texte("EMAIL_BACKEND") or "apps.core.courriel_dev.BoiteDevCourriels"
 INSTALLED_APPS = [*INSTALLED_APPS, "django.contrib.messages"]
 STYLEGUIDE_ENABLED = True
 DEV_INBOX_ENABLED = True

@@ -49,5 +49,8 @@ urlpatterns = [
     path("pro/annonces/<uuid:annonce_id>", p.editeur, name="pro-annonce"),
 ]
 
+if settings.DEBUG and getattr(settings, "DEV_INBOX_ENABLED", False):
+    urlpatterns.append(path("dev/boite", views.boite_dev, name="boite-dev"))
+
 if getattr(settings, "STYLEGUIDE_ENABLED", False):
     urlpatterns.append(path("styleguide", views.styleguide, name="styleguide"))
