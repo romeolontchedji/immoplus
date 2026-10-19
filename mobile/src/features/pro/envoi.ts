@@ -66,16 +66,26 @@ export async function envoyerFichier(o: { uploadUrl: string; uri: string; surPro
   });
 }
 
+/** Étape en cours d'un envoi : réduction de la vidéo sur le téléphone, puis envoi au serveur. */
+export type EtapeEnvoi = "preparation" | "envoi";
+
 /**
  * Ajoute un média à une annonce : compresse la vidéo, déclare l'envoi au serveur (`kind`, `size_bytes` → `upload_url`),
- * puis envoie le fichier par morceaux. La progression va de 0 à 1.
+ * puis envoie le fichier par morceaux. La progression va de 0 à 1 pour chaque étape.
  */
-export async function ajouterMedia(o: { annonceId: string; uri: string; kind: "video" | "photo"; surProgression?: (ratio: number) => void }): Promise<void> {
-  const uri = o.kind === "video" ? await compresserVideo(o.uri) : o.uri;
+export async function ajouterMedia(o: {
+  annonceId: string;
+  uri: string;
+  kind: "video" | "photo";
+  surProgression?: (ratio: number, etape: EtapeEnvoi) => void;
+}): Promise<void> {
+  if (o.kind === "video") o.surProgression?.(0, "preparation");
+  const uri = o.kind === "video" ? await compresserVideo(o.uri, (ratio) => o.surProgression?.(ratio, "preparation")) : o.uri;
+  o.surProgression?.(0, "envoi");
   const taille = (await (await fetch(uri)).blob()).size;
   const media = await unwrap(
     api.POST("/v1/pro/listings/{annonce_id}/media", { params: { path: { annonce_id: o.annonceId } }, body: { kind: o.kind, size_bytes: taille } }),
   );
   if (!media.upload_url) throw new Error("upload_url manquant");
-  await envoyerFichier({ uploadUrl: media.upload_url, uri, surProgression: (envoyes, total) => o.surProgression?.(total ? envoyes / total : 0) });
+  await envoyerFichier({ uploadUrl: media.upload_url, uri, surProgression: (envoyes, total) => o.surProgression?.(total ? envoyes / total : 0, "envoi") });
 }

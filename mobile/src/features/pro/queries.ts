@@ -15,8 +15,18 @@ export const useMediasPro = (id: string | undefined) =>
     queryKey: qk.pro.medias(id ?? ""), enabled: !!id,
     queryFn: () => unwrap(api.GET("/v1/pro/listings/{annonce_id}/media", { params: { path: { annonce_id: id as string } } })),
     // Tant qu'un média est en traitement (vidéo : transcodage), on relit toutes les 3 s.
-    refetchInterval: (q) => (q.state.data?.some((m) => m.status === "uploading" || m.status === "processing" || m.status === "pending") ? 3000 : false),
+    refetchInterval: (q) => (q.state.data?.some((m) => m.status === "uploaded" || m.status === "processing" || m.status === "pending") ? 3000 : false),
   });
+
+/** Retire une photo ou la vidéo d'une annonce (refusé pour une annonce en ligne qui passerait sous le minimum). */
+export function useSupprimerMedia(annonceId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (mediaId: string) =>
+      unwrap(api.DELETE("/v1/pro/listings/{annonce_id}/media/{media_id}", { params: { path: { annonce_id: annonceId as string, media_id: mediaId } } })),
+    onSettled: () => void qc.invalidateQueries({ queryKey: qk.pro.medias(annonceId ?? "") }),
+  });
+}
 
 type Action = "confirm" | "hide" | "mark-rented" | "undo-rented" | "publish";
 

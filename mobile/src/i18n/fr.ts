@@ -23,6 +23,11 @@ const fr = {
     upgrade_required: "Mets Logeo à jour pour continuer.",
     maintenance: "Logeo est en maintenance. Réessaie dans quelques minutes.",
     network: "Pas de connexion. Vérifie ton réseau et réessaie.",
+    upload_quota: "Limite atteinte : une vidéo et 10 photos par annonce, deux envois à la fois au plus.",
+    media_required: "Une annonce en ligne garde sa vidéo et au moins 3 photos. Masque-la d’abord, ou ajoute la nouvelle photo avant de retirer l’ancienne.",
+    listing_locked: "Cette annonce n'accepte plus de médias.",
+    storage_full: "Le stockage du serveur est plein. Réessaie plus tard.",
+    upload_too_large: "Le fichier est trop lourd.",
   } as Record<string, string>,
   statutAnnonce: { draft: "Brouillon", processing: "En traitement", published: "En ligne", hidden: "Masquée", rented: "Louée", archived: "Archivée", removed: "Retirée" } as Record<string, string>,
   // Repli hors ligne : types officiels (la liste vivante vient de GET /v1/room-types, décision V1).

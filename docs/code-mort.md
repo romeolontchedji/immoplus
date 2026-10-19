@@ -46,7 +46,7 @@ conséquence, le mot `export` est simplement de trop.
 
 | Fonction | État | Ce qui manque |
 |---|---|---|
-| **Supprimer ou réordonner les photos depuis l'application** | Routes `DELETE …/media/{id}` et `PATCH …/media/order` prêtes, utilisées par le site | Aucun écran mobile : un gérant ne peut pas retirer une photo depuis son téléphone |
+| Réordonner les photos depuis l'application | Route `PATCH …/media/order` prête, utilisée par le site | Aucun écran mobile (la suppression et le remplacement de la vidéo sont branchés depuis le 19/10/2026) |
 | Anti-robot du site (Turnstile) | Interface prête, fournisseur `fake` | Clés Cloudflare et `CAPTCHA_PROVIDER=turnstile` |
 | Attestation de l'application (Play Integrity, App Attest) | Interface prête, fournisseur `fake` | Développement des deux fournisseurs |
 | Pièces d'identité chiffrées | `PRIVATE_FILES_KEY` et volume `media_private` en place | Aucune fonctionnalité ne les utilise (la vérification des gérants se fait hors plateforme) |
