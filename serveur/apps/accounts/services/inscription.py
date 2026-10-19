@@ -117,7 +117,8 @@ def reinitialiser_mot_de_passe(
             raise ErreurMetier("not_found", "Compte introuvable.", statut=404)
         utilisateur.password = mots_de_passe.hacher(nouveau)  # invalide aussi les sessions du site
         utilisateur.token_version += 1
-        utilisateur.save()
+        # Colonnes nommées : le rôle `app` n'a le droit de modifier que certaines colonnes de `users`.
+        utilisateur.save(update_fields=["password", "token_version", "updated_at"])
     jetons.invalider_utilisateur(utilisateur.pk)
     appareils.revoquer_autres(utilisateur, None, raison="mot_de_passe_reinitialise")
     audit.enregistrer(

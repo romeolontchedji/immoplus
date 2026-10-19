@@ -173,7 +173,6 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
     ancien_numero, role, uid = utilisateur.phone_e164, utilisateur.role, utilisateur.pk
     with transaction.atomic():
         utilisateur.phone_e164 = f"del:{uuid.uuid4().hex[:12]}"
-        utilisateur.email = None
         utilisateur.full_name = "Compte supprimé"
         utilisateur.avatar_path = None
         utilisateur.status = Statut.DELETED
@@ -181,7 +180,13 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
         utilisateur.notif_prefs = {}
         utilisateur.token_version += 1
         utilisateur.set_unusable_password()
-        utilisateur.save()
+        # Colonnes nommées : le rôle `app` ne peut pas modifier `email` ni `role` (seul le personnel a un e-mail).
+        utilisateur.save(
+            update_fields=[
+                "phone_e164", "full_name", "avatar_path", "status", "deleted_at", "notif_prefs",
+                "token_version", "password", "updated_at",
+            ]
+        )  # fmt: skip
         OtpCode.objects.filter(phone_e164=ancien_numero).update(phone_e164="")
         appareils_a_revoquer = list(utilisateur.devices.all())
         for appareil in appareils_a_revoquer:
