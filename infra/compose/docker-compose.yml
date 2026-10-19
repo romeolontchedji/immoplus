@@ -192,7 +192,9 @@ services:
 
   backup:
     <<: *profils
-    image: postgres:16-bookworm
+    image: logeo-sauvegarde:local
+    build:
+      context: ../backup  # pg_dump + restic (ADR 0008)
     restart: unless-stopped
     command: ["bash", "/scripts/boucle.sh"]
     env_file: [env/backup.env]
