@@ -100,6 +100,11 @@ Cela crée `.env` avec **tous les secrets générés** (mots de passe des bases,
 | `SMS_PROVIDER` | `generic_http` |
 | `SMS_HTTP_URL`, `SMS_HTTP_TOKEN`, `SMS_HTTP_SECRET` | Fournis par l'agrégateur SMS |
 | `PUSH_PROVIDER` | `expo` |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` | Tes clés Cloudflare (dash.cloudflare.com › Turnstile › Ajouter un site, gratuit). Les clés de test du modèle laissent tout passer : elles sont signalées comme erreur en production |
+| `EMAIL_BACKEND` | vide (envoi SMTP par défaut) |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Ton serveur SMTP (Brevo, Gmail avec mot de passe d'application…) : indispensable, les codes de connexion à l'administration partent par courriel |
+| `ERREURS_DESTINATAIRES` | Ton adresse : tu reçois un courriel à chaque nouvelle erreur (au plus un par heure et par erreur) |
+| `RESTIC_REPOSITORY`, `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE` | Le compartiment de stockage des sauvegardes chez un autre fournisseur (étape 10) |
 
 Ne touche pas aux secrets. Régénère ensuite les fichiers des services **sans changer les secrets** :
 
@@ -180,23 +185,36 @@ l'application. Redémarre Caddy : `logeo restart caddy`.
 
 ## Étape 10 : sauvegardes
 
-Le service `backup` écrit chaque nuit une sauvegarde compressée de la base dans le volume `backups` et en garde 14.
+Chaque nuit, le service `backup` (ADR 0008) :
 
-**Limite actuelle :** ces sauvegardes restent sur le même serveur. Tant que la copie automatique vers un autre
-fournisseur (prévue au CDC §13.4, avec restic) n'est pas en place, rapatrie-les au moins chaque semaine :
+1. sauvegarde la base (`pg_dump`), **vérifie qu'elle est complète**, et en garde 14 sur le serveur ;
+2. si `RESTIC_REPOSITORY` est renseigné, envoie une **copie chiffrée** des sauvegardes de la base **et des photos et
+   vidéos** chez un autre fournisseur, avec restic (conservation : 14 jours puis 8 semaines).
+
+**Mettre en place la copie hors du serveur (15 minutes) :**
+
+1. Crée un compte chez Backblaze B2 ou Cloudflare R2 (autre fournisseur que le VPS), un compartiment privé
+   `logeo-sauvegardes` et une clé d'accès limitée à ce compartiment.
+2. Renseigne dans `.env` : `RESTIC_REPOSITORY` (ex. `s3:https://s3.eu-central-003.backblazeb2.com/logeo-sauvegardes`),
+   `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE`. `RESTIC_PASSWORD` a été généré à l'étape 5 : **copie-le dans le
+   coffre de l'équipe**, sans lui les sauvegardes sont illisibles.
+3. `python3 outils/creer_env.py --services && logeo up -d backup`
+4. Lance une passe tout de suite et vérifie le message « copie chiffrée hors serveur terminée » :
+   `logeo exec backup bash /scripts/boucle.sh une-fois`
+
+**Test de restauration** (avant l'ouverture, puis chaque trimestre, sur un serveur de test) :
 
 ```bash
-# sur ton ordinateur
-scp 'logeo@<IP>:/var/lib/docker/volumes/logeo_backups/_data/logeo-*.sql.gz' ./sauvegardes/
+logeo exec backup restic restore latest --target /tmp/restauration     # récupère base et médias
+gunzip -c /tmp/restauration/backups/logeo-<date>.sql.gz | logeo exec -T postgres psql -U postgres -d logeo
 ```
 
-(Le nom exact du volume s'affiche avec `docker volume ls | grep backups`.)
+Tant que la copie hors serveur n'est pas configurée, le journal du service `backup` le rappelle chaque nuit.
 
-**Test de restauration** (à faire une fois avant l'ouverture, sur un serveur de test) :
+## Conteneurs figés
 
-```bash
-gunzip -c logeo-AAAAMMJJTHHMMSSZ.sql.gz | logeo exec -T postgres psql -U postgres -d logeo
-```
+`bootstrap.sh` installe une minuterie qui, chaque minute, redémarre un conteneur qui ne répond plus (au plus 3 fois
+par heure, ensuite il faut intervenir). Historique : `journalctl -t logeo-autoguerison`.
 
 ## Mettre à jour
 
@@ -231,9 +249,9 @@ par SMS ou e-mail. Elle te prévient si le site tombe, si la base ne répond plu
 - [ ] Agrégateur SMS branché et testé avec ton propre numéro (inscription complète).
 - [ ] Notifications push testées sur Android et iPhone avec l'application compilée.
 - [ ] Identité légale complétée dans les paramètres (« provisoire » décoché).
-- [ ] `ADMIN_ALLOWED_IPS` limité à ton adresse ou ton VPN. La double authentification de l'administration prévue au
-      CDC n'est pas encore développée : la liste d'adresses et le verrouillage après 5 échecs sont pour l'instant les
-      seules protections.
+- [ ] `ADMIN_ALLOWED_IPS` limité à ton adresse ou ton VPN.
+- [ ] Courriels testés : connexion à l'administration (le code arrive), et une erreur reçue par courriel.
+- [ ] Vraies clés Turnstile (pas les clés de test) : rien dans Administration › Erreurs à ce sujet.
 - [ ] Sauvegardes copiées hors du serveur et restauration testée.
 - [ ] Surveillance externe de `/readyz` active.
 - [ ] `.env` conservé dans le coffre de l'équipe.

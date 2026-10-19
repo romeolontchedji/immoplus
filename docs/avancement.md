@@ -2,6 +2,18 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-19 : solidité avant hébergement.**
+- `readyz` passe par le client Redis partagé (tests : disque simulé). Relevé du code mort : `docs/code-mort.md`.
+- Administration : double authentification par code envoyé par courriel à chaque connexion (10 min, 5 essais,
+  3 renvois). Suivi des erreurs : regroupées dans redis-queue, page « Erreurs » de l'administration, courriel au
+  plus une fois par heure et par erreur (`ERREURS_DESTINATAIRES`).
+- Sauvegardes : image `logeo-sauvegarde` (pg_dump vérifié + restic, ADR 0008) ; copie hors serveur inactive tant que
+  `RESTIC_REPOSITORY` est vide. Restauration testée en local.
+- Anti-robot Turnstile branché dès le développement (clés de test Cloudflare) ; `fake` refusé en production, clés de
+  test signalées comme erreur. `.env.example` commenté paramètre par paramètre.
+- Développement : page `/dev/boite` (courriels, SMS, push reçus). VPS : minuterie systemd qui redémarre les
+  conteneurs figés (`infra/vps/autoguerison.sh`, 3 fois par heure au plus).
+
 **2026-10-18 (fin) : prêt pour l'hébergement.**
 - Médias derrière `StorageProvider` (ADR 0007) : disque local par défaut, squelette S3/R2 ; aucune migration.
 - CI : nouvelle tâche « mobile » (types, lint, tests, client d'API comparé au contrat) ; TypeScript 6 (attendu par
