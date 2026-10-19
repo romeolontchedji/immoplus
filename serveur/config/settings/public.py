@@ -18,6 +18,12 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
+PRODUCTION = True
+# Le défi anti-robot factice se remplit tout seul : en production, il laisserait passer n'importe quel robot.
+if env.texte("CAPTCHA_PROVIDER", "fake") in ("", "fake"):
+    raise ImproperlyConfigured(
+        "CAPTCHA_PROVIDER=turnstile est obligatoire en production (clés Cloudflare)."
+    )
 # Hôtes servis : le site et l'API du domaine, plus l'adresse interne des contrôles de santé (curl 127.0.0.1).
 # Sans cette liste, Django répondrait 400 à toute requête en production.
 _DOMAINE = env.texte("DOMAIN")

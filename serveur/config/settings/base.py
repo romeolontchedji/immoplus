@@ -178,10 +178,19 @@ PAYMENT_WEBHOOK_SECRET = env.texte(
     "PAYMENT_WEBHOOK_SECRET"
 )  # signature des webhooks (factice et réels)
 KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
+# Attestation que l'application est authentique (Play Integrity, App Attest) : `fake` tant qu'elle n'est pas développée.
 DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
-CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER", "fake")
-TURNSTILE_SECRET = env.texte("TURNSTILE_SECRET")
-TURNSTILE_SITE_KEY = env.texte("TURNSTILE_SITE_KEY")
+# Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).
+CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER") or "fake"
+TURNSTILE_SECRET = env.texte(
+    "TURNSTILE_SECRET"
+)  # clé secrète Turnstile (vérification côté serveur)
+TURNSTILE_SITE_KEY = env.texte(
+    "TURNSTILE_SITE_KEY"
+)  # clé publique Turnstile (affichage du défi dans la page)
+# Clés de test publiées par Cloudflare (le défi réussit toujours) : signalées comme erreur en production.
+TURNSTILE_CLES_DE_TEST = ("1x00000000000000000000AA", "1x0000000000000000000000000000000AA")
+PRODUCTION = False  # vrai dans les réglages public, admin et taches (garde-fous de démarrage)
 SMS_HTTP_URL = env.texte("SMS_HTTP_URL")
 SMS_HTTP_TOKEN = env.texte("SMS_HTTP_TOKEN")
 SMS_HTTP_SECRET = env.texte("SMS_HTTP_SECRET")
@@ -197,11 +206,8 @@ SUBSCRIPTION_ENABLED = env.booleen("SUBSCRIPTION_ENABLED", False)
 # --- Courriels : codes de l'administration et alertes d'erreurs ---
 # N'importe quel serveur SMTP convient. Gratuit pour notre volume : Brevo (300 / jour), Gmail avec un « mot de passe
 # d'application » (500 / jour), ou la messagerie du nom de domaine. Seul le `worker` envoie (il a accès à Internet).
-EMAIL_BACKEND = (
-    env.texte(  # en développement : la console (le courriel s'affiche dans les journaux du worker)
-        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
-    )
-)
+# Envoi par SMTP (production) ; en développement, settings/local.py affiche les courriels dans la console.
+EMAIL_BACKEND = env.texte("EMAIL_BACKEND") or "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env.texte("EMAIL_HOST", "localhost")  # adresse du serveur SMTP du fournisseur
 EMAIL_PORT = env.entier("EMAIL_PORT", 587)  # 587 avec STARTTLS (le plus courant), 465 avec SSL
 EMAIL_HOST_USER = env.texte("EMAIL_HOST_USER")  # identifiant SMTP (souvent l'adresse d'envoi)
@@ -211,9 +217,8 @@ EMAIL_USE_SSL = env.booleen(
     "EMAIL_USE_SSL", False
 )  # chiffrement SSL direct (port 465) ; jamais avec TLS
 EMAIL_TIMEOUT = 15  # secondes avant d'abandonner un envoi (la tâche réessaie ensuite)
-DEFAULT_FROM_EMAIL = env.texte(
-    "DEFAULT_FROM_EMAIL", "Logeo <no-reply@localhost>"
-)  # expéditeur affiché
+# Expéditeur affiché dans les courriels de Logeo.
+DEFAULT_FROM_EMAIL = env.texte("DEFAULT_FROM_EMAIL") or "Logeo <no-reply@localhost>"
 
 # --- Journalisation JSON ---
 LOGGING = {

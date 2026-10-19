@@ -28,7 +28,7 @@ def importer(module: str, **env) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-c", f"import {module}"],
         cwd=SERVEUR,
-        env={**propre, "DOMAIN": "logeo.exemple.bj", **env},
+        env={**propre, "DOMAIN": "logeo.exemple.bj", "CAPTCHA_PROVIDER": "turnstile", **env},
         capture_output=True,
         text=True,
         check=False,
@@ -100,6 +100,7 @@ def test_cookies_distincts_site_et_administration():
         env={
             **os.environ,
             "DOMAIN": "logeo.exemple.bj",
+            "CAPTCHA_PROVIDER": "turnstile",
             "SECRET_KEY": "a" * 60,
             "JWT_SIGNING_KEY": "b" * 60,
             "OTP_HMAC_KEY": "c" * 60,
@@ -131,3 +132,11 @@ class TestClesDeSecurite:
     def test_identique_a_une_autre_cle(self, cle):
         r = importer("config.settings.public", **{**CLES, cle: CLES["SECRET_KEY"]})
         assert r.returncode != 0 and "trois clés différentes" in r.stderr
+
+
+def test_l_anti_robot_factice_est_refuse_en_production():
+    r = importer(
+        "config.settings.public",
+        SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60, CAPTCHA_PROVIDER="fake",
+    )  # fmt: skip
+    assert r.returncode != 0 and "CAPTCHA_PROVIDER" in r.stderr

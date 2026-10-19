@@ -20,4 +20,5 @@ if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
     )
 
 SECRET_KEY = env.texte("SECRET_KEY")
+PRODUCTION = True
 ALLOWED_HOSTS: list[str] = []  # aucune requête HTTP
