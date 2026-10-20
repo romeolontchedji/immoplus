@@ -1,53 +1,52 @@
-"""Texte enrichi des annonces : Markdown restreint, assaini (CDC §11.8) ; détection des coordonnées (CDC §11.7)."""
+"""« Autres détails » des annonces : texte simple, sans mise en forme (19/10/2026) ; détection des coordonnées (CDC §11.7).
 
+Le gérant écrit du texte brut : les marques de mise en forme (gras, italique, titres) d'anciennes descriptions sont
+retirées, les retours à la ligne sont gardés. Le HTML produit ne contient que <p> et <br>, texte échappé.
+"""
+
+import html as html_lib
 import re
 from dataclasses import dataclass, field
 
 import nh3
-from markdown_it import MarkdownIt
 
 from apps.core.errors import ErreurMetier
 
 LONGUEUR_MAX = 4000
-LIGNES_LISTE_MAX = 40
-_BALISES = {"p", "strong", "em", "s", "h3", "ul", "ol", "li", "br"}
-_MD = MarkdownIt("zero").enable(
-    ["paragraph", "emphasis", "strikethrough", "list", "heading", "newline", "text"]
-)
 
 
-def _nettoyer_source(texte: str) -> str:
-    """Retire ce que le sous-ensemble interdit : HTML, images, liens (on garde le texte), code, citations."""
-    texte = nh3.clean(texte, tags=set())  # balises HTML brutes supprimées
+def texte_simple(texte: str) -> str:
+    """Texte brut : HTML, liens, marques de gras, d'italique, de barré et de titre retirés ; trois lignes vides au plus."""
+    texte = nh3.clean(texte or "", tags=set())
     texte = texte.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
     texte = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", texte)
     texte = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", texte)
     texte = texte.replace("`", "")
     texte = re.sub(r"(?m)^\s*>+\s?", "", texte)
-    texte = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "### ", texte)  # un seul niveau de titre
+    texte = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", texte)
+    texte = re.sub(r"(\*\*|__|~~)(.+?)\1", r"\2", texte)
+    texte = re.sub(r"(?<![\w*])[*_](?!\s)(.+?)(?<!\s)[*_](?![\w*])", r"\1", texte)
+    texte = re.sub(r"(?m)^\s*[*+]\s+", "- ", texte)
+    texte = re.sub(r"[ \t]+\n", "\n", texte)
+    texte = re.sub(r"\n{3,}", "\n\n", texte)
     return texte.strip()
 
 
-def rendre(markdown: str) -> tuple[str, str]:
-    """Retourne (markdown nettoyé, HTML assaini). Lève `ErreurMetier` si le texte est trop long."""
-    nettoye = _nettoyer_source(markdown or "")
-    if len(nettoye) > LONGUEUR_MAX:
+def rendre(texte: str) -> tuple[str, str]:
+    """Retourne (texte simple, HTML : paragraphes et retours à la ligne). Lève `ErreurMetier` si trop long."""
+    propre = texte_simple(texte)
+    if len(propre) > LONGUEUR_MAX:
         raise ErreurMetier(
             "validation_error",
-            f"La description est trop longue ({LONGUEUR_MAX} caractères au plus).",
-            champs={"description_md": ["Trop longue"]},
+            f"Les autres détails sont trop longs ({LONGUEUR_MAX} caractères au plus).",
+            champs={"description_md": ["Trop long"]},
         )
-    lignes_liste = sum(
-        1 for ligne in nettoye.splitlines() if re.match(r"^\s*(?:[-*+]|\d+\.)\s", ligne)
+    paragraphes = [p for p in re.split(r"\n\s*\n", propre) if p.strip()]
+    html = "".join(
+        "<p>" + "<br>".join(html_lib.escape(ligne) for ligne in p.splitlines()) + "</p>"
+        for p in paragraphes
     )
-    if lignes_liste > LIGNES_LISTE_MAX:
-        raise ErreurMetier(
-            "validation_error",
-            f"Une liste ne peut pas dépasser {LIGNES_LISTE_MAX} lignes.",
-            champs={"description_md": ["Liste trop longue"]},
-        )
-    html = nh3.clean(_MD.render(nettoye), tags=_BALISES, attributes={}, link_rel=None)
-    return nettoye, html
+    return propre, html
 
 
 def texte_brut(html: str) -> str:

@@ -7,7 +7,7 @@ import posixpath
 import uuid
 
 from django.core.cache import cache
-from django.db.models import BooleanField, Count, Q
+from django.db.models import Avg, BooleanField, Count, Q
 from django.db.models.expressions import RawSQL
 from django.utils.dateparse import parse_datetime
 
@@ -15,13 +15,32 @@ from apps.accounts import selectors as comptes
 from apps.core.errors import ErreurMetier
 from apps.media import stockage
 
-from .enums import StatutAnnonce, StatutMedia, TypeMedia
-from .models import Alert, District, Favorite, Listing, ListingMedia
+from .enums import Compteur, Cuisine, Eau, StatutAnnonce, StatutMedia, TypeMedia
+from .models import Alert, District, Favorite, Listing, ListingMedia, Review
 from .services import geo, types
 
 
 def quartiers_actifs():
     return District.objects.filter(is_active=True)
+
+
+RAYON_VOISINS_M = 3000
+
+
+def quartiers_voisins(slugs: list[str], *, limite: int = 4) -> list[District]:
+    """Quartiers actifs les plus proches des quartiers donnés (centres à moins de 3 km), du plus proche au plus loin."""
+    reference = list(quartiers_actifs().filter(slug__in=slugs))
+    if not reference:
+        return []
+    autres = quartiers_actifs().exclude(slug__in=slugs)
+    distances = []
+    for q in autres:
+        d = min(
+            geo.haversine_m(q.latitude, q.longitude, r.latitude, r.longitude) for r in reference
+        )
+        if d <= RAYON_VOISINS_M:
+            distances.append((d, q.name, q))
+    return [q for _, _, q in sorted(distances, key=lambda t: (t[0], t[1]))[:limite]]
 
 
 def quartiers_avec_chambres(limite: int = 12) -> list[dict]:
@@ -176,6 +195,8 @@ def _appliquer_criteres(requete, f: dict):
         requete = requete.filter(water_source__in=f["water"])
     if f["meter"]:
         requete = requete.filter(electricity_meter__in=f["meter"])
+    if f.get("kitchen"):
+        requete = requete.filter(kitchen__in=f["kitchen"])
     if f["fenced"] is not None:
         requete = requete.filter(is_fenced=f["fenced"])
     if f["available_before"]:
@@ -224,6 +245,7 @@ def _carte(annonce: Listing, medias: list, gerants: dict) -> dict:
         "district": {"name": annonce.district.name, "slug": annonce.district.slug},
         "landmark_text": annonce.landmark_text,
         "rent_amount": annonce.rent_amount,
+        "rent_negotiable": annonce.rent_negotiable,
         "deposit_months": annonce.deposit_months,
         "advance_months": annonce.advance_months,
         "distance_m": geo.arrondir_50(annonce.distance_to_campus_m),
@@ -456,14 +478,27 @@ def fiche_publique(ident) -> dict | None:
         "has_private_bathroom": annonce.has_private_bathroom,
         "is_fenced": annonce.is_fenced,
         "water_source": annonce.water_source,
+        "water_label": Eau(annonce.water_source).label
+        if annonce.water_source in Eau.values
+        else "",
         "electricity_meter": annonce.electricity_meter,
+        "electricity_label": (
+            Compteur(annonce.electricity_meter).label
+            if annonce.electricity_meter in Compteur.values
+            else ""
+        ),
+        "kitchen": annonce.kitchen,
+        "kitchen_label": Cuisine(annonce.kitchen).label if annonce.kitchen else "",
+        "rent_negotiable": annonce.rent_negotiable,
         "description_md": annonce.description_md,
         "description_html": annonce.description_html,
         "status": annonce.status,
         "published_at": annonce.published_at,
         "last_confirmed_at": annonce.last_confirmed_at,
         "media": sortie_medias,
+        "reviews": resume_avis([annonce.pk]).get(annonce.pk, {"average": None, "count": 0}),
         "gerant": {
+            "id": annonce.gerant_id,
             "name": gerant.get("name"),
             "verified": gerant.get("verified", False),
             "median_response_min": gerant.get("median_response_min"),
@@ -644,4 +679,100 @@ def tableau_de_bord_gerant(gerant) -> dict:
         "favorites_30d": stats.somme("favorites_added", ids, depuis=depuis),
         "conversations_30d": stats.somme("conversations_started", ids, depuis=depuis),
         "to_confirm": a_confirmer,
+    }
+
+
+# ----------------------------------------------------------------------------- avis des locataires
+def _nom_court(nom: str | None) -> str:
+    """« Awa Bio » → « Awa B. » : l'avis reste personnel sans exposer le nom complet."""
+    morceaux = (nom or "").split()
+    if not morceaux:
+        return "Locataire"
+    return f"{morceaux[0]} {morceaux[1][0]}." if len(morceaux) > 1 else morceaux[0]
+
+
+def resume_avis(annonce_ids) -> dict:
+    """{annonce_id: {"average": 4.3, "count": 7}} sur les avis visibles (absent si aucun avis)."""
+    lignes = (
+        Review.objects.filter(listing_id__in=list(annonce_ids), is_hidden=False)
+        .values("listing_id")
+        .annotate(moyenne=Avg("rating"), nombre=Count("id"))
+    )
+    return {
+        ligne["listing_id"]: {
+            "average": round(float(ligne["moyenne"]), 1),
+            "count": ligne["nombre"],
+        }
+        for ligne in lignes
+    }
+
+
+def resume_avis_gerant(gerant_id) -> dict:
+    """Moyenne et nombre d'avis visibles sur toutes les chambres d'un gérant."""
+    agr = Review.objects.filter(listing__gerant_id=gerant_id, is_hidden=False).aggregate(
+        moyenne=Avg("rating"), nombre=Count("id")
+    )
+    return {
+        "average": round(float(agr["moyenne"]), 1) if agr["moyenne"] is not None else None,
+        "count": agr["nombre"],
+    }
+
+
+def avis(*, annonce_id=None, gerant_id=None, limite: int = 20) -> list[dict]:
+    """Avis visibles d'une chambre ou d'un gérant, les plus récents d'abord."""
+    requete = Review.objects.filter(is_hidden=False).select_related("listing")
+    if annonce_id is not None:
+        requete = requete.filter(listing_id=annonce_id)
+    if gerant_id is not None:
+        requete = requete.filter(listing__gerant_id=gerant_id)
+    lignes = list(requete.order_by("-created_at")[:limite])
+    noms = comptes.noms_utilisateurs({a.author_id for a in lignes})
+    return [
+        {
+            "id": a.pk,
+            "rating": a.rating,
+            "comment": a.comment,
+            "author_name": _nom_court(noms.get(a.author_id)),
+            "listing_title": a.listing.title,
+            "listing_slug": a.listing.slug,
+            "created_at": a.created_at,
+        }
+        for a in lignes
+    ]
+
+
+def avis_de(utilisateur_id, annonce_id) -> dict | None:
+    """L'avis de ce locataire sur cette chambre (pour le modifier), même masqué."""
+    a = Review.objects.filter(author_id=utilisateur_id, listing_id=annonce_id).first()
+    return {"rating": a.rating, "comment": a.comment, "is_hidden": a.is_hidden} if a else None
+
+
+def avis_pour_moderation(*, masques: bool | None = None, limite: int = 200) -> list[Review]:
+    requete = Review.objects.select_related("listing")
+    if masques is not None:
+        requete = requete.filter(is_hidden=masques)
+    return list(requete.order_by("-created_at")[:limite])
+
+
+def profil_gerant_public(gerant_id) -> dict | None:
+    """Page publique d'un gérant : identité publique, chambres en ligne, avis (accessible depuis la messagerie)."""
+    try:
+        gerant_id = uuid.UUID(str(gerant_id))
+    except ValueError:
+        return None
+    profil = comptes.gerant_public(gerant_id)
+    if profil is None:
+        return None
+    annonces = list(
+        Listing.objects.filter(
+            gerant_id=gerant_id, status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True
+        )
+        .select_related("district")
+        .order_by("-published_at")[:30]
+    )
+    return {
+        **profil,
+        "listings": _cartes(annonces),
+        "reviews": resume_avis_gerant(gerant_id),
+        "reviews_items": avis(gerant_id=gerant_id, limite=10),
     }

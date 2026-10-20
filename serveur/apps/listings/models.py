@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from .enums import (
     Compteur,
+    Cuisine,
     Eau,
     RaisonMasquage,
     StatutAnnonce,
@@ -134,7 +135,16 @@ class Listing(models.Model):
     electricity_meter = models.CharField(
         max_length=10, choices=Compteur.choices, verbose_name="compteur"
     )
-    description_md = models.TextField(default="", db_default="", verbose_name="description")
+    # Vide = non précisé (annonces publiées avant l'ajout du champ).
+    kitchen = models.CharField(
+        max_length=10, choices=Cuisine.choices, blank=True, default="", db_default="",
+        verbose_name="cuisine",
+    )  # fmt: skip
+    rent_negotiable = models.BooleanField(
+        default=False, db_default=False, verbose_name="loyer à débattre"
+    )
+    # « Autres détails » : texte simple (plus de mise en forme depuis le 19/10/2026).
+    description_md = models.TextField(default="", db_default="", verbose_name="autres détails")
     description_html = models.TextField(default="", db_default="")
     search_vector = SearchVectorField(null=True, blank=True)
     status = models.CharField(
@@ -197,6 +207,10 @@ class Listing(models.Model):
             models.CheckConstraint(
                 condition=models.Q(electricity_meter__in=[c.value for c in Compteur]),
                 name="listings_compteur_valide",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(kitchen__in=["", *[c.value for c in Cuisine]]),
+                name="listings_cuisine_valide",
             ),
             models.CheckConstraint(
                 condition=models.Q(hidden_reason__isnull=True)
@@ -329,4 +343,46 @@ class Alert(models.Model):
         indexes = [
             GinIndex(fields=["district_ids"], name="alerts_quartiers_idx"),
             models.Index(fields=["user", "is_active"], name="alerts_utilisateur_idx"),
+        ]
+
+
+class Review(models.Model):
+    """Avis d'un locataire sur une chambre, possible seulement après une vraie discussion avec son gérant.
+
+    Publié tout de suite ; la modération peut le masquer (signalement ou contrôle). Un avis par locataire et par
+    chambre, modifiable par son auteur."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="reviews", verbose_name="annonce"
+    )
+    author = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="+", verbose_name="auteur"
+    )
+    rating = models.SmallIntegerField(verbose_name="note")
+    comment = models.TextField(default="", db_default="", blank=True, verbose_name="commentaire")
+    is_hidden = models.BooleanField(default=False, db_default=False, verbose_name="masqué")
+    hidden_reason = models.CharField(
+        max_length=200, default="", db_default="", blank=True, verbose_name="raison du masquage"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
+
+    def __str__(self) -> str:
+        return f"{self.rating}/5"
+
+    class Meta:
+        db_table = "listing_reviews"
+        verbose_name = "avis"
+        verbose_name_plural = "avis"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=5), name="avis_note_1_a_5"
+            ),
+            models.UniqueConstraint(fields=["listing", "author"], name="avis_un_par_chambre"),
+        ]
+        indexes = [
+            models.Index(fields=["listing", "is_hidden", "-created_at"], name="avis_annonce_idx"),
         ]

@@ -262,7 +262,7 @@ def test_apercu_depuis_le_site_avec_session_et_csrf():
         content_type="application/json",
         HTTP_X_CSRFTOKEN=str(jeton),
     )
-    assert r.status_code == 200 and "<strong>calme</strong>" in r.json()["html"]
+    assert r.status_code == 200 and r.json()["html"] == "<p>Chambre calme<br>- Douche</p>"
     sans_csrf = c.post(
         "/v1/pro/markdown/preview", {"markdown": "x"}, content_type="application/json"
     )

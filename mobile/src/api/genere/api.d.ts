@@ -403,6 +403,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/gerants/{gerant_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profil public d'un gérant : chambres en ligne et avis (jamais de numéro) */
+        get: operations["v1_gerants_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/legal/{slug}": {
         parameters: {
             query?: never;
@@ -466,6 +483,41 @@ export interface paths {
         };
         /** Fiche d'une annonce (identifiant ou slug) */
         get: operations["listings_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/listings/{ident}/my-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Donner ou modifier mon avis (après un échange avec le gérant) */
+        put: operations["v1_listings_my_review_update"];
+        post?: never;
+        /** Retirer mon avis */
+        delete: operations["v1_listings_my_review_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/listings/{ident}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Avis des locataires sur une chambre */
+        get: operations["v1_listings_reviews_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -765,7 +817,7 @@ export interface paths {
         get: operations["v1_pro_listings_retrieve"];
         put?: never;
         post?: never;
-        /** Supprimer un brouillon */
+        /** Supprimer une annonce ou un brouillon */
         delete: operations["v1_pro_listings_destroy"];
         options?: never;
         head?: never;
@@ -1085,6 +1137,15 @@ export interface components {
             is_fenced: boolean;
             water_source: components["schemas"]["WaterSourceEnum"];
             electricity_meter: components["schemas"]["ElectricityMeterEnum"];
+            /** @description private (interne), shared (commune), none (aucune) ; vide = non précisé.
+             *
+             *     * `private` - private
+             *     * `shared` - shared
+             *     * `none` - none */
+            kitchen?: components["schemas"]["KitchenEnum"] | components["schemas"]["BlankEnum"];
+            /** @description Loyer à débattre. */
+            rent_negotiable?: boolean;
+            /** @description Autres détails, en texte simple (la mise en forme est retirée). */
             description_md?: string;
         };
         AnnonceProOut: {
@@ -1114,6 +1175,8 @@ export interface components {
             is_fenced: boolean;
             water_source: string;
             electricity_meter: string;
+            kitchen: string;
+            rent_negotiable: boolean;
             description_md: string;
             status: components["schemas"]["AnnonceProOutStatusEnum"];
             hidden_reason: string | null;
@@ -1174,6 +1237,33 @@ export interface components {
             created_at: string;
             current: boolean;
         };
+        AvisIn: {
+            rating: number;
+            comment?: string;
+        };
+        AvisListeOut: {
+            summary: components["schemas"]["ResumeAvisOut"];
+            items: components["schemas"]["AvisOut"][];
+            /** @description Le locataire connecté peut donner (ou modifier) son avis. */
+            can_review: boolean;
+            my_review: {
+                [key: string]: unknown;
+            } | null;
+        };
+        AvisOut: {
+            /** Format: uuid */
+            id: string;
+            rating: number;
+            comment: string;
+            /** @description Prénom et initiale du nom. */
+            author_name: string;
+            listing_title: string;
+            listing_slug: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** @enum {unknown} */
+        BlankEnum: "";
         BlocLegalOut: {
             type: components["schemas"]["TypeEnum"];
             text: string;
@@ -1191,6 +1281,8 @@ export interface components {
             district: components["schemas"]["QuartierRefOut"];
             landmark_text: string;
             rent_amount: number;
+            /** @description Loyer à débattre avec le gérant. */
+            rent_negotiable: boolean;
             deposit_months: number;
             advance_months: number;
             distance_m: number;
@@ -1297,10 +1389,11 @@ export interface components {
         };
         /**
          * @description * `individual` - individual
+         *     * `sub_meter` - sub_meter
          *     * `shared` - shared
          * @enum {string}
          */
-        ElectricityMeterEnum: "individual" | "shared";
+        ElectricityMeterEnum: "individual" | "sub_meter" | "shared";
         EnvoiOut: {
             message: components["schemas"]["MessageOut"];
             warning: string | null;
@@ -1329,7 +1422,14 @@ export interface components {
             has_private_bathroom: boolean;
             is_fenced: boolean;
             water_source: string;
+            water_label: string;
             electricity_meter: string;
+            electricity_label: string;
+            /** @description Vide = non précisé. */
+            kitchen: string;
+            kitchen_label: string;
+            rent_negotiable: boolean;
+            /** @description Autres détails, texte simple. */
             description_md: string;
             description_html: string;
             status: string;
@@ -1338,21 +1438,40 @@ export interface components {
             /** Format: date-time */
             last_confirmed_at: string | null;
             media: components["schemas"]["MediaPublicOut"][];
+            reviews: components["schemas"]["ResumeAvisOut"];
             gerant: components["schemas"]["GerantFicheOut"];
             is_favorite: boolean;
         };
         FilOut: {
             items: components["schemas"]["CarteOut"][];
             next_cursor: string | null;
+            /** @description Quartier demandé presque vide : mêmes critères dans les quartiers proches (à part). */
+            voisins: components["schemas"]["VoisinsOut"] | null;
         };
         GerantCarteOut: {
             name: string | null;
             verified: boolean;
         };
         GerantFicheOut: {
+            /**
+             * Format: uuid
+             * @description Pour ouvrir son profil public (`GET /v1/gerants/{id}`).
+             */
+            id: string;
             name: string | null;
             verified: boolean;
             median_response_min: number | null;
+        };
+        GerantPublicOut: {
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            verified: boolean;
+            median_response_min: number | null;
+            /** Format: date */
+            member_since: string;
+            listings: components["schemas"]["CarteOut"][];
+            reviews: components["schemas"]["ResumeAvisOut"];
         };
         HistoriqueOut: {
             items: components["schemas"]["MessageOut"][];
@@ -1395,6 +1514,13 @@ export interface components {
          * @enum {string}
          */
         KindEnum: "video" | "photo";
+        /**
+         * @description * `private` - private
+         *     * `shared` - shared
+         *     * `none` - none
+         * @enum {string}
+         */
+        KitchenEnum: "private" | "shared" | "none";
         LectureIn: {
             up_to_seq: number;
         };
@@ -1577,6 +1703,15 @@ export interface components {
             is_fenced?: boolean;
             water_source?: components["schemas"]["WaterSourceEnum"];
             electricity_meter?: components["schemas"]["ElectricityMeterEnum"];
+            /** @description private (interne), shared (commune), none (aucune) ; vide = non précisé.
+             *
+             *     * `private` - private
+             *     * `shared` - shared
+             *     * `none` - none */
+            kitchen?: components["schemas"]["KitchenEnum"] | components["schemas"]["BlankEnum"];
+            /** @description Loyer à débattre. */
+            rent_negotiable?: boolean;
+            /** @description Autres détails, en texte simple (la mise en forme est retirée). */
             description_md?: string;
         };
         PatchedOrdreMediasIn: {
@@ -1662,6 +1797,14 @@ export interface components {
             push?: boolean;
             /** @description Messages : faux = « Nouveau message » sans le texte. */
             apercu?: boolean;
+        };
+        ResumeAvisOut: {
+            /**
+             * Format: double
+             * @description Note moyenne sur 5, une décimale.
+             */
+            average: number | null;
+            count: number;
         };
         /**
          * @description * `client` - client
@@ -1788,16 +1931,22 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        VoisinsOut: {
+            districts: components["schemas"]["QuartierRefOut"][];
+            items: components["schemas"]["CarteOut"][];
+        };
         VueOut: {
             counted: boolean;
         };
         /**
-         * @description * `running` - running
-         *     * `well` - well
+         * @description * `individual` - individual
+         *     * `sub_meter` - sub_meter
+         *     * `running` - running
          *     * `borehole` - borehole
+         *     * `well` - well
          * @enum {string}
          */
-        WaterSourceEnum: "running" | "well" | "borehole";
+        WaterSourceEnum: "individual" | "sub_meter" | "running" | "borehole" | "well";
     };
     responses: never;
     parameters: never;
@@ -2375,6 +2524,27 @@ export interface operations {
             };
         };
     };
+    v1_gerants_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gerant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GerantPublicOut"];
+                };
+            };
+        };
+    };
     legal_document: {
         parameters: {
             query?: never;
@@ -2409,6 +2579,8 @@ export interface operations {
                 district?: string;
                 /** @description Clôture (true/false) */
                 fenced?: string;
+                /** @description Cuisines séparées par des virgules (private, shared, none) */
+                kitchen?: string;
                 /** @description 10 par défaut, 50 au plus */
                 limit?: string;
                 /** @description Distance maximale au campus (m) */
@@ -2490,6 +2662,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FicheOut"];
+                };
+            };
+        };
+    };
+    v1_listings_my_review_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvisIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["AvisIn"];
+                "multipart/form-data": components["schemas"]["AvisIn"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_listings_my_review_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_listings_reviews_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisListeOut"];
                 };
             };
         };

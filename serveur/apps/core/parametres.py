@@ -94,8 +94,15 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "Durée maximale d'une suspension prononcée par un modérateur.",
     ),
     "RENTED_REPORTS_THRESHOLD": (3, "Signalements « déjà louée » distincts avant dossier."),
-    "STALE_HIDE_DAYS": (14, "Jours sans confirmation avant le masquage d'une annonce."),
-    "STALE_REMINDER_DAYS": ([7, 10], "Jours sans confirmation avant chaque relance."),
+    "STALE_HIDE_DAYS": (
+        0,
+        "Jours sans confirmation avant le masquage automatique d'une annonce. 0 = jamais (réglage par défaut "
+        "depuis le 19/10/2026 : le gérant retire lui-même une chambre louée ou indisponible).",
+    ),
+    "STALE_REMINDER_DAYS": (
+        [7, 10],
+        "Jours sans confirmation avant chaque relance au gérant (utilisé seulement si le masquage est actif).",
+    ),
     "MIN_SUPPORTED_VERSION": (
         "1.0.0",
         "Version minimale de l'application mobile (en dessous : mise à jour).",

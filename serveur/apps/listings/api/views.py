@@ -182,9 +182,11 @@ class AnnonceProDetail(_Pro):
         )
         return Response(_sortie(annonce))
 
-    @extend_schema(tags=TAG_PRO, summary="Supprimer un brouillon", responses={204: None})
+    @extend_schema(
+        tags=TAG_PRO, summary="Supprimer une annonce ou un brouillon", responses={204: None}
+    )
     def delete(self, request, annonce_id):
-        annonces.supprimer_brouillon(self.profil(request), annonce_id)
+        annonces.supprimer(self.profil(request), annonce_id)
         return Response(status=204)
 
 

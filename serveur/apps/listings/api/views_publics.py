@@ -13,7 +13,7 @@ from apps.core.errors import ErreurMetier
 from apps.core.http import ip_client
 
 from .. import selectors
-from ..services import alertes, favoris, fil, vues
+from ..services import alertes, avis, favoris, fil, vues
 from . import serializers_publics as s
 
 TAG = ["Fil et fiches"]
@@ -29,6 +29,7 @@ PARAMETRES_FIL = [
         ("bathroom", "Douche et WC internes (true/false)"),
         ("water", "Sources d'eau séparées par des virgules"),
         ("meter", "Compteurs séparés par des virgules"),
+        ("kitchen", "Cuisines séparées par des virgules (private, shared, none)"),
         ("fenced", "Clôture (true/false)"),
         ("available_before", "Disponible avant cette date (AAAA-MM-JJ)"),
         ("max_distance_m", "Distance maximale au campus (m)"),
@@ -57,7 +58,13 @@ class Fil(_Public):
     )
     def get(self, request):
         resultat = fil.rechercher(request.query_params)
-        reponse = Response({"items": resultat["items"], "next_cursor": resultat["next_cursor"]})
+        reponse = Response(
+            {
+                "items": resultat["items"],
+                "next_cursor": resultat["next_cursor"],
+                "voisins": resultat["voisins"],
+            }
+        )
         reponse["Cache-Control"] = "public, max-age=30"
         return reponse
 
@@ -125,6 +132,78 @@ class Vue(_Public):
             user_agent=request.headers.get("User-Agent"), proprietaire=proprietaire, canal="app",
         )  # fmt: skip
         return Response({"counted": compte})
+
+
+class Avis(_Public):
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=TAG, summary="Avis des locataires sur une chambre", responses={200: s.AvisListeOut}
+    )
+    def get(self, request, ident):
+        fiche = selectors.fiche_publique(ident)
+        if fiche is None:
+            raise ErreurMetier("not_found", "Annonce introuvable.", statut=404)
+        utilisateur = request.user
+        return Response(
+            {
+                "summary": fiche["reviews"],
+                "items": s.AvisOut(selectors.avis(annonce_id=fiche["id"]), many=True).data,
+                "can_review": avis.peut_donner(utilisateur, fiche["id"]),
+                "my_review": selectors.avis_de(utilisateur.pk, fiche["id"])
+                if utilisateur
+                else None,
+            }
+        )
+
+
+class MonAvis(APIView):
+    authentication_classes = [AuthJwt]
+    permission_classes = [EstClient]
+    throttle_classes = [LimiteCompte]
+
+    @extend_schema(
+        tags=TAG_LOC,
+        summary="Donner ou modifier mon avis (après un échange avec le gérant)",
+        request=s.AvisIn,
+        responses={204: None},
+    )
+    def put(self, request, ident):
+        fiche = selectors.fiche_publique(ident)
+        if fiche is None:
+            raise ErreurMetier("not_found", "Annonce introuvable.", statut=404)
+        d = s.AvisIn(data=request.data)
+        d.is_valid(raise_exception=True)
+        avis.donner(
+            request.user,
+            fiche["id"],
+            d.validated_data["rating"],
+            d.validated_data.get("comment", ""),
+        )
+        return Response(status=204)
+
+    @extend_schema(tags=TAG_LOC, summary="Retirer mon avis", responses={204: None})
+    def delete(self, request, ident):
+        fiche = selectors.fiche_publique(ident)
+        if fiche is None:
+            raise ErreurMetier("not_found", "Annonce introuvable.", statut=404)
+        avis.retirer(request.user, fiche["id"])
+        return Response(status=204)
+
+
+class ProfilGerant(_Public):
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=TAG,
+        summary="Profil public d'un gérant : chambres en ligne et avis (jamais de numéro)",
+        responses={200: s.GerantPublicOut},
+    )
+    def get(self, request, gerant_id):
+        profil = selectors.profil_gerant_public(gerant_id)
+        if profil is None:
+            raise ErreurMetier("not_found", "Gérant introuvable.", statut=404)
+        return Response(s.GerantPublicOut(profil).data)
 
 
 class _Client(APIView):

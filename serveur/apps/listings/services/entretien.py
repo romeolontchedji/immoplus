@@ -23,6 +23,8 @@ def relances_de_fraicheur() -> dict:
     jours_relance = sorted(int(j) for j in parametres.lire("STALE_REMINDER_DAYS"))
     jour_masquage = int(parametres.lire("STALE_HIDE_DAYS"))
     bilan = {"relances": 0, "masquees": 0}
+    if jour_masquage <= 0:  # masquage automatique désactivé : ni relance ni masquage
+        return bilan
     for annonce in Listing.objects.filter(status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True):
         reference = annonce.last_confirmed_at or annonce.published_at or annonce.created_at
         age = (maintenant - reference).days

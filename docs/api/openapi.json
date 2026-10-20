@@ -1006,6 +1006,43 @@
                 }
             }
         },
+        "/v1/gerants/{gerant_id}": {
+            "get": {
+                "operationId": "v1_gerants_retrieve",
+                "summary": "Profil public d'un gérant : chambres en ligne et avis (jamais de numéro)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "gerant_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GerantPublicOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/legal/{slug}": {
             "get": {
                 "operationId": "legal_document",
@@ -1085,6 +1122,14 @@
                             "type": "string"
                         },
                         "description": "Clôture (true/false)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "kitchen",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Cuisines séparées par des virgules (private, shared, none)"
                     },
                     {
                         "in": "query",
@@ -1258,6 +1303,119 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/FicheOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/listings/{ident}/my-review": {
+            "put": {
+                "operationId": "v1_listings_my_review_update",
+                "summary": "Donner ou modifier mon avis (après un échange avec le gérant)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvisIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvisIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvisIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_listings_my_review_destroy",
+                "summary": "Retirer mon avis",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Espace locataire"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/listings/{ident}/reviews": {
+            "get": {
+                "operationId": "v1_listings_reviews_retrieve",
+                "summary": "Avis des locataires sur une chambre",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "ident",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Fil et fiches"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AvisListeOut"
                                 }
                             }
                         },
@@ -2108,7 +2266,7 @@
             },
             "delete": {
                 "operationId": "v1_pro_listings_destroy",
-                "summary": "Supprimer un brouillon",
+                "summary": "Supprimer une annonce ou un brouillon",
                 "parameters": [
                     {
                         "in": "path",
@@ -3026,8 +3184,24 @@
                     "electricity_meter": {
                         "$ref": "#/components/schemas/ElectricityMeterEnum"
                     },
+                    "kitchen": {
+                        "description": "private (interne), shared (commune), none (aucune) ; vide = non précisé.\n\n* `private` - private\n* `shared` - shared\n* `none` - none",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/KitchenEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "rent_negotiable": {
+                        "type": "boolean",
+                        "description": "Loyer à débattre."
+                    },
                     "description_md": {
                         "type": "string",
+                        "description": "Autres détails, en texte simple (la mise en forme est retirée).",
                         "maxLength": 6000
                     }
                 },
@@ -3118,6 +3292,12 @@
                     "electricity_meter": {
                         "type": "string"
                     },
+                    "kitchen": {
+                        "type": "string"
+                    },
+                    "rent_negotiable": {
+                        "type": "boolean"
+                    },
                     "description_md": {
                         "type": "string"
                     },
@@ -3163,12 +3343,14 @@
                     "hidden_reason",
                     "id",
                     "is_fenced",
+                    "kitchen",
                     "landmark_text",
                     "last_confirmed_at",
                     "latitude",
                     "longitude",
                     "published_at",
                     "rent_amount",
+                    "rent_negotiable",
                     "room_type",
                     "room_type_label",
                     "slug",
@@ -3325,6 +3507,95 @@
                     "platform"
                 ]
             },
+            "AvisIn": {
+                "type": "object",
+                "properties": {
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "comment": {
+                        "type": "string",
+                        "maxLength": 600
+                    }
+                },
+                "required": [
+                    "rating"
+                ]
+            },
+            "AvisListeOut": {
+                "type": "object",
+                "properties": {
+                    "summary": {
+                        "$ref": "#/components/schemas/ResumeAvisOut"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvisOut"
+                        }
+                    },
+                    "can_review": {
+                        "type": "boolean",
+                        "description": "Le locataire connecté peut donner (ou modifier) son avis."
+                    },
+                    "my_review": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "can_review",
+                    "items",
+                    "my_review",
+                    "summary"
+                ]
+            },
+            "AvisOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "rating": {
+                        "type": "integer"
+                    },
+                    "comment": {
+                        "type": "string"
+                    },
+                    "author_name": {
+                        "type": "string",
+                        "description": "Prénom et initiale du nom."
+                    },
+                    "listing_title": {
+                        "type": "string"
+                    },
+                    "listing_slug": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "author_name",
+                    "comment",
+                    "created_at",
+                    "id",
+                    "listing_slug",
+                    "listing_title",
+                    "rating"
+                ]
+            },
+            "BlankEnum": {
+                "enum": [
+                    ""
+                ]
+            },
             "BlocLegalOut": {
                 "type": "object",
                 "properties": {
@@ -3372,6 +3643,10 @@
                     },
                     "rent_amount": {
                         "type": "integer"
+                    },
+                    "rent_negotiable": {
+                        "type": "boolean",
+                        "description": "Loyer à débattre avec le gérant."
                     },
                     "deposit_months": {
                         "type": "integer"
@@ -3430,6 +3705,7 @@
                     "landmark_text",
                     "published_at",
                     "rent_amount",
+                    "rent_negotiable",
                     "room_type",
                     "room_type_label",
                     "slug",
@@ -3763,10 +4039,11 @@
             "ElectricityMeterEnum": {
                 "enum": [
                     "individual",
+                    "sub_meter",
                     "shared"
                 ],
                 "type": "string",
-                "description": "* `individual` - individual\n* `shared` - shared"
+                "description": "* `individual` - individual\n* `sub_meter` - sub_meter\n* `shared` - shared"
             },
             "EnvoiOut": {
                 "type": "object",
@@ -3846,11 +4123,28 @@
                     "water_source": {
                         "type": "string"
                     },
+                    "water_label": {
+                        "type": "string"
+                    },
                     "electricity_meter": {
                         "type": "string"
                     },
-                    "description_md": {
+                    "electricity_label": {
                         "type": "string"
+                    },
+                    "kitchen": {
+                        "type": "string",
+                        "description": "Vide = non précisé."
+                    },
+                    "kitchen_label": {
+                        "type": "string"
+                    },
+                    "rent_negotiable": {
+                        "type": "boolean"
+                    },
+                    "description_md": {
+                        "type": "string",
+                        "description": "Autres détails, texte simple."
                     },
                     "description_html": {
                         "type": "string"
@@ -3874,6 +4168,9 @@
                             "$ref": "#/components/schemas/MediaPublicOut"
                         }
                     },
+                    "reviews": {
+                        "$ref": "#/components/schemas/ResumeAvisOut"
+                    },
                     "gerant": {
                         "$ref": "#/components/schemas/GerantFicheOut"
                     },
@@ -3890,12 +4187,15 @@
                     "description_md",
                     "distance_m",
                     "district",
+                    "electricity_label",
                     "electricity_meter",
                     "gerant",
                     "has_private_bathroom",
                     "id",
                     "is_favorite",
                     "is_fenced",
+                    "kitchen",
+                    "kitchen_label",
                     "landmark_text",
                     "last_confirmed_at",
                     "latitude",
@@ -3903,11 +4203,14 @@
                     "media",
                     "published_at",
                     "rent_amount",
+                    "rent_negotiable",
+                    "reviews",
                     "room_type",
                     "room_type_label",
                     "slug",
                     "status",
                     "title",
+                    "water_label",
                     "water_source"
                 ]
             },
@@ -3923,11 +4226,21 @@
                     "next_cursor": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "voisins": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/VoisinsOut"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Quartier demandé presque vide : mêmes critères dans les quartiers proches (à part)."
                     }
                 },
                 "required": [
                     "items",
-                    "next_cursor"
+                    "next_cursor",
+                    "voisins"
                 ]
             },
             "GerantCarteOut": {
@@ -3949,6 +4262,11 @@
             "GerantFicheOut": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Pour ouvrir son profil public (`GET /v1/gerants/{id}`)."
+                    },
                     "name": {
                         "type": "string",
                         "nullable": true
@@ -3962,8 +4280,51 @@
                     }
                 },
                 "required": [
+                    "id",
                     "median_response_min",
                     "name",
+                    "verified"
+                ]
+            },
+            "GerantPublicOut": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "verified": {
+                        "type": "boolean"
+                    },
+                    "median_response_min": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "member_since": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CarteOut"
+                        }
+                    },
+                    "reviews": {
+                        "$ref": "#/components/schemas/ResumeAvisOut"
+                    }
+                },
+                "required": [
+                    "id",
+                    "listings",
+                    "median_response_min",
+                    "member_since",
+                    "name",
+                    "reviews",
                     "verified"
                 ]
             },
@@ -4095,6 +4456,15 @@
                 ],
                 "type": "string",
                 "description": "* `video` - video\n* `photo` - photo"
+            },
+            "KitchenEnum": {
+                "enum": [
+                    "private",
+                    "shared",
+                    "none"
+                ],
+                "type": "string",
+                "description": "* `private` - private\n* `shared` - shared\n* `none` - none"
             },
             "LectureIn": {
                 "type": "object",
@@ -4735,8 +5105,24 @@
                     "electricity_meter": {
                         "$ref": "#/components/schemas/ElectricityMeterEnum"
                     },
+                    "kitchen": {
+                        "description": "private (interne), shared (commune), none (aucune) ; vide = non précisé.\n\n* `private` - private\n* `shared` - shared\n* `none` - none",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/KitchenEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "rent_negotiable": {
+                        "type": "boolean",
+                        "description": "Loyer à débattre."
+                    },
                     "description_md": {
                         "type": "string",
+                        "description": "Autres détails, en texte simple (la mise en forme est retirée).",
                         "maxLength": 6000
                     }
                 }
@@ -4944,6 +5330,24 @@
                         "description": "Messages : faux = « Nouveau message » sans le texte."
                     }
                 }
+            },
+            "ResumeAvisOut": {
+                "type": "object",
+                "properties": {
+                    "average": {
+                        "type": "number",
+                        "format": "double",
+                        "nullable": true,
+                        "description": "Note moyenne sur 5, une décimale."
+                    },
+                    "count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "average",
+                    "count"
+                ]
             },
             "RoleEnum": {
                 "enum": [
@@ -5318,6 +5722,27 @@
                     "terms_version"
                 ]
             },
+            "VoisinsOut": {
+                "type": "object",
+                "properties": {
+                    "districts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuartierRefOut"
+                        }
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CarteOut"
+                        }
+                    }
+                },
+                "required": [
+                    "districts",
+                    "items"
+                ]
+            },
             "VueOut": {
                 "type": "object",
                 "properties": {
@@ -5331,12 +5756,14 @@
             },
             "WaterSourceEnum": {
                 "enum": [
+                    "individual",
+                    "sub_meter",
                     "running",
-                    "well",
-                    "borehole"
+                    "borehole",
+                    "well"
                 ],
                 "type": "string",
-                "description": "* `running` - running\n* `well` - well\n* `borehole` - borehole"
+                "description": "* `individual` - individual\n* `sub_meter` - sub_meter\n* `running` - running\n* `borehole` - borehole\n* `well` - well"
             }
         },
         "securitySchemes": {

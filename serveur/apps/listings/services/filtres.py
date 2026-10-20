@@ -5,7 +5,7 @@ from collections.abc import Mapping
 
 from apps.core.errors import ErreurMetier
 
-from ..enums import Compteur, Eau
+from ..enums import Compteur, Cuisine, Eau
 from . import types
 
 TRIS = ("recent", "rent_asc", "rent_desc", "distance")
@@ -91,6 +91,7 @@ def normaliser(params: Mapping) -> dict:
         "bathroom": _booleen(params.get("bathroom"), "bathroom"),
         "water": _liste(params.get("water"), Eau.values, "water"),
         "meter": _liste(params.get("meter"), Compteur.values, "meter"),
+        "kitchen": _liste(params.get("kitchen"), Cuisine.values, "kitchen"),
         "fenced": _booleen(params.get("fenced"), "fenced"),
         "available_before": avant or None,
         "max_distance_m": _entier(params.get("max_distance_m"), "max_distance_m"),
@@ -106,6 +107,6 @@ def a_des_criteres(filtres: dict) -> bool:
         filtres.get(cle) not in (None, "", [])
         for cle in (
             "q", "districts", "types", "rent_min", "rent_max", "bathroom", "water", "meter",
-            "fenced", "available_before", "max_distance_m",
+            "kitchen", "fenced", "available_before", "max_distance_m",
         )
     )  # fmt: skip

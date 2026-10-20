@@ -24,6 +24,7 @@ class CarteOut(serializers.Serializer):
     district = QuartierRefOut()
     landmark_text = serializers.CharField()
     rent_amount = serializers.IntegerField()
+    rent_negotiable = serializers.BooleanField(help_text="Loyer à débattre avec le gérant.")
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
     distance_m = serializers.IntegerField()
@@ -38,9 +39,18 @@ class CarteOut(serializers.Serializer):
     gerant = GerantCarteOut()
 
 
+class VoisinsOut(serializers.Serializer):
+    districts = QuartierRefOut(many=True)
+    items = CarteOut(many=True)
+
+
 class FilOut(serializers.Serializer):
     items = CarteOut(many=True)
     next_cursor = serializers.CharField(allow_null=True)
+    voisins = VoisinsOut(
+        allow_null=True,
+        help_text="Quartier demandé presque vide : mêmes critères dans les quartiers proches (à part).",
+    )
 
 
 class MediaPublicOut(serializers.Serializer):
@@ -57,9 +67,49 @@ class MediaPublicOut(serializers.Serializer):
 
 
 class GerantFicheOut(serializers.Serializer):
+    id = serializers.UUIDField(help_text="Pour ouvrir son profil public (`GET /v1/gerants/{id}`).")
     name = serializers.CharField(allow_null=True)
     verified = serializers.BooleanField()
     median_response_min = serializers.IntegerField(allow_null=True)
+
+
+class ResumeAvisOut(serializers.Serializer):
+    average = serializers.FloatField(allow_null=True, help_text="Note moyenne sur 5, une décimale.")
+    count = serializers.IntegerField()
+
+
+class AvisOut(serializers.Serializer):
+    id = serializers.UUIDField()
+    rating = serializers.IntegerField()
+    comment = serializers.CharField()
+    author_name = serializers.CharField(help_text="Prénom et initiale du nom.")
+    listing_title = serializers.CharField()
+    listing_slug = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class AvisListeOut(serializers.Serializer):
+    summary = ResumeAvisOut()
+    items = AvisOut(many=True)
+    can_review = serializers.BooleanField(
+        help_text="Le locataire connecté peut donner (ou modifier) son avis."
+    )
+    my_review = serializers.DictField(allow_null=True)
+
+
+class AvisIn(serializers.Serializer):
+    rating = serializers.IntegerField(min_value=1, max_value=5)
+    comment = serializers.CharField(max_length=600, required=False, allow_blank=True)
+
+
+class GerantPublicOut(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField(allow_null=True)
+    verified = serializers.BooleanField()
+    median_response_min = serializers.IntegerField(allow_null=True)
+    member_since = serializers.DateField()
+    listings = CarteOut(many=True)
+    reviews = ResumeAvisOut()
 
 
 class FicheOut(serializers.Serializer):
@@ -83,13 +133,19 @@ class FicheOut(serializers.Serializer):
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
     water_source = serializers.CharField()
+    water_label = serializers.CharField()
     electricity_meter = serializers.CharField()
-    description_md = serializers.CharField()
+    electricity_label = serializers.CharField()
+    kitchen = serializers.CharField(help_text="Vide = non précisé.")
+    kitchen_label = serializers.CharField()
+    rent_negotiable = serializers.BooleanField()
+    description_md = serializers.CharField(help_text="Autres détails, texte simple.")
     description_html = serializers.CharField()
     status = serializers.CharField()
     published_at = serializers.DateTimeField(allow_null=True)
     last_confirmed_at = serializers.DateTimeField(allow_null=True)
     media = MediaPublicOut(many=True)
+    reviews = ResumeAvisOut()
     gerant = GerantFicheOut()
     is_favorite = serializers.BooleanField()
 

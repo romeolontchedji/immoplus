@@ -29,7 +29,24 @@ def vieillir(annonce, jours):
     )
 
 
+def test_masquage_automatique_coupe_par_defaut():
+    assert parametres.lire("STALE_HIDE_DAYS") == 0
+
+
 class TestFraicheur:
+    @pytest.fixture(autouse=True)
+    def masquage_actif(self):
+        """Masquage automatique coupé par défaut depuis le 19/10/2026 : ces tests l'activent (14 jours)."""
+        parametres.definir("STALE_HIDE_DAYS", 14)
+
+    def test_desactive_par_defaut_ni_relance_ni_masquage(self):
+        parametres.definir("STALE_HIDE_DAYS", 0)
+        a = ListingFactory()
+        vieillir(a, 60)
+        assert entretien.relances_de_fraicheur() == {"relances": 0, "masquees": 0}
+        a.refresh_from_db()
+        assert a.status == "published"
+
     def test_rien_avant_sept_jours(self):
         a = ListingFactory(last_confirmed_at=timezone.now() - datetime.timedelta(days=6))
         assert entretien.relances_de_fraicheur() == {"relances": 0, "masquees": 0}

@@ -35,14 +35,27 @@ class RaisonMasquage(models.TextChoices):
 
 
 class Eau(models.TextChoices):
-    RUNNING = "running", "Eau courante"
-    WELL = "well", "Puits"
+    """Source et comptage de l'eau (ordre d'affichage des listes)."""
+
+    INDIVIDUAL = "individual", "Compteur d'eau personnel"
+    SUB_METER = "sub_meter", "Décompteur"
+    RUNNING = "running", "Eau courante partagée"
     BOREHOLE = "borehole", "Forage"
+    WELL = "well", "Puits"
 
 
 class Compteur(models.TextChoices):
-    INDIVIDUAL = "individual", "Individuel"
-    SHARED = "shared", "Partagé"
+    """Comptage de l'électricité (SBEE)."""
+
+    INDIVIDUAL = "individual", "Compteur personnel"
+    SUB_METER = "sub_meter", "Décompteur"
+    SHARED = "shared", "Compteur partagé"
+
+
+class Cuisine(models.TextChoices):
+    PRIVATE = "private", "Cuisine interne"
+    SHARED = "shared", "Cuisine commune"
+    NONE = "none", "Pas de cuisine"
 
 
 class TypeMedia(models.TextChoices):

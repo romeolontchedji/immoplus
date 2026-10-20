@@ -112,7 +112,7 @@ def test_site_inscription_et_compte(django_capture_on_commit_callbacks):
     assert r["Location"] == "/compte"
     u = User.objects.get(phone_e164="+2290197585858")
     assert u.occupation == "student_other"
-    c.post("/compte", {"action": "nom", "full_name": "Awa Bio", "occupation": ""})
+    c.post("/compte/profil", {"action": "nom", "full_name": "Awa Bio", "occupation": ""})
     u.refresh_from_db()
     assert u.occupation is None
 

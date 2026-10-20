@@ -255,7 +255,7 @@ def editeur(request, profil, annonce_id=None):
                 annonce = annonces.modifier(profil, annonce.pk, donnees)
                 message = "Annonce enregistrée."
             elif action == "supprimer" and annonce:
-                annonces.supprimer_brouillon(profil, annonce.pk)
+                annonces.supprimer(profil, annonce.pk)
                 return redirect("/pro/annonces")
             elif action in ACTIONS and annonce:
                 annonce = ACTIONS[action](profil, annonce.pk)

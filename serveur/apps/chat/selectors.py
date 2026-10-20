@@ -37,6 +37,13 @@ def conversation_du_participant(utilisateur_id, conversation_id) -> Conversation
     return conversation
 
 
+def a_echange_avec_le_gerant(client_id, annonce_id) -> bool:
+    """Vrai si ce locataire a une conversation sur cette chambre et que le gérant y a répondu (droit de donner un avis)."""
+    return Conversation.objects.filter(
+        client_id=client_id, listing_id=annonce_id, first_reply_at__isnull=False
+    ).exists()
+
+
 def conversation_par_id(conversation_id) -> Conversation | None:
     ident = _uuid(conversation_id)
     return Conversation.objects.filter(pk=ident).first() if ident else None

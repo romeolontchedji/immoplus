@@ -56,10 +56,9 @@ class TestCreation:
         assert 0 < a["distance_to_campus_m"] < 2000 and a["district_name"] == quartier.name
         assert a["address_private"] == "Rue 12, maison bleue"
         annonce = Listing.objects.get(pk=a["id"])
-        assert (
-            "<strong>calme</strong>" in annonce.description_html
-            and "<li>Douche interne</li>" in annonce.description_html
-        )
+        # « Autres détails » en texte simple : les marques de mise en forme disparaissent, les lignes restent.
+        assert "<strong>" not in annonce.description_html and "calme" in annonce.description_html
+        assert "**" not in annonce.description_md
         assert Listing.objects.filter(pk=a["id"], search_vector__isnull=False).exists()
         assert AuditLog.objects.filter(action="listing.cree").exists()
 
@@ -201,8 +200,19 @@ class TestModification:
         assert pro.delete(f"/v1/pro/listings/{a['id']}").status_code == 204
         assert pro.get(f"/v1/pro/listings/{a['id']}").status_code == 404
 
-    def test_une_annonce_publiee_ne_se_supprime_pas(self, gerant, pro):
+    def test_une_annonce_publiee_se_supprime_et_disparait(
+        self, gerant, pro, django_capture_on_commit_callbacks
+    ):
         a = ListingFactory(gerant=gerant)
+        with django_capture_on_commit_callbacks(execute=True):
+            assert pro.delete(f"/v1/pro/listings/{a.pk}").status_code == 204
+        a.refresh_from_db()
+        assert a.status == "archived" and a.deleted_at is not None
+        assert pro.get(f"/v1/pro/listings/{a.pk}").status_code == 404
+        assert APIClient().get(f"/v1/listings/{a.slug}").status_code == 404
+
+    def test_une_annonce_retiree_par_la_moderation_ne_se_supprime_pas(self, gerant, pro):
+        a = ListingFactory(gerant=gerant, status="removed")
         assert pro.delete(f"/v1/pro/listings/{a.pk}").status_code == 409
 
 
@@ -316,21 +326,19 @@ class TestServicesPurs:
         assert 110_000 < geo.haversine_m(9.0, 2.63, 10.0, 2.63) < 112_000  # un degré de latitude
         assert geo.arrondir_50(1234) == 1250 and geo.arrondir_position(9.340987) == 9.341
 
-    def test_apercu_markdown(self, pro):
-        r = pro.post("/v1/pro/markdown/preview", {"markdown": "### Titre\n- a\n- b"}, format="json")
-        assert (
-            r.status_code == 200
-            and "<h3>Titre</h3>" in r.json()["html"]
-            and r.json()["html"].count("<li>") == 2
+    def test_apercu_en_texte_simple(self, pro):
+        r = pro.post(
+            "/v1/pro/markdown/preview", {"markdown": "### Titre\n- a\n- **b**"}, format="json"
         )
+        assert r.status_code == 200
+        assert r.json()["html"] == "<p>Titre<br>- a<br>- b</p>"
 
     def test_description_trop_longue(self):
         from apps.core.errors import ErreurMetier
 
         with pytest.raises(ErreurMetier):
             contenu.rendre("a" * 4001)
-        with pytest.raises(ErreurMetier):
-            contenu.rendre("\n".join(f"- ligne {i}" for i in range(41)))
+        assert contenu.rendre("<b>x</b> & 3 < 4")[1] == "<p>x &amp; 3 &lt; 4</p>"  # texte échappé
 
     @pytest.mark.parametrize(
         "texte", ["mon numéro est caché", "écris sur WhatsApp", "telegram svp"]

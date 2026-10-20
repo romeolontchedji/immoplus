@@ -50,6 +50,32 @@ def gerants_publics(identifiants) -> dict:
     }
 
 
+def gerant_public(gerant_id) -> dict | None:
+    """Profil public d'un gérant actif : nom, badge, délai et taux de réponse, ancienneté. Jamais de numéro."""
+    from .models import GerantProfile
+
+    ligne = (
+        GerantProfile.objects.filter(pk=gerant_id, user__deleted_at__isnull=True)
+        .values(
+            "user_id", "display_name", "user__full_name", "verification_status",
+            "median_response_min", "response_rate_30d", "created_at", "user__status",
+        )
+        .first()
+    )  # fmt: skip
+    if ligne is None or ligne["user__status"] != "active":
+        return None
+    return {
+        "id": ligne["user_id"],
+        "name": ligne["display_name"] or ligne["user__full_name"],
+        "verified": ligne["verification_status"] == "verified",
+        "median_response_min": ligne["median_response_min"],
+        "response_rate_30d": (
+            float(ligne["response_rate_30d"]) if ligne["response_rate_30d"] is not None else None
+        ),
+        "member_since": ligne["created_at"].date(),
+    }
+
+
 def noms_utilisateurs(identifiants) -> dict:
     """Nom affiché des comptes (messagerie, notifications), par identifiant."""
     return {

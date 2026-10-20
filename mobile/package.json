@@ -64,7 +64,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:ci": "jest --ci --coverage",
-    "api:generer": "cd .. && outils/exporter_client_ts.sh",
+    "api:generer": "npx --yes openapi-typescript@7.4.4 ../docs/api/openapi.json -o src/api/genere/api.d.ts",
     "verifier": "npm run typecheck && npm run lint && npm run test:ci"
   },
   "private": true

@@ -16,7 +16,7 @@ from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
 
 from .. import selectors, signals
-from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeMedia
+from ..enums import Compteur, Cuisine, Eau, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import District, Listing, ListingMedia
 from . import contenu, geo, types
 
@@ -29,7 +29,7 @@ CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "descri
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
     "deposit_months", "advance_months", "agent_fee_amount", "available_from", "has_private_bathroom", "is_fenced",
-    "water_source", "electricity_meter", "description_md",
+    "water_source", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
 # partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
@@ -54,6 +54,10 @@ def _valider(d: dict) -> None:
         raise _champ("water_source", "Source d'eau inconnue.")
     if "electricity_meter" in d and d["electricity_meter"] not in Compteur.values:
         raise _champ("electricity_meter", "Type de compteur inconnu.")
+    if "kitchen" in d and d["kitchen"] not in ("", *Cuisine.values):
+        raise _champ("kitchen", "Type de cuisine inconnu.")
+    if "rent_negotiable" in d and not isinstance(d["rent_negotiable"], bool):
+        raise _champ("rent_negotiable", "Oui ou non attendu.")
     if "rent_amount" in d and not (isinstance(d["rent_amount"], int) and d["rent_amount"] > 0):
         raise _champ("rent_amount", "Le loyer doit être un entier positif en FCFA.")
     for nom in ("deposit_months", "advance_months"):
@@ -103,8 +107,24 @@ def _annonce_du_gerant(gerant: "GerantProfile", annonce_id, *, verrou: bool = Fa
 
 
 def _vecteur_de_recherche(annonce: Listing) -> None:
-    """Titre, description en texte brut et quartier, sans accents (CDC §9.8)."""
-    texte = f"{annonce.title} {contenu.texte_brut(annonce.description_html)} {annonce.district.name} {annonce.landmark_text}"
+    """Titre, autres détails, quartier, repère et équipements, sans accents (CDC §9.8) : chercher « forage » ou
+    « cuisine » trouve les annonces qui l'indiquent dans leurs champs comme dans leurs autres détails."""
+    equipements = " ".join(
+        str(libelle)
+        for libelle in (
+            dict(Eau.choices).get(annonce.water_source),
+            dict(Compteur.choices).get(annonce.electricity_meter),
+            dict(Cuisine.choices).get(annonce.kitchen) if annonce.kitchen != Cuisine.NONE else "",
+            "douche interne" if annonce.has_private_bathroom else "",
+            "clôturée portail" if annonce.is_fenced else "",
+            "à débattre" if annonce.rent_negotiable else "",
+        )
+        if libelle
+    )
+    texte = (
+        f"{annonce.title} {contenu.texte_brut(annonce.description_html)} {annonce.district.name} "
+        f"{annonce.landmark_text} {equipements}"
+    )
     with connection.cursor() as c:
         c.execute(
             "UPDATE listings SET search_vector = to_tsvector('french', unaccent(%s)) WHERE id = %s",
@@ -194,12 +214,24 @@ def modifier(gerant: "GerantProfile", annonce_id, donnees: dict) -> Listing:
 
 
 @transaction.atomic
-def supprimer_brouillon(gerant: "GerantProfile", annonce_id) -> None:
+def supprimer(gerant: "GerantProfile", annonce_id) -> None:
+    """Supprime une annonce ou un brouillon. Une annonce déjà visible est d'abord archivée (alertes, favoris et
+    messagerie prévenus comme pour un retrait), puis disparaît de l'espace du gérant ; ses vidéos sont purgées sous
+    24 h. Les conversations restent lisibles. Une annonce retirée par la modération ne se supprime pas."""
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
-    if annonce.status != StatutAnnonce.DRAFT:
-        raise ErreurMetier("listing_locked", "Seul un brouillon peut être supprimé.", statut=409)
-    annonce.deleted_at = timezone.now()
+    if annonce.status == StatutAnnonce.REMOVED:
+        raise ErreurMetier(
+            "listing_locked", "Cette annonce a été retirée par la modération.", statut=409
+        )
+    if annonce.status not in (StatutAnnonce.DRAFT, StatutAnnonce.ARCHIVED):
+        changer_statut(annonce, StatutAnnonce.ARCHIVED, acteur=gerant.user)
+    maintenant = timezone.now()
+    ListingMedia.objects.filter(
+        listing=annonce, kind=TypeMedia.VIDEO, deleted_at__isnull=True
+    ).update(delete_after=maintenant)
+    annonce.deleted_at = maintenant
     annonce.save(update_fields=["deleted_at", "updated_at"])
+    selectors.invalider_fil()
     audit.enregistrer("listing.supprimee", acteur=gerant.user, cible=annonce)
 
 
@@ -289,7 +321,7 @@ CHAMPS_ANNONCE = {
     "title": "le titre", "room_type": "le type de chambre", "district": "le quartier", "landmark_text": "le repère",
     "rent_amount": "le loyer", "deposit_months": "la caution", "advance_months": "l'avance",
     "available_from": "la date de disponibilité", "has_private_bathroom": "la douche interne",
-    "is_fenced": "la clôture", "water_source": "la source d'eau", "electricity_meter": "le compteur SBEE",
+    "is_fenced": "la clôture", "water_source": "l'eau", "electricity_meter": "l'électricité",
 }  # fmt: skip
 
 
@@ -472,12 +504,15 @@ def remettre_apres_suspension(gerant_user_id, *, acteur) -> int:
 
     Une annonce devenue périmée pendant la suspension reste masquée « sans confirmation » : le gérant la confirme.
     """
-    delai = timezone.now() - timedelta(days=int(parametres.lire("STALE_HIDE_DAYS")))
+    jours = int(parametres.lire("STALE_HIDE_DAYS"))
+    delai = timezone.now() - timedelta(days=jours) if jours > 0 else None
     remises = 0
     for annonce in Listing.objects.filter(
         gerant_id=gerant_user_id, status=StatutAnnonce.HIDDEN, hidden_reason="gerant_suspended"
     ):  # pas de select_related("gerant") : colonnes réservées illisibles pour le rôle `app`
-        perimee = annonce.last_confirmed_at is None or annonce.last_confirmed_at < delai
+        perimee = delai is not None and (
+            annonce.last_confirmed_at is None or annonce.last_confirmed_at < delai
+        )
         if perimee or manques_a_la_publication(annonce):
             Listing.objects.filter(pk=annonce.pk).update(hidden_reason="stale")
             continue

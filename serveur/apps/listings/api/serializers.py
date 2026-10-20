@@ -2,7 +2,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ..enums import Compteur, Eau, StatutAnnonce, StatutTypeChambre
+from ..enums import Compteur, Cuisine, Eau, StatutAnnonce, StatutTypeChambre
 from ..services import types
 
 
@@ -41,7 +41,15 @@ class AnnonceIn(serializers.Serializer):
     is_fenced = serializers.BooleanField()
     water_source = serializers.ChoiceField(choices=[e.value for e in Eau])
     electricity_meter = serializers.ChoiceField(choices=[c.value for c in Compteur])
-    description_md = serializers.CharField(max_length=6000, required=False, allow_blank=True)
+    kitchen = serializers.ChoiceField(
+        choices=[c.value for c in Cuisine], required=False, allow_blank=True,
+        help_text="private (interne), shared (commune), none (aucune) ; vide = non précisé.",
+    )  # fmt: skip
+    rent_negotiable = serializers.BooleanField(required=False, help_text="Loyer à débattre.")
+    description_md = serializers.CharField(
+        max_length=6000, required=False, allow_blank=True,
+        help_text="Autres détails, en texte simple (la mise en forme est retirée).",
+    )  # fmt: skip
 
 
 class AnnonceProOut(serializers.Serializer):
@@ -66,6 +74,8 @@ class AnnonceProOut(serializers.Serializer):
     is_fenced = serializers.BooleanField()
     water_source = serializers.CharField()
     electricity_meter = serializers.CharField()
+    kitchen = serializers.CharField()
+    rent_negotiable = serializers.BooleanField()
     description_md = serializers.CharField()
     status = serializers.ChoiceField(choices=[s.value for s in StatutAnnonce])
     hidden_reason = serializers.CharField(allow_null=True)
