@@ -25,13 +25,15 @@ export type Brouillon = {
   is_fenced?: boolean;
   water_source?: string;
   electricity_meter?: string;
-  description_md?: string;
+  kitchen?: string; // private, shared, none (plan v3, C2)
+  rent_negotiable?: boolean; // loyer à débattre (plan v3, C3)
+  description_md?: string; // « Autres détails », texte simple
 };
 
 /** Champs obligatoires pour créer l'annonce côté serveur. */
 export const CHAMPS_CREATION = [
   "title", "room_type", "rent_amount", "deposit_months", "advance_months", "available_from", "district", "landmark_text",
-  "address_private", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter",
+  "address_private", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter", "kitchen",
 ] as const satisfies readonly (keyof Brouillon)[];
 
 export function champsManquants(b: Brouillon): (typeof CHAMPS_CREATION)[number][] {

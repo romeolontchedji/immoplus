@@ -56,7 +56,7 @@ export function ListingCard({
           style={{
             width: "100%",
             height: 190,
-            backgroundColor: "#1E3A8A",
+            backgroundColor: colors.night,
             position: "relative",
             justifyContent: "center",
             alignItems: "center",
@@ -90,8 +90,8 @@ export function ListingCard({
                 borderRadius: rayon.pilule,
               }}
             >
-              <Check size={12} color="#FFFFFF" strokeWidth={3} />
-              <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
+              <Check size={12} color={colors.white} strokeWidth={3} />
+              <Text style={{ color: colors.white, fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
             </View>
           ) : null}
 
@@ -108,7 +108,7 @@ export function ListingCard({
                 borderRadius: rayon.pilule,
               }}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>Louée</Text>
+              <Text style={{ color: colors.white, fontSize: 11, fontWeight: "700" }}>Louée</Text>
             </View>
           ) : null}
 
@@ -119,10 +119,10 @@ export function ListingCard({
                 width: 52,
                 height: 52,
                 borderRadius: 26,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.white,
                 justifyContent: "center",
                 alignItems: "center",
-                shadowColor: "#000000",
+                shadowColor: colors.night,
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.2,
                 shadowRadius: 6,
@@ -143,7 +143,7 @@ export function ListingCard({
             alignItems: "center",
             paddingHorizontal: sp[4],
             paddingVertical: sp[3],
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
           }}
         >
           <View style={{ flex: 1, paddingRight: sp[2] }}>
@@ -170,15 +170,18 @@ export function ListingCard({
             </Text>
           </View>
 
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "800",
-              color: colors.primary,
-            }}
-          >
-            {francs(annonce.rent_amount)}
-          </Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "800",
+                color: colors.primary,
+              }}
+            >
+              {francs(annonce.rent_amount)}
+            </Text>
+            {annonce.rent_negotiable ? <Text style={{ fontSize: 12, fontWeight: "700", color: colors.textMuted }}>à débattre</Text> : null}
+          </View>
         </View>
       </View>
     </Pressable>

@@ -8,6 +8,7 @@ import { sp } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Button } from "@/ui/components/Button";
 import { Chip } from "@/ui/components/Chip";
+import { ListeDeroulante } from "@/ui/components/ListeDeroulante";
 import { Screen } from "@/ui/components/Screen";
 import { SwitchRow } from "@/ui/components/SwitchRow";
 import { TextField } from "@/ui/components/TextField";
@@ -27,6 +28,7 @@ const schema = z.object({
   rent_amount: z.coerce.number({ error: "Obligatoire." }).min(1000, "1 000 F minimum.").max(999_999, "Trop élevé."),
   deposit_months: z.coerce.number().min(1).max(6),
   is_available: z.boolean(),
+  rent_negotiable: z.boolean(),
 });
 
 type Valeurs = z.infer<typeof schema>;
@@ -51,6 +53,7 @@ export function InfosStep() {
       rent_amount: brouillon.rent_amount ?? (undefined as unknown as number),
       deposit_months: brouillon.deposit_months ?? 2,
       is_available: !brouillon.available_from || brouillon.available_from <= new Date().toISOString().slice(0, 10),
+      rent_negotiable: brouillon.rent_negotiable ?? false,
     },
   });
 
@@ -78,6 +81,7 @@ export function InfosStep() {
       rent_amount: v.rent_amount,
       deposit_months: v.deposit_months,
       advance_months: 1,
+      rent_negotiable: v.rent_negotiable,
       available_from: v.is_available ? new Date().toISOString().slice(0, 10) : undefined,
     });
     router.push("/pro/nouvelle-annonce/localisation" as never);
@@ -88,7 +92,7 @@ export function InfosStep() {
       <EntetePublication etape={1} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Parle-nous de ta chambre</Text>
-      <Text muted>Les infos que les étudiants cherchent en premier.</Text>
+      <Text muted>Les infos que les locataires cherchent en premier.</Text>
 
       {/* Titre */}
       <Controller
@@ -105,19 +109,17 @@ export function InfosStep() {
         )}
       />
 
-      {/* Type — chips (actif = bleu cobalt) */}
+      {/* Type en liste déroulante (plan v3, A1) ; « Autre type » s'il manque */}
       <View style={{ gap: sp[2] }}>
-        <Text variante="label">Type</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {types.map((tp) => (
-            <Chip
-              key={tp.slug}
-              titre={tp.status === "pending" ? `${tp.label} (en validation)` : tp.label}
-              actif={typeSel === tp.slug}
-              onPress={() => setValue("room_type", tp.slug, { shouldValidate: true })}
-            />
-          ))}
-          <Chip titre="Autre…" actif={autre !== null} onPress={() => setAutre(autre === null ? "" : null)} />
+        <ListeDeroulante
+          label="Type de chambre"
+          placeholder="Choisis un type"
+          options={types.map((tp) => ({ valeur: tp.slug, libelle: tp.status === "pending" ? `${tp.label} (en validation)` : tp.label }))}
+          valeurs={typeSel ? [typeSel] : []}
+          onChange={(v) => setValue("room_type", v[0] ?? "", { shouldValidate: true })}
+        />
+        <View style={{ flexDirection: "row" }}>
+          <Chip titre={autre === null ? "Mon type n'est pas dans la liste" : "Annuler"} actif={autre !== null} onPress={() => setAutre(autre === null ? "" : null)} />
         </View>
         {autre !== null ? (
           <View style={{ gap: sp[2] }}>
@@ -153,29 +155,28 @@ export function InfosStep() {
         )}
       />
 
-      {/* Caution + toggle Disponible côte à côte (conforme maquette) */}
-      <View style={{ flexDirection: "row", gap: sp[3], alignItems: "flex-end" }}>
-        <View style={{ flex: 1, gap: sp[2] }}>
-          <Text variante="label">Caution</Text>
-          <View style={{ flexDirection: "row", gap: sp[2] }}>
-            {CAUTIONS.map((nb) => (
-              <Chip
-                key={nb}
-                titre={`${nb} mois`}
-                actif={caution === Number(nb)}
-                onPress={() => setValue("deposit_months", Number(nb))}
-              />
-            ))}
-          </View>
+      <Controller
+        control={control}
+        name="rent_negotiable"
+        render={({ field }) => (
+          <SwitchRow titre="Prix à débattre" aide="La fiche affichera « à débattre » à côté du loyer." valeur={field.value} onChange={field.onChange} />
+        )}
+      />
+
+      {/* Caution, puis disponibilité sur sa propre ligne (évite le chevauchement sur petit écran) */}
+      <View style={{ gap: sp[2] }}>
+        <Text variante="label">Caution</Text>
+        <View style={{ flexDirection: "row", gap: sp[2], flexWrap: "wrap" }}>
+          {CAUTIONS.map((nb) => (
+            <Chip key={nb} titre={`${nb} mois`} actif={caution === Number(nb)} onPress={() => setValue("deposit_months", Number(nb))} />
+          ))}
         </View>
-        <Controller
-          control={control}
-          name="is_available"
-          render={({ field }) => (
-            <SwitchRow titre="Disponible" valeur={field.value} onChange={field.onChange} />
-          )}
-        />
       </View>
+      <Controller
+        control={control}
+        name="is_available"
+        render={({ field }) => <SwitchRow titre="Disponible maintenant" valeur={field.value} onChange={field.onChange} />}
+      />
     </Screen>
   );
 }

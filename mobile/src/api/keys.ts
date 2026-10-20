@@ -8,6 +8,8 @@ export const qk = {
   fil: (filtres: unknown) => ["fil", filtres] as const,
   fiche: (ident: string) => ["fiche", ident] as const,
   similaires: (ident: string) => ["similaires", ident] as const,
+  avis: (ident: string) => ["avis", ident] as const,
+  gerant: (id: string) => ["gerant", id] as const,
   favoris: ["favoris"] as const,
   alertes: ["alertes"] as const,
   conversations: ["conversations"] as const,

@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Bell } from "lucide-react-native";
+import { Bell, BellPlus } from "lucide-react-native";
 import { colors, ombre, sp } from "@/ui/theme/tokens";
 import { BarreRecherche } from "@/ui/components/BarreRecherche";
 import { Chip } from "@/ui/components/Chip";
@@ -50,6 +50,17 @@ export function AccueilScreen() {
           <View style={{ gap: sp[4], paddingBottom: sp[2], paddingTop: sp[2] }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <Logotype taille={38} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2] }}>
+              {/* Action mise en avant (plan v3, I1) : créer une alerte, la raison d'être de l'application */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Créer une alerte"
+                onPress={() => router.push("/nouvelle-alerte")}
+                style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: sp[3], borderRadius: 14, backgroundColor: pressed ? colors.sunHover : colors.sun })}
+              >
+                <BellPlus size={18} color={colors.night} />
+                <Text variante="corpsGras">Alerte</Text>
+              </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
@@ -58,6 +69,7 @@ export function AccueilScreen() {
               >
                 <Bell size={20} color={colors.night} />
               </Pressable>
+              </View>
             </View>
 
             <Text style={{ fontSize: 28, lineHeight: 34, fontWeight: "800", color: colors.night, letterSpacing: -0.5 }}>Où veux-tu habiter ?</Text>

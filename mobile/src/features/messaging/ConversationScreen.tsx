@@ -105,7 +105,7 @@ export function ConversationScreen() {
           paddingHorizontal: sp[4],
           paddingTop: marges.top + sp[2],
           paddingBottom: sp[3],
-          backgroundColor: "#FFFFFF",
+          backgroundColor: colors.surface,
           borderBottomWidth: 1,
           borderBottomColor: "rgba(15, 27, 61, 0.06)",
         }}
@@ -118,7 +118,7 @@ export function ConversationScreen() {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: "#F1F5F9",
+            backgroundColor: colors.bg,
             justifyContent: "center",
             alignItems: "center",
           }}
@@ -126,27 +126,34 @@ export function ConversationScreen() {
           <ArrowLeft size={20} color={colors.night} />
         </Pressable>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text style={{ fontSize: 18, fontWeight: "800", color: colors.night }}>
+        {/* Locataire : le nom du gérant ouvre son profil public et ses chambres (plan v3, F2) */}
+        <Pressable
+          accessibilityRole={role !== "gerant" ? "button" : undefined}
+          accessibilityLabel={role !== "gerant" ? `Voir le profil de ${autreNom}` : undefined}
+          disabled={role === "gerant" || !conversation.data.other?.id}
+          onPress={() => router.push({ pathname: "/gerant/[id]", params: { id: String(conversation.data.other?.id) } })}
+          style={{ flexDirection: "row", alignItems: "center", gap: 10, flexShrink: 1 }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: "800", color: colors.night, textDecorationLine: role !== "gerant" ? "underline" : "none" }} numberOfLines={1}>
             {autreNom}
           </Text>
           {autreVerifie ? (
             <View
               style={{
-                backgroundColor: "#0D9488",
+                backgroundColor: colors.success,
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: rayon.pilule,
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                <BadgeCheck size={12} color="#FFFFFF" />
-                <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
+                <BadgeCheck size={12} color={colors.white} />
+                <Text style={{ color: colors.white, fontSize: 11, fontWeight: "700" }}>Vérifié</Text>
               </View>
             </View>
           ) : null}
           {conversation.data.muted ? <BellOff size={16} color={colors.textMuted} accessibilityLabel="En sourdine" /> : null}
-        </View>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Options de la conversation"
@@ -167,7 +174,7 @@ export function ConversationScreen() {
             marginHorizontal: sp[4],
             marginTop: sp[3],
             marginBottom: sp[1],
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.surface,
             borderRadius: 18,
             padding: 12,
             flexDirection: "row",
@@ -185,7 +192,7 @@ export function ConversationScreen() {
               width: 50,
               height: 50,
               borderRadius: 12,
-              backgroundColor: "#1E3A8A",
+              backgroundColor: colors.night,
               overflow: "hidden",
             }}
           >
@@ -218,13 +225,13 @@ export function ConversationScreen() {
           /* Avertissement de sécurité jaune en tête de discussion */
           <View
             style={{
-              backgroundColor: "#FEF3C7",
+              backgroundColor: colors.warningBg,
               borderRadius: 16,
               padding: 14,
               marginBottom: sp[2],
             }}
           >
-            <Text style={{ fontSize: 13, color: "#92400E", lineHeight: 18, fontWeight: "500" }}>
+            <Text style={{ fontSize: 13, color: colors.warning, lineHeight: 18, fontWeight: "500" }}>
               Ne paie jamais avant d’avoir visité. Signale tout message suspect.
             </Text>
           </View>
@@ -238,7 +245,7 @@ export function ConversationScreen() {
             <View style={{ alignSelf: miens ? "flex-end" : "flex-start", maxWidth: "80%" }}>
               <View
                 style={{
-                  backgroundColor: miens ? colors.primary : "#FFFFFF",
+                  backgroundColor: miens ? colors.primary : colors.white,
                   borderRadius: 18,
                   borderBottomRightRadius: miens ? 4 : 18,
                   borderBottomLeftRadius: miens ? 18 : 4,
@@ -255,7 +262,7 @@ export function ConversationScreen() {
                   style={{
                     fontSize: 15,
                     lineHeight: 21,
-                    color: miens ? "#FFFFFF" : colors.night,
+                    color: miens ? colors.white : colors.night,
                   }}
                 >
                   {corps}
@@ -302,7 +309,7 @@ export function ConversationScreen() {
 
       {/* Barre de saisie inférieure */}
       {ecritureImpossible ? (
-        <View style={{ padding: sp[4], backgroundColor: "#FFFFFF" }}>
+        <View style={{ padding: sp[4], backgroundColor: colors.white }}>
           <Text style={{ textAlign: "center", color: colors.textMuted, fontSize: 14 }}>
             {conversation.data.status === "read_only"
               ? "Cette conversation est en lecture seule."
@@ -317,7 +324,7 @@ export function ConversationScreen() {
             paddingHorizontal: sp[4],
             paddingTop: 12,
             paddingBottom: Math.max(marges.bottom, 12),
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.surface,
             borderTopWidth: 1,
             borderTopColor: "rgba(15, 27, 61, 0.06)",
             gap: 12,
@@ -326,7 +333,7 @@ export function ConversationScreen() {
           <View
             style={{
               flex: 1,
-              backgroundColor: "#F8FAFC",
+              backgroundColor: colors.bg,
               borderRadius: 24,
               borderWidth: 1,
               borderColor: "rgba(15, 27, 61, 0.1)",
@@ -366,7 +373,7 @@ export function ConversationScreen() {
               opacity: !texte.trim() ? 0.6 : 1,
             }}
           >
-            <Send size={18} color="#FFFFFF" style={{ marginLeft: 2 }} />
+            <Send size={18} color={colors.white} style={{ marginLeft: 2 }} />
           </Pressable>
         </View>
       )}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import { CalendarCheck, Plus } from "lucide-react-native";
+import { Eye, FilePen, Plus } from "lucide-react-native";
 import { francs } from "@/lib/format";
 import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 import { Badge } from "@/ui/components/Card";
@@ -11,29 +11,42 @@ import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 import { type AnnoncePro, useMesAnnonces } from "./queries";
-import { ilYA, ONGLETS, STATUTS } from "./statuts";
+import { ONGLETS, STATUTS } from "./statuts";
 
+/** Une annonce du gérant ; un brouillon est dessiné à part (pointillés, fond jaune) pour ne jamais être confondu (C5). */
 function CarteAnnonce({ annonce, onPress }: { annonce: AnnoncePro; onPress: () => void }) {
   const statut = STATUTS[annonce.status] ?? { libelle: annonce.status, ton: "neutre" as const };
-  const confirmee = annonce.status === "published" ? ilYA(annonce.last_confirmed_at ?? annonce.published_at) : null;
+  const brouillon = annonce.status === "draft";
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${annonce.title}, ${statut.libelle}`}
       onPress={onPress}
-      style={({ pressed }) => ({ backgroundColor: pressed ? colors.bg : colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.divider, padding: sp[4], gap: sp[2], ...ombre.card })}
+      style={({ pressed }) => ({
+        backgroundColor: brouillon ? colors.warningBg : pressed ? colors.bg : colors.surface,
+        borderRadius: rayon.card, borderWidth: brouillon ? 2 : 1, borderStyle: brouillon ? "dashed" : "solid",
+        borderColor: brouillon ? colors.sun : colors.divider, padding: sp[4], gap: sp[2], ...(brouillon ? {} : ombre.card),
+      })}
     >
       <View style={{ flexDirection: "row", alignItems: "flex-start", gap: sp[3] }}>
         <Text variante="corpsGras" style={{ flex: 1 }} numberOfLines={2}>{annonce.title}</Text>
-        <Badge titre={statut.libelle} ton={statut.ton} />
+        {brouillon ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.surface, borderRadius: rayon.pilule, paddingHorizontal: sp[2], paddingVertical: 3 }}>
+            <FilePen size={13} color={colors.warning} />
+            <Text style={{ fontSize: 12, fontWeight: "800", color: colors.warning }}>Brouillon</Text>
+          </View>
+        ) : (
+          <Badge titre={statut.libelle} ton={statut.ton} />
+        )}
       </View>
       <Text variante="legende" muted>{[annonce.room_type_label, annonce.district_name].filter(Boolean).join(" · ")}</Text>
+      {brouillon ? <Text variante="legende" couleur={colors.warning} style={{ fontWeight: "700" }}>Invisible pour les locataires tant qu’elle n’est pas publiée.</Text> : null}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text variante="corpsGras" couleur={colors.primary}>{francs(annonce.rent_amount)} / mois</Text>
-        {confirmee ? (
+        <Text variante="corpsGras" couleur={colors.primary}>{`${francs(annonce.rent_amount)} / mois${annonce.rent_negotiable ? " · à débattre" : ""}`}</Text>
+        {!brouillon ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <CalendarCheck size={14} color={colors.textMuted} />
-            <Text variante="legende" muted>Confirmée {confirmee}</Text>
+            <Eye size={14} color={colors.textMuted} />
+            <Text variante="legende" muted>{`${annonce.views_total} vue${annonce.views_total > 1 ? "s" : ""}`}</Text>
           </View>
         ) : null}
       </View>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Alert, Pressable, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
@@ -42,15 +42,18 @@ export function SignalerScreen() {
   const signaler = useSignaler();
   const dejaLouee = useSignalerDejaLouee();
 
+  // Confirmation explicite (plan v3, H4) avant de refermer la modale.
+  const confirmer = () =>
+    Alert.alert("Signalement envoyé", "Ton signalement a été pris en compte et sera traité par l’équipe Logeo.", [
+      { text: "OK", onPress: () => router.back() },
+    ]);
+
   const soumettre = () => {
     if (!motif) return;
     if (motif === "already_rented" && type === "listing") {
-      dejaLouee.mutate(id, { onSuccess: () => router.back() });
+      dejaLouee.mutate(id, { onSuccess: confirmer });
     } else {
-      signaler.mutate(
-        { cible: type, id, motif, details: details.trim() || undefined },
-        { onSuccess: () => router.back() },
-      );
+      signaler.mutate({ cible: type, id, motif, details: details.trim() || undefined }, { onSuccess: confirmer });
     }
   };
 

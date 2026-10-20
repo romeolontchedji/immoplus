@@ -89,3 +89,35 @@ export function useSignaler() {
 export function useSignalerDejaLouee() {
   return useMutation({ mutationFn: (annonceId: string) => unwrap(api.POST("/v1/listings/{annonce_id}/report-rented", { params: { path: { annonce_id: annonceId } } })) });
 }
+
+export type ListeAvis = components["schemas"]["AvisListeOut"];
+export type ProfilGerant = components["schemas"]["GerantPublicOut"];
+
+/** Avis des locataires d'une chambre, et si le locataire connecté peut en donner un (plan v3, G). */
+export const useAvis = (ident: string | undefined) =>
+  useQuery({ queryKey: qk.avis(ident ?? ""), enabled: !!ident, queryFn: () => unwrap(api.GET("/v1/listings/{ident}/reviews", { params: { path: { ident: ident as string } } })) });
+
+/** Donner, modifier ou retirer son avis ; la fiche et la liste sont relues ensuite. */
+export function useMonAvis(ident: string) {
+  const qc = useQueryClient();
+  const relire = () => {
+    void qc.invalidateQueries({ queryKey: qk.avis(ident) });
+    void qc.invalidateQueries({ queryKey: qk.fiche(ident) });
+  };
+  return {
+    donner: useMutation({
+      mutationFn: (v: { rating: number; comment: string }) => unwrap(api.PUT("/v1/listings/{ident}/my-review", { params: { path: { ident } }, body: v })),
+      onSuccess: relire,
+    }),
+    retirer: useMutation({ mutationFn: () => unwrap(api.DELETE("/v1/listings/{ident}/my-review", { params: { path: { ident } } })), onSuccess: relire }),
+  };
+}
+
+/** Profil public d'un gérant : chambres en ligne et avis, jamais de numéro (plan v3, F1). */
+export const useProfilGerant = (id: string | undefined) =>
+  useQuery({ queryKey: qk.gerant(id ?? ""), enabled: !!id, queryFn: () => unwrap(api.GET("/v1/gerants/{gerant_id}", { params: { path: { gerant_id: id as string } } })) });
+
+/** « Contacter le gérant » : ouvre (ou retrouve) la discussion, sans message imposé (plan v3, B6). */
+export function useDemarrerConversation() {
+  return useMutation({ mutationFn: (annonceId: string) => unwrap(api.POST("/v1/conversations/start", { body: { listing_id: annonceId } })) });
+}

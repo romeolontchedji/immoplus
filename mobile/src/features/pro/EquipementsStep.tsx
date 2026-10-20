@@ -2,47 +2,32 @@ import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/ui/components/Button";
 import { Chip } from "@/ui/components/Chip";
+import { ListeDeroulante } from "@/ui/components/ListeDeroulante";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
 import { colors, sp } from "@/ui/theme/tokens";
+import { LIBELLES_COMPTEUR, LIBELLES_CUISINE, LIBELLES_EAU } from "@/features/listings/filtres";
 import { useBrouillon } from "./brouillon";
 import { EntetePublication } from "./EntetePublication";
 
-const EAUX = [
-  { val: "running", label: "Eau courante" },
-  { val: "borehole", label: "Forage" },
-  { val: "well", label: "Puits" },
-] as const;
-const COMPTEURS = [
-  { val: "individual", label: "Compteur individuel" },
-  { val: "shared", label: "Compteur partagé" },
-] as const;
-
-function Bloc({ titre, aide, children }: { titre: string; aide?: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: sp[2] }}>
-      <Text variante="label" muted>{titre}</Text>
-      {aide ? <Text variante="legende" muted>{aide}</Text> : null}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>{children}</View>
-    </View>
-  );
-}
+const options = (libelles: Record<string, string>) => Object.entries(libelles).map(([valeur, libelle]) => ({ valeur, libelle }));
 
 /**
- * Étape Équipements (EF-ANN-04) : douche interne, clôture, source d'eau, compteur électrique. Ces champs sont exigés par
- * `POST /v1/pro/listings` ; l'annonce est créée côté serveur à l'étape suivante (description).
+ * Étape Équipements (plan v3, C2) : électricité (compteur personnel, décompteur, partagé), eau (compteur personnel,
+ * décompteur, eau courante, forage, puits), cuisine, en listes déroulantes ; douche interne et clôture en cases.
+ * Les champs remplacent l'ancien grand texte : les locataires filtrent directement dessus.
  */
 export function EquipementsStep() {
   const router = useRouter();
   const { brouillon, maj } = useBrouillon();
-  const complet = !!brouillon.water_source && !!brouillon.electricity_meter;
+  const complet = !!brouillon.water_source && !!brouillon.electricity_meter && !!brouillon.kitchen;
 
   return (
     <Screen
       scroll
       footer={
         <Button
-          titre={complet ? "Continuer" : "Choisis l'eau et le compteur"}
+          titre={complet ? "Continuer" : "Indique l'électricité, l'eau et la cuisine"}
           disabled={!complet}
           onPress={() => {
             maj({ has_private_bathroom: !!brouillon.has_private_bathroom, is_fenced: !!brouillon.is_fenced });
@@ -53,25 +38,21 @@ export function EquipementsStep() {
     >
       <EntetePublication etape={3} total={6} />
       <Text variante="titre" style={{ marginTop: sp[2] }}>Qu’est-ce qu’il y a ?</Text>
-      <Text muted>Les étudiants filtrent sur ces critères : sois précis.</Text>
+      <Text muted>Les locataires filtrent sur ces critères : sois précis.</Text>
 
       <View style={{ gap: sp[5] }}>
-        <Bloc titre="Confort">
-          <Chip titre="Douche interne" actif={!!brouillon.has_private_bathroom} onPress={() => maj({ has_private_bathroom: !brouillon.has_private_bathroom })} />
-          <Chip titre="Cour clôturée" actif={!!brouillon.is_fenced} onPress={() => maj({ is_fenced: !brouillon.is_fenced })} />
-        </Bloc>
-        <Bloc titre="Eau" aide="Obligatoire">
-          {EAUX.map((e) => (
-            <Chip key={e.val} titre={e.label} actif={brouillon.water_source === e.val} onPress={() => maj({ water_source: e.val })} />
-          ))}
-        </Bloc>
-        <Bloc titre="Électricité" aide="Obligatoire">
-          {COMPTEURS.map((e) => (
-            <Chip key={e.val} titre={e.label} actif={brouillon.electricity_meter === e.val} onPress={() => maj({ electricity_meter: e.val })} />
-          ))}
-        </Bloc>
+        <ListeDeroulante label="Électricité" placeholder="Choisis" options={options(LIBELLES_COMPTEUR)} valeurs={brouillon.electricity_meter ? [brouillon.electricity_meter] : []} onChange={(v) => maj({ electricity_meter: v[0] })} />
+        <ListeDeroulante label="Eau" placeholder="Choisis" options={options(LIBELLES_EAU)} valeurs={brouillon.water_source ? [brouillon.water_source] : []} onChange={(v) => maj({ water_source: v[0] })} />
+        <ListeDeroulante label="Cuisine" placeholder="Choisis" options={options(LIBELLES_CUISINE)} valeurs={brouillon.kitchen ? [brouillon.kitchen] : []} onChange={(v) => maj({ kitchen: v[0] })} />
+        <View style={{ gap: sp[2] }}>
+          <Text variante="label" muted>Confort</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
+            <Chip titre="Douche interne" actif={!!brouillon.has_private_bathroom} onPress={() => maj({ has_private_bathroom: !brouillon.has_private_bathroom })} />
+            <Chip titre="Cour clôturée" actif={!!brouillon.is_fenced} onPress={() => maj({ is_fenced: !brouillon.is_fenced })} />
+          </View>
+        </View>
       </View>
-      {!complet ? <Text variante="legende" couleur={colors.textMuted}>Indique la source d’eau et le type de compteur pour continuer.</Text> : null}
+      {!complet ? <Text variante="legende" couleur={colors.textMuted}>Ces trois informations sont obligatoires.</Text> : null}
     </Screen>
   );
 }

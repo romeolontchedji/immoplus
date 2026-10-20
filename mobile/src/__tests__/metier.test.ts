@@ -42,10 +42,18 @@ describe("filtres de recherche", () => {
   });
 });
 
+describe("filtres du plan v3 (électricité, cuisine)", () => {
+  it("partent au serveur et comptent comme filtres", () => {
+    const f = { ...FILTRES_VIDES, meter: ["sub_meter"], kitchen: ["private"] };
+    expect(versParametres(f)).toMatchObject({ meter: "sub_meter", kitchen: "private" });
+    expect(nombreDeFiltres(f)).toBe(2);
+  });
+});
+
 describe("brouillon d'annonce", () => {
   const complet: Brouillon = {
     title: "Chambre", room_type: "single", rent_amount: 20000, deposit_months: 2, advance_months: 1, available_from: "2026-11-01", district: "d",
-    landmark_text: "près du marché", address_private: "Rue 12", latitude: "9.34", longitude: "2.63", has_private_bathroom: false, is_fenced: true, water_source: "running", electricity_meter: "individual",
+    landmark_text: "près du marché", address_private: "Rue 12", latitude: "9.34", longitude: "2.63", has_private_bathroom: false, is_fenced: true, water_source: "running", electricity_meter: "individual", kitchen: "private",
   };
   it("rien ne manque quand tout est saisi", () => expect(champsManquants(complet)).toEqual([]));
   it("fausse valeur booléenne ≠ valeur absente", () => expect(champsManquants({ ...complet, is_fenced: false })).toEqual([]));

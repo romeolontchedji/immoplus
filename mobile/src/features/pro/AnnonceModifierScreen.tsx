@@ -6,17 +6,16 @@ import { messageErreur, t } from "@/i18n/fr";
 import { useDistricts } from "@/features/listings/queries";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
-import { Chip } from "@/ui/components/Chip";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { SwitchRow } from "@/ui/components/SwitchRow";
 import { TextField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
-import { EditeurDescription } from "./EditeurDescription";
+import { ListeDeroulante } from "@/ui/components/ListeDeroulante";
+import { LIBELLES_COMPTEUR, LIBELLES_CUISINE, LIBELLES_EAU } from "@/features/listings/filtres";
 import { type AnnoncePro, type ModificationAnnonce, useAnnoncePro, useModifierAnnonce, useTypesChambrePro } from "./queries";
 
-const EAUX = [{ val: "running", label: "Eau courante" }, { val: "borehole", label: "Forage" }, { val: "well", label: "Puits" }] as const;
-const COMPTEURS = [{ val: "individual", label: "Compteur individuel" }, { val: "shared", label: "Compteur partagé" }] as const;
+const options = (libelles: Record<string, string>) => Object.entries(libelles).map(([valeur, libelle]) => ({ valeur, libelle }));
 
 function Section({ titre, children }: { titre: string; children: ReactNode }) {
   return (
@@ -32,14 +31,16 @@ const entier = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(/\
 type Valeurs = {
   title: string; room_type: string; district: string; landmark_text: string; address_private: string;
   rent_amount: string; deposit_months: string; advance_months: string; agent_fee_amount: string; available_from: string;
-  has_private_bathroom: boolean; is_fenced: boolean; water_source: string; electricity_meter: string; description_md: string;
+  has_private_bathroom: boolean; is_fenced: boolean; water_source: string; electricity_meter: string; kitchen: string;
+  rent_negotiable: boolean; description_md: string;
 };
 
 const depuis = (a: AnnoncePro): Valeurs => ({
   title: a.title, room_type: a.room_type, district: a.district, landmark_text: a.landmark_text, address_private: a.address_private,
   rent_amount: String(a.rent_amount), deposit_months: String(a.deposit_months), advance_months: String(a.advance_months),
   agent_fee_amount: String(a.agent_fee_amount), available_from: a.available_from, has_private_bathroom: a.has_private_bathroom,
-  is_fenced: a.is_fenced, water_source: a.water_source, electricity_meter: a.electricity_meter, description_md: a.description_md,
+  is_fenced: a.is_fenced, water_source: a.water_source, electricity_meter: a.electricity_meter, kitchen: a.kitchen,
+  rent_negotiable: a.rent_negotiable, description_md: a.description_md,
 });
 
 /** Seuls les champs modifiés partent au serveur (PATCH) : une annonce en ligne n'est pas réécrite inutilement. */
@@ -69,18 +70,12 @@ function Formulaire({ annonce }: { annonce: AnnoncePro }) {
     <>
       <TextField label="Titre" value={v.title} onChangeText={(x) => maj({ title: x })} maxLength={120} erreur={erreur("title")} />
 
-      <Section titre="Type">
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {(types.data ?? []).map((tp) => <Chip key={tp.slug} titre={tp.label} actif={v.room_type === tp.slug} onPress={() => maj({ room_type: tp.slug })} />)}
-        </View>
-      </Section>
+      <ListeDeroulante label="Type de chambre" options={(types.data ?? []).map((tp) => ({ valeur: tp.slug, libelle: tp.label }))} valeurs={[v.room_type]} onChange={(x) => x[0] && maj({ room_type: x[0] })} />
 
-      <Section titre="Quartier">
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {(quartiers.data ?? []).map((q) => <Chip key={q.id} titre={q.name} actif={v.district === q.id} onPress={() => maj({ district: q.id })} />)}
-        </View>
+      <View style={{ gap: sp[1] }}>
+        <ListeDeroulante label="Quartier" options={(quartiers.data ?? []).map((q) => ({ valeur: q.id, libelle: q.name }))} valeurs={[v.district]} onChange={(x) => x[0] && maj({ district: x[0] })} />
         {v.district !== initial.district ? <Text variante="legende" muted>La distance à l’UP sera recalculée depuis le centre du nouveau quartier.</Text> : null}
-      </Section>
+      </View>
       <TextField label="Repère (visible par les étudiants)" value={v.landmark_text} onChangeText={(x) => maj({ landmark_text: x })} erreur={erreur("landmark_text")} />
       <TextField label="Adresse précise (confidentielle)" value={v.address_private} onChangeText={(x) => maj({ address_private: x })} erreur={erreur("address_private")} />
 
@@ -92,20 +87,18 @@ function Formulaire({ annonce }: { annonce: AnnoncePro }) {
         <View style={{ flex: 1 }}><TextField label="Caution (mois)" value={v.deposit_months} onChangeText={(x) => maj({ deposit_months: x })} keyboardType="number-pad" erreur={erreur("deposit_months")} /></View>
         <View style={{ flex: 1 }}><TextField label="Avance (mois)" value={v.advance_months} onChangeText={(x) => maj({ advance_months: x })} keyboardType="number-pad" erreur={erreur("advance_months")} /></View>
       </View>
+      <SwitchRow titre="Prix à débattre" aide="La fiche affichera « à débattre » à côté du loyer." valeur={v.rent_negotiable} onChange={(x) => maj({ rent_negotiable: x })} />
       <TextField label="Disponible à partir du (AAAA-MM-JJ)" value={v.available_from} onChangeText={(x) => maj({ available_from: x })} erreur={erreur("available_from")} />
 
       <Section titre="Équipements">
         <SwitchRow titre="Douche interne" valeur={v.has_private_bathroom} onChange={(x) => maj({ has_private_bathroom: x })} />
         <SwitchRow titre="Cour clôturée" valeur={v.is_fenced} onChange={(x) => maj({ is_fenced: x })} />
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {EAUX.map((e) => <Chip key={e.val} titre={e.label} actif={v.water_source === e.val} onPress={() => maj({ water_source: e.val })} />)}
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-          {COMPTEURS.map((e) => <Chip key={e.val} titre={e.label} actif={v.electricity_meter === e.val} onPress={() => maj({ electricity_meter: e.val })} />)}
-        </View>
+        <ListeDeroulante label="Électricité" options={options(LIBELLES_COMPTEUR)} valeurs={[v.electricity_meter]} onChange={(x) => x[0] && maj({ electricity_meter: x[0] })} />
+        <ListeDeroulante label="Eau" options={options(LIBELLES_EAU)} valeurs={[v.water_source]} onChange={(x) => x[0] && maj({ water_source: x[0] })} />
+        <ListeDeroulante label="Cuisine" placeholder="Choisis" options={options(LIBELLES_CUISINE)} valeurs={v.kitchen ? [v.kitchen] : []} onChange={(x) => maj({ kitchen: x[0] ?? "" })} />
       </Section>
 
-      <EditeurDescription valeur={v.description_md} onChange={(x) => maj({ description_md: x })} />
+      <TextField label="Autres détails" value={v.description_md} onChangeText={(x) => maj({ description_md: x })} multiline maxLength={4000} aide="Texte simple : règles de la maison, voisinage, marché proche…" erreur={erreur("description_md")} />
 
       {modifier.error ? (
         <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">

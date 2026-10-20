@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, Share, useWindowDimensions, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { FlatList, Pressable, ScrollView, Share, TextInput, useWindowDimensions, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { ArrowLeft, BadgeCheck, Bell, Flag, Heart, MapPin, Play, Share2 } from "lucide-react-native";
+import {
+  ArrowLeft, BadgeCheck, Bell, CalendarDays, ChevronLeft, ChevronRight, Droplet, Fence, Flag, Heart, MapPin, Play, Share2,
+  ShowerHead, Star, Utensils, Zap, type LucideIcon,
+} from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { isApiError } from "@/api/errors";
 import { WEB_HOST } from "@/config/env";
 import { dateCourte, distance, francs } from "@/lib/format";
 import { urlMedia } from "@/lib/media";
-import { t } from "@/i18n/fr";
+import { messageErreur, t } from "@/i18n/fr";
 import { useSession } from "@/state/session";
 import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
@@ -16,14 +20,12 @@ import { ErrorState, OfflineBanner } from "@/ui/components/States";
 import { Skeleton } from "@/ui/components/Skeleton";
 import { Text } from "@/ui/components/Text";
 import { ListingCard } from "@/ui/components/ListingCard";
-import { TexteEnrichi } from "@/ui/components/TexteEnrichi";
 import { noterConsultation } from "./consultees";
-import { LIBELLES_EAU } from "./filtres";
-import { useBasculerFavori, useCompterVue, useFiche, useSimilaires, type Fiche } from "./queries";
+import {
+  useAvis, useBasculerFavori, useCompterVue, useDemarrerConversation, useFiche, useMonAvis, useSimilaires, type Fiche,
+} from "./queries";
 
 type Media = Fiche["media"][number];
-
-const COMPTEUR: Record<string, string> = { individual: "Compteur individuel", shared: "Compteur partagé" };
 
 /** Délai de réponse médian du gérant, en clair. */
 function delaiReponse(min: number | null | undefined): string | null {
@@ -59,17 +61,178 @@ function Ligne({ libelle, valeur }: { libelle: string; valeur: string }) {
   );
 }
 
-function BoutonRond({ libelle, onPress, children }: { libelle: string; onPress: () => void; children: React.ReactNode }) {
+function BoutonRond({ libelle, onPress, children, desactive }: { libelle: string; onPress: () => void; children: React.ReactNode; desactive?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={libelle}
+      accessibilityState={{ disabled: !!desactive }}
+      disabled={desactive}
       onPress={onPress}
       hitSlop={6}
-      style={({ pressed }) => ({ width: 42, height: 42, borderRadius: 21, backgroundColor: pressed ? colors.divider : colors.white, alignItems: "center", justifyContent: "center", ...ombre.card })}
+      style={({ pressed }) => ({ width: 42, height: 42, borderRadius: 21, opacity: desactive ? 0 : 1, backgroundColor: pressed ? colors.divider : colors.white, alignItems: "center", justifyContent: "center", ...ombre.card })}
     >
       {children}
     </Pressable>
+  );
+}
+
+/**
+ * Galerie (plan v3, B1) : une diapositive à la fois, toutes au même format (vidéo d'abord, puis les photos). On glisse du
+ * doigt ou on appuie sur les flèches ; le compteur suit. La vidéo se lit sur place.
+ */
+function Galerie({ medias, hauteur }: { medias: Media[]; hauteur: number }) {
+  const { width } = useWindowDimensions();
+  const liste = useRef<FlatList<Media>>(null);
+  const [index, setIndex] = useState(0);
+  const [lecture, setLecture] = useState<string | null>(null);
+  const aller = (i: number) => {
+    const cible = Math.max(0, Math.min(medias.length - 1, i));
+    setLecture(null);
+    liste.current?.scrollToIndex({ index: cible, animated: true });
+    setIndex(cible);
+  };
+  if (!medias.length) {
+    return <Image source={require("../../../assets/illustration-chambres.svg")} style={{ width, height: hauteur }} contentFit="cover" />;
+  }
+  return (
+    <View style={{ height: hauteur, backgroundColor: colors.night }}>
+      <FlatList
+        ref={liste}
+        data={medias}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(m) => m.id}
+        getItemLayout={(_d, i) => ({ length: width, offset: width * i, index: i })}
+        onMomentumScrollEnd={(e) => {
+          setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+          setLecture(null);
+        }}
+        renderItem={({ item }) => (
+          <View style={{ width, height: hauteur, alignItems: "center", justifyContent: "center" }}>
+            {item.kind === "video" && lecture === item.id ? (
+              <LecteurVideo uri={urlMedia(item.playback_url) ?? ""} />
+            ) : (
+              <>
+                <Image source={imageDe(item) ? { uri: imageDe(item) as string } : undefined} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" transition={150} accessibilityIgnoresInvertColors />
+                {item.kind === "video" ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Lire la vidéo de la chambre"
+                    onPress={() => setLecture(item.id)}
+                    style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.white, alignItems: "center", justifyContent: "center", ...ombre.pop }}
+                  >
+                    <Play size={26} color={colors.primary} fill={colors.primary} style={{ marginLeft: 4 }} />
+                  </Pressable>
+                ) : null}
+              </>
+            )}
+          </View>
+        )}
+      />
+      {medias.length > 1 ? (
+        <>
+          <View style={{ position: "absolute", top: "50%", left: sp[3], marginTop: -21 }}>
+            <BoutonRond libelle="Photo précédente" onPress={() => aller(index - 1)} desactive={index === 0}><ChevronLeft size={22} color={colors.night} /></BoutonRond>
+          </View>
+          <View style={{ position: "absolute", top: "50%", right: sp[3], marginTop: -21 }}>
+            <BoutonRond libelle="Photo suivante" onPress={() => aller(index + 1)} desactive={index === medias.length - 1}><ChevronRight size={22} color={colors.night} /></BoutonRond>
+          </View>
+          <View style={{ position: "absolute", bottom: sp[10], right: sp[4], backgroundColor: "rgba(15,27,61,0.65)", borderRadius: rayon.pilule, paddingHorizontal: sp[3], paddingVertical: 4 }}>
+            <Text style={{ color: colors.white, fontSize: 13, fontWeight: "800" }} accessibilityLiveRegion="polite">{`${index + 1} / ${medias.length}`}</Text>
+          </View>
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+function Equipement({ Icone, libelle, valeur }: { Icone: LucideIcon; libelle: string; valeur: string }) {
+  return (
+    <View style={{ width: "48%", flexDirection: "row", alignItems: "center", gap: sp[2], padding: sp[3], borderRadius: rayon.field, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.divider }}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.blueSoft, alignItems: "center", justifyContent: "center" }}>
+        <Icone size={18} color={colors.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text variante="legende" muted>{libelle}</Text>
+        <Text style={{ fontSize: 14, fontWeight: "700", color: colors.night }}>{valeur}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Etoiles({ note, taille = 14 }: { note: number; taille?: number }) {
+  return (
+    <View style={{ flexDirection: "row", gap: 2 }} accessibilityLabel={`${note} sur 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star key={n} size={taille} color={n <= note ? colors.sunHover : colors.border} fill={n <= note ? colors.sunHover : colors.border} />
+      ))}
+    </View>
+  );
+}
+
+/** Formulaire d'avis : part des valeurs déjà données (modifier) ou vides (première fois). */
+function FormulaireAvis({ ident, initial }: { ident: string; initial: { rating: number; comment: string } | null }) {
+  const { donner, retirer } = useMonAvis(ident);
+  const [note, setNote] = useState(initial?.rating ?? 0);
+  const [commentaire, setCommentaire] = useState(initial?.comment ?? "");
+  const erreur = donner.error ?? retirer.error;
+  return (
+    <View style={{ gap: sp[3], padding: sp[4], borderRadius: rayon.card, backgroundColor: colors.blueSoft }}>
+      <Text variante="corpsGras">{initial ? "Modifier ton avis" : "Ta note"}</Text>
+      <View style={{ flexDirection: "row", gap: sp[2] }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Pressable key={n} accessibilityRole="radio" accessibilityState={{ checked: note === n }} accessibilityLabel={`${n} sur 5`} onPress={() => setNote(n)} hitSlop={4}>
+            <Star size={32} color={n <= note ? colors.sunHover : colors.border} fill={n <= note ? colors.sunHover : colors.border} />
+          </Pressable>
+        ))}
+      </View>
+      <TextInput
+        value={commentaire}
+        onChangeText={setCommentaire}
+        maxLength={600}
+        multiline
+        placeholder="Propreté, calme, eau, électricité, accueil du gérant…"
+        placeholderTextColor={colors.textMuted}
+        accessibilityLabel="Ton commentaire (facultatif)"
+        style={{ minHeight: 80, textAlignVertical: "top", backgroundColor: colors.surface, borderRadius: rayon.field, borderWidth: 1, borderColor: colors.border, padding: sp[3], fontSize: 15, color: colors.night }}
+      />
+      {erreur ? <Text variante="legende" couleur={colors.danger}>{isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.commun.erreurGenerique}</Text> : null}
+      {donner.isSuccess ? <Text variante="legende" couleur={colors.success}>Merci, ton avis est publié.</Text> : null}
+      <Button titre={initial ? "Mettre à jour mon avis" : "Publier mon avis"} disabled={note === 0} chargement={donner.isPending} onPress={() => donner.mutate({ rating: note, comment: commentaire })} />
+      {initial ? <Button titre="Retirer mon avis" variante="fantome" chargement={retirer.isPending} onPress={() => retirer.mutate()} /> : null}
+    </View>
+  );
+}
+
+/** Avis des locataires (plan v3, G) : moyenne, liste, et formulaire pour qui a vraiment échangé avec le gérant. */
+function Avis({ ident }: { ident: string }) {
+  const { data } = useAvis(ident);
+  if (!data) return null;
+  const mien = data.my_review ? { rating: Number(data.my_review.rating) || 0, comment: String(data.my_review.comment ?? "") } : null;
+  return (
+    <View style={{ gap: sp[3] }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text variante="label" muted>Avis des locataires</Text>
+        {data.summary.count ? <Text variante="corpsGras">{`★ ${Number(data.summary.average).toFixed(1).replace(".", ",")} · ${data.summary.count} avis`}</Text> : null}
+      </View>
+      {data.can_review ? <FormulaireAvis key={mien ? `${mien.rating}-${mien.comment}` : "nouveau"} ident={ident} initial={mien} /> : null}
+      {data.items.length ? (
+        data.items.map((a) => (
+          <View key={a.id} style={{ gap: sp[1], paddingBottom: sp[3], borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2] }}>
+              <Text variante="corpsGras">{a.author_name}</Text>
+              <Etoiles note={a.rating} />
+              <Text variante="legende" muted>{dateCourte(a.created_at)}</Text>
+            </View>
+            {a.comment ? <Text>{a.comment}</Text> : null}
+          </View>
+        ))
+      ) : (
+        <Text muted>Aucun avis pour l’instant.</Text>
+      )}
+    </View>
   );
 }
 
@@ -99,8 +262,9 @@ function Similaires({ ident }: { ident: string }) {
 }
 
 /**
- * Fiche d'annonce (EF-REC-06 à EF-REC-10, maquette Mobile · Détail chambre). Ne lit que les champs de `FicheOut` :
- * médias (vidéo lisible, photos), loyer et conditions, équipements, gérant (nom, vérifié, délai médian), description.
+ * Fiche d'annonce (plan v3) : quartier d'abord, galerie à diapositives de même taille, prix (« à débattre »), note des
+ * avis, équipements, gérant (son profil d'un appui), conditions, autres détails, avis, chambres similaires. « Contacter »
+ * ouvre directement la discussion, sans message imposé.
  */
 export function FicheScreen() {
   const router = useRouter();
@@ -110,9 +274,7 @@ export function FicheScreen() {
   const requete = useFiche(ident);
   const compterVue = useCompterVue();
   const basculerFavori = useBasculerFavori();
-  const [mediaActif, setMediaActif] = useState<string | null>(null);
-  const [lecture, setLecture] = useState(false);
-  const [descriptionOuverte, setDescriptionOuverte] = useState(false);
+  const demarrer = useDemarrerConversation();
 
   useEffect(() => {
     if (ident) compterVue.mutate(ident);
@@ -159,18 +321,8 @@ export function FicheScreen() {
   }
 
   const fiche = requete.data;
-  const medias = fiche.media ?? [];
-  const video = medias.find((m) => m.kind === "video");
-  const couverture = medias.find((m) => m.id === mediaActif) ?? medias.find((m) => m.is_cover) ?? medias[0];
-  const image = imageDe(couverture);
+  const medias = [...(fiche.media ?? [])].sort((a, b) => (a.kind === "video" ? -1 : b.kind === "video" ? 1 : 0));
   const lien = `https://${WEB_HOST}/annonces/${fiche.slug}`;
-
-  const equipements = [
-    fiche.has_private_bathroom ? "Douche interne" : null,
-    fiche.is_fenced ? "Cour clôturée" : null,
-    LIBELLES_EAU[fiche.water_source] ?? null,
-    COMPTEUR[fiche.electricity_meter] ?? null,
-  ].filter((x): x is string => !!x);
 
   const basculer = () => {
     if (etat.statut !== "connecte") return router.push("/connexion");
@@ -178,52 +330,20 @@ export function FicheScreen() {
   };
   const contacter = () => {
     if (etat.statut !== "connecte") return router.push("/connexion");
-    router.push(`/conversation/nouvelle?listing=${fiche.id}` as never);
+    demarrer.mutate(fiche.id, { onSuccess: (c) => router.push({ pathname: "/conversation/[id]", params: { id: c.id } }) });
   };
 
   const delai = delaiReponse(fiche.gerant?.median_response_min);
-  const description = fiche.description_md?.trim();
+  const details = fiche.description_md?.trim();
+  const note = fiche.reviews;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["bottom"]}>
       <OfflineBanner />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
-        {/* Média principal */}
-        <View style={{ height: 300 + haut, backgroundColor: colors.night, justifyContent: "center", alignItems: "center" }}>
-          {lecture && video ? (
-            <LecteurVideo uri={urlMedia(video.playback_url) ?? ""} />
-          ) : (
-            <>
-              <Image
-                source={image ? { uri: image } : require("../../../assets/illustration-chambres.svg")}
-                style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                contentFit="cover"
-                transition={150}
-                accessibilityIgnoresInvertColors
-              />
-              <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,27,61,0.20)" }} />
-              {video ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Lire la vidéo de la chambre"
-                  onPress={() => setLecture(true)}
-                  style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.white, alignItems: "center", justifyContent: "center", ...ombre.pop }}
-                >
-                  <Play size={26} color={colors.primary} fill={colors.primary} style={{ marginLeft: 4 }} />
-                </Pressable>
-              ) : null}
-              {video?.duration_s ? (
-                <View style={{ position: "absolute", bottom: sp[8], right: sp[4], backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 8, paddingHorizontal: sp[2], paddingVertical: 3 }}>
-                  <Text style={{ color: colors.white, fontSize: 12, fontWeight: "700" }}>
-                    {`${Math.floor(video.duration_s / 60)}:${String(Math.round(video.duration_s % 60)).padStart(2, "0")}`}
-                  </Text>
-                </View>
-              ) : null}
-            </>
-          )}
-        </View>
+        <Galerie medias={medias} hauteur={300 + haut} />
 
-        {/* Boutons superposés */}
+        {/* Boutons superposés : retour, partage, favori toujours en haut (plan v3, B2) */}
         <View style={{ position: "absolute", top: haut + sp[2], left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: sp[4] }}>
           <BoutonRond libelle={t.commun.retour} onPress={retour}><ArrowLeft size={20} color={colors.night} /></BoutonRond>
           <View style={{ flexDirection: "row", gap: sp[2] }}>
@@ -236,73 +356,64 @@ export function FicheScreen() {
           </View>
         </View>
 
-        {/* Feuille blanche */}
         <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: rayon.sheet, borderTopRightRadius: rayon.sheet, marginTop: -28, padding: sp[4], paddingTop: sp[5], gap: sp[5], flex: 1 }}>
-          {medias.length > 1 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: sp[2] }}>
-              {medias.map((m) => {
-                const vignette = urlMedia(m.thumb_url ?? m.poster_url ?? m.url);
-                const actif = m.id === couverture?.id;
-                return (
-                  <Pressable
-                    key={m.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={m.kind === "video" ? "Vidéo" : "Photo"}
-                    onPress={() => {
-                      setLecture(false);
-                      setMediaActif(m.id);
-                    }}
-                    style={{ width: 72, height: 56, borderRadius: 12, overflow: "hidden", borderWidth: 2, borderColor: actif ? colors.primary : "transparent", backgroundColor: colors.night, alignItems: "center", justifyContent: "center" }}
-                  >
-                    {vignette ? <Image source={{ uri: vignette }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" /> : null}
-                    {m.kind === "video" ? <Play size={16} color={colors.white} fill={colors.white} /> : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          ) : null}
-
           <View style={{ gap: sp[2] }}>
+            {/* Le quartier d'abord (plan v3, B2) */}
+            <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.primary, borderRadius: rayon.pilule, paddingHorizontal: sp[3], paddingVertical: 6 }}>
+              <MapPin size={16} color={colors.white} />
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 15 }}>{fiche.district?.name}</Text>
+            </View>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: sp[3] }}>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text variante="label" couleur={colors.primary}>{fiche.room_type_label}</Text>
                 <Text variante="titreSection">{fiche.title}</Text>
+                <Text variante="legende" muted>
+                  {[fiche.room_type_label, fiche.distance_m != null ? `${distance(fiche.distance_m)} de l'UP` : null, fiche.landmark_text].filter(Boolean).join(" · ")}
+                </Text>
               </View>
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={{ fontSize: 22, fontWeight: "800", color: colors.primary }}>{francs(fiche.rent_amount)}</Text>
                 <Text variante="legende" muted>par mois</Text>
+                {fiche.rent_negotiable ? (
+                  <View style={{ marginTop: 4, backgroundColor: colors.warningBg, borderRadius: rayon.pilule, paddingHorizontal: sp[2], paddingVertical: 2 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "800", color: colors.warning }}>À débattre</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <MapPin size={15} color={colors.textMuted} />
-              <Text variante="legende" muted style={{ flex: 1 }}>
-                {[fiche.district?.name, fiche.landmark_text, fiche.distance_m != null ? `${distance(fiche.distance_m)} de l'UP` : null].filter(Boolean).join(" · ")}
-              </Text>
+              {note.count ? (
+                <>
+                  <Star size={16} color={colors.sunHover} fill={colors.sunHover} />
+                  <Text variante="corpsGras">{Number(note.average).toFixed(1).replace(".", ",")}</Text>
+                  <Text variante="legende" muted>{`· ${note.count} avis`}</Text>
+                </>
+              ) : (
+                <Text variante="legende" muted>Pas encore d’avis</Text>
+              )}
             </View>
-            {fiche.status !== "published" ? (
-              <Text variante="corpsGras" couleur={colors.warning}>{t.statutAnnonce[fiche.status] ?? fiche.status}</Text>
-            ) : fiche.last_confirmed_at ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success }} />
-                <Text variante="legende" couleur={colors.successText} style={{ fontWeight: "700" }}>
-                  Disponibilité confirmée le {dateCourte(fiche.last_confirmed_at)}
-                </Text>
-              </View>
-            ) : null}
+            {fiche.status !== "published" ? <Text variante="corpsGras" couleur={colors.warning}>{t.statutAnnonce[fiche.status] ?? fiche.status}</Text> : null}
           </View>
 
-          {equipements.length ? (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-              {equipements.map((eq) => (
-                <View key={eq} style={{ paddingHorizontal: sp[3], paddingVertical: sp[2], borderRadius: rayon.pilule, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface }}>
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: colors.night }}>{eq}</Text>
-                </View>
-              ))}
+          {/* Équipements (plan v3, B4) */}
+          <View style={{ gap: sp[2] }}>
+            <Text variante="label" muted>Équipements</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: sp[2] }}>
+              <Equipement Icone={Zap} libelle="Électricité" valeur={fiche.electricity_label || "Non précisé"} />
+              <Equipement Icone={Droplet} libelle="Eau" valeur={fiche.water_label || "Non précisé"} />
+              <Equipement Icone={Utensils} libelle="Cuisine" valeur={fiche.kitchen_label || "Non précisé"} />
+              <Equipement Icone={ShowerHead} libelle="Douche et WC" valeur={fiche.has_private_bathroom ? "Internes" : "Partagés"} />
+              <Equipement Icone={Fence} libelle="Cour" valeur={fiche.is_fenced ? "Clôturée" : "Ouverte"} />
+              <Equipement Icone={CalendarDays} libelle="Disponible" valeur={fiche.available_from ? dateCourte(fiche.available_from) : "Maintenant"} />
             </View>
-          ) : null}
+          </View>
 
-          {/* Gérant */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: sp[3], padding: sp[4], backgroundColor: colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.border }}>
+          {/* Gérant : son profil et ses chambres d'un appui (plan v3, F) */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Voir le profil de ${fiche.gerant?.name ?? "ce gérant"}`}
+            onPress={() => router.push({ pathname: "/gerant/[id]", params: { id: String(fiche.gerant.id) } })}
+            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: sp[3], padding: sp[4], backgroundColor: pressed ? colors.divider : colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.border })}
+          >
             <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.blueSoft, alignItems: "center", justifyContent: "center" }}>
               <Text style={{ fontWeight: "800", color: colors.primary }}>{initiales(fiche.gerant?.name)}</Text>
             </View>
@@ -316,34 +427,27 @@ export function FicheScreen() {
                   </View>
                 ) : null}
               </View>
-              <Text variante="legende" muted>{delai ?? "Gérant de la chambre"}</Text>
+              <Text variante="legende" muted>{delai ? `${delai} · voir son profil` : "Voir son profil et ses chambres"}</Text>
             </View>
-          </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </Pressable>
 
-          {/* Conditions */}
           <View>
             <Text variante="label" muted style={{ marginBottom: sp[1] }}>Conditions</Text>
-            <Ligne libelle="Loyer" valeur={`${francs(fiche.rent_amount)} / mois`} />
+            <Ligne libelle="Loyer" valeur={`${francs(fiche.rent_amount)} / mois${fiche.rent_negotiable ? " (à débattre)" : ""}`} />
             {fiche.deposit_months ? <Ligne libelle="Caution" valeur={`${fiche.deposit_months} mois`} /> : null}
             {fiche.advance_months ? <Ligne libelle="Avance" valeur={`${fiche.advance_months} mois`} /> : null}
-            <Ligne libelle="Frais d'agence" valeur={fiche.agent_fee_amount ? francs(fiche.agent_fee_amount) : "Aucun"} />
-            {fiche.available_from ? <Ligne libelle="Disponible dès le" valeur={dateCourte(fiche.available_from)} /> : null}
+            <Ligne libelle="Frais de démarcheur" valeur={fiche.agent_fee_amount ? francs(fiche.agent_fee_amount) : "Aucun"} />
           </View>
 
-          {description ? (
+          {details ? (
             <View style={{ gap: sp[2] }}>
-              <Text variante="label" muted>Description</Text>
-              {/* Fermée : environ 6 lignes visibles ; le Markdown restreint est rendu (gras, listes…), jamais affiché brut. */}
-              <View style={descriptionOuverte ? null : { maxHeight: 6 * 23, overflow: "hidden" }}>
-                <TexteEnrichi md={description} />
-              </View>
-              {description.length > 240 ? (
-                <Pressable accessibilityRole="button" onPress={() => setDescriptionOuverte((v) => !v)} hitSlop={8}>
-                  <Text variante="lien" style={{ fontWeight: "700" }}>{descriptionOuverte ? "Réduire" : "Lire la suite"}</Text>
-                </Pressable>
-              ) : null}
+              <Text variante="label" muted>Autres détails</Text>
+              <Text style={{ lineHeight: 23 }}>{details}</Text>
             </View>
           ) : null}
+
+          <Avis ident={fiche.slug} />
 
           <Similaires ident={fiche.slug} />
 
@@ -358,17 +462,22 @@ export function FicheScreen() {
         </View>
       </ScrollView>
 
-      {/* Actions fixes */}
-      <View style={{ flexDirection: "row", gap: sp[3], padding: sp[4], borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Me prévenir pour des chambres similaires"
-          onPress={() => router.push("/nouvelle-alerte")}
-          style={({ pressed }) => ({ width: 52, minHeight: 48, borderRadius: rayon.field, borderWidth: 1.5, borderColor: colors.border, backgroundColor: pressed ? colors.divider : colors.surface, alignItems: "center", justifyContent: "center" })}
-        >
-          <Bell size={20} color={colors.night} />
-        </Pressable>
-        <Button titre="Contacter le gérant" style={{ flex: 1 }} onPress={contacter} disabled={fiche.status !== "published"} />
+      {/* Actions fixes : un seul bouton pour entrer dans la discussion (plan v3, B6) */}
+      <View style={{ gap: sp[2], padding: sp[4], borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
+        {demarrer.error ? (
+          <Text variante="legende" couleur={colors.danger}>{isApiError(demarrer.error) ? messageErreur(demarrer.error.code, demarrer.error.message) : t.commun.erreurGenerique}</Text>
+        ) : null}
+        <View style={{ flexDirection: "row", gap: sp[3] }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Créer une alerte pour des chambres semblables"
+            onPress={() => router.push("/nouvelle-alerte")}
+            style={({ pressed }) => ({ width: 52, minHeight: 48, borderRadius: rayon.field, borderWidth: 1.5, borderColor: colors.border, backgroundColor: pressed ? colors.divider : colors.surface, alignItems: "center", justifyContent: "center" })}
+          >
+            <Bell size={20} color={colors.night} />
+          </Pressable>
+          <Button titre="Contacter le gérant" style={{ flex: 1 }} onPress={contacter} chargement={demarrer.isPending} disabled={fiche.status !== "published"} />
+        </View>
       </View>
     </SafeAreaView>
   );

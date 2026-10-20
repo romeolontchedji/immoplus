@@ -12,7 +12,7 @@ export const STATUTS: Record<string, { libelle: string; ton: TonBadge }> = {
 };
 
 export const RAISONS_MASQUAGE: Record<string, string> = {
-  stale: "Masquée faute de confirmation : confirme qu'elle est toujours libre.",
+  stale: "Masquée automatiquement. Remets-la en ligne si elle est toujours libre.",
   moderation: "Masquée par la modération. Contacte l'équipe Logeo pour en savoir plus.",
   owner: "Tu l'as masquée. Remets-la en ligne quand tu veux.",
   gerant_suspended: "Ton compte est suspendu : tes annonces sont masquées.",

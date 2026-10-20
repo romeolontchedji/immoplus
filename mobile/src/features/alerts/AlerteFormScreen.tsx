@@ -12,12 +12,27 @@ import { proposerNotifications } from "@/features/notifications/DemandeNotificat
 import { useDistricts } from "@/features/listings/queries";
 import { criteresDe, criteresDepuisFiltres, EditeurCriteres, versCorps, type Criteres } from "./EditeurCriteres";
 import { useAlertes, useCreerAlerte, useModifierAlerte } from "./queries";
+import { AuthRequired } from "@/features/auth/AuthRequired";
+import { useSession } from "@/state/session";
 
 /**
  * Création et modification d'une alerte (EF-ALR-01). /nouvelle-alerte part de la recherche en cours ;
  * /modifier-alerte/[id] préremplit l'alerte puis envoie un PATCH.
  */
 export function AlerteFormScreen() {
+  const { etat } = useSession();
+  // Créer une alerte exige un compte (plan v3, H3) : on le demande avant le formulaire, pas après.
+  if (etat.statut !== "connecte") {
+    return (
+      <Screen scroll>
+        <AuthRequired />
+      </Screen>
+    );
+  }
+  return <AlerteFormConnecte />;
+}
+
+function AlerteFormConnecte() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { filtres } = useFiltres();
   const districts = useDistricts();

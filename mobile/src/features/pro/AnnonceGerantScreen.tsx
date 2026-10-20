@@ -1,6 +1,6 @@
 import { Alert, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { BarChart3, CircleAlert, CircleCheck, Eye, Image as IconeImage, PenLine, Video } from "lucide-react-native";
+import { BarChart3, CircleAlert, CircleCheck, Eye, FilePen, Image as IconeImage, PenLine, Video } from "lucide-react-native";
 import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
 import { francs } from "@/lib/format";
@@ -11,8 +11,8 @@ import { GroupeListe, LigneListe } from "@/ui/components/Groupe";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
-import { type AnnoncePro, useActionAnnonce, useAnnoncePro, useMediasPro, usePreparation } from "./queries";
-import { ilYA, RAISONS_MASQUAGE, STATUTS } from "./statuts";
+import { type AnnoncePro, useActionAnnonce, useAnnoncePro, useMediasPro, usePreparation, useSupprimerAnnonce } from "./queries";
+import { RAISONS_MASQUAGE, STATUTS } from "./statuts";
 
 type Action = "confirm" | "hide" | "mark-rented" | "undo-rented" | "publish";
 
@@ -51,9 +51,9 @@ function Medias({ id, onCompleter }: { id: string; onCompleter: () => void }) {
 function actionsPour(a: AnnoncePro): { action: Action; titre: string; variante?: "secondaire" | "fantome"; confirmer?: string }[] {
   switch (a.status) {
     case "published":
+      // « Confirmer qu'elle est libre » retiré (plan v3, D1) : louée ou masquée, le gérant le dit lui-même.
       return [
-        { action: "confirm", titre: "Confirmer qu'elle est libre" },
-        { action: "mark-rented", titre: "Marquer comme louée", variante: "secondaire", confirmer: "Elle disparaîtra des recherches. Les conversations restent ; la vidéo sera supprimée dans 7 jours sauf annulation." },
+        { action: "mark-rented", titre: "Marquer comme louée", confirmer: "Elle disparaîtra des recherches. Les conversations restent ; la vidéo sera supprimée dans 7 jours sauf annulation." },
         { action: "hide", titre: "Masquer", variante: "fantome" },
       ];
     case "hidden":
@@ -74,6 +74,12 @@ export function AnnonceGerantScreen() {
   const router = useRouter();
   const requete = useAnnoncePro(id);
   const action = useActionAnnonce(id);
+  const supprimer = useSupprimerAnnonce(id);
+  const demanderSuppression = () =>
+    Alert.alert("Supprimer l'annonce ?", "Elle disparaîtra pour tout le monde. Les conversations restent lisibles.", [
+      { text: t.commun.annuler, style: "cancel" },
+      { text: "Supprimer", style: "destructive", onPress: () => supprimer.mutate(undefined, { onSuccess: () => router.replace("/pro/annonces" as never) }) },
+    ]);
 
   const lancer = (a: Action, confirmer?: string) => {
     if (!confirmer) return action.mutate(a);
@@ -88,10 +94,19 @@ export function AnnonceGerantScreen() {
           return (
             <>
               <View style={{ gap: sp[2] }}>
-                <Badge titre={statut.libelle} ton={statut.ton} style={{ alignSelf: "flex-start" }} />
+                {a.status === "draft" ? (
+                  <View style={{ flexDirection: "row", gap: sp[2], alignItems: "flex-start", padding: sp[3], borderRadius: rayon.card, borderWidth: 2, borderStyle: "dashed", borderColor: colors.sun, backgroundColor: colors.warningBg }}>
+                    <FilePen size={18} color={colors.warning} />
+                    <Text style={{ flex: 1 }} variante="legende">
+                      <Text variante="legende" style={{ fontWeight: "800" }}>Brouillon</Text> · pas encore visible par les locataires. Termine-la puis publie-la.
+                    </Text>
+                  </View>
+                ) : (
+                  <Badge titre={statut.libelle} ton={statut.ton} style={{ alignSelf: "flex-start" }} />
+                )}
                 <Text variante="titre">{a.title}</Text>
-                <Text muted>{[a.room_type_label, a.district_name, `${francs(a.rent_amount)} / mois`].filter(Boolean).join(" · ")}</Text>
-                {a.status === "published" ? <Text variante="legende" muted>Disponibilité confirmée {ilYA(a.last_confirmed_at ?? a.published_at)}</Text> : null}
+                <Text muted>{[a.room_type_label, a.district_name, `${francs(a.rent_amount)} / mois${a.rent_negotiable ? " · à débattre" : ""}`].filter(Boolean).join(" · ")}</Text>
+                {a.status !== "draft" ? <Text variante="legende" muted>{`${a.views_total} vue${a.views_total > 1 ? "s" : ""} depuis la publication`}</Text> : null}
                 {a.status === "hidden" && a.hidden_reason ? <Text variante="legende" couleur={colors.warningText}>{RAISONS_MASQUAGE[a.hidden_reason] ?? "Annonce masquée."}</Text> : null}
               </View>
 
@@ -114,9 +129,18 @@ export function AnnonceGerantScreen() {
                 <LigneListe titre="Modifier l'annonce" sousTitre="Titre, loyer, quartier, description…" icone={PenLine} onPress={() => router.push(`/pro/annonce/${a.id}/modifier` as never)} />
                 <LigneListe titre="Statistiques" sousTitre="Vues, favoris et contacts" icone={BarChart3} onPress={() => router.push(`/pro/annonce/${a.id}/stats` as never)} />
                 {a.status === "published" ? (
-                  <LigneListe titre="Voir comme un étudiant" icone={Eye} onPress={() => router.push({ pathname: "/annonces/[ident]", params: { ident: a.slug } })} />
+                  <LigneListe titre="Voir comme un locataire" icone={Eye} onPress={() => router.push({ pathname: "/annonces/[ident]", params: { ident: a.slug } })} />
                 ) : null}
               </GroupeListe>
+
+              {a.status !== "removed" ? (
+                <View style={{ gap: sp[2] }}>
+                  <Button titre={a.status === "draft" ? "Supprimer le brouillon" : "Supprimer l'annonce"} variante="danger" chargement={supprimer.isPending} onPress={demanderSuppression} />
+                  {supprimer.error ? (
+                    <Text variante="legende" couleur={colors.danger}>{isApiError(supprimer.error) ? messageErreur(supprimer.error.code, supprimer.error.message) : t.erreurs.network}</Text>
+                  ) : null}
+                </View>
+              ) : null}
             </>
           );
         }}

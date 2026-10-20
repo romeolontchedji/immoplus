@@ -59,7 +59,6 @@ export function useModifierAnnonce(id: string) {
 }
 
 /** Aperçu Markdown : rendu par le serveur (même moteur que l'affichage public, HTML déjà assaini). */
-export const useApercuMarkdown = () => useMutation({ mutationFn: (markdown: string) => unwrap(api.POST("/v1/pro/markdown/preview", { body: { markdown } })) });
 
 export type TypeChambrePro = components["schemas"]["TypeChambreProOut"];
 
@@ -73,5 +72,17 @@ export function useProposerType() {
   return useMutation({
     mutationFn: (label: string) => unwrap(api.POST("/v1/pro/room-types", { body: { label } })),
     onSuccess: () => void qc.invalidateQueries({ queryKey: qk.pro.types }),
+  });
+}
+
+/** Supprime une annonce ou un brouillon (plan v3, C6) : une annonce en ligne est d'abord archivée par le serveur. */
+export function useSupprimerAnnonce(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => unwrap(api.DELETE("/v1/pro/listings/{annonce_id}", { params: { path: { annonce_id: id } } })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: qk.pro.annonces });
+      void qc.invalidateQueries({ queryKey: qk.pro.tableau });
+    },
   });
 }
