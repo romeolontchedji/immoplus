@@ -1,6 +1,6 @@
 # Politique de confidentialité
 
-Cette politique explique quelles données Logeo collecte, pourquoi, combien de temps elles sont gardées et comment exercer tes droits. Le responsable du traitement est [[raison_sociale]].
+Cette politique explique quelles données Immo+ collecte, pourquoi, combien de temps elles sont gardées et comment exercer tes droits. Le responsable du traitement est [[raison_sociale]].
 
 ## 1. Responsable du traitement
 

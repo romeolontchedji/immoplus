@@ -1,6 +1,6 @@
 {% extends "web/base.html" %}
-{% load static logeo %}
-{% block titre %}{{ titre }} — Logeo{% endblock %}
+{% load static immoplus %}
+{% block titre %}{{ titre }} — Immo+{% endblock %}
 {% block navigation %}{% endblock %}
 {# Pas de navbar sur ces pages #}
 {% block contenu %}
@@ -8,12 +8,11 @@
     {# ── Panneau gauche illustré ──────────────────────────────────────────── #}
     <aside class="auth-lateral" aria-hidden="true">
       <a class="logotype auth-lateral__logo" href="/" tabindex="-1">
-        <img src="{% static 'design/logo.svg' %}"
-             alt=""
-             width="36"
+        <img src="{% static 'design/logo-horizontal-sombre.svg' %}"
+             alt="Immo+"
+             width="144"
              height="36"
-             class="logotype__icone">
-        Logeo<span class="logotype__point">.</span>
+             class="logotype__image">
       </a>
       <div class="auth-lateral__contenu">
         <h2 class="auth-lateral__titre">{{ accroche|default:"Retrouve tes alertes, tes favoris et tes messages." }}</h2>

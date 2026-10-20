@@ -72,9 +72,9 @@ class TestConstruireCss(unittest.TestCase):
     def test_empreinte_et_manifeste(self):
         sortie = construire_css.construire()
         manifeste = json.loads((construire_css.DIST / "manifest.json").read_text())
-        self.assertEqual(manifeste["logeo.css"], f"css/dist/{sortie.name}")
-        self.assertRegex(sortie.name, r"^logeo\.[0-9a-f]{10}\.css$")
-        self.assertEqual(len(list(construire_css.DIST.glob("logeo.*.css"))), 1)
+        self.assertEqual(manifeste["immoplus.css"], f"css/dist/{sortie.name}")
+        self.assertRegex(sortie.name, r"^immoplus\.[0-9a-f]{10}\.css$")
+        self.assertEqual(len(list(construire_css.DIST.glob("immoplus.*.css"))), 1)
 
     def test_construction_deterministe(self):
         self.assertEqual(construire_css.construire().name, construire_css.construire().name)

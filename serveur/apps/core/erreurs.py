@@ -34,7 +34,7 @@ DETAIL_MAX = 6000
 
 
 def _lieu(record: logging.LogRecord) -> str:
-    """Dernier endroit du code de Logeo traversé par l'erreur (« apps/chat/services.py:142 »), sinon le logger."""
+    """Dernier endroit du code de Immo+ traversé par l'erreur (« apps/chat/services.py:142 »), sinon le logger."""
     if record.exc_info and record.exc_info[2]:
         lieux = [
             f"{os.path.relpath(f.filename, '/app') if f.filename.startswith('/app') else f.filename}:{f.lineno}"
@@ -91,7 +91,7 @@ class JournalErreursHandler(logging.Handler):
         erreur.update(
             message=masquer(record.getMessage())[:300],
             logger=record.name,
-            processus=os.environ.get("LOGEO_SERVICE", "inconnu"),
+            processus=os.environ.get("IMMOPLUS_SERVICE", "inconnu"),
             derniere=maintenant,
             detail=detail,
             nombre=erreur["nombre"] + 1,
@@ -114,8 +114,8 @@ def _prevenir(erreur: dict) -> None:
 
     envoyer_courriel.delay(
         destinataires,
-        f"Logeo · erreur {erreur['type']} ({erreur['processus']})",
-        f"Une erreur vient de se produire sur Logeo.\n\n"
+        f"Immo+ · erreur {erreur['type']} ({erreur['processus']})",
+        f"Une erreur vient de se produire sur Immo+.\n\n"
         f"Type : {erreur['type']}\nEndroit : {erreur['lieu']}\nProcessus : {erreur['processus']}\n"
         f"Occurrences : {erreur['nombre']}\nMessage : {erreur['message']}\n\n"
         f"Détail (dernières lignes) :\n{erreur['detail'][-2500:]}\n\n"

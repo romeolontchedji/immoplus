@@ -1,4 +1,4 @@
-# Logeo — Guide de copywriting (textes, accroches, microcopy)
+# Immo+ — Guide de copywriting (textes, accroches, microcopy)
 
 > Complète `DESIGN.md`. **Tout texte affiché à l'écran doit venir de ce fichier ou lui obéir.** Police : Plus Jakarta Sans (titres 800, corps 500).
 > Chaque phrase ici a un rôle : toucher une peur ou un irritant réel, puis rassurer, puis faire agir. Ne jamais remplacer par une formule générique.
@@ -11,7 +11,7 @@
 1. **Tutoiement**, phrases courtes (≤ 18 mots), verbes d'action. Un message = une idée.
 2. **Pas d'emoji, pas de sticker, pas de points d'exclamation en série** (1 maximum par écran, rarement).
 3. **Aucun chiffre inventé.** Les nombres viennent de la base : `{n}` chambres, `{minutes}` min de l'UP, `{prix}` F. Jamais « des milliers », « n°1 », « 100 % » sans preuve.
-4. **Mots interdits tant que non prouvés** : « garanti », « zéro arnaque », « 100 % sûr », « meilleur », « le plus rapide ». On dit ce que Logeo **fait** (« chaque gérant est vérifié par notre équipe »), pas ce qu'il **promet de l'impossible**.
+4. **Mots interdits tant que non prouvés** : « garanti », « zéro arnaque », « 100 % sûr », « meilleur », « le plus rapide ». On dit ce que Immo+ **fait** (« chaque gérant est vérifié par notre équipe »), pas ce qu'il **promet de l'impossible**.
 5. **Pas de ton alarmiste.** On parle de l'arnaque avec calme et on donne un réflexe (« visite d'abord, paie ensuite »), jamais de menace.
 6. **Cible ouverte** : le cœur est l'étudiant, mais le texte public ne l'exclut pas. Hors page dédiée, écrire « tu cherches une chambre à Parakou », pas « étudiant, cherche ta chambre ». Les mentions de l'UP restent des repères de distance, pas une condition d'accès.
 7. **Vocabulaire du terrain** (à utiliser tel quel) : chambre, entrée-coucher, chambre-salon, studio, caution, avance, loyer, démarcheur, gérant, visite, compteur SBEE, forage, douche interne, cour clôturée, Banikanni, Guéma, Albarika, Titirou, Zongo, Ladjifarani. Prix : `18 000 F` + `/mois`.
@@ -24,7 +24,7 @@
 
 ### 1.1 Ce que la recherche montre (et que le texte doit exploiter)
 
-| Irritant réel du locataire | Ce que Logeo répond | Où on le dit |
+| Irritant réel du locataire | Ce que Immo+ répond | Où on le dit |
 |---|---|---|
 | **L'avance payée trop vite.** Au Bénin, des faux agents publient de belles photos dans des groupes WhatsApp, passent en privé, prétendent qu'un autre client a déjà versé une partie de la caution et poussent à tout payer par mobile money. Les autorités recommandent de ne jamais envoyer d'argent sans visite ni preuve écrite. | « Visite d'abord, paie ensuite. » Gérants vérifiés, visite en vidéo, messagerie qui garde la trace. | Hero, détail, conversation, FAQ, notifications |
 | **Le trajet pour rien** : la chambre est déjà louée, ou ne ressemble pas aux photos. | La visite vidéo, la disponibilité affichée, le retrait de la vidéo quand c'est loué. | Hero, cartes, détail |
@@ -39,7 +39,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 - **Promesse** : *Tu vois la chambre avant de te déplacer, et tu sais à qui tu as affaire.*
 - **Preuves à montrer** : badge Vérifié, vidéo, prix et caution affichés, messagerie tracée, rappel anti-avance.
-- **Voix** : un grand frère fiable du quartier. Direct, calme, jamais donneur de leçons. Il dit « on » pour Logeo, « tu » pour le visiteur.
+- **Voix** : un grand frère fiable du quartier. Direct, calme, jamais donneur de leçons. Il dit « on » pour Immo+, « tu » pour le visiteur.
 
 ### 1.3 Slogan et signatures
 
@@ -52,7 +52,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 ## 2. Web — Accueil
 
-**Meta title** : `Chambres à louer à Parakou, visite en vidéo — Logeo`
+**Meta title** : `Chambres à louer à Parakou, visite en vidéo — Immo+`
 **Meta description** : `Cherche une chambre, un entrée-coucher ou un studio à Parakou. Regarde la visite en vidéo, contacte un gérant vérifié, crée une alerte. Visite d'abord, paie ensuite.`
 
 **Navbar (visiteur)** : `Chambres` · `Comment ça marche` · `FAQ` · `Se connecter` · bouton `Inscris-toi`
@@ -78,7 +78,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - Champs : `QUARTIER` (placeholder `Banikanni, Guéma…`), `BUDGET MAX` (placeholder `15 000 F / mois`)
 - Bouton : `Voir les chambres`
 
-### Section « Pourquoi Logeo » (3 piliers : problème, puis réponse)
+### Section « Pourquoi Immo+ » (3 piliers : problème, puis réponse)
 1. **Titre** : `Tu ne paies pas pour une chambre que tu n'as pas vue.` — **Texte** : `Regarde la visite en vidéo, vérifie le gérant, puis seulement après, vas-y.`
 2. **Titre** : `Un gérant vérifié, pas un inconnu.` — **Texte** : `Avant de publier, chaque gérant fournit ses pièces et passe un entretien avec notre équipe.`
 3. **Titre** : `Tu n'as plus besoin d'être dans le bon groupe.` — **Texte** : `Toutes les chambres au même endroit. Crée une alerte : si une chambre correspond, tu le sais.`
@@ -91,7 +91,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
   3. `Contacte le gérant` — `Discute dans l'app, fixe la visite, puis décide.`
   - Bouton : `Voir les chambres`
 - **Colonne Gérant** : titre `Je loue des chambres`
-  1. `Contacte l'équipe Logeo` — `Par WhatsApp ou appel, avec tes pièces.`
+  1. `Contacte l'équipe Immo+` — `Par WhatsApp ou appel, avec tes pièces.`
   2. `On vérifie, puis on crée ton compte` — `Pièce d'identité, justificatif, court entretien.`
   3. `Publie et reçois des demandes` — `Une vidéo, des photos, et tu vois qui regarde ta chambre.`
   - Bouton : `Contacter l'équipe · +229 01 56 20 14 00`
@@ -105,13 +105,13 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - **Titre** : `Ne cours plus après les annonces.` — **Texte** : `Dis-nous ton quartier et ton budget. On te prévient dès qu'une chambre correspond.` — **Bouton** : `Créer mon alerte`
 
 ### FAQ (réponses courtes, une peur par question)
-1. **Logeo est-il gratuit pour moi ?** — `Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.`
-2. **Je ne suis pas étudiant, puis-je l'utiliser ?** — `Oui. Logeo est ouvert à tous ceux qui cherchent une chambre à Parakou : étudiants, stagiaires, travailleurs, familles.`
+1. **Immo+ est-il gratuit pour moi ?** — `Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.`
+2. **Je ne suis pas étudiant, puis-je l'utiliser ?** — `Oui. Immo+ est ouvert à tous ceux qui cherchent une chambre à Parakou : étudiants, stagiaires, travailleurs, familles.`
 3. **Comment savoir que la chambre existe vraiment ?** — `Regarde la visite en vidéo et le badge Vérifié du gérant. Ensuite, visite avant tout paiement.`
-4. **Dois-je payer pour réserver ?** — `Ne paie jamais avant d'avoir visité, et exige un reçu écrit pour chaque somme versée. [À CONFIRMER : Logeo n'encaisse ni loyer ni caution.]`
+4. **Dois-je payer pour réserver ?** — `Ne paie jamais avant d'avoir visité, et exige un reçu écrit pour chaque somme versée. [À CONFIRMER : Immo+ n'encaisse ni loyer ni caution.]`
 5. **On me demande de l'argent avant la visite. Que faire ?** — `Ne paie pas. Arrête la discussion et signale le message depuis la conversation : notre équipe regarde.`
 6. **Que veut dire « Vérifié » ?** — `Le gérant a fourni sa pièce d'identité et un justificatif, et a passé un entretien avec notre équipe.`
-7. **Comment devient-on gérant ?** — `On ne s'inscrit pas seul : contacte l'équipe Logeo, fournis tes pièces, passe un court entretien. Ensuite, on crée ton compte.`
+7. **Comment devient-on gérant ?** — `On ne s'inscrit pas seul : contacte l'équipe Immo+, fournis tes pièces, passe un court entretien. Ensuite, on crée ton compte.`
 8. **Pourquoi je ne peux pas créer un compte gérant moi-même ?** — `Pour protéger les locataires. Chaque gérant est connu de notre équipe avant de publier.`
 9. **Combien coûte la publication ?** — `2 000 F par mois, sans engagement. Gratuit pendant le lancement. [À CONFIRMER : aucune commission sur les loyers.]`
 10. **Comment fonctionnent les alertes ?** — `Tu choisis un quartier, un budget et un type. Dès qu'une chambre correspond, tu reçois une notification.`
@@ -125,7 +125,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 ## 3. Web — Page Chambres
 
-- **Meta title** : `{n} chambres à Parakou — loyers, quartiers, visites vidéo — Logeo` ; par quartier : `Chambres à {quartier}, Parakou — Logeo`
+- **Meta title** : `{n} chambres à Parakou — loyers, quartiers, visites vidéo — Immo+` ; par quartier : `Chambres à {quartier}, Parakou — Immo+`
 - **Titre (recommandé)** : **Ta prochaine chambre est à quelques minutes de tout.** (pour la page générale, plus ouverte que « de l'UP »)
 - **Variante campus** : `À quelques minutes de l'UP.` (à utiliser seulement sur les filtres « Près de l'UP »)
 - **Sous-titre** : `Regarde la vidéo, compare, contacte. Rien à payer avant d'avoir visité.`
@@ -164,7 +164,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - **Sous-titre** : `Pas de mot de passe. On t'envoie un code par SMS.` **[À CONFIRMER : voir ECARTS.md, les gérants peuvent avoir un mot de passe]**
 - Champs : `NUMÉRO DE TÉLÉPHONE` (`+229`), bouton `Recevoir le code`
 - Code : `CODE REÇU PAR SMS` ; minuteur `Renvoyer le code dans 00:42` ; lien `Renvoyer le code`
-- **Bas de page** : `Pas de compte ? Inscris-toi` + `Inscription réservée aux locataires. Les comptes gérant sont créés par l'équipe Logeo.`
+- **Bas de page** : `Pas de compte ? Inscris-toi` + `Inscription réservée aux locataires. Les comptes gérant sont créés par l'équipe Immo+.`
 - **Panneau latéral web (titre)** : `Retrouve tes alertes, tes favoris et tes messages.` — texte `Ta chambre à Parakou t'attend.`
 
 ### Inscription (locataire)
@@ -216,7 +216,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 ### Profil
 - **Locataire** : `Mon profil` · `Mes alertes` · `Mes favoris` · `Messages` · `Aide et contact` · `Se déconnecter`
-- **Gérant** (carte verte) : `Identité vérifiée par Logeo` / `Pièces validées et entretien passé le {date}. Ce badge rassure les locataires.`
+- **Gérant** (carte verte) : `Identité vérifiée par Immo+` / `Pièces validées et entretien passé le {date}. Ce badge rassure les locataires.`
 
 ---
 
@@ -309,17 +309,17 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - Gérants : titre `Gérants` ; blocs `À vérifier ({n})` / `Gérants vérifiés ({n})` ; boutons `Valider et créer le compte` · `Refuser` · `Créer un compte gérant`
 - Confirmation création : `Compte gérant créé. Un SMS « compte prêt » a été envoyé au {numéro}.` ; échec SMS : `Compte créé, mais le SMS n'est pas parti. Renvoie-le ou appelle le gérant.`
 - Modération : `Signalé : arnaque` · `Signalé : coordonnées hors application` ; actions `Supprimer le message` · `Avertir le gérant` · `Suspendre le compte` · `Ignorer`
-- Avertissement envoyé au gérant : `Un message que tu as envoyé ne respecte pas les règles de Logeo (échange en dehors de l'application / demande de paiement avant visite). Merci de rester dans l'application. Un nouvel écart peut entraîner la suspension de ton compte.`
+- Avertissement envoyé au gérant : `Un message que tu as envoyé ne respecte pas les règles de Immo+ (échange en dehors de l'application / demande de paiement avant visite). Merci de rester dans l'application. Un nouvel écart peut entraîner la suspension de ton compte.`
 - Journal : titres d'événements courts et datés (`Compte gérant créé : {nom}`).
 
 ---
 
 ## 11. Store et partage
 
-- **Nom** : `Logeo : chambres à Parakou`
+- **Nom** : `Immo+ : chambres à Parakou`
 - **Sous-titre / courte description (≤ 80)** : `Chambres en vidéo, gérants vérifiés. Visite d'abord, paie ensuite.`
 - **Description longue (début)** : `Tu cherches une chambre, un entrée-coucher ou un studio à Parakou ? Regarde la visite en vidéo avant de te déplacer, contacte un gérant vérifié par notre équipe, et crée une alerte pour être prévenu dès qu'une chambre correspond. Gratuit pour les locataires.`
-- **Partage d'annonce (WhatsApp)** : `{type} à {quartier} · {prix} F/mois. Regarde la visite en vidéo sur Logeo : {lien}`
+- **Partage d'annonce (WhatsApp)** : `{type} à {quartier} · {prix} F/mois. Regarde la visite en vidéo sur Immo+ : {lien}`
 
 ---
 

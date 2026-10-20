@@ -66,7 +66,7 @@ export function useVerrouBiometrique() {
 }
 
 async function deverrouiller(): Promise<void> {
-  if (await authentifier("Déverrouille Logeo")) modifier({ verrouille: false });
+  if (await authentifier("Déverrouille Immo+")) modifier({ verrouille: false });
 }
 
 /** Monté une fois à la racine : verrouille au démarrage et après 5 minutes en arrière-plan. */
@@ -108,7 +108,7 @@ export function VerrouHote() {
         <Fingerprint size={36} color={colors.primary} />
       </View>
       <View style={{ gap: sp[2], alignItems: "center" }}>
-        <Text variante="titreSection">Logeo est verrouillé</Text>
+        <Text variante="titreSection">Immo+ est verrouillé</Text>
         <Text muted style={{ textAlign: "center" }}>Utilise ton empreinte ou le code de ton téléphone pour continuer.</Text>
       </View>
       <Button titre="Déverrouiller" onPress={() => void deverrouiller()} style={{ alignSelf: "stretch" }} />

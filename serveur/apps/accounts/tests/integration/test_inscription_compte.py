@@ -47,7 +47,7 @@ class TestInscription:
         assert u.check_password(FORT) and u.password.startswith(("md5$", "argon2$"))
 
     def test_trace_l_acceptation_des_cgu(self):
-        u = inscrire(ip="41.0.0.1", user_agent="Logeo/1.0")
+        u = inscrire(ip="41.0.0.1", user_agent="Immo+/1.0")
         ligne = AuditLog.objects.get(action="terms.accepted")
         assert (ligne.actor_id, ligne.metadata, str(ligne.ip)) == (
             u.pk,

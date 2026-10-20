@@ -142,9 +142,9 @@ en production.** Idem pour `CAMPUS_REFERENCE` (déjà dans le projet, non revu).
 ## D. Pour reprendre
 
 ```bash
-cd logeo && python3 -m venv .venv && .venv/bin/pip install -r serveur/requirements/dev.txt
+cd immoplus && python3 -m venv .venv && .venv/bin/pip install -r serveur/requirements/dev.txt
 # PostgreSQL 16 et Redis démarrés ; rôles app, admin_app, retention créés (voir infra/postgres/init/01-roles.sh)
-cd serveur && DB_USER=<superutilisateur> DB_PASSWORD=<mdp> DB_NAME=logeo ../.venv/bin/python -m pytest -q -p no:randomly
+cd serveur && DB_USER=<superutilisateur> DB_PASSWORD=<mdp> DB_NAME=immoplus ../.venv/bin/python -m pytest -q -p no:randomly
 ```
 Exécuter en **série** : le mode parallèle (`-n`) entre en conflit sur la création des rôles de la base de test
 (problème antérieur à cette session).

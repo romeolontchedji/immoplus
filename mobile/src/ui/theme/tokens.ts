@@ -1,7 +1,7 @@
 import { jetons } from "./jetons.genere";
 
 /**
- * Jetons de design de l'application Logeo.
+ * Jetons de design de l'application Immo+.
  * Source unique : docs/design/tokens.json → jetons.genere.ts (couleurs, espaces, rayons, tailles), partagée avec le site.
  */
 

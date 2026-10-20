@@ -36,7 +36,7 @@ def test_ne_masque_pas_un_prix():
 
 def test_formateur_json_valide():
     enregistrement = logging.LogRecord(
-        "logeo", logging.INFO, __file__, 1, "bonjour %s", ("monde",), None
+        "immoplus", logging.INFO, __file__, 1, "bonjour %s", ("monde",), None
     )
     donnees = json.loads(FormateurJson().format(enregistrement))
     assert donnees["message"] == "bonjour monde"

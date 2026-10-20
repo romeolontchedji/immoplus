@@ -28,12 +28,12 @@ if env.texte("CAPTCHA_PROVIDER", "fake") in ("", "fake"):
 # Sans cette liste, Django répondrait 400 à toute requête en production.
 _DOMAINE = env.texte("DOMAIN")
 if not _DOMAINE or _DOMAINE == "localhost":
-    raise ImproperlyConfigured("DOMAIN de production absent (ex. logeo.bj).")
+    raise ImproperlyConfigured("DOMAIN de production absent (ex. immoplus.bj).")
 ALLOWED_HOSTS = [f"www.{_DOMAINE}", f"api.{_DOMAINE}", "127.0.0.1", "localhost"]
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
 OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY")
 # `realtime` (WebSocket) vérifie les jetons mais n'émet aucun code OTP : il ne reçoit pas cette clé (moindre privilège).
-_TEMPS_REEL = env.texte("LOGEO_PROCESSUS") == "realtime"
+_TEMPS_REEL = env.texte("IMMOPLUS_PROCESSUS") == "realtime"
 _EXIGEES = [("JWT_SIGNING_KEY", JWT_SIGNING_KEY)] + (
     [] if _TEMPS_REEL else [("OTP_HMAC_KEY", OTP_HMAC_KEY)]
 )

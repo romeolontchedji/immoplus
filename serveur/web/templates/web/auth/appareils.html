@@ -1,5 +1,5 @@
 {% extends "web/espace.html" %}
-{% block titre %}Appareils connectés — Logeo{% endblock %}
+{% block titre %}Appareils connectés — Immo+{% endblock %}
 {# Plan d'actions v2, W7 : expliquer ce qu'est un appareil, montrer la session en cours, tout déconnecter. #}
 {% block espace %}
   <section class="section">
@@ -10,7 +10,7 @@
           {% include "web/composants/icone.html" with nom="shield-check" taille=22 %}
         </span>
         <p class="mb-0">
-          Un appareil, c'est un téléphone où l'application Logeo est connectée à ton compte, ou ce navigateur.
+          Un appareil, c'est un téléphone où l'application Immo+ est connectée à ton compte, ou ce navigateur.
           Si tu ne reconnais pas un appareil, ou si tu as perdu ton téléphone, déconnecte-le : il devra retrouver ton
           mot de passe pour revenir.
         </p>
@@ -31,7 +31,7 @@
           <span class="badge badge--succes">Ici</span>
         </li>
       </ul>
-      <h2 class="appareils-titre">Application Logeo</h2>
+      <h2 class="appareils-titre">Application Immo+</h2>
       {% if appareils %}
         <ul class="liste-appareils">
           {% for a in appareils %}

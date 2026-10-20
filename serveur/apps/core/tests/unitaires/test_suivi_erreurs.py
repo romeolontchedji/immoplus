@@ -27,7 +27,7 @@ def _planter(numero="97123456"):
 
 
 def test_erreurs_identiques_regroupees_et_masquees(settings):
-    settings.ERREURS_DESTINATAIRES = ["equipe@logeo.bj"]
+    settings.ERREURS_DESTINATAIRES = ["equipe@immoplus.bj"]
     _planter()
     _planter("96000000")
     [e] = erreurs.liste()
@@ -35,7 +35,7 @@ def test_erreurs_identiques_regroupees_et_masquees(settings):
     assert "test_suivi_erreurs.py" in e["lieu"]
     assert "97123456" not in e["detail"] and "96000000" not in e["message"]  # numéros masqués
     assert len(mail.outbox) == 1  # un seul courriel pour deux occurrences dans l'heure
-    assert "ValueError" in mail.outbox[0].subject and mail.outbox[0].to == ["equipe@logeo.bj"]
+    assert "ValueError" in mail.outbox[0].subject and mail.outbox[0].to == ["equipe@immoplus.bj"]
 
 
 def test_sans_destinataire_aucun_courriel(settings):
@@ -45,7 +45,7 @@ def test_sans_destinataire_aucun_courriel(settings):
 
 
 def test_corrigee_puis_revenue(settings):
-    settings.ERREURS_DESTINATAIRES = ["equipe@logeo.bj"]
+    settings.ERREURS_DESTINATAIRES = ["equipe@immoplus.bj"]
     _planter()
     erreurs.resoudre(erreurs.liste()[0]["id"])
     assert erreurs.liste() == []

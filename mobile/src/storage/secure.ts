@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 /** Secrets de l'appareil : jeton de rafraîchissement et identifiant d'installation. Jamais dans AsyncStorage. */
-const CLES = { refresh: "logeo.refresh", installation: "logeo.installation" } as const;
+const CLES = { refresh: "immoplus.refresh", installation: "immoplus.installation" } as const;
 
 export const secure = {
   async getRefresh(): Promise<string | null> {

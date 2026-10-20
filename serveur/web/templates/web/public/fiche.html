@@ -1,6 +1,6 @@
 {% extends "web/base.html" %}
-{% load logeo static %}
-{% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Logeo{% endblock %}
+{% load immoplus static %}
+{% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Immo+{% endblock %}
 {% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount|fcfa }} F par mois.{% endblock %}
 {% block contenu %}
   <section class="section">
@@ -317,7 +317,7 @@
               <div class="fiche-gerant-avatar" aria-hidden="true">{{ f.gerant.name|default:"G"|slice:":2"|upper }}</div>
               <div class="fiche-gerant-meta">
                 <div class="fiche-gerant-ligne">
-                  <h2 class="fiche-gerant-nom">{{ f.gerant.name|default:"Gérant Logeo" }}</h2>
+                  <h2 class="fiche-gerant-nom">{{ f.gerant.name|default:"Gérant Immo+" }}</h2>
                   {% if f.gerant.verified %}
                     <span class="badge-verifie-pill badge-verifie-pill--petit">
                       {% include "web/composants/icone.html" with nom="check" taille=10 %}

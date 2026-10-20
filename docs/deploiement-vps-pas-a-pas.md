@@ -1,4 +1,4 @@
-# Mettre Logeo en ligne sur un VPS, pas à pas
+# Mettre Immo+ en ligne sur un VPS, pas à pas
 
 Ce guide part d'un serveur vierge et arrive à un site en HTTPS, une API pour l'application et une administration
 réservée à l'équipe. Chaque étape donne la commande exacte et ce que tu dois voir. Si une étape ne donne pas le
@@ -6,7 +6,7 @@ résultat attendu, ne passe pas à la suivante.
 
 ## Pourquoi un VPS et pas un hébergement mutualisé
 
-Logeo fait tourner une base PostgreSQL, deux Redis, des tâches de fond (vidéos, notifications, alertes), une connexion
+Immo+ fait tourner une base PostgreSQL, deux Redis, des tâches de fond (vidéos, notifications, alertes), une connexion
 temps réel pour la messagerie et un serveur web (Caddy). Un hébergement mutualisé (cPanel, « espace web ») ne permet rien
 de tout cela. Il faut un **serveur virtuel (VPS)** sur lequel on installe Docker : c'est la même pile que sur ton
 ordinateur (`make up`), en version production.
@@ -16,7 +16,7 @@ ordinateur (`make up`), en version production.
 | Élément | Détail |
 |---|---|
 | Un VPS | Ubuntu 24.04, 4 vCPU, 8 Go de mémoire, 160 Go SSD (CDC §6). Accès root par clé SSH. |
-| Un nom de domaine | Tu dois pouvoir créer des enregistrements DNS. Dans ce guide : `logeo.bj`. |
+| Un nom de domaine | Tu dois pouvoir créer des enregistrements DNS. Dans ce guide : `immoplus.bj`. |
 | Une clé SSH | Sur ton ordinateur : `ssh-keygen -t ed25519` puis `cat ~/.ssh/id_ed25519.pub`. |
 | Une adresse IP fixe ou un VPN | L'administration n'est ouverte qu'à des adresses autorisées (voir étape 5). |
 | Un agrégateur SMS | Adresse, jeton et secret de l'API d'envoi. Sans lui, personne ne peut s'inscrire. |
@@ -43,7 +43,7 @@ Chez ton fournisseur de domaine, crée quatre enregistrements de type **A** vers
 | `api` | l'application mobile |
 | `pilotage` | l'administration |
 
-**Résultat attendu** (sur ton ordinateur, quelques minutes plus tard) : `dig +short www.logeo.bj` affiche l'IP du
+**Résultat attendu** (sur ton ordinateur, quelques minutes plus tard) : `dig +short www.immoplus.bj` affiche l'IP du
 serveur, de même pour `api` et `pilotage`.
 
 ## Étape 3 : préparer le serveur
@@ -55,18 +55,18 @@ scp infra/vps/bootstrap.sh root@<IP>:/root/
 ssh root@<IP> 'bash /root/bootstrap.sh'
 ```
 
-Le script met le système à jour, installe Docker, crée l'utilisateur `logeo` (avec ta clé), interdit la connexion root
+Le script met le système à jour, installe Docker, crée l'utilisateur `immoplus` (avec ta clé), interdit la connexion root
 et les mots de passe, ouvre seulement SSH, 80 et 443, active fail2ban et les mises à jour de sécurité automatiques.
 
-**Résultat attendu :** le script finit par « Serveur prêt ». Dans un **nouveau** terminal, `ssh logeo@<IP>` fonctionne
+**Résultat attendu :** le script finit par « Serveur prêt ». Dans un **nouveau** terminal, `ssh immoplus@<IP>` fonctionne
 et `docker ps` répond (liste vide). `ssh root@<IP>` est désormais refusé : c'est voulu.
 
 ## Étape 4 : récupérer le code
 
-Connecté en `logeo` :
+Connecté en `immoplus` :
 
 ```bash
-ssh-keygen -t ed25519 -C "deploiement-logeo" -f ~/.ssh/deploiement -N ""
+ssh-keygen -t ed25519 -C "deploiement-immoplus" -f ~/.ssh/deploiement -N ""
 cat ~/.ssh/deploiement.pub
 ```
 
@@ -77,16 +77,16 @@ cat >> ~/.ssh/config <<'CONF'
 Host github.com
   IdentityFile ~/.ssh/deploiement
 CONF
-git clone git@github.com:Magloireaffokpe/logeo.git ~/logeo
-cd ~/logeo && git checkout main
+git clone git@github.com:Magloireaffokpe/immoplus.git ~/immoplus
+cd ~/immoplus && git checkout main
 ```
 
-**Résultat attendu :** le dossier `~/logeo` contient le projet, sur la branche `main`.
+**Résultat attendu :** le dossier `~/immoplus` contient le projet, sur la branche `main`.
 
 ## Étape 5 : la configuration
 
 ```bash
-cd ~/logeo
+cd ~/immoplus
 python3 outils/creer_env.py
 ```
 
@@ -95,7 +95,7 @@ Cela crée `.env` avec **tous les secrets générés** (mots de passe des bases,
 
 | Variable | Valeur |
 |---|---|
-| `DOMAIN` | `logeo.bj` (sans `www`) |
+| `DOMAIN` | `immoplus.bj` (sans `www`) |
 | `ADMIN_ALLOWED_IPS` | Ton adresse fixe ou celle de ton VPN, par ex. `203.0.113.7/32`. Une adresse de réseau mobile change souvent : un VPN (WireGuard, Tailscale) est plus fiable. Vide = administration fermée à tous. |
 | `SMS_PROVIDER` | `generic_http` |
 | `SMS_HTTP_URL`, `SMS_HTTP_TOKEN`, `SMS_HTTP_SECRET` | Fournis par l'agrégateur SMS |
@@ -126,44 +126,44 @@ affiche ton domaine.
 Crée un raccourci (à ajouter aussi dans `~/.bashrc`) :
 
 ```bash
-alias logeo='docker compose --env-file .env -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.prod.yml --profile prod'
+alias immoplus='docker compose --env-file .env -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.prod.yml --profile prod'
 ```
 
 Puis :
 
 ```bash
-logeo build          # construit l'image (5 à 10 minutes la première fois)
-logeo up -d          # migrations, fichiers statiques, puis tous les services
-logeo ps             # état des services
+immoplus build          # construit l'image (5 à 10 minutes la première fois)
+immoplus up -d          # migrations, fichiers statiques, puis tous les services
+immoplus ps             # état des services
 ```
 
-**Résultat attendu :** dans `logeo ps`, `migrer` est « exited (0) » et tous les autres sont « running (healthy) ».
-Si un service redémarre en boucle : `logeo logs <service> --tail 50`.
+**Résultat attendu :** dans `immoplus ps`, `migrer` est « exited (0) » et tous les autres sont « running (healthy) ».
+Si un service redémarre en boucle : `immoplus logs <service> --tail 50`.
 
 Caddy obtient seul les certificats HTTPS au premier accès (le DNS de l'étape 2 doit être en place).
 
 ## Étape 7 : vérifier
 
 ```bash
-curl -fsS https://api.logeo.bj/healthz     # {"status": "ok"} : le processus répond
-curl -fsS https://api.logeo.bj/readyz      # base, cache, file et disque prêts
-curl -sI https://logeo.bj | head -3         # 301 vers https://www.logeo.bj/
+curl -fsS https://api.immoplus.bj/healthz     # {"status": "ok"} : le processus répond
+curl -fsS https://api.immoplus.bj/readyz      # base, cache, file et disque prêts
+curl -sI https://immoplus.bj | head -3         # 301 vers https://www.immoplus.bj/
 ```
 
-Ouvre `https://www.logeo.bj` dans un navigateur : le cadenas doit être présent.
-`https://pilotage.logeo.bj` doit répondre **404** depuis une adresse non autorisée (c'est voulu), et la page de
+Ouvre `https://www.immoplus.bj` dans un navigateur : le cadenas doit être présent.
+`https://pilotage.immoplus.bj` doit répondre **404** depuis une adresse non autorisée (c'est voulu), et la page de
 connexion depuis une adresse de `ADMIN_ALLOWED_IPS`.
 
 ## Étape 8 : données de base et premier administrateur
 
 ```bash
-logeo run --rm admin python manage.py seed      # paramètres par défaut et quartiers de Parakou (sans annonces de démo)
-logeo run --rm admin python manage.py creer_personnel --email toi@logeo.bj --nom "Ton nom" --role admin
+immoplus run --rm admin python manage.py seed      # paramètres par défaut et quartiers de Parakou (sans annonces de démo)
+immoplus run --rm admin python manage.py creer_personnel --email toi@immoplus.bj --nom "Ton nom" --role admin
 ```
 
 Le mot de passe est demandé au clavier (il n'apparaît pas dans l'historique).
 
-Connecte-toi ensuite sur `https://pilotage.logeo.bj` et, dans **Paramètres**, complète au minimum :
+Connecte-toi ensuite sur `https://pilotage.immoplus.bj` et, dans **Paramètres**, complète au minimum :
 
 - **Contact et identité légale** : numéro de l'équipe, raison sociale, RCCM, IFU, adresse, puis décoche « identité
   provisoire ».
@@ -174,14 +174,14 @@ Connecte-toi ensuite sur `https://pilotage.logeo.bj` et, dans **Paramètres**, c
 Dans `mobile/.env` (ou dans les variables du service de compilation Expo) :
 
 ```bash
-EXPO_PUBLIC_API_URL=https://api.logeo.bj
-EXPO_PUBLIC_WEB_HOST=www.logeo.bj
+EXPO_PUBLIC_API_URL=https://api.immoplus.bj
+EXPO_PUBLIC_WEB_HOST=www.immoplus.bj
 EAS_PROJECT_ID=<identifiant donné par `eas init`>
 ```
 
 Compile avec `eas build`, puis complète `infra/caddy/wellknown/assetlinks.json` (identifiant du paquet Android et
-empreinte de signature donnée par `eas credentials`) pour que les liens `https://www.logeo.bj/annonces/…` ouvrent
-l'application. Redémarre Caddy : `logeo restart caddy`.
+empreinte de signature donnée par `eas credentials`) pour que les liens `https://www.immoplus.bj/annonces/…` ouvrent
+l'application. Redémarre Caddy : `immoplus restart caddy`.
 
 ## Étape 10 : sauvegardes
 
@@ -194,19 +194,19 @@ Chaque nuit, le service `backup` (ADR 0008) :
 **Mettre en place la copie hors du serveur (15 minutes) :**
 
 1. Crée un compte chez Backblaze B2 ou Cloudflare R2 (autre fournisseur que le VPS), un compartiment privé
-   `logeo-sauvegardes` et une clé d'accès limitée à ce compartiment.
-2. Renseigne dans `.env` : `RESTIC_REPOSITORY` (ex. `s3:https://s3.eu-central-003.backblazeb2.com/logeo-sauvegardes`),
+   `immoplus-sauvegardes` et une clé d'accès limitée à ce compartiment.
+2. Renseigne dans `.env` : `RESTIC_REPOSITORY` (ex. `s3:https://s3.eu-central-003.backblazeb2.com/immoplus-sauvegardes`),
    `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE`. `RESTIC_PASSWORD` a été généré à l'étape 5 : **copie-le dans le
    coffre de l'équipe**, sans lui les sauvegardes sont illisibles.
-3. `python3 outils/creer_env.py --services && logeo up -d backup`
+3. `python3 outils/creer_env.py --services && immoplus up -d backup`
 4. Lance une passe tout de suite et vérifie le message « copie chiffrée hors serveur terminée » :
-   `logeo exec backup bash /scripts/boucle.sh une-fois`
+   `immoplus exec backup bash /scripts/boucle.sh une-fois`
 
 **Test de restauration** (avant l'ouverture, puis chaque trimestre, sur un serveur de test) :
 
 ```bash
-logeo exec backup restic restore latest --target /tmp/restauration     # récupère base et médias
-gunzip -c /tmp/restauration/backups/logeo-<date>.sql.gz | logeo exec -T postgres psql -U postgres -d logeo
+immoplus exec backup restic restore latest --target /tmp/restauration     # récupère base et médias
+gunzip -c /tmp/restauration/backups/immoplus-<date>.sql.gz | immoplus exec -T postgres psql -U postgres -d immoplus
 ```
 
 Tant que la copie hors serveur n'est pas configurée, le journal du service `backup` le rappelle chaque nuit.
@@ -214,34 +214,34 @@ Tant que la copie hors serveur n'est pas configurée, le journal du service `bac
 ## Conteneurs figés
 
 `bootstrap.sh` installe une minuterie qui, chaque minute, redémarre un conteneur qui ne répond plus (au plus 3 fois
-par heure, ensuite il faut intervenir). Historique : `journalctl -t logeo-autoguerison`.
+par heure, ensuite il faut intervenir). Historique : `journalctl -t immoplus-autoguerison`.
 
 ## Mettre à jour
 
 ```bash
-cd ~/logeo
+cd ~/immoplus
 git pull
-logeo build
-logeo up -d          # applique les nouvelles migrations puis redémarre les services modifiés
-logeo ps
+immoplus build
+immoplus up -d          # applique les nouvelles migrations puis redémarre les services modifiés
+immoplus ps
 ```
 
 Avant une mise à jour importante, lance une sauvegarde à la main :
-`logeo run --rm backup bash /scripts/boucle.sh une-fois`.
+`immoplus run --rm backup bash /scripts/boucle.sh une-fois`.
 
 ## Revenir en arrière
 
 ```bash
 git log --oneline -5             # repère la version précédente
 git checkout <commit>
-logeo build && logeo up -d
+immoplus build && immoplus up -d
 ```
 
 Si la mise à jour contenait une migration de base, restaure aussi la sauvegarde faite juste avant (étape 10).
 
 ## Surveiller
 
-Crée une surveillance externe gratuite (UptimeRobot, Better Stack…) sur `https://api.logeo.bj/readyz` avec une alerte
+Crée une surveillance externe gratuite (UptimeRobot, Better Stack…) sur `https://api.immoplus.bj/readyz` avec une alerte
 par SMS ou e-mail. Elle te prévient si le site tombe, si la base ne répond plus ou si le disque se remplit.
 
 ## Avant d'ouvrir au public : liste de contrôle

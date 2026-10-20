@@ -40,7 +40,7 @@ yarn-error.*
 /ios
 /android
 
-# Logeo
+# Immo+
 .env
 .env.*
 !.env.example

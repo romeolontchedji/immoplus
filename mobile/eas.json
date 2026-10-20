@@ -12,13 +12,13 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "channel": "preview",
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.staging.logeo.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.staging.immoplus.example" }
     },
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "channel": "production",
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.logeo.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.example" }
     }
   },
   "submit": { "production": { "android": { "track": "internal" } } }

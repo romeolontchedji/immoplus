@@ -54,7 +54,7 @@ export function GerantScreen() {
                     </View>
                   ) : null}
                 </View>
-                <Fait Icone={CalendarDays} texte={`Sur Logeo depuis le ${dateCourte(g.member_since)}`} />
+                <Fait Icone={CalendarDays} texte={`Sur Immo+ depuis le ${dateCourte(g.member_since)}`} />
                 {delai(g.median_response_min) ? <Fait Icone={Clock} texte={delai(g.median_response_min) as string} /> : null}
                 <Fait Icone={House} texte={`${g.listings.length} chambre${g.listings.length > 1 ? "s" : ""} en ligne`} />
                 <Fait Icone={Star} texte={g.reviews.count ? `${Number(g.reviews.average).toFixed(1).replace(".", ",")} / 5 · ${g.reviews.count} avis` : "Pas encore d'avis"} />

@@ -1,6 +1,6 @@
 {% extends "web/espace.html" %}
-{% load logeo %}
-{% block titre %}Mes annonces — Espace Gérant — Logeo{% endblock %}
+{% load immoplus %}
+{% block titre %}Mes annonces — Espace Gérant — Immo+{% endblock %}
 {% block espace %}
   <div class="pro-principal pile pile--large">
     <div class="pro-entete">
@@ -22,7 +22,7 @@
     {% endif %}
     {% if profil.verification_status != "verified" %}
       <div class="alerte alerte--avertissement" role="status">
-        <p>Ton profil n'est pas encore vérifié : tu pourras publier après l'entretien de validation avec l'équipe Logeo.</p>
+        <p>Ton profil n'est pas encore vérifié : tu pourras publier après l'entretien de validation avec l'équipe Immo+.</p>
       </div>
     {% endif %}
     {% if brouillons %}

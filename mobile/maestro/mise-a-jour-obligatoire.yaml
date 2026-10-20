@@ -1,6 +1,6 @@
 # Parcours : si le serveur impose une version plus récente, l'application n'affiche que l'écran de mise à jour.
 # À lancer après avoir réglé APP_MIN_VERSION du serveur au-dessus de la version installée.
-appId: bj.logeo.app
+appId: bj.immoplus.app
 ---
 - launchApp
 - assertVisible: "Mise à jour nécessaire"

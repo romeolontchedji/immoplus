@@ -9,7 +9,7 @@ import { CLES_KV, kv } from "@/storage/kv";
 
 /**
  * BienvenueScreen conforme à la maquette Mobile · Bienvenue@1x.png :
- * - Partie haute : Dégradé bleu nuit immersif avec logo Logeo
+ * - Partie haute : Dégradé bleu nuit immersif avec logo Immo+
  * - Feuille blanche inférieure arrondie (rayon 32)
  * - Titre : "Ta chambre à Parakou, vue en vidéo."
  * - Sous-titre : "Gérants vérifiés, alertes en temps réel, zéro arnaque."
@@ -51,7 +51,7 @@ export function BienvenueScreen() {
         {/* Voile : le logo reste lisible sur la photo (ADR 0006) */}
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 27, 61, 0.45)" }} />
 
-        {/* Logo Logeo */}
+        {/* Logo Immo+ */}
         <Logotype taille={44} surFondSombre />
       </View>
 

@@ -73,7 +73,7 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.texte("DB_NAME", "logeo"),
+        "NAME": env.texte("DB_NAME", "immoplus"),
         "USER": env.texte("DB_USER", "app"),
         "PASSWORD": env.texte("DB_PASSWORD", "app-dev"),
         "HOST": env.texte("DB_HOST", "localhost"),
@@ -96,7 +96,7 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": REDIS_CACHE_URL,
-        "KEY_PREFIX": "logeo",
+        "KEY_PREFIX": "immoplus",
     }
 }
 
@@ -160,8 +160,8 @@ REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
 }
 SPECTACULAR_SETTINGS = {
-    "TITLE": "API Logeo",
-    "DESCRIPTION": "API REST de Logeo (additive uniquement, versionnée sous /v1).",
+    "TITLE": "API Immo+",
+    "DESCRIPTION": "API REST de Immo+ (additive uniquement, versionnée sous /v1).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_DIST": "/static/vendor/swagger-ui",
@@ -217,8 +217,8 @@ EMAIL_USE_SSL = env.booleen(
     "EMAIL_USE_SSL", False
 )  # chiffrement SSL direct (port 465) ; jamais avec TLS
 EMAIL_TIMEOUT = 15  # secondes avant d'abandonner un envoi (la tâche réessaie ensuite)
-# Expéditeur affiché dans les courriels de Logeo.
-DEFAULT_FROM_EMAIL = env.texte("DEFAULT_FROM_EMAIL") or "Logeo <no-reply@localhost>"
+# Expéditeur affiché dans les courriels de Immo+.
+DEFAULT_FROM_EMAIL = env.texte("DEFAULT_FROM_EMAIL") or "Immo+ <no-reply@localhost>"
 
 # --- Journalisation JSON ---
 LOGGING = {

@@ -96,7 +96,7 @@ describe("file d'envoi", () => {
     expect((await outbox.lister()).map((e) => e.clientMsgId)).toEqual(["id-2"]);
     await outbox.vider();
     expect(outbox.instantane()).toEqual([]);
-    expect(await AsyncStorage.getItem("logeo.outbox")).toBeNull();
+    expect(await AsyncStorage.getItem("immoplus.outbox")).toBeNull();
     stop();
   });
 });

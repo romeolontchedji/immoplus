@@ -1,4 +1,4 @@
-# Logeo
+# Immo+
 
 Trouver une chambre à Parakou : annonces avec vidéo réelle, gérants vérifiés, messagerie intégrée,
 aucun contact hors plateforme.
@@ -29,7 +29,7 @@ Le dépôt contient les deux parties du projet :
 Prérequis : Git, Make, Python 3.12 et Docker avec Compose.
 
 ```bash
-git clone https://github.com/Magloireaffokpe/logeo.git logeo && cd logeo
+git clone https://github.com/Magloireaffokpe/immoplus.git immoplus && cd immoplus
 make up        # installe les hooks, crée .env, construit et démarre la pile
 make fumee     # vérifie que tout répond
 ```

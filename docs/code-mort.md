@@ -16,7 +16,7 @@ Rien n'a été supprimé : chaque ligne est à confirmer avant nettoyage.
 | `changer_role()` | `apps/accounts/services/administration.py` | Jamais appelée, même par les tests |
 | `attendre()` | `apps/core/providers/push.py` | « Point d'extension pour les tests » jamais utilisé |
 | `statuts_publics()` | `apps/listings/selectors.py` | Remplacée par `STATUTS_VISIBLES` |
-| Filtre `statut_conversation` | `web/templatetags/logeo.py` | Plus utilisé par les gabarits |
+| Filtre `statut_conversation` | `web/templatetags/immoplus.py` | Plus utilisé par les gabarits |
 | Icônes `plus`, `log-in` | `web/templates/web/composants/icone.html` | Plus utilisées après la refonte des menus |
 | Icônes `user-check`, `map` | `adminsite/templates/admin/includes_icone.html` | Tuile « Gérants à vérifier » retirée |
 | Règles CSS de l'ancien gabarit gérant (`pro-layout`, `pro-sidebar*`, `pro-nav*`) | `web/static/css/components/pro.css` | Remplacées par la barre latérale commune (`espace.css`) |

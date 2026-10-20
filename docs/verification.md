@@ -33,7 +33,7 @@ Légende : Exécuté ✅ · Simulé ⚠️ · Non exécuté ⛔ — mesures du 6
 
 ```
 9 files already formatted
-Contrôles Logeo :
+Contrôles Immo+ :
   ✔ noms et mots interdits
   ✔ hygiène (secrets, débogage, tailles)
   ✔ nom de la branche courante

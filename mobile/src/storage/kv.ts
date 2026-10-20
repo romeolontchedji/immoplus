@@ -21,12 +21,12 @@ export const kv = {
 };
 
 export const CLES_KV = {
-  preferences: "logeo.preferences",
-  brouillon: "logeo.brouillon-annonce",
-  outbox: "logeo.outbox",
-  cacheRequetes: "logeo.cache-requetes",
-  onboardingVu: "logeo.onboarding-vu",
-  demandeNotifications: "logeo.demande-notifications",
-  verrouBiometrique: "logeo.verrou-biometrique",
-  consultees: "logeo.chambres-consultees",
+  preferences: "immoplus.preferences",
+  brouillon: "immoplus.brouillon-annonce",
+  outbox: "immoplus.outbox",
+  cacheRequetes: "immoplus.cache-requetes",
+  onboardingVu: "immoplus.onboarding-vu",
+  demandeNotifications: "immoplus.demande-notifications",
+  verrouBiometrique: "immoplus.verrou-biometrique",
+  consultees: "immoplus.chambres-consultees",
 } as const;

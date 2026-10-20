@@ -25,5 +25,5 @@ export function analyser(texte: string): EvenementServeur | null {
   }
 }
 
-/** Codes de fermeture propres à Logeo (docs/mobile/websocket.md). */
+/** Codes de fermeture propres à Immo+ (docs/mobile/websocket.md). */
 export const FERMETURE = { ticketInvalide: 4401, compteSuspendu: 4403, inactif: 4408, tropDEvenements: 4429, trameTropGrosse: 1009 } as const;

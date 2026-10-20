@@ -17,7 +17,7 @@ function EtatTelephone({ etat, onActiver }: { etat: Etat | null; onActiver: () =
   if (!etat || etat === "accordee") return null;
   const contenu = {
     a_demander: { texte: "Les notifications sont coupées sur ce téléphone. Active-les pour être prévenu des réponses et des nouvelles chambres.", action: "Activer les notifications", agir: onActiver },
-    refusee: { texte: "Tu as refusé les notifications pour Logeo. Réactive-les dans les réglages du téléphone.", action: "Ouvrir les réglages", agir: () => void Linking.openSettings() },
+    refusee: { texte: "Tu as refusé les notifications pour Immo+. Réactive-les dans les réglages du téléphone.", action: "Ouvrir les réglages", agir: () => void Linking.openSettings() },
     indisponible: { texte: "Les notifications push ne fonctionnent pas dans Expo Go ni sur émulateur : il faut l'application installée.", action: null, agir: null },
   }[etat];
   return (

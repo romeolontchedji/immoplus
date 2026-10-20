@@ -1,5 +1,5 @@
 # Parcours : créer une alerte depuis une recherche sans résultat. Suppose un locataire connecté.
-appId: bj.logeo.app
+appId: bj.immoplus.app
 ---
 - launchApp
 - tapOn: "Recherche"

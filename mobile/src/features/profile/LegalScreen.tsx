@@ -14,7 +14,7 @@ import { colors, ombre, rayon, sp } from "@/ui/theme/tokens";
 type Document = components["schemas"]["DocumentLegalOut"];
 type Slug = Document["slug"];
 
-const SOUS_TITRE: Record<Slug, string> = { conditions: "Règles d’utilisation de Logeo", confidentialite: "Tes données et tes droits" };
+const SOUS_TITRE: Record<Slug, string> = { conditions: "Règles d’utilisation de Immo+", confidentialite: "Tes données et tes droits" };
 
 function useDocumentLegal(slug: Slug) {
   return useQuery({

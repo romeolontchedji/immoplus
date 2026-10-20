@@ -188,9 +188,9 @@ class Command(BaseCommand):
     def _demonstration(self):
         # 1. Administrateur de démo
         admin, _ = User.objects.get_or_create(
-            email="demo-admin@logeo.test",
+            email="demo-admin@immoplus.test",
             defaults={
-                "full_name": "Admin Logeo",
+                "full_name": "Admin Immo+",
                 "role": Role.ADMIN,
                 "phone_e164": "+22901970000099",
             },
@@ -431,8 +431,8 @@ Identifiants de test (Mot de passe commun : {MOT_DE_PASSE_DEMO}) :
    - Numéro : +22901970000003
    - Données : Profil non vérifié (idéal pour tester la modération admin).
 
-4. Administrateur (Admin Logeo) :
-   - Email  : demo-admin@logeo.test (ou +22901970000099)
+4. Administrateur (Admin Immo+) :
+   - Email  : demo-admin@immoplus.test (ou +22901970000099)
    - Accès  : http://pilotage.localhost:8080/ (ou port d'admin)
 ========================================================================
 """

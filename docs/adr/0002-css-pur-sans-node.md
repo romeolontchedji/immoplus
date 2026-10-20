@@ -12,7 +12,7 @@ JavaScript, un CSS léger, aucune chaîne de construction lourde à maintenir.
 
 - Le CSS est écrit à la main, en **couches** (`@layer tokens, base, layout, components, utilities`).
 - `outils/construire_css.py` (bibliothèque standard) assemble, minifie et ajoute une empreinte au nom du fichier,
-  puis écrit `manifest.json`. La balise `{% css_logeo %}` lit ce manifeste.
+  puis écrit `manifest.json`. La balise `{% css_immoplus %}` lit ce manifeste.
 - **Toutes** les valeurs de couleur, taille, ombre et mouvement viennent de `tokens.css`. Un test refuse toute couleur
   écrite en dur ailleurs.
 - `outils/contraste.py` vérifie les contrastes WCAG AA des jetons en thème clair et sombre.

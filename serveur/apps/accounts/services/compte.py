@@ -87,7 +87,7 @@ def changer_numero(
     transaction.on_commit(
         lambda: tasks.envoyer_sms.delay(
             ancien,
-            "Logeo : le numéro de ton compte vient d'être modifié. Si ce n'est pas toi, contacte le support.",
+            "Immo+ : le numéro de ton compte vient d'être modifié. Si ce n'est pas toi, contacte le support.",
         )
     )
     return utilisateur

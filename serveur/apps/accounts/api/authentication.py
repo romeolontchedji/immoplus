@@ -30,7 +30,7 @@ class AuthJwt(BaseAuthentication):
         return utilisateur, identite
 
     def authenticate_header(self, request):
-        return 'Bearer realm="logeo"'
+        return 'Bearer realm="immoplus"'
 
 
 class Connecte(BasePermission):

@@ -176,7 +176,7 @@ export function CompteGerantScreen() {
         </View>
 
         <Text variante="legende" muted>
-          Une fois le compte créé, l’équipe Logeo te transmet tes identifiants : connecte-toi avec
+          Une fois le compte créé, l’équipe Immo+ te transmet tes identifiants : connecte-toi avec
           ton numéro et ton mot de passe.
         </Text>
 

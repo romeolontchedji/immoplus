@@ -9,7 +9,7 @@ import redis
 from apps.core.verrou import VerrouRedis
 from config import env
 
-CLE = "logeo:verrou:beat"
+CLE = "immoplus:verrou:beat"
 
 
 def main() -> int:
@@ -27,7 +27,7 @@ def main() -> int:
             "beat",
             "-l",
             "info",
-            "--schedule=/var/lib/logeo/celerybeat-schedule",
+            "--schedule=/var/lib/immoplus/celerybeat-schedule",
         ]
     )
     try:

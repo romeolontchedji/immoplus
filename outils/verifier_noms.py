@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refuse les chemins et contenus qui violent les conventions de nommage de Logeo."""
+"""Refuse les chemins et contenus qui violent les conventions de nommage de Immo+."""
 
 import os
 import re
@@ -18,7 +18,7 @@ SEGMENTS_IMPOSES = {"ISSUE_TEMPLATE", "LC_MESSAGES"}
 # (composants en PascalCase, groupes (…), segments [id] et fichiers +not-found).
 ARBRES_SANS_CONVENTION = (
     "docs/design/",
-    "logeo-design-pack/",
+    "immoplus-design-pack/",
     "serveur/adminsite/templates/admin/",
     "mobile/",
 )
@@ -58,7 +58,7 @@ def erreurs_chemin(chemin, conf):
     if (
         nom in conf["noms_imposes"]
         or radical in conf["noms_majuscules"]
-        or nom in {"base_site.html", "swagger_ui.html", "logeo_admin.css"}
+        or nom in {"base_site.html", "swagger_ui.html", "immoplus_admin.css"}
         or nom.startswith((".", "_"))
     ):
         return erreurs

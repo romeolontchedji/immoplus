@@ -1,6 +1,6 @@
 # Tuto — Créer un compte gérant
 
-Ce document décrit, étape par étape, le parcours réel d'un gérant chez Logeo :
+Ce document décrit, étape par étape, le parcours réel d'un gérant chez Immo+ :
 de la commande manuelle dans l'administration jusqu'à l'ouverture de son espace
 professionnel. Il est écrit en suivant le code, pas une intention : à chaque
 étape, on indique ce qui est **fait**, ce qui est **à faire**, et le fichier
@@ -66,7 +66,7 @@ L'administrateur communique au gérant, **hors plateforme** (WhatsApp, appel, SM
 En complément, un **SMS automatique purement informatif** part vers le numéro
 enregistré à la création du compte (ADR 0004) :
 
-> Logeo : ton compte gérant est créé. Connecte-toi dans l'application avec le
+> Immo+ : ton compte gérant est créé. Connecte-toi dans l'application avec le
 > mot de passe que l'équipe t'a transmis. Ne le communique jamais.
 
 Fonctionnement (`serveur/apps/accounts/services/administration.py`) :

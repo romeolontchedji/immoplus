@@ -12,7 +12,7 @@ describe("session", () => {
   it("le jeton d'accès reste en mémoire, le jeton de rafraîchissement va au coffre", async () => {
     await storeTokens({ access: "A1", refresh: "R1" });
     expect(accessToken()).toBe("A1");
-    expect(magasin.get("logeo.refresh")).toBe("R1");
+    expect(magasin.get("immoplus.refresh")).toBe("R1");
     expect([...magasin.values()]).not.toContain("A1");
     expect(await hasRefreshToken()).toBe(true);
     await clearSession();
@@ -34,7 +34,7 @@ describe("session", () => {
     expect(resultats.every(Boolean)).toBe(true);
     expect(renouveleur).toHaveBeenCalledTimes(1);
     expect(accessToken()).toBe("neuf");
-    expect(magasin.get("logeo.refresh")).toBe("R2"); // rotation du jeton de rafraîchissement
+    expect(magasin.get("immoplus.refresh")).toBe("R2"); // rotation du jeton de rafraîchissement
   });
 
   it("refus du serveur : session effacée et interface prévenue", async () => {

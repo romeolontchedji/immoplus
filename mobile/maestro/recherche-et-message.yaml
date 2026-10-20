@@ -1,5 +1,5 @@
 # Parcours : trouver une chambre, ouvrir la fiche, écrire au gérant. Suppose un locataire connecté et des annonces (make seed DEMO=1).
-appId: bj.logeo.app
+appId: bj.immoplus.app
 ---
 - launchApp
 - tapOn: "Recherche"

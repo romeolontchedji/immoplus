@@ -1,5 +1,5 @@
-/* Administration Logeo : même identité que le site et l'application (jetons de serveur/web/static/css/tokens.css).
-   Les variables de l'admin Django sont redirigées vers les jetons Logeo, puis chaque zone est soignée. Thème clair seul. */
+/* Administration Immo+ : même identité que le site et l'application (jetons de serveur/web/static/css/tokens.css).
+   Les variables de l'admin Django sont redirigées vers les jetons Immo+, puis chaque zone est soignée. Thème clair seul. */
 
 @font-face {
   font-family: "Plus Jakarta Sans";
@@ -77,8 +77,6 @@ h1, h2, h3, h4 { font-family: var(--police-titre); color: var(--night); }
 }
 #site-name { margin: 0; }
 #site-name a.lg-marque, .lg-marque { display: inline-flex; align-items: center; gap: var(--sp-2); text-decoration: none; }
-.lg-marque__nom { font-size: var(--fs-20); font-weight: 800; letter-spacing: -0.02em; color: var(--night); }
-.lg-marque__nom b { color: var(--sun); }
 .lg-marque__badge {
   margin-left: var(--sp-2); padding: 2px var(--sp-3); border-radius: var(--r-pill); background: var(--blue-soft);
   color: var(--blue); font-size: var(--fs-12); font-weight: 800; letter-spacing: 0.04em;

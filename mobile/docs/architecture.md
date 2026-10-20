@@ -79,7 +79,7 @@ système respectées, états de chargement par squelettes, bandeau « hors conne
 | Décision | Pourquoi | Si vous voulez autre chose |
 |---|---|---|
 | Expo (client de développement) plutôt que React Native nu | Exigé par le cahier des charges ; builds via EAS | — |
-| Identifiant Android `bj.logeo.app` | Valeur par défaut raisonnable | À fixer avant la première publication (irréversible) |
+| Identifiant Android `bj.immoplus.app` | Valeur par défaut raisonnable | À fixer avant la première publication (irréversible) |
 | Visiteur sans compte : fil, recherche, fiches ouverts | Le fil de l'API est public ; réduit la friction | Mettre `AuthRequired` au niveau de `(locataire)/_layout` |
 | `openapi-fetch` + `openapi-typescript` | Client typé de bout en bout, sans code généré à maintenir | — |
 | Rendu de la description : `description_html` du serveur (déjà assaini) via `react-native-render-html` | Même rendu que le site | Rendre `description_md` côté application |

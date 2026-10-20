@@ -8,7 +8,7 @@ try:
     import psycopg
 
     with psycopg.connect(
-        dbname=os.environ.get("DB_NAME", "logeo"),
+        dbname=os.environ.get("DB_NAME", "immoplus"),
         user=os.environ.get("DB_USER", "app"),
         password=os.environ.get("DB_PASSWORD", "app-dev"),
         host=os.environ.get("DB_HOST", "localhost"),

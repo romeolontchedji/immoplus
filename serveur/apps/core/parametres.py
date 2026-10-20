@@ -115,16 +115,16 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "APP_NOTICE": ("", "Avis court affiché dans l'application (vide : aucun)."),
     "TEAM_PHONE": (
         "+2290156201400",
-        "Numéro de l'équipe Logeo (appel et WhatsApp), format international.",
+        "Numéro de l'équipe Immo+ (appel et WhatsApp), format international.",
     ),
     # Identité de l'éditeur dans les textes légaux : VALEURS FICTIVES PROVISOIRES (décision du 2026-10-17),
     # à remplacer par les vraies avant l'ouverture au public, puis passer LEGAL_PROVISIONAL à faux.
     "LEGAL_PROVISIONAL": (True, "Textes légaux provisoires (identité fictive) : bandeau affiché."),
-    "LEGAL_COMPANY": ("LOGEO SARL", "Raison sociale de l'éditeur."),
+    "LEGAL_COMPANY": ("IMMOPLUS SARL", "Raison sociale de l'éditeur."),
     "LEGAL_RCCM": ("RB/PKO/26 B 00001", "Numéro RCCM de l'éditeur."),
     "LEGAL_IFU": ("3202600000001", "Numéro IFU de l'éditeur."),
     "LEGAL_ADDRESS": ("Banikanni, Parakou, République du Bénin", "Siège social de l'éditeur."),
-    "LEGAL_EMAIL": ("contact@logeo.bj", "Contact pour les questions légales et les données."),
+    "LEGAL_EMAIL": ("contact@immoplus.bj", "Contact pour les questions légales et les données."),
     "LEGAL_UPDATED_AT": ("2026-10-17", "Date de mise à jour des textes légaux (AAAA-MM-JJ)."),
 }
 

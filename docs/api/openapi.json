@@ -1,9 +1,9 @@
 {
     "openapi": "3.0.3",
     "info": {
-        "title": "API Logeo",
+        "title": "API Immo+",
         "version": "1.0.0",
-        "description": "API REST de Logeo (additive uniquement, versionnée sous /v1)."
+        "description": "API REST de Immo+ (additive uniquement, versionnée sous /v1)."
     },
     "paths": {
         "/uploads/{media_id}": {

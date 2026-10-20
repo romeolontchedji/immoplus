@@ -49,30 +49,30 @@ def creer(**options):
 
 
 def test_creation_d_un_moderateur():
-    texte = creer(email="Modo@Logeo.test", nom="Modo", role="moderator")
-    u = User.objects.get(email="modo@logeo.test")
+    texte = creer(email="Modo@Immoplus.test", nom="Modo", role="moderator")
+    u = User.objects.get(email="modo@immoplus.test")
     assert u.role == "moderator" and u.check_password(MDP) and u.is_staff
     assert u.email in texte
     assert AuditLog.objects.filter(action="admin.personnel_cree").exists()
 
 
 def test_creation_d_un_administrateur():
-    creer(email="chef@logeo.test", nom="Chef", role="admin")
-    assert User.objects.get(email="chef@logeo.test").is_superuser
+    creer(email="chef@immoplus.test", nom="Chef", role="admin")
+    assert User.objects.get(email="chef@immoplus.test").is_superuser
 
 
 def test_mot_de_passe_faible_refuse():
     with pytest.raises(CommandError):
-        creer(email="x@logeo.test", nom="X", role="admin", mot_de_passe="1234")
-    assert not User.objects.filter(email="x@logeo.test").exists()
+        creer(email="x@immoplus.test", nom="X", role="admin", mot_de_passe="1234")
+    assert not User.objects.filter(email="x@immoplus.test").exists()
 
 
 def test_courriel_deja_utilise():
-    creer(email="x@logeo.test", nom="X", role="admin")
+    creer(email="x@immoplus.test", nom="X", role="admin")
     with pytest.raises(CommandError):
-        creer(email="X@logeo.test", nom="Y", role="admin")
+        creer(email="X@immoplus.test", nom="Y", role="admin")
 
 
 def test_roles_de_clientele_refuses():
     with pytest.raises(CommandError):
-        creer(email="x@logeo.test", nom="X", role="client")
+        creer(email="x@immoplus.test", nom="X", role="client")

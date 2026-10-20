@@ -20,10 +20,10 @@ def _manifeste() -> dict[str, str]:
 
 
 @register.simple_tag
-def css_logeo() -> str:
+def css_immoplus() -> str:
     """URL du CSS assemblé (`make css`). Échoue clairement s'il n'a pas été construit."""
     try:
-        return static(_manifeste()["logeo.css"])
+        return static(_manifeste()["immoplus.css"])
     except FileNotFoundError as e:
         raise RuntimeError("CSS non construit : lance `make css`.") from e
 

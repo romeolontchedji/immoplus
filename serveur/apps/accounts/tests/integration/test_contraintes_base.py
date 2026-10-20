@@ -80,9 +80,9 @@ class TestUsers:
     def test_email_unique_mais_plusieurs_absents(self):
         ClientFactory()
         ClientFactory()  # deux comptes sans e-mail : l'unicité ne s'applique qu'aux valeurs non nulles
-        PersonnelFactory(email="a@logeo.test")
+        PersonnelFactory(email="a@immoplus.test")
         with pytest.raises(IntegrityError), transaction.atomic():
-            PersonnelFactory(email="a@logeo.test")
+            PersonnelFactory(email="a@immoplus.test")
 
     def test_valeurs_par_defaut_posees_par_la_base(self):
         with connection.cursor() as c:

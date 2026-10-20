@@ -67,7 +67,7 @@ def authentifier(saisie_telephone: str, mot_de_passe: str, client: str) -> User:
     if utilisateur.status == Statut.BANNED or not utilisateur.is_active:
         raise ErreurMetier(
             "account_suspended",
-            "Ton compte est suspendu. Contacte le support de Logeo.",
+            "Ton compte est suspendu. Contacte le support de Immo+.",
             statut=403,
         )
     verrouillage.enregistrer_succes(cle, client)

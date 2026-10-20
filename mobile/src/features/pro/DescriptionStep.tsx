@@ -87,7 +87,7 @@ export function DescriptionStep() {
         multiline
         maxLength={4000}
         placeholder={"Ex. Chambre au calme, à 5 minutes du marché Arzèkè.\nPas d'animaux. Visite possible le soir."}
-        aide="Les numéros, e-mails et liens sont refusés : les échanges passent par la messagerie Logeo."
+        aide="Les numéros, e-mails et liens sont refusés : les échanges passent par la messagerie Immo+."
       />
 
       {erreur ? (

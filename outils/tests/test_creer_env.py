@@ -88,10 +88,10 @@ class TestCreerEnv(unittest.TestCase):
                 secret = creer_env.lire_valeurs(racine / ".env")["SITE_SECRET_KEY"]
                 self.assertGreaterEqual(len(secret), 48)  # écrit dans .env dès le premier passage
                 env = racine / ".env"
-                env.write_text(env.read_text().replace("DOMAIN=localhost", "DOMAIN=logeo.bj"))
+                env.write_text(env.read_text().replace("DOMAIN=localhost", "DOMAIN=immoplus.bj"))
                 self.assertEqual(creer_env.main(["--services"]), 0)
                 rendu = (racine / "infra/compose/env/x.env").read_text()
-                self.assertIn("D=logeo.bj", rendu)
+                self.assertIn("D=immoplus.bj", rendu)
                 self.assertIn(f"K={secret}", rendu)
             finally:
                 creer_env.RACINE, creer_env.MODELE_RACINE, creer_env.DOSSIER_ENV = avant

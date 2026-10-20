@@ -59,7 +59,7 @@ def agregateur():
 class TestSmsConsole:
     def test_ecrit_dans_la_boite_de_developpement(self, settings, capsys):
         cache.clear()
-        resultat = sms.ConsoleSmsProvider().envoyer("+2290197123456", "Ton code Logeo : 123456")
+        resultat = sms.ConsoleSmsProvider().envoyer("+2290197123456", "Ton code Immo+ : 123456")
         assert resultat.cout_xof == 0
         assert "123456" in capsys.readouterr().err
         assert cache.get(sms.CLE_BOITE_DEV)[0]["a"] == "+2290197123456"
@@ -159,7 +159,7 @@ class TestAttestation:
             attestation.PlayIntegrityAttestationProvider()
 
     def test_play_integrity_sans_jeton_est_refuse_sans_erreur(self, settings):
-        settings.PLAY_INTEGRITY_PACKAGE = "bj.logeo"
+        settings.PLAY_INTEGRITY_PACKAGE = "bj.immoplus"
         settings.PLAY_INTEGRITY_CREDENTIALS = "x"
         assert attestation.PlayIntegrityAttestationProvider().verifier(None, "i") is False
 

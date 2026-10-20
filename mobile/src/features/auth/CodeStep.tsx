@@ -17,7 +17,7 @@ import { codeSchema } from "./schemas";
 
 /**
  * Deuxième étape conforme à la maquette Mobile · Inscription 2 2@1x.png :
- * - En-tête : Logo Logeo à gauche, "Étape 2/2" à droite, barre de progression 2 segments bleus
+ * - En-tête : Logo Immo+ à gauche, "Étape 2/2" à droite, barre de progression 2 segments bleus
  * - Titre "Entre le code reçu par SMS" + numéro formaté
  * - Boîtes de code individuelles avec bordure bleue active
  * - Compteur "Renvoyer le code dans MM:SS"

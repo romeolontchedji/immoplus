@@ -41,7 +41,7 @@ def _empreinte(code: str, utilisateur_id) -> str:
 
 
 def masquer_courriel(adresse: str) -> str:
-    """« admin.essai@logeo.bj » → « a••••••••••@logeo.bj » : on montre où le code est parti sans tout révéler."""
+    """« admin.essai@immoplus.bj » → « a••••••••••@immoplus.bj » : on montre où le code est parti sans tout révéler."""
     nom, _, domaine = (adresse or "").partition("@")
     return f"{nom[:1]}{'•' * max(len(nom) - 1, 1)}@{domaine}" if domaine else "ton adresse"
 
@@ -57,9 +57,9 @@ def _envoyer(request, utilisateur, etat: dict) -> None:
     heure = timezone.localtime().strftime("%H:%M")
     envoyer_courriel.delay(
         [utilisateur.email],
-        f"Logeo · ton code de connexion : {code}",
+        f"Immo+ · ton code de connexion : {code}",
         f"Bonjour {utilisateur.full_name or ''},\n\n"
-        f"Ton code de connexion à l'administration Logeo : {code}\n"
+        f"Ton code de connexion à l'administration Immo+ : {code}\n"
         f"Il est valable 10 minutes.\n\n"
         f"Demande faite à {heure} depuis l'adresse {ip_client(request) or 'inconnue'}.\n"
         "Si ce n'est pas toi, ne transmets ce code à personne et change ton mot de passe : "

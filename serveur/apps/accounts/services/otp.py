@@ -40,7 +40,7 @@ SEUIL_FRICTION = 0.8
 MARQUE_NON_ENVOYE = (
     "non-envoye"  # ligne enregistrée pour les plafonds, sans SMS (compte inexistant)
 )
-SEL_JETON = "logeo.otp.jeton"
+SEL_JETON = "immoplus.otp.jeton"
 
 
 @dataclass(frozen=True)
@@ -245,7 +245,7 @@ def demander(saisie: str, objet: str, ctx: Contexte) -> None:
             provider_ref=None if envoyer else MARQUE_NON_ENVOYE,
         )
         if envoyer:
-            message = f"Logeo : ton code est {code}. Il expire dans 5 minutes. Ne le partage avec personne."
+            message = f"Immo+ : ton code est {code}. Il expire dans 5 minutes. Ne le partage avec personne."
             transaction.on_commit(lambda: tasks.envoyer_sms.delay(phone, message, str(ligne.id)))
 
 

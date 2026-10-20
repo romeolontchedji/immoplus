@@ -194,7 +194,7 @@
   background: var(--sun); color: var(--night);
 }
 
-/* ── Pourquoi Logeo (3 piliers) ─────────────────────────────────────────────── */
+/* ── Pourquoi Immo+ (3 piliers) ─────────────────────────────────────────────── */
 .accueil-piliers { background: var(--bg); }
 .accueil-piliers__grille {
   display: grid; gap: var(--sp-5); grid-template-columns: 1fr;

@@ -102,12 +102,12 @@ def detecter(texte: str) -> Detection:
 
 def refuser_si_coordonnees(**champs: str) -> None:
     """Annonces : enregistrement refusé avec explication quand un signal fort est présent (mode `mask`)."""
-    fautes = {nom: ["Les coordonnées (numéro, e-mail, lien) sont interdites : tout passe par la messagerie Logeo."]
+    fautes = {nom: ["Les coordonnées (numéro, e-mail, lien) sont interdites : tout passe par la messagerie Immo+."]
               for nom, valeur in champs.items() if detecter(valeur).fort}  # fmt: skip
     if fautes:
         raise ErreurMetier(
             "contact_detected",
-            "Retire les numéros, e-mails et liens de ton annonce : les échanges se font dans Logeo.",
+            "Retire les numéros, e-mails et liens de ton annonce : les échanges se font dans Immo+.",
             champs=fautes,
         )
 

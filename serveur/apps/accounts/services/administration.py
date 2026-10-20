@@ -19,7 +19,7 @@ journal = logging.getLogger(__name__)
 
 # Texte sans « ê » (GSM-7) pour rester sur un seul segment SMS.
 MESSAGE_COMPTE_PRET = (
-    "Logeo : ton compte gérant est créé. Connecte-toi dans l'application avec le mot de passe "
+    "Immo+ : ton compte gérant est créé. Connecte-toi dans l'application avec le mot de passe "
     "que l'équipe t'a transmis. Ne le communique jamais."
 )
 

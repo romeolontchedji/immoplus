@@ -132,7 +132,7 @@ Parité attendue avec le web : tout ce qu'un locataire ou un gérant fait sur le
 | MM8 | Messages gérant ✅ (filtre « À répondre » ; délai de réponse : à faire) | Onglet partagé | Filtre « à répondre », délai de réponse affiché |
 | MM9 | Notifications ✅ regroupées par jour | Écran présent | Regroupement par jour, actions rapides (ouvrir la conversation, voir la chambre), « tout marquer comme lu » |
 | MM10 | Abonnement / paiement | Retirés de l'app (P0.9) | Rebranchés sur l'API de §7 bis seulement au lancement payant |
-| MM11 | Pages légales, aide, WhatsApp de l'équipe ✅ | Absents | Écrans « Conditions », « Confidentialité », « Aide » servis par l'API (§1.4) ; ligne « WhatsApp Logeo » dans le Profil |
+| MM11 | Pages légales, aide, WhatsApp de l'équipe ✅ | Absents | Écrans « Conditions », « Confidentialité », « Aide » servis par l'API (§1.4) ; ligne « WhatsApp Immo+ » dans le Profil |
 
 ---
 

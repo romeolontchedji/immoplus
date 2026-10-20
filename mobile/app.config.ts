@@ -1,23 +1,23 @@
 import type { ExpoConfig } from "expo/config";
 
 /**
- * Configuration Expo de Logeo (une seule application, deux espaces : locataire et gérant).
+ * Configuration Expo de Immo+ (une seule application, deux espaces : locataire et gérant).
  * Les valeurs qui changent selon l'environnement viennent de `EXPO_PUBLIC_*` (voir `.env.example`).
  */
-const hoteWeb = process.env.EXPO_PUBLIC_WEB_HOST ?? "logeo.example"; // domaine du site : liens profonds https
+const hoteWeb = process.env.EXPO_PUBLIC_WEB_HOST ?? "immoplus.example"; // domaine du site : liens profonds https
 
 const config: ExpoConfig = {
-  name: "Logeo",
-  slug: "logeo",
-  scheme: "logeo", // liens profonds : logeo://annonces/<slug>
+  name: "Immo+",
+  slug: "immoplus",
+  scheme: "immoplus", // liens profonds : immoplus://annonces/<slug>
   version: "1.0.0", // doit rester >= `min_supported_version` renvoyée par GET /v1/app-config
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light", // thème clair uniquement (le sombre rendait des textes illisibles)
   android: {
-    package: "bj.logeo.app", // à confirmer avant la première publication (impossible à changer ensuite)
+    package: "bj.immoplus.app", // à confirmer avant la première publication (impossible à changer ensuite)
     adaptiveIcon: {
-      backgroundColor: "#117853",
+      backgroundColor: "#1B44D6", // bleu Immo+
       foregroundImage: "./assets/android-icon-foreground.png",
       backgroundImage: "./assets/android-icon-background.png",
       monochromeImage: "./assets/android-icon-monochrome.png",
@@ -32,7 +32,7 @@ const config: ExpoConfig = {
       },
     ],
   },
-  ios: { supportsTablet: false, bundleIdentifier: "bj.logeo.app" },
+  ios: { supportsTablet: false, bundleIdentifier: "bj.immoplus.app" },
   plugins: [
     "expo-router",
     "expo-secure-store",
@@ -42,9 +42,9 @@ const config: ExpoConfig = {
     ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 200, resizeMode: "contain", backgroundColor: "#FFFFFF" }],
     ["expo-build-properties", { android: { minSdkVersion: 26 } }], // Android 8.0 (ENF-COMP-01)
     ["expo-notifications", { color: "#117853" }],
-    ["expo-image-picker", { photosPermission: "Logeo accède à tes photos pour illustrer ton annonce.", cameraPermission: "Logeo utilise la caméra pour filmer ta chambre." }],
-    ["expo-location", { locationWhenInUsePermission: "Logeo utilise ta position pour situer ta chambre sur la carte." }],
-    ["expo-local-authentication", { faceIDPermission: "Logeo utilise Face ID pour déverrouiller l'application." }], // ADR 0005
+    ["expo-image-picker", { photosPermission: "Immo+ accède à tes photos pour illustrer ton annonce.", cameraPermission: "Immo+ utilise la caméra pour filmer ta chambre." }],
+    ["expo-location", { locationWhenInUsePermission: "Immo+ utilise ta position pour situer ta chambre sur la carte." }],
+    ["expo-local-authentication", { faceIDPermission: "Immo+ utilise Face ID pour déverrouiller l'application." }], // ADR 0005
     "react-native-compressor",
   ],
   experiments: { reactCompiler: false },

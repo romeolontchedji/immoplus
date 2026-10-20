@@ -264,7 +264,7 @@ def signaler(request, slug):
     return _rendre_fiche(
         request,
         f,
-        message="Ton signalement a été pris en compte et sera traité par l'équipe Logeo.",
+        message="Ton signalement a été pris en compte et sera traité par l'équipe Immo+.",
     )
 
 
@@ -415,7 +415,7 @@ def mes_conversations(request):
 
 
 MOTIFS_CONVERSATION = [
-    ("contact_leak", "Coordonnées partagées ou demande de sortir de Logeo"),
+    ("contact_leak", "Coordonnées partagées ou demande de sortir de Immo+"),
     ("scam", "Arnaque ou demande d'acompte sans visite"),
     ("harassment", "Harcèlement ou propos déplacés"),
     ("other", "Autre raison"),
@@ -481,7 +481,7 @@ def _agir(request, c) -> tuple[str | None, str | None]:
         )
     if action == "signaler":
         moderation.signaler(request.user, "conversation", c.pk, request.POST.get("motif", ""))
-        return "Ton signalement a été pris en compte et sera traité par l'équipe Logeo.", "succes"
+        return "Ton signalement a été pris en compte et sera traité par l'équipe Immo+.", "succes"
     return None, None
 
 

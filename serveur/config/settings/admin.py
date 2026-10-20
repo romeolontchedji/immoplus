@@ -19,7 +19,7 @@ SECRET_KEY = env.texte("SECRET_KEY")
 # Seul l'hôte d'administration, plus l'adresse interne du contrôle de santé.
 _DOMAINE = env.texte("DOMAIN")
 if not _DOMAINE or _DOMAINE == "localhost":
-    raise ImproperlyConfigured("DOMAIN de production absent (ex. logeo.bj).")
+    raise ImproperlyConfigured("DOMAIN de production absent (ex. immoplus.bj).")
 ALLOWED_HOSTS = [f"pilotage.{_DOMAINE}", "127.0.0.1", "localhost"]
 CSRF_TRUSTED_ORIGINS = [f"https://pilotage.{_DOMAINE}"]
 ADMIN_2FA_ACTIVE = True  # jamais désactivable en production

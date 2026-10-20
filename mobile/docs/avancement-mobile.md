@@ -1,4 +1,4 @@
-# Avancement de l'application mobile Logeo
+# Avancement de l'application mobile Immo+
 
 Ce document suit l'état d'implémentation et de conformité de l'application mobile (`mobile/`).
 

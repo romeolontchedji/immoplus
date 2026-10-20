@@ -117,7 +117,7 @@ def test_production_utilise_les_reglages_stricts(prod):
         prod["services"]["admin"]["environment"]["DJANGO_SETTINGS_MODULE"]
         == "config.settings.admin"
     )
-    assert prod["services"]["web-api"]["environment"]["LOGEO_RELOAD"] == "0"
+    assert prod["services"]["web-api"]["environment"]["IMMOPLUS_RELOAD"] == "0"
 
 
 def test_developpement_admin_utilise_les_reglages_locaux(pile):

@@ -1,6 +1,6 @@
 {% extends "web/espace.html" %}
-{% load static logeo %}
-{% block titre %}Tableau de bord — Espace Gérant — Logeo{% endblock %}
+{% load static immoplus %}
+{% block titre %}Tableau de bord — Espace Gérant — Immo+{% endblock %}
 {% block espace %}
   <div class="pro-principal">
     {# En-tête #}
@@ -28,7 +28,7 @@
     </div>
     {% if profil.verification_status != "verified" %}
       <div class="alerte alerte--avertissement" role="status">
-        <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Logeo.</p>
+        <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Immo+.</p>
       </div>
     {% endif %}
     {% if message %}

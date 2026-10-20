@@ -13,7 +13,7 @@ et dans l'application, pour un rendu plus chaleureux.
 
 - **9 photos d'ambiance** à licence libre (Unsplash, Pexels, Pixabay), choisies et téléchargées par le porteur :
   bannière de l'accueil (3), présentation de l'application (4), écran de bienvenue (1), page gérant (1).
-- **Hébergées par Logeo** : originaux dans `photos-brutes/` (non versionné), conversion en WebP par un script du
+- **Hébergées par Immo+** : originaux dans `photos-brutes/` (non versionné), conversion en WebP par un script du
   dossier `outils/`, tailles 480/960/1600 px servies en fichiers statiques par le site, 960 px embarquée dans
   l'application. Aucun chargement depuis un site tiers : la règle « aucune image externe, aucun CDN » est conservée.
 - **Jamais pour représenter une chambre.** Une annonce sans image garde l'affiche vectorielle de repli (CDC §9.3,

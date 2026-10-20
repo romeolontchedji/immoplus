@@ -18,7 +18,7 @@ type Valeurs = z.infer<typeof connexionSchema>;
 
 /**
  * ConnexionScreen fidèle à la maquette Mobile · Connexion@1x.png :
- * - Logo Logeo avec puce solaire
+ * - Logo Immo+ avec puce solaire
  * - Titre "Entre ton numéro" + sous-titre
  * - Préfixe +229 et saisie du numéro
  * - Champ mot de passe avec affichage/masquage
@@ -43,7 +43,7 @@ export function ConnexionScreen() {
   return (
     <Screen scroll>
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
-        {/* Logo Logeo */}
+        {/* Logo Immo+ */}
         <View style={{ marginBottom: sp[2] }}>
           <Logotype taille={38} />
         </View>
@@ -149,7 +149,7 @@ export function ConnexionScreen() {
             }}
           >
             L’inscription est réservée aux locataires. Les comptes gérant sont créés par l’équipe
-            Logeo.
+            Immo+.
           </Text>
         </View>
       </View>

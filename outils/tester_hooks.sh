@@ -2,16 +2,16 @@
 # Preuve que les hooks refusent ce qu'ils doivent refuser : 9 cas dans un dépôt temporaire avec distant nu.
 set -uo pipefail
 # Le dépôt temporaire ne contient ni Django ni les outils de la CI : les contrôles complets y sont
-# « sautés ». On n'hérite donc pas du mode strict posé par la CI (LOGEO_STRICT=1), sinon le premier
+# « sautés ». On n'hérite donc pas du mode strict posé par la CI (IMMOPLUS_STRICT=1), sinon le premier
 # push d'amorçage échouerait pour de simples sauts, sans rapport avec les hooks testés.
-unset LOGEO_STRICT
+unset IMMOPLUS_STRICT
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 git init -q --bare "$TMP/distant.git"
 git init -q -b main "$TMP/depot"
 cd "$TMP/depot"
-git config user.name "Test" && git config user.email "test@logeo.local"
+git config user.name "Test" && git config user.email "test@immoplus.local"
 git remote add origin "$TMP/distant.git"
 mkdir -p outils .githooks serveur
 cp "$SRC"/outils/*.py "$SRC"/outils/*.sh "$SRC"/outils/mots-interdits.toml "$SRC"/outils/ruff.toml outils/
@@ -19,7 +19,7 @@ cp "$SRC"/serveur/pyproject.toml serveur/   # configuration ruff héritée par o
 cp "$SRC"/.githooks/* .githooks/
 git config core.hooksPath .githooks
 git add . && git commit -q -m "chore(outils): amorcer le dépôt de test" || { echo "✗ amorçage impossible"; exit 1; }
-LOGEO_PREMIER_PUSH=1 git push -q origin main 2>/dev/null || { echo "✗ le premier push d'amorçage (LOGEO_PREMIER_PUSH=1) a échoué"; exit 1; }
+IMMOPLUS_PREMIER_PUSH=1 git push -q origin main 2>/dev/null || { echo "✗ le premier push d'amorçage (IMMOPLUS_PREMIER_PUSH=1) a échoué"; exit 1; }
 
 ok=0; ko=0
 pousser() { # pousse en affichant la raison du refus (ligne « Push annulé »)

@@ -1,5 +1,5 @@
 # Parcours : un locataire se connecte. Fournir un compte de test : le mot de passe via la variable MOT_DE_PASSE (maestro test -e MOT_DE_PASSE=…).
-appId: bj.logeo.app
+appId: bj.immoplus.app
 ---
 - launchApp:
     clearState: true

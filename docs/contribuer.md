@@ -1,4 +1,4 @@
-# Contribuer à Logeo
+# Contribuer à Immo+
 
 ## 1. Mise en place
 
@@ -24,7 +24,7 @@ Fusion : classique ou « rebase », **jamais « squash »** (l'historique propre
 Le hook refuse tout push sur `main`. Pour le tout premier push d'un dépôt vide, une seule fois :
 
 ```bash
-LOGEO_PREMIER_PUSH=1 git push -u origin main
+IMMOPLUS_PREMIER_PUSH=1 git push -u origin main
 ```
 
 ## 4. Protéger `main` côté GitHub (obligatoire : les hooks locaux se contournent)

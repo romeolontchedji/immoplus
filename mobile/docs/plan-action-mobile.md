@@ -1,4 +1,4 @@
-# Plan de conception et refonte de l'application mobile Logeo
+# Plan de conception et refonte de l'application mobile Immo+
 
 Ce document décrit la stratégie d'implémentation et de refonte visuelle de l'application mobile React Native / Expo (`mobile/`), en stricte conformité avec le guide de style `docs/design/DESIGN.md`, les maquettes visuelles `docs/design/screens/` et l'architecture technique existante (`mobile/docs/architecture.md`).
 
@@ -22,7 +22,7 @@ Ce document décrit la stratégie d'implémentation et de refonte visuelle de l'
 ### Phase 1 : Système de Design Mobile & Composants de base
 - [x] **Dépendances :** Installation locale (`npm install`) pour activer le linting, le typage TypeScript et les tests Jest.
 - [x] **Jetons de design (`mobile/src/ui/theme/tokens.ts`) :**
-  - Remplacement de l'ancienne palette verte par la charte officielle Logeo (`--blue`, `--sun`, `--night`, `--bg`, etc.).
+  - Remplacement de l'ancienne palette verte par la charte officielle Immo+ (`--blue`, `--sun`, `--night`, `--bg`, etc.).
   - Configuration des rayons (cartes 20, champs 14, pilule 999) et des ombres douces.
 - [x] **Typographie :** Chargement de la police Google Font *Plus Jakarta Sans* via `expo-font`.
 - [x] **Composants d'interface (`mobile/src/ui/components/`) :**
@@ -37,7 +37,7 @@ Ce document décrit la stratégie d'implémentation et de refonte visuelle de l'
 
 ### Phase 2 : Authentification & Bienvenue (Locataire & Gérant)
 - [x] **Écran de bienvenue / Onboarding (`Mobile · Bienvenue@1x.png`) :**
-  - Bannière nuit avec logo Logeo, feuille blanche arrondie, promesse de valeur, pastilles claires, CTA bleu locataire, CTA crème gérant.
+  - Bannière nuit avec logo Immo+, feuille blanche arrondie, promesse de valeur, pastilles claires, CTA bleu locataire, CTA crème gérant.
 - [x] **Connexion (`Mobile · Connexion@1x.png`) :**
   - Identifiant (numéro de téléphone béninois `+229`), mot de passe, bouton cobalt, mention explicative gérant.
 - [x] **Inscription Locataire multi-étapes (`Mobile · Inscription 1 2@1x.png` & `2 2@1x.png`) :**
@@ -51,7 +51,7 @@ Ce document décrit la stratégie d'implémentation et de refonte visuelle de l'
 
 ### Phase 3 : Découverte & Recherche (Locataire & Visiteur)
 - [x] **Accueil (`Mobile · Accueil@1x.png`) :**
-  - En-tête avec logo officiel `Logeo.` et cloche de notifications en carte ronde.
+  - En-tête avec logo officiel `Immo+.` et cloche de notifications en carte ronde.
   - Titre héroïque "Où veux-tu habiter ?", barre de recherche avec bouton bleu "Filtres".
   - Puces de recherche rapide défilantes et fil infini avec ListingCard fidèle.
 - [x] **Fiche détaillée de chambre (`Mobile · Détail chambre@1x.png`) :**

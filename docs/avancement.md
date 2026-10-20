@@ -2,6 +2,14 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 : nouvelle identité Immo+ (domaine `immoplus.bj`).**
+- Nom, logos (site, administration, application, icônes Android et iOS, favicon), PDF de la documentation régénérés.
+  Paquet mobile `bj.immoplus.app`, schéma `immoplus`. Palette inchangée.
+- Infrastructure : projet Compose, base, rôles, utilisateur des images et variables `IMMOPLUS_*` renommés ; volumes
+  de développement copiés vers `immoplus_*`, base renommée.
+- Migrations de données : `core.0009` (textes des paramètres), `accounts.0008` (courriels de démonstration).
+- Fiche publique : seule la position du quartier est donnée (tests alignés).
+
 **2026-10-20 : plan d'actions v3 (retours du 19/10), voir `docs/plan-actions-v3.md`.**
 - Recherche : listes déroulantes, filtres en temps réel, colonne de filtres fixe (site), quartiers voisins, équipements
   indexés. Fiche : quartier d'abord, galerie à diapositives, équipements, prix à débattre, avis, contact direct.
@@ -19,7 +27,7 @@
 - Administration : double authentification par code envoyé par courriel à chaque connexion (10 min, 5 essais,
   3 renvois). Suivi des erreurs : regroupées dans redis-queue, page « Erreurs » de l'administration, courriel au
   plus une fois par heure et par erreur (`ERREURS_DESTINATAIRES`).
-- Sauvegardes : image `logeo-sauvegarde` (pg_dump vérifié + restic, ADR 0008) ; copie hors serveur inactive tant que
+- Sauvegardes : image `immoplus-sauvegarde` (pg_dump vérifié + restic, ADR 0008) ; copie hors serveur inactive tant que
   `RESTIC_REPOSITORY` est vide. Restauration testée en local.
 - Anti-robot Turnstile branché dès le développement (clés de test Cloudflare) ; `fake` refusé en production, clés de
   test signalées comme erreur. `.env.example` commenté paramètre par paramètre.
@@ -94,7 +102,7 @@
   `Ex : 25 000`, métriques `default:0` → `—`) ; prix en `F` (au lieu de `FCFA`) ; unité de distance en
   mètres (`À X m de l'UP`).
 - Codes techniques traduits : statut de conversation (`statut_conversation`) et manques de publication
-  (`manque_publication`) via de nouveaux filtres dans `web/templatetags/logeo.py`.
+  (`manque_publication`) via de nouveaux filtres dans `web/templatetags/immoplus.py`.
 - CSP : le seul `<style>`, `<script>` et `style=` en ligne restant (`conversation.html`) est externalisé
   (`components/conversation.css`, `js/conversation.js`).
 - Icônes Lucide ajoutées (`heart`, `chevron-up`, `chevron-down`, `smartphone`) à la place des glyphes
@@ -239,7 +247,7 @@ Les fonctionnalités a à g sont implémentées et testées. Détail dans `docs/
   - Refonte complète des tableaux de bord de chaque profil :
     - **Espace gérant** (`/pro/dashboard`, `/pro/annonces`, `/pro/annonces/nouvelle`) : barre latérale pro unifiée (`_sidebar.html`), métriques 4 colonnes, grille des annonces actives avec vues et contacts, derniers contacts reçus, éditeur avec upload de médias et aperçu de carte.
     - **Espace locataire** (`/compte`, `/compte/alertes`, `/compte/favoris`, `/compte/messages`, `/compte/notifications`) : panneau profil avec avatar et navigation latérale en cartes, gestion complète des alertes avec chips, messagerie sécurisée sans contact hors plateforme.
-    - **Espace administration** (`adminsite`) : intégration des règles du thème Logeo Admin (`serveur/adminsite/static/admin/css/logeo-adm.css` et `serveur/adminsite/templates/admin/base_site.html`), logo officiel, typographie Plus Jakarta Sans, boutons d'action stylisés (jaune solaire `--sun` pour enregistrer, rouge `--danger` pour supprimer), fil d'Ariane épuré, modules arrondis, suppression du dossier externe redondant `serveur/logeo-django-admin-theme`.
+    - **Espace administration** (`adminsite`) : intégration des règles du thème Immo+ Admin (`serveur/adminsite/static/admin/css/immoplus-adm.css` et `serveur/adminsite/templates/admin/base_site.html`), logo officiel, typographie Plus Jakarta Sans, boutons d'action stylisés (jaune solaire `--sun` pour enregistrer, rouge `--danger` pour supprimer), fil d'Ariane épuré, modules arrondis, suppression du dossier externe redondant `serveur/immoplus-django-admin-theme`.
     - **Page d'accueil branchée** : `/` sert désormais la page de présentation (`web/accueil.html` : héro illustré, recherche à onglets, « Comment ça marche », FAQ) ; le catalogue reste sur `/annonces`. Le script des onglets est déplacé dans `serveur/web/static/js/accueil.js` (CSP sans script en ligne) et le code mort `views_public.accueil` est supprimé.
   - Élimination intégrale des couleurs et opacités en dur hors de `tokens.css` (conforme règle 8 de `AGENTS.md`).
   - Respect strict de la CSP (règle 5) : suppression de tous les attributs `style=` et gestionnaires d'événements `on...=` inline.
@@ -248,11 +256,11 @@ Les fonctionnalités a à g sont implémentées et testées. Détail dans `docs/
 
 - **Phase 9 — Application Mobile Expo / React Native (`mobile/`).**
   - Refonte et alignement visuel strict des 19 écrans sur les maquettes de référence (`docs/design/screens/`) et `docs/design/DESIGN.md`.
-  - Palette officielle Logeo : Bleu cobalt (`#1B44D6`), Nuit (`#0F1B3D`), Jaune solaire (`#FFB429`), Fond clair (`#F5F6FA`).
+  - Palette officielle Immo+ : Bleu cobalt (`#1B44D6`), Nuit (`#0F1B3D`), Jaune solaire (`#FFB429`), Fond clair (`#F5F6FA`).
   - Typographie *Plus Jakarta Sans*, icônes Lucide uniquement (aucun emoji ni sticker, conformément aux règles du projet).
   - Écrans finalisés et stylisés :
     1. **Bienvenue** (`BienvenueScreen`) : bannière nuit, logo officiel, feuille blanche arrondie (rayon 32), pastilles pastel, double CTA locataire/gérant.
-    2. **Connexion** (`ConnexionScreen`) : en-tête Logeo, numéro béninois (+229), bouton cobalt, rappel inscription réservée aux locataires.
+    2. **Connexion** (`ConnexionScreen`) : en-tête Immo+, numéro béninois (+229), bouton cobalt, rappel inscription réservée aux locataires.
     3. **Inscription 1/2 & 2/2** (`TelephoneStep`, `CodeStep`) : stepper 2 segments, champ prénom, chips statut étudiant, case CGU, 6 cases de code avec contour cobalt actif, chrono MM:SS, encadré informatif alerte.
     4. **Accueil** (`AccueilScreen`, `ListingCard`) : en-tête avec bouton cloche circulaire, titre héroïque "Où veux-tu habiter ?", barre de recherche avec bouton bleu Filtres, chips de filtrage rapide défilants, cartes annonces avec média 16:9, bouton play blanc centré, badge vert "✓ Vérifié", durée vidéo et prix cobalt.
     5. **Fiche chambre** (`FicheScreen`) : média immersif, bouton play, badge vérifié, feuille blanche remontante (rayon 28), prix mensuel, caractéristiques complètes, action contacter le gérant.
@@ -364,7 +372,7 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   (8080 par défaut) quand `EXPO_PUBLIC_API_URL` est vide ; `api/client.ts` coupe toute requête après
   20 s (`NetworkError` affichée) ; les mutations d'authentification passent en `networkMode: "always"`
   (NetInfo pouvait les suspendre indéfiniment).
-- **Logo unifié.** Composant `Logotype` (`ui/components/Logo.tsx`, icône officielle + « Logeo » + point
+- **Logo unifié.** Composant `Logotype` (`ui/components/Logo.tsx`, icône officielle + « Immo+ » + point
   solaire, comme `web/base.html`) utilisé sur Bienvenue, Connexion (glyphe `⌂` supprimé), Inscription,
   Mot de passe, Accueil, Tableau de bord gérant, Compte gérant, Maintenance et Mise à jour.
 - **Thème clair uniquement.** Le mode sombre rendait des textes illisibles (couleurs `colors.night` en dur
@@ -453,7 +461,7 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
   processus. Sondes propres à chaque service dans `docker-compose.yml`. Les 11 conteneurs sont *healthy*.
   **Phase 0 terminée.**
 - **Reste noté** : `realtime` et `admin` journalisent `Control server error: Permission denied: '/app/.gunicorn'`
-  au démarrage (socket de contrôle de gunicorn dans le code monté en lecture pour l'utilisateur `logeo`) ; sans effet.
+  au démarrage (socket de contrôle de gunicorn dans le code monté en lecture pour l'utilisateur `immoplus`) ; sans effet.
 - **Position des annonces (V7)** : plus de latitude ni de longitude à saisir (site et mobile). L'API les rend
   facultatives (changement additif) : centre du quartier par défaut, GPS du téléphone si le gérant le partage depuis
   l'app (`expo-location`, déjà présent). Pas de GPS sur le site : `Permissions-Policy: geolocation=()` en production.
@@ -484,7 +492,7 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **Types de logement élargis** : 13 officiels (migration `listings.0004`), de la chambre simple à la villa.
 - **Phase 1 (socle épuré)** : motif de marque SVG en filigrane (site : pied de page, états vides, pages légales via
   `--motif-clair`/`--motif-sombre` ; mobile : `FondMotif`), composants mobiles communs (`Groupe.tsx`), Profil refait
-  (carte cobalt, listes groupées, WhatsApp Logeo, version), logo animé au démarrage (`DemarrageAnime`), présentation
+  (carte cobalt, listes groupées, WhatsApp Immo+, version), logo animé au démarrage (`DemarrageAnime`), présentation
   en 4 étapes (`/presentation`, avant `/bienvenue`). Bug corrigé : double numérotation du sommaire légal.
 - **Mobile, écrans manquants** : espace gérant complet (Mes chambres, fiche, modifier, statistiques) avec deux
   routes ajoutées `GET /v1/pro/listings/{id}/readiness` et `…/stats?days=7|30` (libellés des manques partagés
@@ -529,10 +537,10 @@ builds / EAS est inchangé. Détail dans `mobile/docs/avancement-mobile.md`. Res
 - **426 et 503** : `apps/core/acces_application.py` (intergiciel du site et de l'API) : version sous
   `MIN_SUPPORTED_VERSION` → 426, `MAINTENANCE_ENABLED` → 503 (page `web/maintenance.html` sur le site). Restent ouverts :
   app-config, textes légaux, webhooks, santé, statiques ; l'administration n'est jamais bloquée.
-- **Administration refondue** : design aligné (jetons, police locale, `adminsite/static/admin/css/logeo-adm.css`
+- **Administration refondue** : design aligné (jetons, police locale, `adminsite/static/admin/css/immoplus-adm.css`
   réécrit en redirigeant les variables de l'admin Django), accueil « À traiter / Activité / Gérer », page Paramètres par
   thème (`adminsite/parametres_page.py`), quartiers gérables, tout en français (intitulés des applications, modèles,
   champs et valeurs de modération ; migrations d'options et d'intitulés **sans SQL**, vérifiées par `sqlmigrate`),
   noms lisibles, groupes retirés. 984 tests serveur verts (seul `/readyz`).
-- **Données locales** : compte administrateur d'essai `admin.essai@logeo.local` / `AdminEssai2026!` (local seulement).
+- **Données locales** : compte administrateur d'essai `admin.essai@immoplus.local` / `AdminEssai2026!` (local seulement).
 

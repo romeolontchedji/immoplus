@@ -1,7 +1,7 @@
 [project]
-name = "logeo-serveur"
+name = "immoplus-serveur"
 version = "0.1.0"
-description = "Serveur Logeo : site, API et administration (monolithe modulaire Django)."
+description = "Serveur Immo+ : site, API et administration (monolithe modulaire Django)."
 requires-python = ">=3.12"
 
 [tool.ruff]

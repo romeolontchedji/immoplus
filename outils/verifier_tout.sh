@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Enchaîne tous les contrôles. Un contrôle dont l'outil manque est « sauté » (jamais compté comme réussi).
-# LOGEO_STRICT=1 (intégration continue) : un contrôle sauté fait échouer l'ensemble.
+# IMMOPLUS_STRICT=1 (intégration continue) : un contrôle sauté fait échouer l'ensemble.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 [ -d .venv/bin ] && PATH="$PWD/.venv/bin:$PATH"
@@ -22,7 +22,7 @@ optionnelle() { # optionnelle <outil> <libellé> <commande...>
 }
 dans_serveur() { ( cd serveur && "$@" ); }
 
-echo "Contrôles Logeo :"
+echo "Contrôles Immo+ :"
 etape "noms et mots interdits" python3 outils/verifier_noms.py
 etape "hygiène (secrets, débogage, tailles)" python3 outils/verifier_hygiene.py
 etape "nom de la branche courante" python3 outils/verifier_branche.py
@@ -61,5 +61,5 @@ else
 fi
 
 if [ "$echec" -ne 0 ]; then echo "✗ Contrôles en échec."; exit 1; fi
-if [ "$saute" -ne 0 ] && [ "${LOGEO_STRICT:-0}" = "1" ]; then echo "✗ $saute contrôle(s) sauté(s) en mode strict."; exit 1; fi
+if [ "$saute" -ne 0 ] && [ "${IMMOPLUS_STRICT:-0}" = "1" ]; then echo "✗ $saute contrôle(s) sauté(s) en mode strict."; exit 1; fi
 echo "✔ Contrôles réussis ($saute sauté(s))."

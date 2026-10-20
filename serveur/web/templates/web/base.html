@@ -1,4 +1,4 @@
-{% load i18n logeo static %}
+{% load i18n immoplus static %}
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -6,16 +6,17 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light">
-    <title>{% block titre %}Logeo — Chambres à Parakou, visite en vidéo{% endblock %}</title>
+    <title>{% block titre %}Immo+ — Chambres à Parakou, visite en vidéo{% endblock %}</title>
     <meta name="description"
           content="{% block description %}Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct. Visite d'abord, paie ensuite.{% endblock %}">
     <link rel="icon" href="{% static 'design/logo.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'design/favicon.ico' %}" sizes="any">
     <link rel="preload"
           href="{% static 'fonts/plus-jakarta-sans-latin.woff2' %}"
           as="font"
           type="font/woff2"
           crossorigin>
-    <link rel="stylesheet" href="{% css_logeo %}">
+    <link rel="stylesheet" href="{% css_immoplus %}">
     {% block tete %}{% endblock %}
   </head>
   <body>
@@ -23,14 +24,12 @@
     <div class="page">
       <header class="entete">
         <div class="conteneur entete__barre">
-          <a class="logotype" href="/" aria-label="Logeo — Accueil">
-            <img class="logotype__icone"
-                 src="{% static 'design/logo.svg' %}"
-                 alt=""
-                 aria-hidden="true"
-                 width="36"
+          <a class="logotype" href="/" aria-label="Immo+ — Accueil">
+            <img class="logotype__image"
+                 src="{% static 'design/logo-horizontal.svg' %}"
+                 alt="Immo+"
+                 width="144"
                  height="36">
-            Logeo<span class="logotype__point">.</span>
           </a>
           {% block navigation %}
             {% include "web/composants/navigation.html" %}
@@ -56,8 +55,12 @@
             <div class="conteneur">
               <div class="pied__grille">
                 <div class="pied__logo-colonne">
-                  <a class="logotype pied__logo" href="/" aria-label="Logeo">
-                    Logeo<span class="logotype__point">.</span>
+                  <a class="logotype pied__logo" href="/" aria-label="Immo+">
+                    <img class="logotype__image"
+                         src="{% static 'design/logo-horizontal-sombre.svg' %}"
+                         alt="Immo+"
+                         width="144"
+                         height="36">
                   </a>
                   <p class="pied__slogan">Le logement à Parakou, vu avant d'y aller.</p>
                 </div>
@@ -92,7 +95,7 @@
                 </div>
               </div>
               <div class="pied__bas">
-                <span>© Logeo · Parakou, Bénin</span>
+                <span>© Immo+ · Parakou, Bénin</span>
                 <span>FCFA · Africa/Porto-Novo</span>
               </div>
             </div>

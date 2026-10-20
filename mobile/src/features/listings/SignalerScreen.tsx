@@ -20,7 +20,7 @@ const MOTIFS: Motif[] = [
   { code: "fake_listing", label: "Annonce fausse ou trompeuse", description: "Photos ou description ne correspondent pas à la réalité." },
   { code: "already_rented", label: "Chambre déjà louée", description: "Cette chambre n'est plus disponible mais l'annonce reste en ligne." },
   { code: "price_mismatch", label: "Prix différent", description: "Le loyer ou les frais demandés ne sont pas ceux de l'annonce." },
-  { code: "contact_leak", label: "Coordonnées partagées", description: "Le gérant partage son numéro ou demande à sortir de Logeo." },
+  { code: "contact_leak", label: "Coordonnées partagées", description: "Le gérant partage son numéro ou demande à sortir de Immo+." },
   { code: "scam", label: "Arnaque", description: "Demande d'acompte sans visite, identité douteuse ou autre abus." },
   { code: "harassment", label: "Harcèlement", description: "Messages insistants, insultants ou déplacés." },
   { code: "other", label: "Autre raison", description: "Décris le problème dans le champ ci-dessous." },
@@ -44,7 +44,7 @@ export function SignalerScreen() {
 
   // Confirmation explicite (plan v3, H4) avant de refermer la modale.
   const confirmer = () =>
-    Alert.alert("Signalement envoyé", "Ton signalement a été pris en compte et sera traité par l’équipe Logeo.", [
+    Alert.alert("Signalement envoyé", "Ton signalement a été pris en compte et sera traité par l’équipe Immo+.", [
       { text: "OK", onPress: () => router.back() },
     ]);
 

@@ -121,7 +121,7 @@ export function TelephoneStep({
                 <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }} onPress={() => router.push("/legal/confidentialite")}>
                   politique de confidentialité
                 </Text>{" "}
-                de Logeo.
+                de Immo+.
               </Text>
             </Pressable>
           ) : null}
@@ -135,7 +135,7 @@ export function TelephoneStep({
                 marginTop: 4,
               }}
             >
-              Inscription réservée aux locataires. Les comptes gérant sont créés par l’équipe Logeo.
+              Inscription réservée aux locataires. Les comptes gérant sont créés par l’équipe Immo+.
             </Text>
           ) : null}
 

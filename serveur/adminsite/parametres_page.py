@@ -52,7 +52,7 @@ NOTES = {
     "TEAM_PHONE": "Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229…",
     "LEGAL_PROVISIONAL": "Coché : un bandeau prévient que les mentions légales sont provisoires. À décocher quand "
     "l'entreprise est réellement immatriculée et les champs ci-dessous exacts.",
-    "LEGAL_COMPANY": "Nom officiel de la société qui édite Logeo, repris dans les conditions et la confidentialité.",
+    "LEGAL_COMPANY": "Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité.",
     "LEGAL_RCCM": "Numéro d'immatriculation au registre du commerce (RCCM).",
     "LEGAL_IFU": "Identifiant fiscal unique (IFU) de la société.",
     "LEGAL_ADDRESS": "Adresse du siège, affichée dans les textes légaux.",

@@ -4,7 +4,7 @@ Source unique. `CLAUDE.md` renvoie ici. En cas de doute : `docs/cahier-des-charg
 
 ## 1. Projet en 10 lignes
 
-- Logeo aide les étudiants de Parakou (Bénin) à trouver une chambre : annonces avec vidéo réelle, gérants vérifiés, messagerie intégrée, aucun contact hors plateforme.
+- Immo+ aide les étudiants de Parakou (Bénin) à trouver une chambre : annonces avec vidéo réelle, gérants vérifiés, messagerie intégrée, aucun contact hors plateforme.
 - Trois surfaces : **APP** (application mobile, partie 2, pas encore commencée), **WEB** (site public rendu par le serveur), **ADM** (administration, hôte séparé).
 - Un seul serveur : monolithe modulaire Django 5.2 LTS, PostgreSQL 16, Redis, Celery, Channels, Caddy.
 - Partie 1 (ce dépôt) : serveur, site web, API `/v1`, administration, infrastructure, outils. Reste : le mobile (`mobile/`).
@@ -75,7 +75,7 @@ Commit : `type(portée): sujet`.
 - `fixup!`, `squash!`, `wip` : refusés au push.
 
 Branche : `^(main|(feat|fix|refactor|perf|test|docs|style|build|ci|chore|sec)/[a-z0-9]+(-[a-z0-9]+)*)$`, 60 caractères au plus.
-Pas de push direct sur `main` (sauf premier push : `LOGEO_PREMIER_PUSH=1`). Pas de fusion « squash ».
+Pas de push direct sur `main` (sauf premier push : `IMMOPLUS_PREMIER_PUSH=1`). Pas de fusion « squash ».
 Le hook `pre-push` lance `outils/verifier_tout.sh` ; la CI refait les mêmes contrôles.
 **Ne jamais utiliser `--no-verify`.**
 

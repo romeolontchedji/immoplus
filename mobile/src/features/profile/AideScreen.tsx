@@ -10,9 +10,9 @@ type Section = { titre: string; contenu: string };
 
 const SECTIONS: Section[] = [
   {
-    titre: "Comment fonctionne Logeo ?",
+    titre: "Comment fonctionne Immo+ ?",
     contenu:
-      "Logeo met en relation les étudiants de Parakou avec des gérants de chambres vérifiés. Toutes les annonces sont accompagnées d'une vidéo réelle tournée sur place, garantissant la conformité de la chambre.",
+      "Immo+ met en relation les étudiants de Parakou avec des gérants de chambres vérifiés. Toutes les annonces sont accompagnées d'une vidéo réelle tournée sur place, garantissant la conformité de la chambre.",
   },
   {
     titre: "Comment contacter un gérant ?",
@@ -81,7 +81,7 @@ export function AideScreen() {
       </View>
 
       <Text variante="legende" muted style={{ textAlign: "center" }}>
-        Logeo · Version 1.0.0 · Parakou, Bénin
+        Immo+ · Version 1.0.0 · Parakou, Bénin
       </Text>
     </Screen>
   );

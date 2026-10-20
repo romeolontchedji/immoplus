@@ -31,7 +31,7 @@ Ce document consigne les éléments présents sur les maquettes de référence (
 
 | Élément maquette | État dans la base / serveur | Traitement retenu |
 |---|---|---|
-| **Téléphone direct ou WhatsApp du gérant** | Strictement interdit par le CDC (§5 de `AGENTS.md`) : zéro contact hors plateforme, masquage des coordonnées. | Aucun numéro de gérant n'est affiché. Les échanges passent exclusivement par la messagerie Logeo (`/compte/messages`). |
+| **Téléphone direct ou WhatsApp du gérant** | Strictement interdit par le CDC (§5 de `AGENTS.md`) : zéro contact hors plateforme, masquage des coordonnées. | Aucun numéro de gérant n'est affiché. Les échanges passent exclusivement par la messagerie Immo+ (`/compte/messages`). |
 | **Paiement direct en ligne** | Le module `billing` est reporté/désactivé au lancement (`SUBSCRIPTION_ENABLED=False`). | Aucun formulaire de paiement fictif. Des messages d'information clairs sont affichés. |
 
 ---

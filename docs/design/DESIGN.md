@@ -1,4 +1,4 @@
-# Logeo — Guide de style (source de vérité UI)
+# Immo+ — Guide de style (source de vérité UI)
 
 > Plateforme de logement étudiant à Parakou (Bénin) : chambres présentées en vidéo, gérants vérifiés, alertes.
 > **Tout agent (Claude Code, Cursor, Copilot…) doit lire ce fichier avant de créer ou modifier une interface**, web (Django templates) ou mobile (React Native).
@@ -27,7 +27,7 @@
 
 Fichier : `docs/design/assets/logo.svg` (icône 48×48).
 Construction : carré arrondi bleu `#1B44D6` (rayon 14/48), épingle de localisation blanche contenant une maison bleue, point jaune `#FFB429` en haut à droite.
-Wordmark : texte « Logeo » en Plus Jakarta Sans 800, espacement −0,03em, suivi d'un **point jaune** : `Logeo.`
+Wordmark : texte « Immo+ » en Plus Jakarta Sans 800, espacement −0,03em, suivi d'un **point jaune** : `Immo+.`
 
 - Hauteur minimale de l'icône : 24 px. Marge autour : au moins la moitié de la hauteur de l'icône.
 - Fond bleu `#1B44D6` ou nuit `#0F1B3D` : wordmark blanc, point jaune conservé.
@@ -146,11 +146,11 @@ Les logos d'opérateurs (MTN, Moov, Celtiis) sont des **images officielles**, ja
 | Mobile locataire | `Mobile-Onboarding`, `Mobile-Home`, `Mobile-Filtres`, `Mobile-Detail`, `Mobile-Alertes`, `Mobile-Notifications`, `Mobile-Conversation`, `Mobile-Profil` | |
 | Mobile gérant | `Mobile-Compte-Gerant`, `Mobile-Abonnement`, `Mobile-Paiement` | Paiement : MTN MoMo, Moov Money, Celtiis Cash |
 
-Parcours gérant : 1) contacte l'équipe Logeo (WhatsApp/appel) 2) l'admin vérifie pièces + entretien et crée le compte 3) le gérant publie (vidéo + photos). Parcours locataire : 1) filtre 2) visite en vidéo 3) contacte le gérant.
+Parcours gérant : 1) contacte l'équipe Immo+ (WhatsApp/appel) 2) l'admin vérifie pièces + entretien et crée le compte 3) le gérant publie (vidéo + photos). Parcours locataire : 1) filtre 2) visite en vidéo 3) contacte le gérant.
 
 ## 7. Implémentation Django Templates (web)
 
-- Pas de framework JS. HTML sémantique + **un fichier CSS** `static/css/logeo.css` basé sur des variables CSS. JS minimal (menus, accordéon, aperçu du média). HTMX accepté pour filtres et notifications.
+- Pas de framework JS. HTML sémantique + **un fichier CSS** `static/css/immoplus.css` basé sur des variables CSS. JS minimal (menus, accordéon, aperçu du média). HTMX accepté pour filtres et notifications.
 - Structure : `templates/base.html` (head, polices, navbar, messages, footer), `partials/navbar.html` (3 variantes selon `request.user` et rôle), `partials/footer.html`, `partials/icon.html`, `partials/room_card.html`, `partials/badge_verified.html`, `partials/notification_item.html`. Un template par écran : `home.html`, `rooms/list.html`, `rooms/detail.html`, `accounts/login.html`, `accounts/signup.html`, `manager/dashboard.html`, `manager/room_form.html`, `admin_panel/*.html`.
 - Les filtres de la page Chambres sont des paramètres GET : `?quartier=&budget=&type=&distance=&equipements=&caution=&dispo=&verifies=1&video=1&tri=`.
 - Variables à reprendre telles quelles :
@@ -200,7 +200,7 @@ export const font = { medium:'PlusJakartaSans_500Medium', bold:'PlusJakartaSans_
 
 1. Aucun emoji ni glyphe décoratif ; icônes Lucide uniquement.
 2. Logo intact et bien dimensionné.
-3. Couleurs, rayons, polices pris dans les tokens (aucune valeur en dur hors `theme.ts` / `logeo.css`).
+3. Couleurs, rayons, polices pris dans les tokens (aucune valeur en dur hors `theme.ts` / `immoplus.css`).
 4. Un seul CTA principal par écran ; bon jaune/bleu selon le fond.
 5. Textes en français, tutoiement, prix `18 000 F`.
 6. Pas d'inscription gérant ; pas d'« Espace gérant » dans la navbar publique.
@@ -209,9 +209,9 @@ export const font = { medium:'PlusJakartaSans_500Medium', bold:'PlusJakartaSans_
 
 ## 11. Administration Django (`/admin/`)
 
-Le site Django admin natif est habillé avec le thème Logeo. Il est **accessible depuis le panneau admin du site** (lien « Administration Django » en bas de la barre latérale, réservé aux comptes `is_staff`) et renvoie vers lui par « Retour au panneau admin ».
+Le site Django admin natif est habillé avec le thème Immo+. Il est **accessible depuis le panneau admin du site** (lien « Administration Django » en bas de la barre latérale, réservé aux comptes `is_staff`) et renvoie vers lui par « Retour au panneau admin ».
 
-- Fichiers : `templates/admin/base_site.html` (marque, liens) et `static/admin/css/logeo_admin.css` (surcharge des variables natives `--primary`, `--secondary`, `--accent`, `--link-fg`, `--button-bg`, etc.). **Ne jamais copier ni modifier les templates natifs de Django** : seulement surcharger les variables et quelques sélecteurs.
+- Fichiers : `templates/admin/base_site.html` (marque, liens) et `static/admin/css/immoplus_admin.css` (surcharge des variables natives `--primary`, `--secondary`, `--accent`, `--link-fg`, `--button-bg`, etc.). **Ne jamais copier ni modifier les templates natifs de Django** : seulement surcharger les variables et quelques sélecteurs.
 - Habillage : en-tête `--night` avec logo + « Administration », fil d'Ariane blanc, modules en cartes arrondies (rayon 18) à en-tête `--night`, filtres en carte à droite, tableaux à en-têtes MAJUSCULES, barre d'actions en carte, bouton « Enregistrer » en `--sun`, « Supprimer » en `--danger`.
 - Regroupement dans `admin.py` : sections Comptes (Gérants, Locataires, Utilisateurs, Groupes), Chambres (Chambres, Photos et vidéos, Alertes), Paiements (Abonnements gérants, Paiements Mobile Money), Modération (Signalements, Messages, Journal d'activité). Libellés en français via `verbose_name`.
 - Mêmes règles qu'ailleurs : aucune icône emoji, tutoiement non requis (interface interne, vouvoiement neutre accepté), statuts en pastilles colorées via `list_display` + `format_html`.

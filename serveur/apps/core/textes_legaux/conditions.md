@@ -1,12 +1,12 @@
 # Conditions d'utilisation
 
-Les présentes conditions encadrent l'utilisation du site et de l'application Logeo, éditées par [[raison_sociale]]. En créant un compte, tu les acceptes.
+Les présentes conditions encadrent l'utilisation du site et de l'application Immo+, éditées par [[raison_sociale]]. En créant un compte, tu les acceptes.
 
 ## 1. Le service
 
-Logeo aide à trouver une chambre à louer à Parakou. Les gérants publient des annonces avec une vidéo et des photos réelles ; les locataires les consultent, les enregistrent, créent des alertes et écrivent aux gérants par la messagerie intégrée.
+Immo+ aide à trouver une chambre à louer à Parakou. Les gérants publient des annonces avec une vidéo et des photos réelles ; les locataires les consultent, les enregistrent, créent des alertes et écrivent aux gérants par la messagerie intégrée.
 
-Logeo met en relation : nous ne sommes ni propriétaire, ni agence, ni partie au contrat de location conclu entre le gérant et le locataire.
+Immo+ met en relation : nous ne sommes ni propriétaire, ni agence, ni partie au contrat de location conclu entre le gérant et le locataire.
 
 Pendant le lancement, le service est entièrement gratuit, pour les locataires comme pour les gérants.
 
@@ -19,9 +19,9 @@ Pendant le lancement, le service est entièrement gratuit, pour les locataires c
 
 ## 3. Règles de la messagerie
 
-- Les échanges restent dans Logeo : les numéros de téléphone, adresses e-mail et liens sont masqués automatiquement et signalés à l'équipe.
+- Les échanges restent dans Immo+ : les numéros de téléphone, adresses e-mail et liens sont masqués automatiquement et signalés à l'équipe.
 - Les messages insultants, discriminatoires, harcelants ou frauduleux sont interdits.
-- Ne paie jamais avant d'avoir visité la chambre. Logeo ne demande jamais de paiement par message.
+- Ne paie jamais avant d'avoir visité la chambre. Immo+ ne demande jamais de paiement par message.
 - Tu peux bloquer un interlocuteur et signaler un message ou une annonce à tout moment.
 
 ## 4. Engagements du gérant

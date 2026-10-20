@@ -1,4 +1,4 @@
-# Comprendre Logeo de A à Z
+# Comprendre Immo+ de A à Z
 
 > Ce document explique **tout le projet** à quelqu'un qui ne l'a jamais ouvert : ce que fait chaque partie, pourquoi
 > elle existe, comment elle fonctionne, quand elle intervient, comment les morceaux se parlent, comment ils sont
@@ -10,7 +10,7 @@
 
 ## Sommaire
 
-1. [Logeo en une page](#1-logeo-en-une-page)
+1. [Immo+ en une page](#1-immoplus-en-une-page)
 2. [Petit lexique](#2-petit-lexique)
 3. [L'architecture en une image](#3-larchitecture-en-une-image)
 4. [Trois histoires pour tout comprendre](#4-trois-histoires-pour-tout-comprendre)
@@ -37,18 +37,18 @@
 
 ---
 
-## 1. Logeo en une page
+## 1. Immo+ en une page
 
 **Le problème.** À Parakou, un étudiant cherche une chambre en passant par des groupes WhatsApp, des démarcheurs et
 des visites inutiles. On lui demande parfois de payer avant d'avoir vu la chambre.
 
-**La réponse de Logeo.** Une plateforme où :
+**La réponse de Immo+.** Une plateforme où :
 
 - les **gérants** (propriétaires ou gestionnaires) publient leurs chambres **avec une vidéo**, après avoir été
   **vérifiés** par l'équipe ;
 - les **locataires** (surtout des étudiants) cherchent par quartier, budget et type, regardent la vidéo, écrivent au
   gérant et créent des **alertes** pour être prévenus quand une chambre correspond ;
-- l'**équipe Logeo** modère, vérifie les gérants et règle la plateforme depuis une **administration**.
+- l'**équipe Immo+** modère, vérifie les gérants et règle la plateforme depuis une **administration**.
 
 **Trois façons d'y accéder, un seul cerveau :**
 
@@ -56,7 +56,7 @@ des visites inutiles. On lui demande parfois de payer avant d'avoir vu la chambr
 |---|---|---|---|
 | Site web | Visiteurs, locataires, gérants | `www.<domaine>` | Pages Django |
 | Application mobile | Locataires, gérants | Android et iPhone | React Native (Expo) |
-| Administration | Équipe Logeo seulement | `pilotage.<domaine>` | Admin Django personnalisée |
+| Administration | Équipe Immo+ seulement | `pilotage.<domaine>` | Admin Django personnalisée |
 
 Le site et l'application parlent au **même serveur** et à la **même base de données**. Une chambre publiée depuis
 l'application apparaît aussitôt sur le site, et inversement.
@@ -76,7 +76,7 @@ rien n'est payant et aucun écran de paiement n'est visible.
 | **Base de données (PostgreSQL)** | Le registre permanent : comptes, chambres, messages… Rien ne s'y perd au redémarrage. |
 | **Redis** | Une mémoire ultra-rapide pour ce qui est temporaire ou très fréquent : compteurs, files d'attente, cache. |
 | **Cache** | Une copie temporaire d'un résultat pour ne pas le recalculer à chaque fois (ex. la page du fil, 60 s). |
-| **Conteneur (Docker)** | Une boîte fermée qui contient un programme et tout ce dont il a besoin. Logeo tourne dans douze boîtes qui communiquent entre elles. |
+| **Conteneur (Docker)** | Une boîte fermée qui contient un programme et tout ce dont il a besoin. Immo+ tourne dans douze boîtes qui communiquent entre elles. |
 | **Volume** | Un disque attaché à un conteneur, qui survit quand on le redémarre (base, médias, sauvegardes). |
 | **Tâche de fond** | Un travail fait « en coulisses », sans faire attendre l'utilisateur (convertir une vidéo, envoyer une notification). |
 | **File d'attente** | La liste des tâches de fond à faire ; des « ouvriers » (workers) les prennent une par une. |
@@ -110,7 +110,7 @@ flowchart LR
   subgraph Internet
     A[Application mobile]
     B[Navigateur]
-    C[Équipe Logeo]
+    C[Équipe Immo+]
   end
   subgraph Serveur[VPS - Docker]
     K[Caddy<br/>HTTPS, portier]
@@ -157,7 +157,7 @@ automatiquement, voir §18).
 
 ### Histoire 1 : Awa ouvre la fiche d'une chambre sur l'application
 
-1. L'application envoie `GET https://api.logeo.bj/v1/listings/chambre-salon-…`.
+1. L'application envoie `GET https://api.immoplus.bj/v1/listings/chambre-salon-…`.
 2. **Caddy** reçoit la demande en HTTPS, vérifie qu'elle commence par `/v1/` et la passe à **web-api**.
 3. **web-api** cherche la chambre dans **PostgreSQL** (sans jamais lire l'adresse privée ni le numéro du gérant).
 4. Il répond en JSON : titre, loyer, quartier, liste des photos et de la vidéo (des **adresses** de fichiers).
@@ -311,7 +311,7 @@ Même si le code Python avait un bug, la base refuserait (migrations `accounts/0
 
 ## 8. Redis : deux mémoires rapides
 
-Logeo utilise **deux Redis séparés**, pour une raison de sécurité très simple :
+Immo+ utilise **deux Redis séparés**, pour une raison de sécurité très simple :
 
 | | `redis-cache` | `redis-queue` |
 |---|---|---|
@@ -613,7 +613,7 @@ est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`)
 
 - **Rendu par Django** (pages HTML générées sur le serveur) : rapide sur un petit téléphone, lisible par Google.
 - **Code** : `serveur/web/` — vues publiques (`views_public.py`), compte (`views_auth.py`), gérant (`views_pro.py`),
-  formulaires (`forms.py`), gabarits (`templates/web/`), filtres de gabarit (`templatetags/logeo.py`).
+  formulaires (`forms.py`), gabarits (`templates/web/`), filtres de gabarit (`templatetags/immoplus.py`).
 - **Gabarits** : `base.html` (structure commune), `espace.html` (pages des espaces avec barre latérale colorée),
   `composants/` (carte d'annonce, champ, icônes, menu mobile, barre latérale…).
 - **CSS sans Node** (ADR 0002) : des fichiers par composant dans `web/static/css/`, assemblés, minifiés et nommés par
@@ -623,7 +623,7 @@ est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`)
   œil des mots de passe. Le site fonctionne même sans JavaScript pour l'essentiel.
 - **Politique de sécurité stricte (CSP)** : aucun script ni style écrit dans la page, aucune ressource externe (sauf le
   défi anti-robot). D'où la règle du projet : jamais de `style="…"` ni de `onclick="…"`.
-- **Polices et images** servies par Logeo (Plus Jakarta Sans, photos d'ambiance en WebP).
+- **Polices et images** servies par Immo+ (Plus Jakarta Sans, photos d'ambiance en WebP).
 - Parcours détaillés : `docs/web-parcours.md`.
 
 ---
@@ -639,7 +639,7 @@ est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`)
   gérants (création), comptes, annonces (relecture), types de logement (valider, rattacher), quartiers, sécurité des
   connexions, journal, paramètres, abonnements (lecture seule).
 - **Code** : `serveur/adminsite/` — `site.py` (tableau de bord, menu), `admin.py`, `admin_moderation.py`,
-  `parametres_page.py`, `middleware.py`, `templates/admin/`, `static/admin/css/logeo-adm.css`.
+  `parametres_page.py`, `middleware.py`, `templates/admin/`, `static/admin/css/immoplus-adm.css`.
 - **Commandes** : `seed` (paramètres et quartiers, `--demo` pour des données d'essai) et `creer_personnel` (premier
   administrateur).
 
@@ -932,7 +932,7 @@ pour les réseaux faibles. Le projet est **prêt pour un lancement maîtrisé**.
 2. **réparer seul** ce qui peut l'être (redémarrage, reprise des tâches, rattrapage) ;
 3. **revenir en arrière** vite quand une erreur passe (sauvegardes testées, versions précédentes).
 
-Logeo fait déjà bien le 2 (reprises, rattrapages, idempotence). Les recommandations ci-dessous renforcent surtout le 1
+Immo+ fait déjà bien le 2 (reprises, rattrapages, idempotence). Les recommandations ci-dessous renforcent surtout le 1
 et le 3.
 
 ### Priorité 1 : avant l'ouverture au public
@@ -992,7 +992,7 @@ et le 3.
 ### Design : mon avis détaillé
 
 - **Points forts** : un seul jeu de jetons pour le site et l'application, police commune, contrastes vérifiés
-  automatiquement, composants partagés (en-têtes, barre latérale, menu mobile), photos d'ambiance hébergées par Logeo.
+  automatiquement, composants partagés (en-têtes, barre latérale, menu mobile), photos d'ambiance hébergées par Immo+.
 - **Faiblesse principale** : **aucune vérification visuelle automatique de l'application mobile** (faute d'émulateur
   dans la chaîne de contrôle). Les tests de bout en bout (n°12) avec captures d'écran comblent ce manque.
 - **À faire** : une passe d'**accessibilité** sur mobile (taille de texte agrandie, lecteur d'écran) et un test avec
@@ -1010,5 +1010,5 @@ et le 3.
 | Mode maintenance et version minimale pilotés à distance | |
 | Verrouillages et plafonds anti-abus qui se lèvent seuls | |
 
-Avec les priorités 1 et 2 en place, Logeo pourra tourner des semaines sans intervention, et prévenir l'équipe dès
+Avec les priorités 1 et 2 en place, Immo+ pourra tourner des semaines sans intervention, et prévenir l'équipe dès
 qu'une intervention est nécessaire.

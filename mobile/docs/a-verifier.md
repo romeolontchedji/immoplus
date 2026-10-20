@@ -13,7 +13,7 @@
 - Push : jamais testé (émulateur sans push, projet EAS et identifiants FCM absents).
 - Envoi tus d'une vraie vidéo : à tester sur appareil (lecture du fichier par `fetch(uri).blob()`, reprise après coupure, jeton expiré en cours d'envoi).
 
-## Dépend du serveur — modifications **non livrées** dans `logeo-partie2.zip`
+## Dépend du serveur — modifications **non livrées** dans `immoplus-partie2.zip`
 Le client généré (`src/api/genere/api.d.ts`) vient d'un schéma qui contient ces points ; ils existent dans mon travail serveur en cours mais **pas dans l'archive précédente** :
 1. `GET /v1/app-config` (version minimale, maintenance, avis, drapeaux, limites) et le refus **426** sur `X-App-Version` trop ancienne. Sans eux, l'application fonctionne mais n'impose jamais la mise à jour (la lecture de la configuration échoue en silence).
 2. Corps d'API en JSON uniquement.
@@ -27,8 +27,8 @@ Le client généré (`src/api/genere/api.d.ts`) vient d'un schéma qui contient 
 - Vidéo de la carte lue automatiquement en connexion rapide (cahier des charges) : non faite ; seul le réglage « économie de données » est prévu.
 
 ## Décisions et valeurs à confirmer
-- Identifiant Android/iOS `bj.logeo.app`, nom, icône et écran de démarrage : **ceux du modèle Expo** (`assets/` contient des images provisoires).
-- Domaine `logeo.example` (liens profonds, partage) : à remplacer ; il faut aussi servir `https://<domaine>/.well-known/assetlinks.json` côté serveur pour que les liens https ouvrent l'application.
+- Identifiant Android/iOS `bj.immoplus.app`, nom, icône et écran de démarrage : **ceux du modèle Expo** (`assets/` contient des images provisoires).
+- Domaine `immoplus.example` (liens profonds, partage) : à remplacer ; il faut aussi servir `https://<domaine>/.well-known/assetlinks.json` côté serveur pour que les liens https ouvrent l'application.
 - `eas.json` : adresses d'API de développement, préproduction et production fictives ; `EAS_PROJECT_ID` à renseigner (`eas init`).
 - Versions : celles résolues par Expo SDK 57 (React 19.2.3, React Native 0.86.3, TypeScript 6.0). `openapi-typescript@7.9.1` est épinglé dans `outils/exporter_client_ts.sh` (exécuté par `npx`, pas une dépendance du projet) : version non revérifiée.
 - Choix à valider (détail dans `docs/architecture.md`) : visiteurs sans compte autorisés, `react-native-render-html` pour la description, MP4 progressif, cache disque limité aux lectures publiques.

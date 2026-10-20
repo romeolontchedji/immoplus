@@ -1,6 +1,6 @@
 # mobile/
 
-Application mobile Logeo (partie 2) : Expo / React Native avec Expo Router.
+Application mobile Immo+ (partie 2) : Expo / React Native avec Expo Router.
 
 Elle consomme l'API `/v1` du serveur (`docs/api/openapi.json`) et le temps réel sous `/ws/`.
 Le contrat d'API est versionné dans le dépôt et sert de point de départ au client TypeScript.

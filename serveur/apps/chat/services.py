@@ -116,7 +116,7 @@ def _analyser_coordonnees(texte: str) -> dict:
     if mode == "block":
         raise ErreurMetier(
             "contact_detected",
-            "Les coordonnées (numéro, e-mail, lien) ne sont pas autorisées : les échanges se font dans Logeo.",
+            "Les coordonnées (numéro, e-mail, lien) ne sont pas autorisées : les échanges se font dans Immo+.",
             statut=422,
             champs={"body": [f"Motif : {motif}"]},
         )
@@ -207,7 +207,7 @@ def envoyer(utilisateur, conversation_id, corps, client_msg_id) -> tuple[Message
 
 def _rappel(motif) -> str | None:
     if motif in ("telephone", "numero_epele", "email", "lien"):
-        return "Pour ta sécurité, garde les échanges dans Logeo : les coordonnées sont masquées et signalées à l'équipe."
+        return "Pour ta sécurité, garde les échanges dans Immo+ : les coordonnées sont masquées et signalées à l'équipe."
     return None
 
 
@@ -539,7 +539,7 @@ def _sms_de_repli(gerant_id) -> None:
         return
     try:
         sms.fournisseur().envoyer(
-            numero, "Logeo : un locataire attend ta réponse. Ouvre l'application."
+            numero, "Immo+ : un locataire attend ta réponse. Ouvre l'application."
         )
     except Exception:  # noqa: BLE001
         journal.warning("sms_repli_echoue")
@@ -560,7 +560,7 @@ def prevenir_conversations(annonce_id, nouveau_statut: str) -> int:
             f"« {titre} » vient d'être louée"
             if nouveau_statut == StatutAnnonce.RENTED
             else f"« {titre} » n'est plus disponible",
-            "Continue ta recherche : d'autres chambres t'attendent sur Logeo.",
+            "Continue ta recherche : d'autres chambres t'attendent sur Immo+.",
             data={
                 "listing_id": str(annonce_id),
                 "slug": annonce["slug"],

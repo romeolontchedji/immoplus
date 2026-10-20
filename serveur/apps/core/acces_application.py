@@ -20,7 +20,7 @@ TOUJOURS_OUVERTS = (
     "/static/",
     "/media/",
 )
-MESSAGE_MAINTENANCE = "Logeo est en maintenance pour quelques minutes. Réessaie bientôt."
+MESSAGE_MAINTENANCE = "Immo+ est en maintenance pour quelques minutes. Réessaie bientôt."
 
 
 def _composantes(version: str) -> list[int] | None:
@@ -70,7 +70,7 @@ class AccesApplicationMiddleware:
             return JsonResponse(
                 corps_erreur(
                     "upgrade_required",
-                    "Cette version de Logeo n'est plus prise en charge. Mets l'application à jour.",
+                    "Cette version de Immo+ n'est plus prise en charge. Mets l'application à jour.",
                 ),
                 status=426,
             )

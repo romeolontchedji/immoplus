@@ -1,6 +1,6 @@
 {% extends "web/base.html" %}
-{% load logeo %}
-{% block titre %}{{ g.name }} — gérant sur Logeo{% endblock %}
+{% load immoplus %}
+{% block titre %}{{ g.name }} — gérant sur Immo+{% endblock %}
 {% block description %}Chambres proposées par {{ g.name }} à Parakou, avis des locataires.{% endblock %}
 {% block contenu %}
   {# Profil public d'un gérant (plan v3, F1) : accessible depuis la fiche et la messagerie ; jamais de numéro. #}
@@ -21,7 +21,7 @@
           <ul class="gerant-public__faits">
             <li>
               {% include "web/composants/icone.html" with nom="calendar" taille=16 %}
-              Sur Logeo depuis {{ g.member_since|date:"F Y" }}
+              Sur Immo+ depuis {{ g.member_since|date:"F Y" }}
             </li>
             {% if g.median_response_min is not None %}
               <li>

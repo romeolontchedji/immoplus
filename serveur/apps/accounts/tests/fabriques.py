@@ -39,7 +39,7 @@ class PersonnelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
 
-    email = factory.Sequence(lambda n: f"personnel{n}@logeo.test")
+    email = factory.Sequence(lambda n: f"personnel{n}@immoplus.test")
     full_name = factory.Sequence(lambda n: f"Personnel {n}")
     role = Role.MODERATOR
     password = factory.LazyFunction(lambda: make_password(MOT_DE_PASSE))
@@ -47,7 +47,7 @@ class PersonnelFactory(factory.django.DjangoModelFactory):
 
 class AdminFactory(PersonnelFactory):
     role = Role.ADMIN
-    email = factory.Sequence(lambda n: f"admin{n}@logeo.test")
+    email = factory.Sequence(lambda n: f"admin{n}@immoplus.test")
 
 
 class GerantProfileFactory(factory.django.DjangoModelFactory):

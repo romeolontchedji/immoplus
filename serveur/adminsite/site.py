@@ -43,9 +43,9 @@ ICONES_RUBRIQUES = {
 }
 
 
-class AdminLogeo(AdminSite):
-    site_header = "Logeo — administration"
-    site_title = "Logeo"
+class AdminImmoplus(AdminSite):
+    site_header = "Immo+ — administration"
+    site_title = "Immo+"
     index_title = "Tableau de bord"
     login_form = FormulaireConnexion
 

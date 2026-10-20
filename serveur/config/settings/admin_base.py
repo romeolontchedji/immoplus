@@ -10,11 +10,11 @@ from .base import TEMPLATES as _TEMPLATES
 
 ROOT_URLCONF = "config.urls_admin"
 
-# `adminsite.apps.AdminLogeoConfig` remplace `django.contrib.admin` : connexion par e-mail et mot de passe.
+# `adminsite.apps.AdminImmoplusConfig` remplace `django.contrib.admin` : connexion par e-mail et mot de passe.
 APPLICATIONS_ADMIN = [
     "django.contrib.messages",
     "axes",
-    "adminsite.admin_config.AdminLogeoConfig",
+    "adminsite.admin_config.AdminImmoplusConfig",
     "adminsite",
 ]
 INSTALLED_APPS = [*INSTALLED_APPS, *APPLICATIONS_ADMIN]

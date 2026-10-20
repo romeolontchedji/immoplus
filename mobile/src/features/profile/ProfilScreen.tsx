@@ -120,7 +120,7 @@ export function ProfilScreen() {
       <GroupeListe titre="Préférences et assistance">
         <LigneListe titre="Notifications" icone={Bell} onPress={aller("/parametres/preferences")} />
         <LigneListe titre="Économie de données" icone={Gauge} onPress={aller("/parametres/economie-donnees")} />
-        <LigneListe titre="WhatsApp Logeo" sousTitre={equipe.affiche} icone={MessageCircle} teinte="vert" onPress={() => void Linking.openURL(equipe.whatsapp_url)} />
+        <LigneListe titre="WhatsApp Immo+" sousTitre={equipe.affiche} icone={MessageCircle} teinte="vert" onPress={() => void Linking.openURL(equipe.whatsapp_url)} />
         <LigneListe titre="Aide et contact" icone={LifeBuoy} onPress={aller("/parametres/aide")} />
       </GroupeListe>
 
@@ -135,7 +135,7 @@ export function ProfilScreen() {
 
       <View style={{ alignItems: "center", gap: sp[2], paddingBottom: sp[4] }}>
         <Text variante="legende" couleur={colors.danger} onPress={aller("/parametres/supprimer")} accessibilityRole="link">Supprimer mon compte</Text>
-        <Text variante="legende" muted>Logeo · version {APP_VERSION}</Text>
+        <Text variante="legende" muted>Immo+ · version {APP_VERSION}</Text>
       </View>
     </Screen>
   );

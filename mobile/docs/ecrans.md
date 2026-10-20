@@ -61,5 +61,5 @@ Les groupes de routes entre parenthèses (`(auth)`, `(locataire)`, `(partage)`, 
 | Partagé | `(partage)` : fiche d'annonce, conversation, notifications, réglages, modales (filtres, signaler, nouvelle conversation) | aucune ; les écrans personnels affichent `AuthRequired` |
 | Gérant | `pro/(onglets)` : Tableau de bord · Annonces · Messages · Profil ; pile : détail/modification d'annonce, assistant de création (6 étapes) | sans session → `/connexion` ; compte locataire → `/` |
 
-Liens profonds : `logeo://annonces/<slug>` et `https://<EXPO_PUBLIC_WEB_HOST>/annonces/<slug>` ouvrent `/annonces/[ident]`
+Liens profonds : `immoplus://annonces/<slug>` et `https://<EXPO_PUBLIC_WEB_HOST>/annonces/<slug>` ouvrent `/annonces/[ident]`
 (le même identifiant que le site). Un appui sur une notification passe par `features/notifications/routage.ts`.

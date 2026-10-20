@@ -279,7 +279,7 @@ def _apres_changement(annonce_id, ancien: str, nouveau: str, raison: str | None)
 
 _MOTIFS_MASQUAGE = {
     "stale": "Elle n'a pas été confirmée à temps. Confirme sa disponibilité pour la remettre en ligne.",
-    "moderation": "Elle a été masquée par la modération de Logeo.",
+    "moderation": "Elle a été masquée par la modération de Immo+.",
     "gerant_suspended": "Ton compte est suspendu : elle sera remise en ligne à la levée de la suspension.",
 }
 

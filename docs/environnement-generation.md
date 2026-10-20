@@ -24,6 +24,6 @@ fichiers de release directement.
 ## Consignes pour reprendre une session
 
 1. Relancer PostgreSQL et Redis (commandes ci-dessus) ; recréer le rôle de test si besoin :
-   `su postgres -c "psql -c \"CREATE ROLE logeo_test LOGIN SUPERUSER PASSWORD 'logeo-test'\""` puis `createdb -O logeo_test logeo`.
-2. Exporter `DB_USER=logeo_test DB_PASSWORD=logeo-test DB_NAME=logeo` avant `pytest` ou `outils/verifier_tout.sh`.
+   `su postgres -c "psql -c \"CREATE ROLE immoplus_test LOGIN SUPERUSER PASSWORD 'immoplus-test'\""` puis `createdb -O immoplus_test immoplus`.
+2. Exporter `DB_USER=immoplus_test DB_PASSWORD=immoplus-test DB_NAME=immoplus` avant `pytest` ou `outils/verifier_tout.sh`.
 3. Ne jamais utiliser `pkill -f` avec un motif présent dans la commande en cours : le shell s'arrête (utiliser des fichiers de PID).

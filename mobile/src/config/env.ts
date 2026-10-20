@@ -20,7 +20,7 @@ export const API_URL = brut.replace(/\/+$/, "").replace(/\/v1$/, "");
 /** WebSocket de la messagerie (`/ws/v1/`) : même hôte que l'API, schéma ws/wss. */
 export const WS_URL = `${API_URL.replace(/^http/, "ws")}/ws/v1/`;
 
-export const WEB_HOST = process.env.EXPO_PUBLIC_WEB_HOST ?? "logeo.example";
+export const WEB_HOST = process.env.EXPO_PUBLIC_WEB_HOST ?? "immoplus.example";
 export const APP_VERSION: string = Constants.expoConfig?.version ?? "0.0.0";
 export const EAS_PROJECT_ID: string | undefined =
   (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas?.projectId || undefined;

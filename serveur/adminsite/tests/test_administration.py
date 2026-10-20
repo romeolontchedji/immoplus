@@ -80,7 +80,7 @@ class TestConnexion:
 
     @pytest.mark.parametrize("fabrique", [ClientFactory, GerantFactory])
     def test_un_locataire_ou_un_gerant_ne_peut_pas_entrer(self, fabrique):
-        u = fabrique(email="client@logeo.test")
+        u = fabrique(email="client@immoplus.test")
         c, _ = se_connecter(u)
         assert c.get("/").status_code == 302
 

@@ -15,7 +15,7 @@ merci d'un oubli.
 ## Décision
 
 - À la création d'un gérant, un **SMS « compte prêt »** est envoyé au numéro
-  enregistré : « Logeo : ton compte gérant est créé. Ouvre l'application et
+  enregistré : « Immo+ : ton compte gérant est créé. Ouvre l'application et
   active-le avec ce numéro. Ne communique jamais ton code. » (texte GSM-7, un
   seul segment).
 - L'envoi est planifié **après le commit** (`transaction.on_commit`) et exécuté

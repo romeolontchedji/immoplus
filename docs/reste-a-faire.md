@@ -44,9 +44,9 @@ Mesures : voir `docs/a-verifier.md`, section « Résultats ».
 
 ## Pour reprendre
 ```bash
-cd logeo && python3 -m venv .venv && .venv/bin/pip install -r serveur/requirements/dev.txt
+cd immoplus && python3 -m venv .venv && .venv/bin/pip install -r serveur/requirements/dev.txt
 # PostgreSQL 16 et Redis démarrés, puis :
-export DB_USER=<superutilisateur> DB_PASSWORD=<mot de passe> DB_NAME=logeo
+export DB_USER=<superutilisateur> DB_PASSWORD=<mot de passe> DB_NAME=immoplus
 cd serveur && ../.venv/bin/python -m pytest -q     # 569 tests attendus
 ```
 Les tests créent leurs rôles `app`, `admin_app`, `retention` (voir `serveur/conftest.py`) : l'utilisateur de test doit être superutilisateur PostgreSQL.

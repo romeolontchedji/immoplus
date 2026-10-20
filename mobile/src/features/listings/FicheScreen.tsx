@@ -347,7 +347,7 @@ export function FicheScreen() {
         <View style={{ position: "absolute", top: haut + sp[2], left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: sp[4] }}>
           <BoutonRond libelle={t.commun.retour} onPress={retour}><ArrowLeft size={20} color={colors.night} /></BoutonRond>
           <View style={{ flexDirection: "row", gap: sp[2] }}>
-            <BoutonRond libelle="Partager" onPress={() => void Share.share({ message: `${fiche.title} · ${francs(fiche.rent_amount)}/mois sur Logeo\n${lien}` })}>
+            <BoutonRond libelle="Partager" onPress={() => void Share.share({ message: `${fiche.title} · ${francs(fiche.rent_amount)}/mois sur Immo+\n${lien}` })}>
               <Share2 size={18} color={colors.night} />
             </BoutonRond>
             <BoutonRond libelle={fiche.is_favorite ? "Retirer des favoris" : "Ajouter aux favoris"} onPress={basculer}>

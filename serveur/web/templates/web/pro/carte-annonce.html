@@ -1,4 +1,4 @@
-{% load logeo %}
+{% load immoplus %}
 {# Une annonce du gérant (liste « Mes annonces »). Paramètre : `ligne`. #}
 {% with a=ligne.annonce %}
   <article class="annonce-pro{% if a.status == 'draft' %} annonce-pro--brouillon{% endif %}">

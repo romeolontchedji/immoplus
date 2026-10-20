@@ -28,7 +28,7 @@ def importer(module: str, **env) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-c", f"import {module}"],
         cwd=SERVEUR,
-        env={**propre, "DOMAIN": "logeo.exemple.bj", "CAPTCHA_PROVIDER": "turnstile", **env},
+        env={**propre, "DOMAIN": "immoplus.exemple.bj", "CAPTCHA_PROVIDER": "turnstile", **env},
         capture_output=True,
         text=True,
         check=False,
@@ -74,7 +74,7 @@ def test_le_temps_reel_demarre_sans_la_cle_des_codes():
         "config.settings.public",
         SECRET_KEY="x" * 60,
         JWT_SIGNING_KEY="y" * 60,
-        LOGEO_PROCESSUS="realtime",
+        IMMOPLUS_PROCESSUS="realtime",
     )
     assert r.returncode == 0, r.stderr
     r = importer("config.settings.public", SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
@@ -99,7 +99,7 @@ def test_cookies_distincts_site_et_administration():
         cwd=SERVEUR,
         env={
             **os.environ,
-            "DOMAIN": "logeo.exemple.bj",
+            "DOMAIN": "immoplus.exemple.bj",
             "CAPTCHA_PROVIDER": "turnstile",
             "SECRET_KEY": "a" * 60,
             "JWT_SIGNING_KEY": "b" * 60,

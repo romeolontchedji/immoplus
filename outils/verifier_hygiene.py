@@ -14,7 +14,7 @@ TAILLE_MAX = 1024 * 1024
 EXCEPTIONS_TAILLE = (
     "serveur/web/static/vendor/",
     "docs/api/openapi.json",
-    "docs/api/logeo.postman_collection.json",
+    "docs/api/immoplus.postman_collection.json",
 )
 CODE = (".py", ".js")
 DEBOGAGE = [

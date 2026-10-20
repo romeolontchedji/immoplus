@@ -1,53 +1,61 @@
-import { View } from "react-native";
-import Svg, { Circle, Path, Rect } from "react-native-svg";
+import Svg, { Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 import { colors } from "@/ui/theme/tokens";
-import { Text } from "./Text";
-
-interface LogoProps {
-  taille?: number;
-}
 
 /**
- * Logo Logeo SVG officiel strict conforme à `docs/design/assets/logo.svg` :
- * - Fond bleu cobalt (#1B44D6) avec coins arrondis (rx 14)
- * - Épingle de localisation blanche
- * - Maisonnette bleue (#1B44D6) au centre
- * - Pastille soleil jaune (#FFB429) en haut à droite
+ * Identité Immo+ (immoplus-identite/, docs/design/assets/) : tracés vectoriels officiels, aucune police requise.
+ * Règle d'or : le « + » est bleu sur fond clair, jaune soleil sur fond sombre.
  */
-export function LogoIcon({ taille = 44 }: LogoProps) {
+
+function Icone() {
   return (
-    <Svg width={taille} height={taille} viewBox="0 0 48 48">
-      <Rect width="48" height="48" rx="14" fill="#1B44D6" />
-      <Path
-        d="M24 9c-6.6 0-12 5.2-12 11.7C12 29 24 39 24 39s12-10 12-18.3C36 14.2 30.6 9 24 9z"
-        fill="#FFFFFF"
-      />
-      <Path d="M17.5 21.5 24 16l6.5 5.5V28h-4v-4.5h-5V28h-4z" fill="#1B44D6" />
-      <Circle cx="36" cy="11" r="4.5" fill="#FFB429" />
+    <>
+      <Defs>
+        <LinearGradient id="immoplus-fond" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={colors.blue} />
+          <Stop offset="1" stopColor={colors.blueHover} />
+        </LinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width="512" height="512" rx="118" fill="url(#immoplus-fond)" />
+      <Path d="M140 372 L140 252 L256 150 L372 252 L372 372 Z" fill={colors.white} stroke={colors.white} strokeWidth={34} strokeLinejoin="round" />
+      <Path d="M256 276 L256 356" stroke={colors.sun} strokeWidth={46} strokeLinecap="round" />
+      <Path d="M216 316 L296 316" stroke={colors.sun} strokeWidth={46} strokeLinecap="round" />
+    </>
+  );
+}
+
+/** Icône de l'application (maison blanche et « + » jaune sur fond bleu). */
+export function LogoIcon({ taille = 44 }: { taille?: number }) {
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 512 512">
+      <Icone />
     </Svg>
   );
 }
 
 interface LogotypeProps {
-  /** Côté de l'icône ; le mot « Logeo » suit la même échelle (38 → 22 pt, comme l'en-tête du site). */
+  /** Côté de l'icône ; le mot « Immo+ » suit la même échelle. */
   taille?: number;
-  /** Texte blanc sur un fond nuit ou une bannière ; sinon texte nuit sur fond clair. */
+  /** Mot blanc et « + » jaune sur un fond nuit ou une bannière ; sinon mot nuit et « + » bleu. */
   surFondSombre?: boolean;
 }
 
-/** Logotype complet du site (`web/base.html`) : icône officielle + « Logeo » + point solaire. Unique source du logo mobile. */
+/** Logo horizontal Immo+ (icône + mot), unique source du logo mobile. */
 export function Logotype({ taille = 38, surFondSombre = false }: LogotypeProps) {
+  // Dans le fichier officiel, l'icône occupe 200 unités sur 288 de haut.
+  const hauteur = (taille * 288) / 200;
   return (
-    <View
-      style={{ flexDirection: "row", alignItems: "center", gap: Math.round(taille * 0.22) }}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel="Logeo"
-    >
-      <LogoIcon taille={taille} />
-      <Text style={{ fontSize: Math.round(taille * 0.58), fontWeight: "800", color: surFondSombre ? colors.white : colors.night }}>
-        Logeo<Text style={{ fontSize: Math.round(taille * 0.58), fontWeight: "800", color: colors.sun }}>.</Text>
-      </Text>
-    </View>
+    <Svg width={(hauteur * 1153) / 288} height={hauteur} viewBox="0 0 1153 288" accessible accessibilityRole="image" accessibilityLabel="Immo+">
+      <G transform="translate(44,44) scale(0.390625)">
+        <Icone />
+      </G>
+      <G transform="translate(294,219) scale(0.2127659574468085,-0.2127659574468085)" fill={surFondSombre ? colors.white : colors.night}>
+          <Path transform="translate(0,0)" d="M233 702V0H62V702Z" />
+          <Path transform="translate(295,0)" d="M1001 326V0H831V303Q831 357 802.5 386.5Q774 416 724 416Q674 416 645.5 386.5Q617 357 617 303V0H447V303Q447 357 418.5 386.5Q390 416 340 416Q290 416 261.5 386.5Q233 357 233 303V0H62V558H233V488Q259 523 301.0 543.5Q343 564 396 564Q459 564 508.5 537.0Q558 510 586 460Q615 506 665.0 535.0Q715 564 774 564Q878 564 939.5 501.0Q1001 438 1001 326Z" />
+          <Path transform="translate(1354,0)" d="M1001 326V0H831V303Q831 357 802.5 386.5Q774 416 724 416Q674 416 645.5 386.5Q617 357 617 303V0H447V303Q447 357 418.5 386.5Q390 416 340 416Q290 416 261.5 386.5Q233 357 233 303V0H62V558H233V488Q259 523 301.0 543.5Q343 564 396 564Q459 564 508.5 537.0Q558 510 586 460Q615 506 665.0 535.0Q715 564 774 564Q878 564 939.5 501.0Q1001 438 1001 326Z" />
+          <Path transform="translate(2413,0)" d="M28 279Q28 365 66.0 430.5Q104 496 170.0 531.0Q236 566 318 566Q400 566 466.0 531.0Q532 496 570.0 430.5Q608 365 608 279Q608 193 569.5 127.5Q531 62 464.5 27.0Q398 -8 316 -8Q234 -8 168.5 27.0Q103 62 65.5 127.0Q28 192 28 279ZM434 279Q434 346 400.5 382.0Q367 418 318 418Q268 418 235.0 382.5Q202 347 202 279Q202 212 234.5 176.0Q267 140 316 140Q365 140 399.5 176.0Q434 212 434 279Z" />
+      </G>
+      <Path d="M1042.936170212766 78.0 L1042.936170212766 210.0" stroke={surFondSombre ? colors.sun : colors.blue} strokeWidth={46} strokeLinecap="round" />
+      <Path d="M976.936170212766 144.0 L1108.936170212766 144.0" stroke={surFondSombre ? colors.sun : colors.blue} strokeWidth={46} strokeLinecap="round" />
+    </Svg>
   );
 }

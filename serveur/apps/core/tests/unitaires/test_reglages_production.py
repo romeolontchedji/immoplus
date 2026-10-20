@@ -17,7 +17,7 @@ import yaml
 RACINE = Path(__file__).resolve().parents[5]
 SERVEUR = RACINE / "serveur"
 COMPOSE = RACINE / "infra" / "compose"
-DOMAINE = "logeo.exemple.bj"
+DOMAINE = "immoplus.exemple.bj"
 
 
 def _outil_env():

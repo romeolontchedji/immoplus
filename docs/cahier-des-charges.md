@@ -16,7 +16,7 @@ Chaque exigence du CDC porte une priorité : **M** (obligatoire), **S** (à fair
 
 1. **Une seule base PostgreSQL, un seul code** : monolithe modulaire Django ; l'API (mobile) et les vues du site appellent **les mêmes services**. Aucune règle métier dans une vue, un sérialiseur, un consommateur WebSocket ou une tâche.
 2. **Administration complètement séparée** : autre hôte, autre processus, autres réglages, autre clé secrète, autre cookie, autre rôle PostgreSQL (`admin_app`), autre fichier d'environnement ; aucune route d'administration sur le site public et aucune route publique sur l'hôte d'administration. 2FA TOTP obligatoire, verrouillage par compte (django-axes), accès réservé à une liste d'adresses ou à un VPN. Détail : CDC §5.1.
-3. **Le numéro n'est jamais exposé par Logeo** : le numéro du gérant n'apparaît ni dans l'API, ni dans les pages, ni dans les aperçus de lien, ni dans les journaux. Messagerie en **texte seul**. **Amendé le 2026-10-18 (décision du porteur)** : dans la messagerie, locataire et gérant peuvent s'échanger librement numéros et liens et poursuivre hors plateforme ; le revenu vient de l'abonnement des gérants et des alertes payantes des locataires, pas du maintien des échanges. Détection des coordonnées (§11.7) en mode `off` par défaut dans la messagerie ; les annonces restent sans coordonnées.
+3. **Le numéro n'est jamais exposé par Immo+** : le numéro du gérant n'apparaît ni dans l'API, ni dans les pages, ni dans les aperçus de lien, ni dans les journaux. Messagerie en **texte seul**. **Amendé le 2026-10-18 (décision du porteur)** : dans la messagerie, locataire et gérant peuvent s'échanger librement numéros et liens et poursuivre hors plateforme ; le revenu vient de l'abonnement des gérants et des alertes payantes des locataires, pas du maintien des échanges. Détection des coordonnées (§11.7) en mode `off` par défaut dans la messagerie ; les annonces restent sans coordonnées.
 4. **Pas de Node en production** ni dans les images de production. Pas de Next.js. Site rendu par Django (gabarits) + HTMX + Alpine.js (build compatible CSP) + **CSS maison en CSS pur** (sans Tailwind : voir §4), assemblé par un script Python. Node n'est utilisé nulle part dans cette partie 1 (au plus pour récupérer des fichiers JS figés pendant la génération).
 5. **Sécurité par conception** (CDC §5) : CSP stricte sans script ni style en ligne, cookies `__Host-`, CSRF, Argon2id, JWT court + rafraîchissement opaque à rotation, ticket WebSocket à usage unique, anti-pompage SMS, journal d'audit résistant à la modification, pièces d'identité chiffrées, rôles de base séparés.
 6. **Mobile first** : toutes les pages se conçoivent d'abord à 360 px sur 3G, puis s'élargissent. Budgets : HTML < 30 Ko compressés, JavaScript initial < 60 Ko compressés, LCP < 2,5 s en 4G.
@@ -49,7 +49,7 @@ Choisis la **dernière version stable** de chaque composant à la date du jour, 
 # 5. Structure du dépôt (à créer à l'identique)
 
 ```
-logeo/
+immoplus/
 ├─ AGENTS.md                      règles pour toute IA et tout développeur (§7) — source unique
 ├─ CLAUDE.md                      une ligne : « Lis AGENTS.md. » (compatibilité des outils)
 ├─ README.md                      présentation, démarrage en 5 commandes, liens vers docs/
@@ -106,7 +106,7 @@ Refs: EF-MSG-03, ENF-PERF-02
 
 **Branches** — expression régulière : `^(main|(feat|fix|refactor|perf|test|docs|style|build|ci|chore|sec)/[a-z0-9]+(-[a-z0-9]+)*)$`. Exemple : `feat/messagerie-envoi-message`. Pas de majuscules, pas d'accents, pas d'underscore, 60 caractères au plus.
 
-**Pousser sur `main` est interdit** par le hook local (sauf premier push d'amorçage avec `LOGEO_PREMIER_PUSH=1`, documenté dans `docs/contribuer.md`) ; `main` est protégée côté GitHub (§6.4). Tout passe par demande de fusion (squash interdit : l'historique propre est la règle ; fusion « rebase » ou fusion classique).
+**Pousser sur `main` est interdit** par le hook local (sauf premier push d'amorçage avec `IMMOPLUS_PREMIER_PUSH=1`, documenté dans `docs/contribuer.md`) ; `main` est protégée côté GitHub (§6.4). Tout passe par demande de fusion (squash interdit : l'historique propre est la règle ; fusion « rebase » ou fusion classique).
 
 **Titre de demande de fusion** : même format que l'en-tête d'un commit.
 
@@ -140,7 +140,7 @@ Refs: EF-MSG-03, ENF-PERF-02
 
 C'est la **mémoire permanente** du projet pour toute IA et tout développeur futur. Court, dense, impératif (moins de 400 lignes), en français. Contenu obligatoire :
 
-1. **Projet en 10 lignes** : ce qu'est Logeo, les surfaces (APP, WEB, ADM), le périmètre de la partie 1, ce qui reste (mobile).
+1. **Projet en 10 lignes** : ce qu'est Immo+, les surfaces (APP, WEB, ADM), le périmètre de la partie 1, ce qui reste (mobile).
 2. **Commandes essentielles** : `make up`, `make migrate`, `make seed`, `make css`, `make test`, `make lint`, `make test-unitaires`, `make test-integration`, `make test-e2e`, `make test-securite`, `make test-lent`, `make couverture`, `make verifier`, `make hooks`, `make openapi`, `make docs` ; comment lancer un seul test ; comment ouvrir un shell Django.
 3. **Carte du dépôt** : le rôle de chaque dossier ; **rappel en gras : le dossier s'appelle `serveur/`, jamais « backend »**.
 4. **Architecture en règles** : couches `models / selectors / services / events / providers / adaptateurs (api, web, consumers, tasks)` ; qui a le droit d'importer quoi ; « une règle métier = un service » ; comment ajouter une fonctionnalité sans rien casser (checklist : service → test → sélecteur → API → vue web → OpenAPI → doc → migration en deux temps).
@@ -229,13 +229,13 @@ Journaux JSON avec identifiant de requête propagé aux tâches ; Sentry sans do
 Le site (et l'administration) doivent donner une impression de **produit soigné et professionnel** alors qu'on n'a ni photographe, ni illustrateur, ni banque d'images. La beauté vient de : un système de design rigoureux, une typographie maîtrisée, des espaces généreux, des illustrations **vectorielles originales** générées dans le code, des états vides et de chargement travaillés, et une cohérence totale. **Aucune image externe, aucun CDN, aucune police externe.**
 
 > **Amendement du 2026-10-17 (accord du porteur, ADR 0006) :** des **photos d'ambiance** à licence libre sont
-> autorisées pour le décor seulement (§9.3, point 8). Elles sont **hébergées par Logeo** (fichiers statiques du site,
+> autorisées pour le décor seulement (§9.3, point 8). Elles sont **hébergées par Immo+** (fichiers statiques du site,
 > ressources de l'application), jamais chargées depuis un site tiers : la règle « aucune image externe, aucun CDN »
 > reste entière. Les annonces n'utilisent jamais de photo de banque d'images.
 
 ## 9.1 Identité
 
-- Nom de travail **Logeo**. Logo : logotype vectoriel en SVG (mot « Logeo » en graisse 700, un pictogramme original d'une porte ouverte formant une épingle de localisation), versions claire, sombre et monochrome, favicon, icônes PWA (192/512, maskable), image de partage Open Graph générée (SVG converti en PNG 1200×630 par un script Pillow, texte « Trouve ta chambre à Parakou »).
+- Nom de travail **Immo+**. Logo : logotype vectoriel en SVG (mot « Immo+ » en graisse 700, un pictogramme original d'une porte ouverte formant une épingle de localisation), versions claire, sombre et monochrome, favicon, icônes PWA (192/512, maskable), image de partage Open Graph générée (SVG converti en PNG 1200×630 par un script Pillow, texte « Trouve ta chambre à Parakou »).
 - Ton éditorial : chaleureux, simple, rassurant, tutoiement pour les locataires et les gérants (« Trouve ta chambre », « Confirme que ta chambre est libre »), phrases courtes, jamais de jargon. Tous les textes sont dans les fichiers de traduction.
 
 ## 9.2 Jetons de design (fichier unique `serveur/web/static/css/tokens.css` ; ne jamais écrire une valeur en dur ailleurs)
@@ -307,8 +307,8 @@ Avant de terminer, tu génères `docs/mobile/` et les outils associés, de sorte
 1. **`docs/api/openapi.json`** versionné et vérifié par un test ; `make openapi` le régénère ; `docs/api/README.md` explique les conventions (CDC §10.1 : authentification, pagination par curseur, idempotence, erreurs, limites de débit, ETag, `X-App-Version`, `X-Installation-Id`, versionnement).
 2. **Tous les endpoints du CDC §10.2 à §10.7** implémentés avec exemples de requêtes et de réponses dans le schéma, erreurs documentées, et **tests de contrat** (schemathesis) qui passent.
 3. **`docs/mobile/passation.md`** : vue d'ensemble pour l'équipe mobile ; ordre de construction recommandé ; ce que fait le serveur pour l'application (rotation des jetons, ticket WebSocket, tus, push, `app-config`, mise à jour obligatoire, mode économie de données).
-4. **`docs/mobile/flux-authentification.md`** (inscription, connexion, rafraîchissement avec grâce de 60 s, révocation, appareils, changement de numéro, suppression), **`docs/mobile/websocket.md`** (protocole complet, reprise `after_seq`, présence, codes), **`docs/mobile/envoi-video-tus.md`** (déroulé pas à pas avec exemples `curl` et reprise), **`docs/mobile/notifications-push.md`** (enregistrement du jeton, charge utile, ouverture de la conversation), **`docs/mobile/liens-profonds.md`** (`/.well-known/assetlinks.json` servi par Caddy avec un modèle `[À FOURNIR : empreinte de signature]`, schéma `logeo://`, correspondance des routes du site), **`docs/mobile/erreurs.md`** (tous les codes et comportements attendus du client), **`docs/mobile/comptes-de-test.md`** (comptes du jeu de données et leurs rôles), **`docs/mobile/markdown-description.md`** (sous-ensemble et jeu de tests `markdown_cases.json`).
-5. **Outils** : `outils/ws_client.py` (client WebSocket en ligne de commande pour tester la messagerie), `outils/exporter_client_ts.sh` (génère le client TypeScript depuis OpenAPI **dans un conteneur** et l'écrit dans `mobile/src/api/` quand le dossier existera ; la commande est documentée et testée à blanc), collection `docs/api/logeo.postman_collection.json` générée depuis OpenAPI.
+4. **`docs/mobile/flux-authentification.md`** (inscription, connexion, rafraîchissement avec grâce de 60 s, révocation, appareils, changement de numéro, suppression), **`docs/mobile/websocket.md`** (protocole complet, reprise `after_seq`, présence, codes), **`docs/mobile/envoi-video-tus.md`** (déroulé pas à pas avec exemples `curl` et reprise), **`docs/mobile/notifications-push.md`** (enregistrement du jeton, charge utile, ouverture de la conversation), **`docs/mobile/liens-profonds.md`** (`/.well-known/assetlinks.json` servi par Caddy avec un modèle `[À FOURNIR : empreinte de signature]`, schéma `immoplus://`, correspondance des routes du site), **`docs/mobile/erreurs.md`** (tous les codes et comportements attendus du client), **`docs/mobile/comptes-de-test.md`** (comptes du jeu de données et leurs rôles), **`docs/mobile/markdown-description.md`** (sous-ensemble et jeu de tests `markdown_cases.json`).
+5. **Outils** : `outils/ws_client.py` (client WebSocket en ligne de commande pour tester la messagerie), `outils/exporter_client_ts.sh` (génère le client TypeScript depuis OpenAPI **dans un conteneur** et l'écrit dans `mobile/src/api/` quand le dossier existera ; la commande est documentée et testée à blanc), collection `docs/api/immoplus.postman_collection.json` générée depuis OpenAPI.
 6. **Jeu de données de démonstration** (`make seed`) : quartiers `[À FOURNIR : liste réelle]` avec valeurs d'exemple clairement marquées fictives, 1 administrateur, 1 modérateur, 2 gérants vérifiés, 3 locataires, ~20 annonces avec vidéos courtes générées par ffmpeg (motifs vidéo synthétiques, pas de contenu tiers) et affiches de repli, conversations et notifications d'exemple.
 7. **Fournisseurs `console`** : en local, les OTP et push s'affichent dans une page de développement `/dev/boite-de-reception` (activée en `local` seulement) qui liste les derniers codes OTP et notifications « envoyés », pour que le mobile se teste **sans SMS ni push réels**.
 8. **`docs/mobile/checklist-partie-2.md`** : liste de ce qui reste à construire côté mobile avec, pour chaque écran du CDC §12.2 et §12.3, le point d'entrée d'API correspondant.
@@ -317,7 +317,7 @@ Avant de terminer, tu génères `docs/mobile/` et les outils associés, de sorte
 
 - `README.md` : en 5 commandes, le projet tourne ; captures décrites ; liens.
 - **`docs/guide-installation-pas-a-pas.md`** : guide pour quelqu'un qui n'a jamais lancé le projet — prérequis par système (Windows avec WSL2, macOS, Linux), installation de Git et Docker, clonage, `cp .env.example .env`, `make hooks`, `make up`, `make migrate`, `make seed`, `make css`, URLs locales (`www.localhost`, `api.localhost`, `pilotage.localhost`, `/styleguide`, `/dev/boite-de-reception`, documentation OpenAPI), comptes de test, connexion à l'administration avec 2FA de développement, lancement des tests, **dépannage** (ports occupés, mémoire Docker, ffmpeg, droits de fichiers, WSL2) avec les messages d'erreur réels et leurs remèdes.
-- **`docs/premiere-execution.md`** : de l'archive décompressée au premier `make fumee` réussi (décompresser, `outils/diagnostic.sh`, `cp .env.example .env`, `make hooks`, `make up`, `make migrate`, `make seed`, `make fumee`), avec **la sortie attendue de chaque commande**, ce qui n'a pas pu être exécuté pendant la génération (renvoi vers `docs/verification.md`), puis création du dépôt GitHub, premier push (`LOGEO_PREMIER_PUSH=1`) et protection de branche.
+- **`docs/premiere-execution.md`** : de l'archive décompressée au premier `make fumee` réussi (décompresser, `outils/diagnostic.sh`, `cp .env.example .env`, `make hooks`, `make up`, `make migrate`, `make seed`, `make fumee`), avec **la sortie attendue de chaque commande**, ce qui n'a pas pu être exécuté pendant la génération (renvoi vers `docs/verification.md`), puis création du dépôt GitHub, premier push (`IMMOPLUS_PREMIER_PUSH=1`) et protection de branche.
 - **`docs/aide-ia-depannage.md`** : texte prêt à coller dans une IA quand une commande échoue (contexte du projet en 10 lignes, les commandes de diagnostic à exécuter, les informations à fournir : sortie complète, système, version de Docker), plus tableau des erreurs probables au premier lancement (images non construites, ports occupés, droits des volumes, extensions PostgreSQL, ffmpeg absent, variables manquantes) avec remèdes.
 - `docs/environnement-generation.md`, `docs/verification.md` (matrice exécuté / simulé / non exécuté).
 - `docs/architecture.md` (schémas, flux, processus), `docs/securite.md` (modèle de menaces, séparation de l'administration, OTP, secrets, rotation des clés), `docs/websocket.md`, `docs/media.md`, `docs/design-system.md` (jetons, composants, règles, comment ajouter un composant), `docs/qualite-web.md` (mesures Lighthouse/axe/budgets), `docs/exploitation.md` (supervision, alertes, sauvegardes et **restauration pas à pas**, rotation des secrets, incidents types), `docs/contribuer.md` (format Git, hooks, protection de branche pas à pas, revue, fusion), `docs/glossaire.md`, `docs/a-fournir.md` (tout ce que l'équipe doit fournir), `docs/avancement.md`, `docs/adr/` (une note par décision), `docs/api/`, `docs/mobile/`.
@@ -326,7 +326,7 @@ Avant de terminer, tu génères `docs/mobile/` et les outils associés, de sorte
 
 # 12. Phases de travail (enchaîne-les ; rapport à la fin de chacune)
 
-Pour **chaque phase** : (a) relire les sections du CDC concernées ; (b) écrire les tests **en même temps que le code** selon le §12 bis ; (c) `make verifier` au vert ; (d) mettre à jour `docs/` et `docs/avancement.md` ; (e) commits conformes au §6 sur une branche `feat/…` (fusionnée dans `main` du dépôt local de génération à la fin de la phase) ; (f) `docs/verification.md` mis à jour ; (g) **archive `logeo-partie1.zip` régénérée et envoyée** (§0 bis.7) ; (h) rapport court : livré, tests exécutés (nombre, résultat), non exécuté, décisions (ADR), `[À FOURNIR]` ouverts, risques.
+Pour **chaque phase** : (a) relire les sections du CDC concernées ; (b) écrire les tests **en même temps que le code** selon le §12 bis ; (c) `make verifier` au vert ; (d) mettre à jour `docs/` et `docs/avancement.md` ; (e) commits conformes au §6 sur une branche `feat/…` (fusionnée dans `main` du dépôt local de génération à la fin de la phase) ; (f) `docs/verification.md` mis à jour ; (g) **archive `immoplus-partie1.zip` régénérée et envoyée** (§0 bis.7) ; (h) rapport court : livré, tests exécutés (nombre, résultat), non exécuté, décisions (ADR), `[À FOURNIR]` ouverts, risques.
 
 - **Phase 0 — Fondations** : dépôt, arborescence, `AGENTS.md`, hooks et contrôles du §6 (avec tests des scripts : cas valides et invalides), Docker Compose complet (tous les services démarrent), réglages `base/local/public/admin/test`, rôles PostgreSQL, Caddy local, import-linter, CI, `outils/construire_css.py`, jetons de design, `/styleguide` initial, `/healthz` `/readyz`, ADR 0001. Critère : les neuf cas de `outils/tester_hooks.sh` (§6.5) se comportent comme attendu, sortie jointe ; la pile Compose est écrite et relue (son démarrage réel est « non exécuté » si Docker est absent du bac à sable, et vérifié par `make fumee` chez l'utilisateur).
 - **Phase 1 — Comptes** : modèles `users`, `otp_codes`, `devices`, `gerant_profiles`, `audit_logs`, `app_settings` ; OTP, inscription, connexion, rotation des jetons, appareils, création manuelle des gérants par l'administration, suppression de compte, mot de passe oublié, changement de numéro ; pages web d'authentification ; administration : hôte séparé, connexion, 2FA, axes, création de gérants, rôles ; tests de sécurité du §5 (CDC §14.2 scénarios 1, 2, 13, 14).
@@ -421,20 +421,20 @@ Affirmer qu'une commande a réussi sans l'avoir exécutée ; recopier des fichie
 
 <!-- DEBUT CDC -->
 
-# PARTIE B — CAHIER DES CHARGES DÉVELOPPEUR DE LOGEO (référence, à copier dans `docs/cahier-des-charges.md`)
+# PARTIE B — CAHIER DES CHARGES DÉVELOPPEUR DE IMMOPLUS (référence, à copier dans `docs/cahier-des-charges.md`)
 
 *Dans cette spécification, le code serveur vit dans `serveur/` (le prompt, Partie A, fait foi pour l'arborescence exacte, §5). Sections retirées de l'original pour alléger : sprints, risques, glossaire, couverture et sommaire. Les figures ne sont pas reproduites ; leur contenu est décrit par les tableaux et listes.*
 
 ## 1. Objet du document et décisions arrêtées
 
-Ce document est la référence unique pour construire Logeo : quoi développer, avec quelles technologies, sur quelles données, selon quelles règles, et comment le système tient la charge, résiste aux attaques et évolue sans casser. Les exigences portent un identifiant stable (par exemple `EF-MSG-03`) à citer dans les tickets et les tests. Priorités : **M** (indispensable au lancement), **S** (attendu, sacrifiable en dernier recours), **C** (si le temps le permet).
+Ce document est la référence unique pour construire Immo+ : quoi développer, avec quelles technologies, sur quelles données, selon quelles règles, et comment le système tient la charge, résiste aux attaques et évolue sans casser. Les exigences portent un identifiant stable (par exemple `EF-MSG-03`) à citer dans les tickets et les tests. Priorités : **M** (indispensable au lancement), **S** (attendu, sacrifiable en dernier recours), **C** (si le temps le permet).
 
 ### Décisions arrêtées
 
 | Décision de l'équipe | Conséquence pour le développement |
 |---|---|
 | Inscription par OTP, connexion par numéro + mot de passe, réinitialisation par OTP | L'OTP n'est envoyé que dans trois cas (inscription, réinitialisation, changement de numéro) : le coût des SMS reste borné (§5.3, §16). |
-| Aucun contact hors plateforme : tout passe par la messagerie de Logeo | Messagerie temps réel dès le lancement, une notification par message reçu, numéro du gérant jamais exposé, détection des coordonnées. |
+| Aucun contact hors plateforme : tout passe par la messagerie de Immo+ | Messagerie temps réel dès le lancement, une notification par message reçu, numéro du gérant jamais exposé, détection des coordonnées. |
 | Messagerie en texte seul : ni vocal, ni image, ni vidéo pour l'instant | Une seule table de messages sans pièce jointe ; l'ajout ultérieur n'oblige pas à modifier l'existant (§6.4). |
 | Une seule application mobile (React Native), expérience selon le rôle | Un seul binaire, deux espaces (locataire, gérant) choisis après la connexion. |
 | Un seul site web en gabarits Django (pas de Next.js, pas de Node en production) | Rendu serveur, HTMX et Alpine.js servis comme fichiers statiques ; CSS pur assemblé par un script (voir §4 du prompt). |
@@ -448,13 +448,13 @@ Ce document est la référence unique pour construire Logeo : quoi développer, 
 | Abonnement prévu, non lancé | Tables, services et écrans livrés mais désactivés par un drapeau (§7.11). |
 | Modèle de données réduit à 19 tables | Fusion des tables secondaires, suppression de PostGIS et des pièces jointes (§9). |
 
-> **Principe de conception.** À valeur égale, on choisit la solution la plus simple à exploiter pour deux développeurs, la plus sobre en octets pour un téléphone modeste en 3G, et celle qui garde les échanges dans Logeo. Aucune brique n'est ajoutée sans un besoin mesurable.
+> **Principe de conception.** À valeur égale, on choisit la solution la plus simple à exploiter pour deux développeurs, la plus sobre en octets pour un téléphone modeste en 3G, et celle qui garde les échanges dans Immo+. Aucune brique n'est ajoutée sans un besoin mesurable.
 
 ## 2. Contexte, objectifs et périmètre
 
 ### Contexte et valeur
 
-À Parakou, démarcheurs et gérants publient leurs chambres dans des groupes WhatsApp, des statuts ou sur Facebook : la découverte est fermée, un étudiant qui arrive en ville ne voit rien. Logeo rassemble les chambres libres en un lieu ouvert, présentées en courtes vidéos, filtrables par quartier et par distance au campus, avec des gérants vérifiés à la main et une messagerie intégrée. Le public visé est large (étudiants, puis tout chercheur de chambre) et l'usage est mobile avant tout.
+À Parakou, démarcheurs et gérants publient leurs chambres dans des groupes WhatsApp, des statuts ou sur Facebook : la découverte est fermée, un étudiant qui arrive en ville ne voit rien. Immo+ rassemble les chambres libres en un lieu ouvert, présentées en courtes vidéos, filtrables par quartier et par distance au campus, avec des gérants vérifiés à la main et une messagerie intégrée. Le public visé est large (étudiants, puis tout chercheur de chambre) et l'usage est mobile avant tout.
 
 ### Objectifs mesurables
 
@@ -465,7 +465,7 @@ Cibles indicatives à calibrer avec le démarcheur partenaire ; le back-office l
 | Chambres actives de gérants vérifiés | 40 | `listings` publiées |
 | Comptes locataires (numéro vérifié) | 300 à 3 mois | `users` rôle client |
 | Délai médian de première réponse d'un gérant | moins de 2 heures | `conversations.first_reply_at` |
-| Locations conclues via Logeo | 20 à 3 mois | `listings.rented_at` |
+| Locations conclues via Immo+ | 20 à 3 mois | `listings.rented_at` |
 | Locataires actifs sur les 30 derniers jours (part des inscrits) | 30 % | `users.last_seen_at`, `daily_stats` |
 
 ### Dans le périmètre de la première version
@@ -496,7 +496,7 @@ Trois surfaces partagent la même base de données et la même logique métier. 
 
 | Code | Surface | Technologie | Utilisateurs et rôle |
 |---|---|---|---|
-| APP | Application mobile Logeo | React Native (Expo), TypeScript | Locataires et gérants. Après la connexion, l'application affiche l'espace locataire ou l'espace gérant selon le rôle du compte. Hôte : api. |
+| APP | Application mobile Immo+ | React Native (Expo), TypeScript | Locataires et gérants. Après la connexion, l'application affiche l'espace locataire ou l'espace gérant selon le rôle du compte. Hôte : api. |
 | WEB | Site web | Gabarits Django, HTMX, Alpine.js, CSS pur | Visiteurs, locataires, gérants. Pages publiques indexables, espace locataire, espace gérant (publier depuis un ordinateur). Hôte : www. |
 | ADM | Administration | Django (réglages et URL séparés), thème moderne | Administrateurs et modérateurs : vérification des gérants, modération, statistiques complètes, paramètres. Hôte dédié, non public. |
 
@@ -564,7 +564,7 @@ Trois surfaces partagent la même base de données et la même logique métier. 
 
 ### 4.1 Vue d'ensemble
 
-Logeo est un **monolithe modulaire** Django : un seul code, une seule base PostgreSQL, déployé en plusieurs processus spécialisés. L'application mobile parle à l'API REST, le site est rendu par Django, l'administration est un processus Django distinct. Les traitements lents (vidéo, notifications, alertes) passent par des files Celery. Tout service externe (SMS, push, paiement, stockage) est derrière une interface remplaçable. Ce choix, plutôt que des microservices, est délibéré : à deux développeurs et à l'échelle visée, il donne la fiabilité d'une transaction unique et une exploitation simple, tout en gardant des frontières nettes pour évoluer (§4.4, §6).
+Immo+ est un **monolithe modulaire** Django : un seul code, une seule base PostgreSQL, déployé en plusieurs processus spécialisés. L'application mobile parle à l'API REST, le site est rendu par Django, l'administration est un processus Django distinct. Les traitements lents (vidéo, notifications, alertes) passent par des files Celery. Tout service externe (SMS, push, paiement, stockage) est derrière une interface remplaçable. Ce choix, plutôt que des microservices, est délibéré : à deux développeurs et à l'échelle visée, il donne la fiabilité d'une transaction unique et une exploitation simple, tout en gardant des frontières nettes pour évoluer (§4.4, §6).
 
 *Figure 1 — Architecture d'ensemble (un serveur au départ, chaque couche remplaçable ou duplicable ensuite). (schéma non reproduit ici : voir les listes et tableaux de la section.)*
 
@@ -677,7 +677,7 @@ La robustesse d'un monolithe tient à ses frontières internes. Elles sont écri
 #### Structure du dépôt
 
 ```
-logeo/
+immoplus/
 ├─ serveur/
 │  ├─ config/                 réglages : base, local, public, admin ; ASGI ; Celery
 │  ├─ apps/
@@ -749,7 +749,7 @@ Le serveur ne contrôle pas le réseau : en Afrique de l'Ouest, l'aller-retour v
 
 ## 5. Sécurité
 
-Logeo détient des numéros de téléphone, des conversations privées et des pièces d'identité de gérants, dans un marché où l'arnaque est le risque principal. La sécurité est donc une exigence de conception, pas une phase finale. Elle repose sur cinq principes.
+Immo+ détient des numéros de téléphone, des conversations privées et des pièces d'identité de gérants, dans un marché où l'arnaque est le risque principal. La sécurité est donc une exigence de conception, pas une phase finale. Elle repose sur cinq principes.
 
 - **Défense en profondeur :** chaque protection est doublée (réseau, application, base).
 - **Moindre privilège :** rôles de base de données séparés, volumes montés au strict nécessaire, groupes de permissions minimaux.
@@ -1709,7 +1709,7 @@ trialing → active ; active → past_due (grâce de 7 jours) → active ou expi
 > signalement automatique ; les modes `mask`, `flag` et `block` restent activables dans les paramètres. Les **annonces**
 > (titre, repère, description) continuent de refuser les coordonnées (EF-ANN-05).
 
-But : garder les échanges dans Logeo sans gêner les conversations normales (les prix contiennent des chiffres). S'applique aux messages, titres, repères, adresses privées et descriptions. Produit un motif ; pour les signaux forts, l'action dépend de `CONTACT_LEAK_MODE` ; les mots-clés sont toujours seulement signalés.
+But : garder les échanges dans Immo+ sans gêner les conversations normales (les prix contiennent des chiffres). S'applique aux messages, titres, repères, adresses privées et descriptions. Produit un motif ; pour les signaux forts, l'action dépend de `CONTACT_LEAK_MODE` ; les mots-clés sont toujours seulement signalés.
 
 | Signal | Règle | Poids |
 |---|---|---|
@@ -1869,7 +1869,7 @@ cd mobile && npx expo start    # application (appareil réel ou émulateur)
 |---|---|---|
 | DJANGO_SETTINGS_MODULE | config.settings.local | config.settings.public ou config.settings.admin selon le conteneur |
 | SECRET_KEY · JWT_SIGNING_KEY | valeurs de développement | secrets longs et uniques ; **différents** pour public et admin |
-| DATABASE_URL (app) · DATABASE_URL_ADMIN · DATABASE_URL_MIGRATE | postgres://app:app@db/logeo · postgres://admin_app:… · postgres://migrate:… | trois rôles distincts ; connexion interne uniquement ; chaque URL n'est injectée que dans les conteneurs qui en ont besoin |
+| DATABASE_URL (app) · DATABASE_URL_ADMIN · DATABASE_URL_MIGRATE | postgres://app:app@db/immoplus · postgres://admin_app:… · postgres://migrate:… | trois rôles distincts ; connexion interne uniquement ; chaque URL n'est injectée que dans les conteneurs qui en ont besoin |
 | REDIS_CACHE_URL · REDIS_QUEUE_URL | redis://redis-cache:6379/0 · redis://redis-queue:6379/0 | idem, avec mot de passe |
 | DOMAIN · ADMIN_HOST · ALLOWED_HOSTS · ADMIN_ALLOWED_IPS | localhost, pilotage.localhost, vide | domaines réels ; liste blanche d'IP ou VPN obligatoire pour l'administration |
 | MEDIA_ROOT_PUBLIC · MEDIA_ROOT_TMP · MEDIA_ROOT_PRIVATE | volumes locaux | volumes du serveur (§4.3) ; clé de chiffrement `PRIVATE_FILES_KEY` hors base, injectée seulement dans admin et backup |
@@ -2001,7 +2001,7 @@ Hypothèses retenues faute de décision ou d'information complète. Chacune se c
 | 11 | Adresse précise de la chambre | Visible seulement dans la conversation, pour garder un rôle à la plateforme. |
 | 12 | Web Push sur le site | Priorité C : les notifications fiables passent par l'application ; le site affiche compteur et messages en direct tant qu'il est ouvert. |
 | 13 | Valeurs chiffrées | Durées, tailles, plafonds et délais de l'annexe A sont des valeurs de départ à ajuster avec le démarcheur et d'après les mesures. |
-| 14 | Nom et domaine | « Logeo » est un nom de travail ; le nom de domaine reste à acheter (le document utilise `<domaine>`). |
+| 14 | Nom et domaine | « Immo+ » est un nom de travail ; le nom de domaine reste à acheter (le document utilise `<domaine>`). |
 
 ## Annexe A. Constantes de configuration
 
