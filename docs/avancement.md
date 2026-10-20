@@ -2,6 +2,18 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 : plan d'actions v3 (retours du 19/10), voir `docs/plan-actions-v3.md`.**
+- Recherche : listes déroulantes, filtres en temps réel, colonne de filtres fixe (site), quartiers voisins, équipements
+  indexés. Fiche : quartier d'abord, galerie à diapositives, équipements, prix à débattre, avis, contact direct.
+- Publication : électricité, eau, cuisine, prix à débattre, « Autres détails » en texte simple ; éditeur en étapes sur
+  le site ; brouillons signalés ; suppression de toute annonce ; vues par chambre et au total (vues du jour comprises).
+- Site : barre latérale fixe partout sauf l'accueil, « Mon profil » (numéro changé sur place), code SMS à six cases,
+  pages de connexion avec photo. Profil public du gérant (site, API, mobile).
+- Administration : note sous chaque paramètre, échecs de connexion du site journalisés, avis, aide des quartiers.
+- Correctifs : lien « Voir les chambres » d'une alerte (quartier par identifiant), « Autres détails » jamais affichés
+  sur la fiche, couleurs en dur du mobile remplacées par les jetons.
+- Migrations : `listings.0009` (cuisine, loyer à débattre, avis, textes simples), `core.0008` (masquage coupé).
+
 **2026-10-19 : solidité avant hébergement.**
 - `readyz` passe par le client Redis partagé (tests : disque simulé). Relevé du code mort : `docs/code-mort.md`.
 - Administration : double authentification par code envoyé par courriel à chaque connexion (10 min, 5 essais,

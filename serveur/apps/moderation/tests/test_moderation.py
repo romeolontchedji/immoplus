@@ -332,6 +332,7 @@ class TestActions:
         assert a.revoked_at and a.revoked_by_id == mod.pk and autre.pk
 
     def test_annonce_perimee_pendant_la_suspension_reste_masquee_sans_confirmation(self, decor):
+        parametres.definir("STALE_HIDE_DAYS", 14)  # masquage automatique coupé par défaut (plan v3)
         mod = PersonnelFactory()
         services.appliquer(
             mod,
