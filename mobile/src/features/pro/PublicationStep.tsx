@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { isApiError } from "@/api/errors";
 import { francs } from "@/lib/format";
 import { urlMedia } from "@/lib/media";
-import { messageErreur, t } from "@/i18n/fr";
+import { messageErreur } from "@/i18n/fr";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Button } from "@/ui/components/Button";
@@ -58,7 +58,6 @@ export function PublicationStep() {
   const publier = useActionAnnonce(id ?? "");
 
   const nbPhotos = (medias.data ?? []).filter((m) => m.kind === "photo").length;
-  const hasVideo = (medias.data ?? []).some((m) => m.kind === "video");
   const cover = (medias.data ?? []).find((m) => m.is_cover);
 
   const lancer = () => {
@@ -70,7 +69,7 @@ export function PublicationStep() {
     });
   };
 
-  const prete = !!(id && hasVideo && nbPhotos >= PHOTOS_MIN);
+  const prete = !!(id && nbPhotos >= PHOTOS_MIN); // vidéo facultative (2026-10-20)
 
   return (
     <Screen
@@ -150,7 +149,6 @@ export function PublicationStep() {
         </View>
       ) : (
         <Text variante="legende" couleur={c.danger}>
-          {!hasVideo ? "Ajoute une vidéo. " : ""}
           {nbPhotos < PHOTOS_MIN ? `Ajoute au moins ${PHOTOS_MIN - nbPhotos} photo${PHOTOS_MIN - nbPhotos > 1 ? "s" : ""} de plus.` : ""}
         </Text>
       )}

@@ -12,7 +12,12 @@ from apps.listings import selectors
 from apps.listings.enums import PHOTOS_MIN
 from apps.listings.models import Alert, ListingMedia
 from apps.listings.services import alertes, annonces
-from apps.listings.tests.fabriques import DistrictFactory, ListingFactory, medias_prets
+from apps.listings.tests.fabriques import (
+    DistrictFactory,
+    ListingFactory,
+    gerant_verifie,
+    medias_prets,
+)
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 
@@ -120,3 +125,26 @@ class TestFicheEtPublication:
             listing=a, kind="photo", status="ready", declared_size_bytes=1, position=9
         )
         assert "trois_photos_pretes" not in annonces.manques_a_la_publication(a)
+
+
+class TestVideoFacultative:
+    def test_publier_sans_video(self):
+        a = ListingFactory(status="draft", gerant=gerant_verifie())
+        medias_prets(a, photos=PHOTOS_MIN, video=False)
+        assert annonces.manques_a_la_publication(a) == []
+
+    def test_retirer_la_video_d_une_annonce_en_ligne(self):
+        from apps.listings.services import medias
+
+        a = ListingFactory()
+        medias_prets(a, photos=PHOTOS_MIN, video=True)
+        video = ListingMedia.objects.get(listing=a, kind="video")
+        medias.supprimer(a.gerant, a.pk, video.pk)
+        video.refresh_from_db()
+        assert video.status == "deleted"
+
+    def test_fiche_sans_video(self):
+        a = ListingFactory()
+        medias_prets(a, photos=PHOTOS_MIN, video=False)
+        page = Client().get(f"/annonces/{a.slug}").content.decode()
+        assert "data-galerie" in page and "<video" not in page

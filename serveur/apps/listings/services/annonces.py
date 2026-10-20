@@ -325,7 +325,6 @@ def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) 
 MANQUES_PUBLICATION = {
     "gerant_non_verifie": "ton compte gérant n'est pas encore vérifié",
     "gerant_suspendu": "ton compte gérant est suspendu",
-    "video_prete": "la vidéo n'est pas encore prête",
     "trois_photos_pretes": f"il faut au moins {PHOTOS_MIN} photos prêtes",
 }
 CHAMPS_ANNONCE = {
@@ -357,9 +356,8 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
         valeur = getattr(annonce, f"{nom}_id" if nom == "district" else nom, None)
         if valeur in (None, "", []):
             manques.append(f"champ:{nom}")
+    # La vidéo est facultative (demande du 2026-10-20) : seules les photos sont exigées.
     media = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
-    if not media.filter(kind=TypeMedia.VIDEO).exists():
-        manques.append("video_prete")
     if media.filter(kind=TypeMedia.PHOTO).count() < PHOTOS_MIN:
         manques.append("trois_photos_pretes")
     return manques
@@ -381,7 +379,7 @@ def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     en_traitement = ListingMedia.objects.filter(
         listing=annonce, status__in=[StatutMedia.UPLOADED, StatutMedia.PROCESSING]
     ).exists()
-    if manques and not (en_traitement and set(manques) <= {"video_prete", "trois_photos_pretes"}):
+    if manques and not (en_traitement and set(manques) <= {"trois_photos_pretes"}):
         raise ErreurMetier(
             "listing_not_publishable", "L'annonce n'est pas encore publiable.", statut=409,
             champs={"manques": manques},

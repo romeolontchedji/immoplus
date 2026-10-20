@@ -221,7 +221,8 @@ class TestPublication:
         a = creer(pro, quartier)
         r = pro.post(f"/v1/pro/listings/{a['id']}/publish")
         assert r.status_code == 409 and r.json()["error"]["code"] == "listing_not_publishable"
-        assert {"video_prete", "trois_photos_pretes"} <= set(r.json()["error"]["fields"]["manques"])
+        manques = set(r.json()["error"]["fields"]["manques"])
+        assert "trois_photos_pretes" in manques and "video_prete" not in manques
 
     def test_gerant_non_verifie(self, quartier):
         from apps.accounts.tests.fabriques import GerantProfileFactory
@@ -355,9 +356,12 @@ class TestPreparationEtStatistiques:
         a = creer(pro, quartier)
         r = pro.get(f"/v1/pro/listings/{a['id']}/readiness")
         assert r.status_code == 200 and r.json()["publishable"] is False
-        assert {"code": "video_prete", "label": "la vidéo n'est pas encore prête"} in r.json()[
-            "missing"
-        ]
+        manques = r.json()["missing"]
+        assert {
+            "code": "trois_photos_pretes",
+            "label": "il faut au moins 5 photos prêtes",
+        } in manques
+        assert not any(m["code"] == "video_prete" for m in manques)  # vidéo facultative
 
     def test_statistiques_par_jour(self, pro, quartier):
         from apps.core import stats

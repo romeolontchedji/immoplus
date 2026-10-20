@@ -430,12 +430,14 @@ class TestGestion:
         nouvelle = ListingMedia.objects.filter(listing=annonce, is_cover=True)
         assert nouvelle.count() == 1 and nouvelle.get().pk != couverture.pk
 
-    def test_une_annonce_publiee_garde_sa_video_et_trois_photos(self, pro, gerant):
+    def test_une_annonce_publiee_garde_ses_photos_pas_forcement_sa_video(self, pro, gerant):
         publiee = ListingFactory(gerant=gerant)
         medias_prets(publiee, photos=5)
-        video = ListingMedia.objects.get(listing=publiee, kind="video")
-        r = pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{video.pk}")
+        photo = ListingMedia.objects.filter(listing=publiee, kind="photo").first()
+        r = pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{photo.pk}")
         assert r.status_code == 409 and r.json()["error"]["code"] == "media_required"
+        video = ListingMedia.objects.get(listing=publiee, kind="video")
+        assert pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{video.pk}").status_code == 204
 
     def test_nettoyage_des_envois_expires(self, annonce):
         m = ListingMedia.objects.create(

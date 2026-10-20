@@ -290,11 +290,11 @@ def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
     annonce = media.listing
     if annonce.status == StatutAnnonce.PUBLISHED and media.status == StatutMedia.READY:
         pret = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
-        restant_video = pret.filter(kind=TypeMedia.VIDEO).exclude(pk=media.pk).exists()
         restant_photos = pret.filter(kind=TypeMedia.PHOTO).exclude(pk=media.pk).count()
-        if not restant_video or restant_photos < PHOTOS_MIN:
+        # La vidéo, facultative, peut se retirer ; les photos restent au moins PHOTOS_MIN.
+        if media.kind == TypeMedia.PHOTO and restant_photos < PHOTOS_MIN:
             raise ErreurMetier(
-                "media_required", f"Une annonce publiée garde sa vidéo et au moins {PHOTOS_MIN} photos. Masque l'annonce avant de supprimer.",
+                "media_required", f"Une annonce publiée garde au moins {PHOTOS_MIN} photos. Masque l'annonce avant de supprimer.",
                 statut=409,
             )  # fmt: skip
     media.status, media.deleted_at, media.is_cover = StatutMedia.DELETED, timezone.now(), False

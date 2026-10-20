@@ -211,7 +211,7 @@
                aria-labelledby="etape-6">
         <h2 class="pro-section-titre" id="etape-6">6. Visite vidéo et photos</h2>
         <p class="texte-doux texte-petit mb-0">
-          Ajoute une courte vidéo (10 à 60 s) et jusqu'à 10 photos. Les chambres avec vidéo reçoivent plus de contacts.
+          Ajoute au moins {{ photos_min }} photos (10 au plus) et, si tu peux, une courte vidéo (10 à 60 s) : elle est facultative, mais les chambres avec vidéo reçoivent plus de contacts.
         </p>
         <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
           <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
@@ -224,7 +224,7 @@
             {% if video_prete %}
               prête
             {% else %}
-              à ajouter (obligatoire)
+              facultative
             {% endif %}
           </li>
           <li class="depot-recap__item{% if photos_pretes >= photos_min %} depot-recap__item--ok{% endif %}">

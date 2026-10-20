@@ -64,7 +64,7 @@ def test_publication_signale_ce_qui_manque(session_gerant):
     c.post("/pro/annonces/nouvelle", formulaire(q))
     a = Listing.objects.get()
     r = c.post(f"/pro/annonces/{a.pk}", {"action": "publier"})
-    assert "pas encore prête" in r.content.decode()
+    assert "au moins 5 photos" in r.content.decode()
     medias_prets(a)
     ListingFactory(gerant=g)
     c.post(f"/pro/annonces/{a.pk}", {"action": "publier"})

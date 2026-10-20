@@ -262,7 +262,7 @@ def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, ph
             return 7
         return 6 if annonce.status == StatutAnnonce.DRAFT else 1
     if annonce.status == StatutAnnonce.DRAFT:
-        return 7 if (video_prete and photos_pretes >= PHOTOS_MIN and not en_cours) else 6
+        return 7 if (photos_pretes >= PHOTOS_MIN and not en_cours) else 6
     return 6 if en_cours else 1
 
 

@@ -42,7 +42,7 @@ function Medias({ id, onCompleter }: { id: string; onCompleter: () => void }) {
   const enCours = liste.filter((m) => ["pending", "uploading", "processing"].includes(m.status)).length;
   return (
     <GroupeListe titre="Photos et vidéo">
-      <LigneListe titre="Vidéo" sousTitre={pret("video") ? "Prête" : "À ajouter (obligatoire)"} icone={Video} teinte={pret("video") ? "vert" : "soleil"} onPress={onCompleter} />
+      <LigneListe titre="Vidéo" sousTitre={pret("video") ? "Prête" : "Facultative : elle attire plus de contacts"} icone={Video} teinte={pret("video") ? "vert" : "bleu"} onPress={onCompleter} />
       <LigneListe titre="Photos" sousTitre={`${pret("photo")} prête(s) · ${PHOTOS_MIN} au minimum`} icone={IconeImage} teinte={pret("photo") >= PHOTOS_MIN ? "vert" : "soleil"} onPress={onCompleter} />
       {enCours ? <LigneListe titre={`${enCours} média(s) en traitement`} sousTitre="Ça prend quelques minutes, tu peux fermer l'app." icone={CircleCheck} teinte="gris" /> : null}
     </GroupeListe>
