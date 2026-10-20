@@ -542,3 +542,90 @@ class TestDroitsRoleApp:
         with self._en_tant_que_app():
             manques = annonces.manques_a_la_publication(Listing.objects.get(pk=annonce.pk))
         assert "gerant_non_verifie" not in manques
+
+
+class TestCloudinary:
+    """ADR 0010 : préparé par worker-media, envoyé par le worker, lu par le CDN ; le disque reste pour l'existant."""
+
+    @pytest.fixture(autouse=True)
+    def compte(self, settings, monkeypatch):
+        from apps.core import parametres
+        from apps.core.providers import stockage as fournisseurs
+
+        settings.CLOUDINARY_CLOUD_NAME, settings.CLOUDINARY_API_KEY = "immoplus-test", "123456"
+        settings.CLOUDINARY_API_SECRET, settings.CLOUDINARY_FOLDER = "abcd", "immoplus"
+        parametres.definir("MEDIA_STORAGE", "cloudinary")
+        self.appels, self.panne = [], False
+
+        def faux(fournisseur, methode, url, corps=None, entetes=None):
+            if self.panne:
+                raise fournisseurs.ErreurStockageDistant("Cloudinary : injoignable")
+            self.appels.append((methode, url))
+            return {}
+
+        monkeypatch.setattr(fournisseurs.CloudinaryStorageProvider, "_requete", faux)
+
+    def test_photo_envoyee_puis_servie_par_le_cdn(
+        self, pro, annonce, settings, django_capture_on_commit_callbacks
+    ):
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.status == "ready" and m.poster_path.startswith("cloudinary:listings/")
+        assert len(self.appels) == len(m.variants)  # une variante = un envoi
+        assert not (
+            settings.MEDIA_ROOT / "listings" / str(annonce.pk) / mid
+        ).exists()  # copie locale retirée
+        liste = pro.get(f"/v1/pro/listings/{annonce.pk}/media").json()
+        assert liste[0]["poster_url"].startswith(
+            "https://res.cloudinary.com/immoplus-test/image/upload/immoplus/listings/"
+        )
+
+    def test_cloudinary_injoignable_le_media_echoue_proprement(
+        self, pro, annonce, monkeypatch, django_capture_on_commit_callbacks
+    ):
+        from apps.listings import tasks
+
+        monkeypatch.setattr(
+            tasks, "ESSAIS_DISTANTS", 0
+        )  # dernier essai d'emblée (pas de rejeu en test)
+        self.panne = True
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.status == "failed" and m.error_code == "stockage_indisponible"
+
+    def test_le_disque_garde_ses_medias_et_le_transfert_les_deplace(
+        self, pro, annonce, settings, django_capture_on_commit_callbacks
+    ):
+        from django.core.management import call_command
+
+        from apps.core import parametres
+
+        parametres.definir("MEDIA_STORAGE", "local")
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.poster_path.startswith("listings/") and self.appels == []
+        call_command("transferer_medias", "--vers", "cloudinary")
+        m.refresh_from_db()
+        assert m.poster_path.startswith("cloudinary:listings/") and len(self.appels) == len(
+            m.variants
+        )
+        assert not (settings.MEDIA_ROOT / "listings" / str(annonce.pk) / mid).exists()
+
+    def test_retour_au_disque(
+        self, pro, annonce, settings, monkeypatch, django_capture_on_commit_callbacks
+    ):
+        from django.core.management import call_command
+
+        from apps.core.providers import stockage as fournisseurs
+
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        monkeypatch.setattr(
+            fournisseurs.CloudinaryStorageProvider,
+            "telecharger",
+            lambda self, cle, destination: destination.write_bytes(b"image"),
+        )
+        call_command("transferer_medias", "--vers", "disque")
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.poster_path.startswith("listings/")
+        assert (settings.MEDIA_ROOT / m.poster_path).read_bytes() == b"image"
+        assert ("DELETE", next(u for _, u in self.appels if "resources/image" in u)) in self.appels

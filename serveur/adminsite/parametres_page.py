@@ -7,6 +7,7 @@ est journalisé avec l'ancienne et la nouvelle valeur.
 import json
 
 from django import forms
+from django.conf import settings
 
 from apps.core import parametres
 
@@ -23,8 +24,10 @@ SECTIONS = [
      ["CONTACT_LEAK_MODE", "MESSAGE_PER_MINUTE", "NEW_CONVERSATIONS_PER_DAY", "ALERTS_MAX_PER_USER",
       "UNANSWERED_REMINDER_H"]),
     ("securite", "Sécurité", "Verrouillages et défi anti-robot.",
-     ["LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE",
+     ["LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE", "RATE_IP_FACTOR",
+      "AUTH_RATE_PER_MIN_IP",
       "TURNSTILE_ENABLED", "ADMIN_LOCK_THRESHOLD", "ADMIN_SESSION_IDLE_MIN", "ADMIN_SESSION_MAX_H"]),
+    ("medias", "Photos et vidéos", "Où sont rangés les médias des annonces.", ["MEDIA_STORAGE"]),
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
     ("abonnement", "Abonnement (désactivé en V1)", "Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.",
@@ -32,12 +35,16 @@ SECTIONS = [
 ]  # fmt: skip
 
 CHOIX = {
+    "MEDIA_STORAGE": [
+        ("local", "Disque du serveur (VPS)"),
+        ("cloudinary", "Cloudinary"),
+    ],
     "CONTACT_LEAK_MODE": [
         ("off", "Aucun filtrage : numéros et liens s'échangent librement"),
         ("mask", "Masquer les coordonnées"),
         ("flag", "Signaler à la modération"),
         ("block", "Bloquer le message"),
-    ]
+    ],
 }
 
 # Note affichée sous chaque réglage (plan v3, J1) : à quoi il sert, ce que change une modification, l'unité.
@@ -87,11 +94,21 @@ NOTES = {
     "LOGIN_LOCK_MINUTES": "Durée du premier blocage, en minutes ; elle double à chaque nouveau blocage du même compte.",
     "LOGIN_FAILS_PER_HOUR_PER_PHONE": "Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les "
     "attaques réparties).",
+    "RATE_IP_FACTOR": "Les visiteurs non connectés sont comptés par adresse IP ; or des centaines d'abonnés mobiles ou "
+    "d'étudiants du campus partagent souvent la même. Plafonds anonymes par minute et par adresse = 60 (pages "
+    "publiques) ou 240 (fil) × ce nombre. Les comptes connectés ont chacun leur propre compteur. À monter un jour "
+    "de forte affluence si des visiteurs voient « Trop de requêtes ».",
+    "AUTH_RATE_PER_MIN_IP": "Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une "
+    "même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après "
+    "des mots de passe faux.",
     "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
     "oublié sur le site.",
     "ADMIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe avant le blocage d'un compte de l'administration.",
     "ADMIN_SESSION_IDLE_MIN": "Sans activité pendant ce nombre de minutes, la session de l'administration se ferme.",
     "ADMIN_SESSION_MAX_H": "Une session de l'administration se ferme au bout de ce nombre d'heures, même active.",
+    "MEDIA_STORAGE": "S'applique aux photos et vidéos envoyées après l'enregistrement ; celles déjà en ligne restent "
+    "où elles sont (commande transferer_medias pour les déplacer). Cloudinary exige le compte dans .env "
+    "(CLOUDINARY_*, voir docs/administration.md).",
     "STAFF_READS_ALERT_THRESHOLD": "Si un membre du personnel ouvre plus de conversations que ce nombre dans la "
     "journée, une alerte est levée (protection de la vie privée).",
     "MODERATOR_MAX_SUSPENSION_DAYS": "Durée maximale d'une suspension décidée par un modérateur ; au-delà, il faut un "
@@ -148,6 +165,16 @@ class SectionForm(forms.Form):
         for cle in cles:
             self.fields[cle] = _champ(cle)
             self.initial[cle] = parametres.lire(cle)
+
+    def clean(self):
+        donnees = super().clean()
+        if donnees.get("MEDIA_STORAGE") == "cloudinary" and not settings.CLOUDINARY_CLOUD_NAME:
+            self.add_error(
+                "MEDIA_STORAGE",
+                "Cloudinary n'est pas configuré sur le serveur : renseigne CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY "
+                "et CLOUDINARY_API_SECRET dans .env, puis redéploie.",
+            )
+        return donnees
 
     def changements(self) -> dict:
         """{clé: (avant, après)} pour les seules valeurs modifiées."""

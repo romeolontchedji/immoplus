@@ -1,4 +1,4 @@
-"""Tâches des médias (file `media`, sans accès Internet)."""
+"""Tâches des annonces et des médias (traitement sur la file `media`, sans Internet ; envoi distant sur `default`)."""
 
 from celery import shared_task
 
@@ -8,6 +8,23 @@ from .services import medias
 @shared_task(name="apps.media.traiter", soft_time_limit=620)
 def traiter_media(media_id: str) -> None:
     medias.traiter(media_id)
+
+
+ESSAIS_DISTANTS = 4  # nouveaux essais d'envoi chez Cloudinary : après 1, 2, 4 puis 8 minutes
+
+
+@shared_task(name="apps.listings.publier_media_distant", bind=True, max_retries=ESSAIS_DISTANTS)
+def publier_media_distant(self, media_id: str) -> None:
+    """File `default` (accès Internet) : envoi chez Cloudinary, nouveaux essais espacés avant l'échec."""
+    from apps.core.providers.stockage import ErreurStockageDistant
+
+    try:
+        medias.publier_distant(media_id)
+    except ErreurStockageDistant as erreur:
+        if self.request.retries >= ESSAIS_DISTANTS:
+            medias.echec_publication_distante(media_id)
+            return
+        raise self.retry(exc=erreur, countdown=60 * 2**self.request.retries) from erreur
 
 
 @shared_task(name="apps.media.nettoyer_envois")

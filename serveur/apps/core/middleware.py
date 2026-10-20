@@ -29,14 +29,19 @@ def construire_csp() -> str:
     styles = getattr(settings, "CSP_STYLE_SOURCES", ["'self'"])
     connexions = getattr(settings, "CSP_CONNECT_SOURCES", ["'self'"])
     cadres = getattr(settings, "CSP_FRAME_SOURCES", ["https://challenges.cloudflare.com"])
+    medias = (
+        "'self' https://res.cloudinary.com"
+        if getattr(settings, "CLOUDINARY_CLOUD_NAME", "")
+        else "'self'"
+    )
     directives = [
         "default-src 'self'",
         f"script-src {' '.join(scripts)}",
         f"style-src {' '.join(styles)}",
-        "img-src 'self' data:",
+        f"img-src {medias} data:",
         "font-src 'self'",
         f"connect-src {' '.join(connexions)}",
-        "media-src 'self' blob:",
+        f"media-src {medias} blob:",
         f"frame-src {' '.join(cadres)}",
         "object-src 'none'",
         "base-uri 'self'",

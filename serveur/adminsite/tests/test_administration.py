@@ -154,7 +154,7 @@ class TestSession:
 
         assert Session.objects.count() == 0  # la table du site n'est pas touchée
 
-    def test_inactivite_de_trente_minutes(self):
+    def test_inactivite_d_une_heure(self):
         u = personnel()
         c, _ = se_connecter(u)
         assert c.get("/").status_code == 200
@@ -163,7 +163,9 @@ class TestSession:
 
         from adminsite.models import AdminSession
 
-        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=31), tick=False):
+        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=50), tick=False):
+            assert c.get("/").status_code == 200  # 50 min d'inactivité : encore ouverte
+        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=50 + 61), tick=False):
             assert c.get("/").status_code == 302
         assert AdminSession.objects.count() <= 1
 
@@ -546,6 +548,24 @@ class TestPlanV3Administration:
         c, _ = se_connecter(personnel())
         page = c.get("/core/appsetting/").content.decode()
         assert 'class="lg-champ__note"' in page and "recommandé : le gérant marque lui-même" in page
+
+    def test_cloudinary_s_active_depuis_les_parametres_seulement_s_il_est_configure(self):
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        envoi = {"section": "medias", "medias-MEDIA_STORAGE": "cloudinary"}
+        with override_settings(CLOUDINARY_CLOUD_NAME=""):
+            page = c.post("/core/appsetting/", envoi).content.decode()
+        assert "Cloudinary n&#x27;est pas configuré" in page
+        assert parametres.lire("MEDIA_STORAGE") == "local"
+        with override_settings(CLOUDINARY_CLOUD_NAME="immoplus-test"):
+            c.post("/core/appsetting/", envoi)
+        assert parametres.lire("MEDIA_STORAGE") == "cloudinary"
+
+    def test_inactivite_de_l_administration_d_une_heure(self):
+        from apps.core import parametres
+
+        assert parametres.lire("ADMIN_SESSION_IDLE_MIN") == 60
 
     def test_echecs_du_site_visibles_dans_l_administration(self):
         from apps.accounts.services import authentification

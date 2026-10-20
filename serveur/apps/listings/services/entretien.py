@@ -56,7 +56,9 @@ def purger_medias() -> dict:
     for media in ListingMedia.objects.filter(
         kind=TypeMedia.VIDEO, delete_after__lte=maintenant, deleted_at__isnull=True
     ):
-        stockage.supprimer_derives(media.listing_id, media.pk)
+        stockage.supprimer_derives(
+            media.listing_id, media.pk, distant=stockage.est_distant(media.playback_path)
+        )
         ListingMedia.objects.filter(pk=media.pk).update(
             deleted_at=maintenant, updated_at=maintenant
         )

@@ -145,6 +145,13 @@ services:
     env_file: [env/worker.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      MEDIA_PUBLIC_ROOT: /var/lib/immoplus/media_public
+      MEDIA_TMP_ROOT: /var/lib/immoplus/media_tmp
+    volumes:
+      - ../../serveur:/app
+      # Envoi chez Cloudinary des dérivés préparés par worker-media (ADR 0010), qui n'a pas Internet.
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-queue: {condition: service_healthy}

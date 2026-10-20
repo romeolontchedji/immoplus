@@ -30,7 +30,9 @@ services:
   worker:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
-    volumes: !override []
+    volumes: !override
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
   worker-media:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.taches

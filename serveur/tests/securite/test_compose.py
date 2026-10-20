@@ -207,3 +207,15 @@ def test_caddy_ne_transmet_que_l_adresse_reelle_du_visiteur():
     assert "@autorise client_ip" in caddyfile and "remote_ip" not in caddyfile
     # Seul en façade, personne n'est un proxy de confiance (adresse de documentation par défaut).
     assert "{$PROXYS_DE_CONFIANCE:192.0.2.1/32}" in caddyfile
+
+
+def test_seul_le_worker_recoit_les_cles_cloudinary():
+    for modele in COMPOSE.glob("env/*.env.example"):
+        texte = modele.read_text(encoding="utf-8")
+        a_les_cles = "CLOUDINARY_API_SECRET" in texte
+        assert a_les_cles == (modele.name == "worker.env.example"), modele.name
+
+
+def test_le_worker_envoie_les_medias_prepares_sans_le_code_en_production(prod):
+    montes = {str(v).split(":")[0] for v in prod["services"]["worker"]["volumes"]}
+    assert montes == {"media_tmp", "media_public"}

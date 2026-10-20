@@ -177,13 +177,18 @@ SPECTACULAR_SETTINGS = {
 # --- Fournisseurs (interfaces dans apps.core.providers) ---
 PUSH_PROVIDER = env.texte("PUSH_PROVIDER", "console")
 STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
+# Cloudinary (ADR 0010) : activé depuis l'administration (paramètre MEDIA_STORAGE) quand le compte est renseigné.
+# Le nom du compte suffit pour construire les URL ; la clé et le secret ne sont donnés qu'au worker (envois).
+CLOUDINARY_CLOUD_NAME = env.texte("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = env.texte("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = env.texte("CLOUDINARY_API_SECRET")
+CLOUDINARY_FOLDER = env.texte("CLOUDINARY_FOLDER", "immoplus")
 VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
 PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
 PAYMENT_WEBHOOK_SECRET = env.texte(
     "PAYMENT_WEBHOOK_SECRET"
 )  # signature des webhooks (factice et réels)
 KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
-# Attestation que l'application est authentique (Play Integrity, App Attest) : `fake` tant qu'elle n'est pas développée.
 # Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).
 CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER") or "fake"
 TURNSTILE_SECRET = env.texte(

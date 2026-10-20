@@ -295,29 +295,54 @@ class TestSecuriteDesAcces:
 
     def test_limite_de_debit_par_adresse(self):
         c = api()
-        codes = [c.post("/v1/auth/login", {}, format="json").status_code for _ in range(32)]
-        assert codes[:30] == [400] * 30 and codes[30:] == [429, 429]
+        codes = [c.post("/v1/auth/login", {}, format="json").status_code for _ in range(62)]
+        assert codes[:60] == [400] * 60 and codes[60:] == [429, 429]  # AUTH_RATE_PER_MIN_IP
         r = c.post("/v1/auth/login", {}, format="json")
         verifier_format_erreur(r, "rate_limited")
         assert int(r["Retry-After"]) >= 1
 
     def test_les_adresses_sont_comptees_separement(self):
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json")
         r = APIClient(HTTP_X_INSTALLATION_ID="installation-test-1", REMOTE_ADDR="41.0.0.99").post(
             "/v1/auth/login", {}, format="json"
         )
         assert r.status_code == 400
 
+    def test_un_compte_connecte_a_son_propre_compteur_derriere_une_adresse_partagee(
+        self, monkeypatch
+    ):
+        from apps.accounts.services import appareils, jetons
+        from apps.core.api.throttles import LimiteLecture
+
+        monkeypatch.setattr(
+            LimiteLecture, "limite", 2
+        )  # anonyme : 2 × RATE_IP_FACTOR (3) = 6 par adresse
+
+        def connecte(utilisateur):
+            d, _ = appareils.ouvrir(
+                utilisateur, installation_id=f"i-{utilisateur.pk}", platform="android"
+            )
+            return avec_jeton(api(), jetons.emettre_acces(utilisateur, d))
+
+        anonymes = [api().get("/v1/listings").status_code for _ in range(7)]
+        assert anonymes[:6] == [200] * 6 and anonymes[6] == 429
+        awa, kofi = (
+            connecte(ClientFactory()),
+            connecte(ClientFactory()),
+        )  # même adresse que les anonymes
+        assert [awa.get("/v1/listings").status_code for _ in range(3)] == [200, 200, 429]
+        assert kofi.get("/v1/listings").status_code == 200
+
     def test_x_forwarded_for_ignore_hors_proxy(self):
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="9.9.9.9")
         r = api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="8.8.8.8")
         assert r.status_code == 429  # l'en-tête falsifié ne permet pas de contourner la limite
 
     def test_x_forwarded_for_lu_derriere_caddy(self, settings):
         settings.USE_X_FORWARDED_FOR = True
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="9.9.9.9")
         r = api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="8.8.8.8")
         assert r.status_code == 400

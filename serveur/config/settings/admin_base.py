@@ -51,7 +51,7 @@ TEMPLATES[0]["OPTIONS"]["context_processors"].append(
 
 # Sessions dans une table propre (`admin_sessions`), jamais celle du site ; cookie distinct.
 SESSION_ENGINE = "adminsite.stockage_sessions"
-SESSION_COOKIE_AGE = 30 * 60
+SESSION_COOKIE_AGE = 60 * 60
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_SAVE_EVERY_REQUEST = True

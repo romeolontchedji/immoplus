@@ -1,6 +1,6 @@
 # ADR 0007 — Stockage des médias derrière `StorageProvider`
 
-- Statut : **accepté**
+- Statut : **accepté** ; complété par l'ADR 0010 (Cloudinary activable depuis l'administration)
 - Date : 2026-10-18
 
 ## Contexte

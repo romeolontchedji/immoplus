@@ -15,12 +15,20 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         30,
         "Échecs par heure et par nom d'utilisateur, tous appareils confondus.",
     ),
+    "RATE_IP_FACTOR": (
+        3,
+        "Multiplicateur des plafonds de requêtes anonymes par adresse IP (adresses partagées).",
+    ),
+    "AUTH_RATE_PER_MIN_IP": (
+        60,
+        "Connexions, inscriptions et rafraîchissements par minute et par adresse IP.",
+    ),
     "ADMIN_LOCK_THRESHOLD": (
         5,
         "Échecs de connexion à l'administration avant verrouillage du compte.",
     ),
     "ADMIN_SESSION_IDLE_MIN": (
-        30,
+        60,
         "Inactivité maximale d'une session d'administration, en minutes.",
     ),
     "ADMIN_SESSION_MAX_H": (8, "Durée maximale d'une session d'administration, en heures."),
@@ -103,6 +111,10 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "Message affiché pendant la maintenance (vide : texte par défaut).",
     ),
     "APP_NOTICE": ("", "Avis court affiché dans l'application (vide : aucun)."),
+    "MEDIA_STORAGE": (
+        "local",
+        "Où ranger les nouvelles photos et vidéos : disque du serveur ou Cloudinary.",
+    ),
     "TEAM_PHONE": (
         "+2290156201400",
         "Numéro de l'équipe Immo+ (appel et WhatsApp), format international.",
