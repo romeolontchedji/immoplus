@@ -324,6 +324,13 @@ export function FicheScreen() {
   const medias = [...(fiche.media ?? [])].sort((a, b) => (a.kind === "video" ? -1 : b.kind === "video" ? 1 : 0));
   const lien = `https://${WEB_HOST}/annonces/${fiche.slug}`;
 
+  // Un seul lien : le site en affiche l'aperçu (photo, prix, quartier) et l'application l'ouvre si elle est installée.
+  const partager = () =>
+    void Share.share({
+      title: fiche.title,
+      message: `${fiche.title} à ${fiche.district?.name}, ${francs(fiche.rent_amount)}/mois sur Immo+\n${lien}`,
+      url: lien,
+    });
   const basculer = () => {
     if (etat.statut !== "connecte") return router.push("/connexion");
     basculerFavori.mutate({ id: fiche.id, ident: fiche.slug, actif: !fiche.is_favorite });
@@ -347,7 +354,7 @@ export function FicheScreen() {
         <View style={{ position: "absolute", top: haut + sp[2], left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: sp[4] }}>
           <BoutonRond libelle={t.commun.retour} onPress={retour}><ArrowLeft size={20} color={colors.night} /></BoutonRond>
           <View style={{ flexDirection: "row", gap: sp[2] }}>
-            <BoutonRond libelle="Partager" onPress={() => void Share.share({ message: `${fiche.title} · ${francs(fiche.rent_amount)}/mois sur Immo+\n${lien}` })}>
+            <BoutonRond libelle="Partager" onPress={partager}>
               <Share2 size={18} color={colors.night} />
             </BoutonRond>
             <BoutonRond libelle={fiche.is_favorite ? "Retirer des favoris" : "Ajouter aux favoris"} onPress={basculer}>
@@ -390,6 +397,15 @@ export function FicheScreen() {
               ) : (
                 <Text variante="legende" muted>Pas encore d’avis</Text>
               )}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Partager cette chambre sur WhatsApp, Facebook, TikTok ou copier le lien"
+                onPress={partager}
+                style={({ pressed }) => ({ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6, minHeight: 40, paddingHorizontal: sp[4], borderRadius: rayon.pilule, backgroundColor: pressed ? colors.sunHover : colors.sun })}
+              >
+                <Share2 size={18} color={colors.night} />
+                <Text variante="corpsGras" couleur={colors.night}>Partager</Text>
+              </Pressable>
             </View>
             {fiche.status !== "published" ? <Text variante="corpsGras" couleur={colors.warning}>{t.statutAnnonce[fiche.status] ?? fiche.status}</Text> : null}
           </View>

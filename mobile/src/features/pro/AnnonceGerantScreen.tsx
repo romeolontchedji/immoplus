@@ -1,6 +1,7 @@
-import { Alert, View } from "react-native";
+import { Alert, Share, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { BarChart3, CircleAlert, CircleCheck, Eye, FilePen, Image as IconeImage, PenLine, Video } from "lucide-react-native";
+import { BarChart3, CircleAlert, CircleCheck, Eye, FilePen, Image as IconeImage, PenLine, Share2, Video } from "lucide-react-native";
+import { WEB_HOST } from "@/config/env";
 import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
 import { francs } from "@/lib/format";
@@ -128,6 +129,18 @@ export function AnnonceGerantScreen() {
               <GroupeListe titre="Gérer">
                 <LigneListe titre="Modifier l'annonce" sousTitre="Titre, loyer, quartier, description…" icone={PenLine} onPress={() => router.push(`/pro/annonce/${a.id}/modifier` as never)} />
                 <LigneListe titre="Statistiques" sousTitre="Vues, favoris et contacts" icone={BarChart3} onPress={() => router.push(`/pro/annonce/${a.id}/stats` as never)} />
+                {a.status === "published" ? (
+                  <LigneListe
+                    titre="Partager l'annonce"
+                    sousTitre="WhatsApp, Facebook, TikTok ou lien à copier"
+                    icone={Share2}
+                    teinte="soleil"
+                    onPress={() => {
+                      const lien = `https://${WEB_HOST}/annonces/${a.slug}`;
+                      void Share.share({ title: a.title, message: `${a.title}, ${francs(a.rent_amount)}/mois sur Immo+\n${lien}`, url: lien });
+                    }}
+                  />
+                ) : null}
                 {a.status === "published" ? (
                   <LigneListe titre="Voir comme un locataire" icone={Eye} onPress={() => router.push({ pathname: "/annonces/[ident]", params: { ident: a.slug } })} />
                 ) : null}
