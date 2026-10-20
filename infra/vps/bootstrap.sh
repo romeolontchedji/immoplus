@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prépare un VPS Ubuntu 24.04 vierge pour Logeo (docs/deploiement-vps-pas-a-pas.md, étape 3).
+# Prépare un VPS Ubuntu 24.04 vierge pour Immo+ (docs/deploiement-vps-pas-a-pas.md, étape 3).
 #
 #   À lancer une fois, en root, juste après la livraison du serveur :
 #     sudo bash infra/vps/bootstrap.sh
@@ -7,16 +7,16 @@
 # Ce qu'il fait (rejouable sans risque) :
 #   1. mises à jour du système et mises à jour de sécurité automatiques ;
 #   2. Docker et Docker Compose depuis le dépôt officiel de Docker ;
-#   3. un utilisateur `logeo` (sans mot de passe, membre du groupe docker) qui reçoit tes clés SSH ;
+#   3. un utilisateur `immoplus` (sans mot de passe, membre du groupe docker) qui reçoit tes clés SSH ;
 #   4. SSH par clé uniquement, connexion root interdite ;
 #   5. pare-feu : SSH, 80 et 443 (TCP) et 443 (UDP, HTTP/3) seulement ; fail2ban sur SSH ;
 #   6. un fichier d'échange de 2 Go si le serveur n'en a pas (marge pour ffmpeg) ;
 #   7. une minuterie qui redémarre les conteneurs figés (infra/vps/autoguerison.sh).
 #
-# Variables : UTILISATEUR (défaut logeo), PORT_SSH (défaut 22).
+# Variables : UTILISATEUR (défaut immoplus), PORT_SSH (défaut 22).
 set -euo pipefail
 
-UTILISATEUR="${UTILISATEUR:-logeo}"
+UTILISATEUR="${UTILISATEUR:-immoplus}"
 PORT_SSH="${PORT_SSH:-22}"
 
 etape() { printf '\n==> %s\n' "$1"; }
@@ -66,7 +66,7 @@ fi
 
 etape "Utilisateur $UTILISATEUR"
 if ! id "$UTILISATEUR" >/dev/null 2>&1; then
-  adduser --disabled-password --gecos "Logeo" "$UTILISATEUR"
+  adduser --disabled-password --gecos "Immo+" "$UTILISATEUR"
 fi
 usermod -aG docker "$UTILISATEUR"
 install -d -m 700 -o "$UTILISATEUR" -g "$UTILISATEUR" "/home/$UTILISATEUR/.ssh"
@@ -78,7 +78,7 @@ chown "$UTILISATEUR:$UTILISATEUR" "/home/$UTILISATEUR/.ssh/authorized_keys"
 chmod 600 "/home/$UTILISATEUR/.ssh/authorized_keys"
 
 etape "SSH : clés uniquement, root interdit"
-cat > /etc/ssh/sshd_config.d/10-logeo.conf <<CONF
+cat > /etc/ssh/sshd_config.d/10-immoplus.conf <<CONF
 Port $PORT_SSH
 PermitRootLogin no
 PasswordAuthentication no
@@ -96,7 +96,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw allow 443/udp
 ufw --force enable
-cat > /etc/fail2ban/jail.d/logeo.conf <<CONF
+cat > /etc/fail2ban/jail.d/immoplus.conf <<CONF
 [sshd]
 enabled = true
 port = $PORT_SSH
@@ -117,18 +117,18 @@ fi
 
 etape "Redémarrage automatique des conteneurs figés (chaque minute)"
 # Le script vit dans le dépôt : la minuterie ne s'exécute qu'une fois le code récupéré (étape 4 du guide).
-cat > /etc/systemd/system/logeo-autoguerison.service <<CONF
+cat > /etc/systemd/system/immoplus-autoguerison.service <<CONF
 [Unit]
-Description=Logeo : redémarre les conteneurs qui ne répondent plus
-ConditionPathExists=/home/$UTILISATEUR/logeo/infra/vps/autoguerison.sh
+Description=Immo+ : redémarre les conteneurs qui ne répondent plus
+ConditionPathExists=/home/$UTILISATEUR/immoplus/infra/vps/autoguerison.sh
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /home/$UTILISATEUR/logeo/infra/vps/autoguerison.sh
+ExecStart=/bin/bash /home/$UTILISATEUR/immoplus/infra/vps/autoguerison.sh
 CONF
-cat > /etc/systemd/system/logeo-autoguerison.timer <<'CONF'
+cat > /etc/systemd/system/immoplus-autoguerison.timer <<'CONF'
 [Unit]
-Description=Logeo : vérification des conteneurs chaque minute
+Description=Immo+ : vérification des conteneurs chaque minute
 
 [Timer]
 OnBootSec=2min
@@ -138,7 +138,7 @@ OnUnitActiveSec=1min
 WantedBy=timers.target
 CONF
 systemctl daemon-reload
-systemctl enable --now logeo-autoguerison.timer
+systemctl enable --now immoplus-autoguerison.timer
 
 etape "Terminé"
 cat <<FIN

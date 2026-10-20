@@ -1,4 +1,4 @@
-# Commandes du projet Logeo. `make aide` liste les cibles.
+# Commandes du projet Immo+. `make aide` liste les cibles.
 SHELL := /bin/bash
 COMPOSE := docker compose --env-file .env -f infra/compose/docker-compose.yml --profile dev
 PYTHON := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
@@ -46,7 +46,7 @@ css: jetons ## Assemble, minifie et empreinte le CSS
 deployer-css: css ## Construit le CSS et le déploie dans le volume statique Docker (Caddy)
 	$(COMPOSE) run --rm \
 		-e DJANGO_SETTINGS_MODULE=config.settings.migrer \
-		-e STATIC_ROOT=/var/lib/logeo/static \
+		-e STATIC_ROOT=/var/lib/immoplus/static \
 		migrer python manage.py collectstatic --clear --noinput
 
 vendor: ## Télécharge htmx, Alpine.js (build CSP), hls.js et tus-js-client en fichiers figés

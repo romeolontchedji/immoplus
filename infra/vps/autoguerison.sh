@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Redémarre les conteneurs Logeo figés (sonde de santé « unhealthy »). Docker relance un conteneur qui s'arrête,
+# Redémarre les conteneurs Immo+ figés (sonde de santé « unhealthy »). Docker relance un conteneur qui s'arrête,
 # mais pas un conteneur qui tourne sans répondre : ce script comble ce manque.
 #
-# Lancé chaque minute par systemd (logeo-autoguerison.timer, installé par bootstrap.sh). Exécution sur le serveur,
+# Lancé chaque minute par systemd (immoplus-autoguerison.timer, installé par bootstrap.sh). Exécution sur le serveur,
 # jamais dans un conteneur : aucun conteneur n'a besoin d'accéder au moteur Docker.
 #
 # Garde-fou : au plus MAX_PAR_HEURE redémarrages par conteneur et par heure ; au-delà, on arrête d'insister (une
-# vraie panne demande un humain) et on l'écrit dans le journal système : `journalctl -t logeo-autoguerison`.
+# vraie panne demande un humain) et on l'écrit dans le journal système : `journalctl -t immoplus-autoguerison`.
 set -euo pipefail
 
-PROJET="${PROJET:-logeo}"
+PROJET="${PROJET:-immoplus}"
 MAX_PAR_HEURE="${MAX_PAR_HEURE:-3}"
-ETAT="${ETAT:-/var/lib/logeo-autoguerison}"
+ETAT="${ETAT:-/var/lib/immoplus-autoguerison}"
 mkdir -p "$ETAT"
 
-journal() { logger -t logeo-autoguerison "$*"; echo "$*"; }
+journal() { logger -t immoplus-autoguerison "$*"; echo "$*"; }
 
 maintenant=$(date +%s)
 for conteneur in $(docker ps --filter "label=com.docker.compose.project=$PROJET" --filter "health=unhealthy" --format '{{.Names}}'); do

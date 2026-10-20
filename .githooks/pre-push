@@ -10,8 +10,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   branche="${remote_ref#refs/heads/}"
   case "$remote_ref" in refs/heads/*) ;; *) continue ;; esac
   if [ "$branche" = "main" ]; then
-    if [ "${LOGEO_PREMIER_PUSH:-0}" = "1" ] && [ "$remote_sha" = "$ZERO" ]; then
-      echo "ℹ Premier push d'amorçage sur main autorisé (LOGEO_PREMIER_PUSH=1)." >&2
+    if [ "${IMMOPLUS_PREMIER_PUSH:-0}" = "1" ] && [ "$remote_sha" = "$ZERO" ]; then
+      echo "ℹ Premier push d'amorçage sur main autorisé (IMMOPLUS_PREMIER_PUSH=1)." >&2
     else
       refuser "push direct sur « main » interdit. Crée une branche (ex. feat/mon-changement) et ouvre une demande de fusion."
     fi
@@ -20,8 +20,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_sha" = "$ZERO" ]; then plage=("$local_sha" --not "--remotes=$remote"); else plage=("$remote_sha..$local_sha"); fi
   for c in $(git rev-list "${plage[@]}"); do
     [ "$(git rev-list --parents -n1 "$c" | wc -w)" -gt 2 ] && continue   # commit de fusion toléré
-    git log -1 --format=%B "$c" > /tmp/logeo-message-commit
-    outils/dans-docker.sh python3 outils/verifier_commit.py --push /tmp/logeo-message-commit \
+    git log -1 --format=%B "$c" > /tmp/immoplus-message-commit
+    outils/dans-docker.sh python3 outils/verifier_commit.py --push /tmp/immoplus-message-commit \
       || refuser "le commit ${c:0:8} ne respecte pas le format (voir ci-dessus)."
   done
 done

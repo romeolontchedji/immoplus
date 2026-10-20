@@ -12,11 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LOGEO_STRICT: "1"
+  IMMOPLUS_STRICT: "1"
   DB_HOST: localhost
-  DB_NAME: logeo
-  DB_USER: logeo_ci
-  DB_PASSWORD: logeo-ci
+  DB_NAME: immoplus
+  DB_USER: immoplus_ci
+  DB_PASSWORD: immoplus-ci
   REDIS_QUEUE_URL: redis://localhost:6379/1
   REDIS_CACHE_URL: redis://localhost:6379/0
 
@@ -27,12 +27,12 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: logeo_ci
-          POSTGRES_PASSWORD: logeo-ci
-          POSTGRES_DB: logeo
+          POSTGRES_USER: immoplus_ci
+          POSTGRES_PASSWORD: immoplus-ci
+          POSTGRES_DB: immoplus
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U logeo_ci" --health-interval 5s --health-timeout 3s --health-retries 20
+          --health-cmd "pg_isready -U immoplus_ci" --health-interval 5s --health-timeout 3s --health-retries 20
       redis:
         image: redis:7
         ports: ["6379:6379"]
@@ -85,7 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Construction de l'image
-        run: docker build -f infra/docker/Dockerfile -t logeo-serveur:ci .
+        run: docker build -f infra/docker/Dockerfile -t immoplus-serveur:ci .
       - name: Validation de la configuration Compose
         run: |
           python3 outils/creer_env.py
