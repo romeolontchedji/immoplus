@@ -29,13 +29,13 @@ CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "descri
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
     "deposit_months", "advance_months", "agent_fee_amount", "available_from", "has_private_bathroom", "is_fenced",
-    "water_source", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
+    "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
 # partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
 OBLIGATOIRES = (
     "title", "room_type", "district", "landmark_text", "rent_amount", "deposit_months",
-    "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter",
+    "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter",
 )  # fmt: skip
 LIMITES_BENIN = {"latitude": (6.0, 12.6), "longitude": (0.7, 3.9)}
 
@@ -50,8 +50,15 @@ def _valider(d: dict) -> None:
         raise _champ("title", "Le titre doit faire au moins 5 caractères.")
     if "room_type" in d:
         types.verifier_pour_annonce(d["room_type"])
-    if "water_source" in d and d["water_source"] not in Eau.values:
-        raise _champ("water_source", "Source d'eau inconnue.")
+    if "water_sources" in d:
+        sources = d["water_sources"]
+        if not isinstance(sources, list | tuple) or not sources:
+            raise _champ("water_sources", "Choisis au moins une source d'eau.")
+        if any(s not in Eau.values for s in sources):
+            raise _champ("water_sources", "Source d'eau inconnue.")
+        d["water_sources"] = [
+            e for e in Eau.values if e in sources
+        ]  # sans doublon, dans l'ordre des listes
     if "electricity_meter" in d and d["electricity_meter"] not in Compteur.values:
         raise _champ("electricity_meter", "Type de compteur inconnu.")
     if "kitchen" in d and d["kitchen"] not in ("", *Cuisine.values):
@@ -112,7 +119,7 @@ def _vecteur_de_recherche(annonce: Listing) -> None:
     equipements = " ".join(
         str(libelle)
         for libelle in (
-            dict(Eau.choices).get(annonce.water_source),
+            " ".join(str(dict(Eau.choices).get(e, "")) for e in annonce.water_sources or []),
             dict(Compteur.choices).get(annonce.electricity_meter),
             dict(Cuisine.choices).get(annonce.kitchen) if annonce.kitchen != Cuisine.NONE else "",
             "douche interne" if annonce.has_private_bathroom else "",
@@ -166,7 +173,7 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
 def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
     _gerant_actif(gerant)
     _abonnement_permet(gerant)
-    manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "")]
+    manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "", [])]
     if manquants:
         raise ErreurMetier(
             "validation_error", "Des champs obligatoires sont manquants.",
@@ -321,7 +328,7 @@ CHAMPS_ANNONCE = {
     "title": "le titre", "room_type": "le type de chambre", "district": "le quartier", "landmark_text": "le repère",
     "rent_amount": "le loyer", "deposit_months": "la caution", "advance_months": "l'avance",
     "available_from": "la date de disponibilité", "has_private_bathroom": "la douche interne",
-    "is_fenced": "la clôture", "water_source": "l'eau", "electricity_meter": "l'électricité",
+    "is_fenced": "la clôture", "water_sources": "l'eau", "electricity_meter": "l'électricité",
 }  # fmt: skip
 
 
@@ -344,7 +351,7 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
         manques.append("gerant_suspendu")
     for nom in OBLIGATOIRES:
         valeur = getattr(annonce, f"{nom}_id" if nom == "district" else nom, None)
-        if valeur in (None, ""):
+        if valeur in (None, "", []):
             manques.append(f"champ:{nom}")
     media = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
     if not media.filter(kind=TypeMedia.VIDEO).exists():

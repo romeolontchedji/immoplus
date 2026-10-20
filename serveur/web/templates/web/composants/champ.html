@@ -1,5 +1,20 @@
 {# Rend un champ de formulaire. Paramètre : `champ`. #}
-{% if champ.field.widget.input_type == "checkbox" %}
+{% if champ.field.widget.allow_multiple_selected and champ.field.widget.input_type == "checkbox" %}
+  {# Choix multiples (ex. sources d'eau) : cases en pastilles, plusieurs réponses possibles #}
+  <fieldset class="champ champ--multiple">
+    <legend class="champ__etiquette">{{ champ.label }}</legend>
+    <div class="choix-multiples">
+      {% for case in champ %}
+        <label class="choix-multiples__option">
+          {{ case.tag }}
+          <span>{{ case.choice_label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {% if champ.help_text %}<p class="champ__aide">{{ champ.help_text }}</p>{% endif %}
+    {% for e in champ.errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
+  </fieldset>
+{% elif champ.field.widget.input_type == "checkbox" %}
   <div class="champ champ--case">
     {{ champ }}
     <label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>

@@ -256,7 +256,7 @@ class Command(BaseCommand):
                     available_from=datetime.date.today() + datetime.timedelta(days=10),
                     has_private_bathroom=douche,
                     is_fenced=cloture,
-                    water_source="running",
+                    water_sources=["running"],
                     electricity_meter="individual",
                     description_md=f"**{titre}**.\n\nChambre idéale pour étudiant(e) à Parakou.\n- Calme et sécurisée\n- Compteur individuel\n- Proche commodités",
                     description_html=f"<p><strong>{titre}</strong>.</p><p>Chambre idéale pour étudiant(e) à Parakou.</p><ul><li>Calme et sécurisée</li><li>Compteur individuel</li></ul>",

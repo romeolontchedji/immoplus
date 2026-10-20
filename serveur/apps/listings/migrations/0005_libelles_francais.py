@@ -1,6 +1,5 @@
 """Intitulés français dans l'administration (options seulement, aucune modification de table)."""
 
-
 from django.db import migrations
 
 

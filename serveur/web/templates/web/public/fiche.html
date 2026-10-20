@@ -304,33 +304,6 @@
               <p class="texte-doux mb-0">Aucun avis pour l'instant.</p>
             {% endif %}
           </section>
-          {% if similaires %}
-            <section class="fiche-similaires" aria-labelledby="titre-similaires">
-              <h2 class="fiche-similaires-titre" id="titre-similaires">Chambres similaires</h2>
-              <div class="fiche-similaires-grille">
-                {% for s in similaires %}
-                  <a class="fiche-similaire-carte" href="/annonces/{{ s.slug }}">
-                    {% if s.cover_url %}
-                      <img class="fiche-similaire-carte__image"
-                           src="{{ s.cover_url }}"
-                           alt=""
-                           loading="lazy"
-                           width="480"
-                           height="270">
-                    {% else %}
-                      <span class="fiche-similaire-carte__image fiche-similaire-carte__image--vide"
-                            aria-hidden="true"></span>
-                    {% endif %}
-                    <span class="fiche-similaire-carte__corps">
-                      <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
-                      <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
-                      <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
-                    </span>
-                  </a>
-                {% endfor %}
-              </div>
-            </section>
-          {% endif %}
         </div>
         <aside class="fiche-sidebar">
           <div class="fiche-carte-principale">
@@ -424,6 +397,34 @@
             {% endif %}
           </div>
         </aside>
+        {# Après le contact : sur téléphone, contacter vient avant les chambres similaires #}
+        {% if similaires %}
+          <section class="fiche-similaires" aria-labelledby="titre-similaires">
+            <h2 class="fiche-similaires-titre" id="titre-similaires">Chambres similaires</h2>
+            <div class="fiche-similaires-grille">
+              {% for s in similaires %}
+                <a class="fiche-similaire-carte" href="/annonces/{{ s.slug }}">
+                  {% if s.cover_url %}
+                    <img class="fiche-similaire-carte__image"
+                         src="{{ s.cover_url }}"
+                         alt=""
+                         loading="lazy"
+                         width="480"
+                         height="270">
+                  {% else %}
+                    <span class="fiche-similaire-carte__image fiche-similaire-carte__image--vide"
+                          aria-hidden="true"></span>
+                  {% endif %}
+                  <span class="fiche-similaire-carte__corps">
+                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
+                    <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
+                    <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
+                  </span>
+                </a>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
       </div>
     </div>
   </section>

@@ -1,6 +1,5 @@
 """Intitulé français du type de logement (aucune instruction SQL)."""
 
-
 from django.db import migrations, models
 
 

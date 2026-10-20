@@ -43,10 +43,10 @@ class TestEquipementsEtPrix:
         a = annonces.creer_brouillon(
             p,
             {**donnees_annonce(q), "district": q.pk, "kitchen": "private", "rent_negotiable": True,
-             "water_source": "sub_meter", "electricity_meter": "sub_meter"},
+             "water_sources": ["sub_meter"], "electricity_meter": "sub_meter"},
         )  # fmt: skip
         a.refresh_from_db()
-        assert (a.kitchen, a.rent_negotiable, a.water_source) == ("private", True, "sub_meter")
+        assert (a.kitchen, a.rent_negotiable, a.water_sources) == ("private", True, ["sub_meter"])
 
     def test_valeurs_inconnues_refusees(self):
         p = gerant_verifie()
@@ -56,7 +56,7 @@ class TestEquipementsEtPrix:
                 annonces.modifier(p, a.pk, {champ: valeur})
 
     def test_la_fiche_donne_les_libelles_et_le_prix_a_debattre(self):
-        a = ListingFactory(kitchen="shared", rent_negotiable=True, water_source="borehole")
+        a = ListingFactory(kitchen="shared", rent_negotiable=True, water_sources=["borehole"])
         f = APIClient().get(f"/v1/listings/{a.slug}").json()
         assert f["kitchen_label"] == "Cuisine commune" and f["water_label"] == "Forage"
         assert f["rent_negotiable"] is True and f["gerant"]["id"] == str(a.gerant_id)
@@ -74,7 +74,7 @@ class TestEquipementsEtPrix:
         p = gerant_verifie()
         q = DistrictFactory()
         a = annonces.creer_brouillon(
-            p, {**donnees_annonce(q), "district": q.pk, "water_source": "borehole",
+            p, {**donnees_annonce(q), "district": q.pk, "water_sources": ["borehole"],
                 "description_md": "Proche du marché Arzèkè"},
         )  # fmt: skip
         Listing.objects.filter(pk=a.pk).update(status="published")

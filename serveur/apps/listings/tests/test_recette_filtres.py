@@ -22,14 +22,14 @@ def jeu():
     base = {
         "is_fenced": False,
         "has_private_bathroom": False,
-        "water_source": "well",
+        "water_sources": ["well"],
         "electricity_meter": "shared",
     }
     definitions = {
-        "a": dict(district=banikanni, room_type="studio", rent_amount=15_000, distance_to_campus_m=300, has_private_bathroom=True, water_source="running"),
+        "a": dict(district=banikanni, room_type="studio", rent_amount=15_000, distance_to_campus_m=300, has_private_bathroom=True, water_sources=["running"]),
         "b": dict(district=banikanni, room_type="single", rent_amount=10_000, distance_to_campus_m=1_200),
         "c": dict(district=zongo, room_type="chambre_salon", rent_amount=25_000, distance_to_campus_m=800, is_fenced=True, electricity_meter="individual"),
-        "d": dict(district=zongo, room_type="studio", rent_amount=35_000, distance_to_campus_m=2_500, water_source="borehole"),
+        "d": dict(district=zongo, room_type="studio", rent_amount=35_000, distance_to_campus_m=2_500, water_sources=["borehole"]),
         "e": dict(district=banikanni, room_type="entree_coucher", rent_amount=20_000, distance_to_campus_m=500, available_from=aujourd_hui + datetime.timedelta(days=60)),
         "f": dict(district=zongo, room_type="single", rent_amount=12_000, distance_to_campus_m=150, has_private_bathroom=True, is_fenced=True),
     }  # fmt: skip

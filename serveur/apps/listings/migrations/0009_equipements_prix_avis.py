@@ -66,9 +66,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_hidden",
-                    models.BooleanField(
-                        db_default=False, default=False, verbose_name="masqué"
-                    ),
+                    models.BooleanField(db_default=False, default=False, verbose_name="masqué"),
                 ),
                 (
                     "hidden_reason",
@@ -137,9 +135,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="listing",
             name="description_md",
-            field=models.TextField(
-                db_default="", default="", verbose_name="autres détails"
-            ),
+            field=models.TextField(db_default="", default="", verbose_name="autres détails"),
         ),
         migrations.AlterField(
             model_name="listing",

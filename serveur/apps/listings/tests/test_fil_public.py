@@ -138,7 +138,7 @@ class TestFil:
     def test_filtres_combines(self):
         q1, q2 = DistrictFactory(slug="banikanni"), DistrictFactory(slug="titirou")
         bon = ListingFactory(district=q1, rent_amount=20000, room_type="studio", has_private_bathroom=True,
-                             is_fenced=True, water_source="borehole", electricity_meter="shared",
+                             is_fenced=True, water_sources=["borehole"], electricity_meter="shared",
                              distance_to_campus_m=400, available_from="2026-10-15")  # fmt: skip
         ListingFactory(district=q2, rent_amount=20000, room_type="studio")
         ListingFactory(district=q1, rent_amount=50000, room_type="studio")

@@ -132,8 +132,11 @@ class FicheOut(serializers.Serializer):
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
-    water_source = serializers.CharField()
-    water_label = serializers.CharField()
+    water_sources = serializers.ListField(child=serializers.CharField())
+    water_labels = serializers.ListField(child=serializers.CharField())
+    water_label = serializers.CharField(
+        help_text="Sources d'eau en une phrase (« Forage, Puits »)."
+    )
     electricity_meter = serializers.CharField()
     electricity_label = serializers.CharField()
     kitchen = serializers.CharField(help_text="Vide = non précisé.")

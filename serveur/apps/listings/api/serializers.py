@@ -39,7 +39,10 @@ class AnnonceIn(serializers.Serializer):
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
-    water_source = serializers.ChoiceField(choices=[e.value for e in Eau])
+    water_sources = serializers.ListField(
+        child=serializers.ChoiceField(choices=[e.value for e in Eau]), allow_empty=False, max_length=len(Eau),
+        help_text="Une ou plusieurs sources : individual, sub_meter, running, borehole, well.",
+    )  # fmt: skip
     electricity_meter = serializers.ChoiceField(choices=[c.value for c in Compteur])
     kitchen = serializers.ChoiceField(
         choices=[c.value for c in Cuisine], required=False, allow_blank=True,
@@ -72,7 +75,7 @@ class AnnonceProOut(serializers.Serializer):
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
-    water_source = serializers.CharField()
+    water_sources = serializers.ListField(child=serializers.CharField())
     electricity_meter = serializers.CharField()
     kitchen = serializers.CharField()
     rent_negotiable = serializers.BooleanField()

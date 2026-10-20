@@ -200,7 +200,7 @@ def _appliquer_criteres(requete, f: dict):
     if f["bathroom"] is not None:
         requete = requete.filter(has_private_bathroom=f["bathroom"])
     if f["water"]:
-        requete = requete.filter(water_source__in=f["water"])
+        requete = requete.filter(water_sources__overlap=f["water"])
     if f["meter"]:
         requete = requete.filter(electricity_meter__in=f["meter"])
     if f.get("kitchen"):
@@ -503,10 +503,11 @@ def fiche_publique(ident) -> dict | None:
         "available_from": annonce.available_from,
         "has_private_bathroom": annonce.has_private_bathroom,
         "is_fenced": annonce.is_fenced,
-        "water_source": annonce.water_source,
-        "water_label": Eau(annonce.water_source).label
-        if annonce.water_source in Eau.values
-        else "",
+        "water_sources": list(annonce.water_sources or []),
+        "water_labels": [Eau(e).label for e in annonce.water_sources or [] if e in Eau.values],
+        "water_label": ", ".join(
+            Eau(e).label for e in annonce.water_sources or [] if e in Eau.values
+        ),
         "electricity_meter": annonce.electricity_meter,
         "electricity_label": (
             Compteur(annonce.electricity_meter).label

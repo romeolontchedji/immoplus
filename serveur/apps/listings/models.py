@@ -131,7 +131,10 @@ class Listing(models.Model):
     available_from = models.DateField(verbose_name="disponible le")
     has_private_bathroom = models.BooleanField(verbose_name="douche interne")
     is_fenced = models.BooleanField(verbose_name="clôturée")
-    water_source = models.CharField(max_length=10, choices=Eau.choices, verbose_name="eau")
+    # Plusieurs sources à la fois (forage, puits, compteur…) : au moins une (demande du 2026-10-20).
+    water_sources = ArrayField(
+        models.CharField(max_length=10, choices=Eau.choices), default=list, verbose_name="eau"
+    )
     electricity_meter = models.CharField(
         max_length=10, choices=Compteur.choices, verbose_name="compteur"
     )
@@ -201,8 +204,12 @@ class Listing(models.Model):
                 name="listings_statut_valide",
             ),
             models.CheckConstraint(
-                condition=models.Q(water_source__in=[e.value for e in Eau]),
+                condition=models.Q(water_sources__contained_by=[e.value for e in Eau]),
                 name="listings_eau_valide",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(water_sources__len__gte=1),
+                name="listings_eau_renseignee",
             ),
             models.CheckConstraint(
                 condition=models.Q(electricity_meter__in=[c.value for c in Compteur]),

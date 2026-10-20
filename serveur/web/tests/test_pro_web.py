@@ -26,7 +26,7 @@ def formulaire(quartier, **extra):
         "action": "enregistrer", "title": "Chambre propre près du campus", "room_type": "single", "district": str(quartier.pk),
         "landmark_text": "Derrière la pharmacie", "address_private": "",
         "rent_amount": "25000", "deposit_months": "2", "advance_months": "1", "agent_fee_amount": "0",
-        "available_from": "2026-11-01", "has_private_bathroom": "on", "is_fenced": "on", "water_source": "running",
+        "available_from": "2026-11-01", "has_private_bathroom": "on", "is_fenced": "on", "water_sources": "running",
         "electricity_meter": "individual", "kitchen": "private", "description_md": "Chambre **calme**", **extra,
     }  # fmt: skip
 

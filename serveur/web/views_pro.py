@@ -236,7 +236,7 @@ def _initial(annonce) -> dict:
         "deposit_months": annonce.deposit_months, "advance_months": annonce.advance_months,
         "agent_fee_amount": annonce.agent_fee_amount, "available_from": annonce.available_from,
         "has_private_bathroom": annonce.has_private_bathroom, "is_fenced": annonce.is_fenced,
-        "water_source": annonce.water_source, "electricity_meter": annonce.electricity_meter,
+        "water_sources": annonce.water_sources, "electricity_meter": annonce.electricity_meter,
         "kitchen": annonce.kitchen, "rent_negotiable": annonce.rent_negotiable,
         "description_md": annonce.description_md,
     }  # fmt: skip

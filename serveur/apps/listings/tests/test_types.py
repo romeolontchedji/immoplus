@@ -202,7 +202,7 @@ def test_site_proposer_un_type_depuis_l_editeur():
             "action": "enregistrer", "title": "Appartement près du campus", "room_type": "",
             "nouveau_type": "Chambre avec mezzanine", "district": str(q.pk), "landmark_text": "Derrière la pharmacie",
             "rent_amount": "45000", "deposit_months": "2", "advance_months": "1", "agent_fee_amount": "0",
-            "available_from": "2026-11-01", "water_source": "running", "electricity_meter": "individual",
+            "available_from": "2026-11-01", "water_sources": ["running"], "electricity_meter": "individual",
             "kitchen": "none",
         },
     )  # fmt: skip

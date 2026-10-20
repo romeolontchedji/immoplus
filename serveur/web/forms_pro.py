@@ -45,7 +45,13 @@ class AnnonceForm(_Base):
     electricity_meter = forms.ChoiceField(
         label="Électricité", choices=[("", "Choisis"), *Compteur.choices]
     )
-    water_source = forms.ChoiceField(label="Eau", choices=[("", "Choisis"), *Eau.choices])
+    water_sources = forms.MultipleChoiceField(
+        label="Eau",
+        choices=Eau.choices,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Coche tout ce qui existe : forage, puits, compteur…",
+        error_messages={"required": "Coche au moins une source d'eau."},
+    )
     kitchen = forms.ChoiceField(label="Cuisine", choices=[("", "Choisis"), *Cuisine.choices])
     # « Autres détails » : texte simple, sans mise en forme (plan v3, C1).
     description_md = forms.CharField(

@@ -43,7 +43,7 @@ def donnees_annonce(quartier, **extra):
         "available_from": "2026-11-01",
         "has_private_bathroom": True,
         "is_fenced": True,
-        "water_source": "running",
+        "water_sources": ["running"],
         "electricity_meter": "individual",
         "description_md": "Chambre **calme**, eau courante.\n\n- Douche interne\n- Portail",
         **extra,
@@ -85,7 +85,7 @@ class ListingFactory(factory.django.DjangoModelFactory):
     available_from = "2026-11-01"
     has_private_bathroom = True
     is_fenced = True
-    water_source = "running"
+    water_sources = factory.LazyFunction(lambda: ["running"])
     electricity_meter = "individual"
     status = "published"
     published_at = factory.LazyFunction(timezone.now)

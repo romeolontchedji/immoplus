@@ -10,190 +10,398 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('accounts', '0003_index_rafraichissement_precedent'),
+        ("accounts", "0003_index_rafraichissement_precedent"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='District',
+            name="District",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=80)),
-                ('slug', models.CharField(max_length=80, unique=True)),
-                ('city', models.CharField(db_default='Parakou', default='Parakou', max_length=40)),
-                ('latitude', models.DecimalField(decimal_places=6, max_digits=9)),
-                ('longitude', models.DecimalField(decimal_places=6, max_digits=9)),
-                ('sort_order', models.SmallIntegerField(db_default=0, default=0)),
-                ('is_active', models.BooleanField(db_default=True, default=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("name", models.CharField(max_length=80)),
+                ("slug", models.CharField(max_length=80, unique=True)),
+                ("city", models.CharField(db_default="Parakou", default="Parakou", max_length=40)),
+                ("latitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                ("longitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                ("sort_order", models.SmallIntegerField(db_default=0, default=0)),
+                ("is_active", models.BooleanField(db_default=True, default=True)),
             ],
             options={
-                'db_table': 'districts',
-                'ordering': ['sort_order', 'name'],
+                "db_table": "districts",
+                "ordering": ["sort_order", "name"],
             },
         ),
         migrations.CreateModel(
-            name='Listing',
+            name="Listing",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('slug', models.CharField(max_length=160, unique=True)),
-                ('title', models.CharField(max_length=120)),
-                ('room_type', models.CharField(choices=[('single', 'Chambre simple'), ('entree_coucher', 'Entrée-coucher'), ('chambre_salon', 'Chambre-salon'), ('studio', 'Studio')], max_length=16)),
-                ('landmark_text', models.CharField(max_length=160)),
-                ('address_private', models.CharField(blank=True, default='', max_length=255)),
-                ('latitude', models.DecimalField(decimal_places=6, max_digits=9)),
-                ('longitude', models.DecimalField(decimal_places=6, max_digits=9)),
-                ('distance_to_campus_m', models.IntegerField()),
-                ('rent_amount', models.IntegerField()),
-                ('deposit_months', models.SmallIntegerField()),
-                ('advance_months', models.SmallIntegerField()),
-                ('agent_fee_amount', models.IntegerField(db_default=0, default=0)),
-                ('available_from', models.DateField()),
-                ('has_private_bathroom', models.BooleanField()),
-                ('is_fenced', models.BooleanField()),
-                ('water_source', models.CharField(choices=[('running', 'Eau courante'), ('well', 'Puits'), ('borehole', 'Forage')], max_length=10)),
-                ('electricity_meter', models.CharField(choices=[('individual', 'Individuel'), ('shared', 'Partagé')], max_length=10)),
-                ('description_md', models.TextField(db_default='', default='')),
-                ('description_html', models.TextField(db_default='', default='')),
-                ('search_vector', django.contrib.postgres.search.SearchVectorField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('draft', 'Brouillon'), ('processing', 'En traitement'), ('published', 'Publiée'), ('hidden', 'Masquée'), ('rented', 'Louée'), ('archived', 'Archivée'), ('removed', 'Retirée')], db_default='draft', default='draft', max_length=12)),
-                ('hidden_reason', models.CharField(blank=True, choices=[('stale', 'Sans confirmation'), ('moderation', 'Modération'), ('owner', 'Gérant'), ('gerant_suspended', 'Gérant suspendu')], max_length=16, null=True)),
-                ('published_at', models.DateTimeField(blank=True, null=True)),
-                ('rented_at', models.DateTimeField(blank=True, null=True)),
-                ('last_confirmed_at', models.DateTimeField(blank=True, null=True)),
-                ('reminder_stage', models.SmallIntegerField(db_default=0, default=0)),
-                ('created_at', models.DateTimeField(db_default=django.db.models.functions.datetime.Now(), default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True, db_default=django.db.models.functions.datetime.Now())),
-                ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                ('district', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='listings', to='listings.district')),
-                ('gerant', models.ForeignKey(db_column='gerant_id', on_delete=django.db.models.deletion.PROTECT, related_name='listings', to='accounts.gerantprofile')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("slug", models.CharField(max_length=160, unique=True)),
+                ("title", models.CharField(max_length=120)),
+                (
+                    "room_type",
+                    models.CharField(
+                        choices=[
+                            ("single", "Chambre simple"),
+                            ("entree_coucher", "Entrée-coucher"),
+                            ("chambre_salon", "Chambre-salon"),
+                            ("studio", "Studio"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("landmark_text", models.CharField(max_length=160)),
+                ("address_private", models.CharField(blank=True, default="", max_length=255)),
+                ("latitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                ("longitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                ("distance_to_campus_m", models.IntegerField()),
+                ("rent_amount", models.IntegerField()),
+                ("deposit_months", models.SmallIntegerField()),
+                ("advance_months", models.SmallIntegerField()),
+                ("agent_fee_amount", models.IntegerField(db_default=0, default=0)),
+                ("available_from", models.DateField()),
+                ("has_private_bathroom", models.BooleanField()),
+                ("is_fenced", models.BooleanField()),
+                (
+                    "water_source",
+                    models.CharField(
+                        choices=[
+                            ("running", "Eau courante"),
+                            ("well", "Puits"),
+                            ("borehole", "Forage"),
+                        ],
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "electricity_meter",
+                    models.CharField(
+                        choices=[("individual", "Individuel"), ("shared", "Partagé")], max_length=10
+                    ),
+                ),
+                ("description_md", models.TextField(db_default="", default="")),
+                ("description_html", models.TextField(db_default="", default="")),
+                (
+                    "search_vector",
+                    django.contrib.postgres.search.SearchVectorField(blank=True, null=True),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Brouillon"),
+                            ("processing", "En traitement"),
+                            ("published", "Publiée"),
+                            ("hidden", "Masquée"),
+                            ("rented", "Louée"),
+                            ("archived", "Archivée"),
+                            ("removed", "Retirée"),
+                        ],
+                        db_default="draft",
+                        default="draft",
+                        max_length=12,
+                    ),
+                ),
+                (
+                    "hidden_reason",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("stale", "Sans confirmation"),
+                            ("moderation", "Modération"),
+                            ("owner", "Gérant"),
+                            ("gerant_suspended", "Gérant suspendu"),
+                        ],
+                        max_length=16,
+                        null=True,
+                    ),
+                ),
+                ("published_at", models.DateTimeField(blank=True, null=True)),
+                ("rented_at", models.DateTimeField(blank=True, null=True)),
+                ("last_confirmed_at", models.DateTimeField(blank=True, null=True)),
+                ("reminder_stage", models.SmallIntegerField(db_default=0, default=0)),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        db_default=django.db.models.functions.datetime.Now(),
+                        default=django.utils.timezone.now,
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_default=django.db.models.functions.datetime.Now()
+                    ),
+                ),
+                ("deleted_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "district",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="listings",
+                        to="listings.district",
+                    ),
+                ),
+                (
+                    "gerant",
+                    models.ForeignKey(
+                        db_column="gerant_id",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="listings",
+                        to="accounts.gerantprofile",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'listings',
+                "db_table": "listings",
             },
         ),
         migrations.CreateModel(
-            name='ListingMedia',
+            name="ListingMedia",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('kind', models.CharField(choices=[('video', 'Vidéo'), ('photo', 'Photo')], max_length=5)),
-                ('position', models.SmallIntegerField(db_default=0, default=0)),
-                ('is_cover', models.BooleanField(db_default=False, default=False)),
-                ('status', models.CharField(choices=[('uploading', 'Envoi en cours'), ('uploaded', 'Envoyé'), ('processing', 'Traitement'), ('ready', 'Prêt'), ('failed', 'Échec'), ('deleted', 'Supprimé')], db_default='uploading', default='uploading', max_length=12)),
-                ('declared_size_bytes', models.BigIntegerField()),
-                ('received_bytes', models.BigIntegerField(db_default=0, default=0)),
-                ('upload_expires_at', models.DateTimeField(blank=True, null=True)),
-                ('original_path', models.CharField(blank=True, max_length=255, null=True)),
-                ('mime_type', models.CharField(blank=True, max_length=60, null=True)),
-                ('size_bytes', models.BigIntegerField(blank=True, null=True)),
-                ('sha256', models.CharField(blank=True, max_length=64, null=True)),
-                ('width', models.IntegerField(blank=True, null=True)),
-                ('height', models.IntegerField(blank=True, null=True)),
-                ('duration_s', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
-                ('playback_path', models.CharField(blank=True, max_length=255, null=True)),
-                ('poster_path', models.CharField(blank=True, max_length=255, null=True)),
-                ('variants', models.JSONField(blank=True, null=True)),
-                ('error_code', models.CharField(blank=True, max_length=40, null=True)),
-                ('error_detail', models.TextField(blank=True, null=True)),
-                ('delete_after', models.DateTimeField(blank=True, null=True)),
-                ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(db_default=django.db.models.functions.datetime.Now(), default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True, db_default=django.db.models.functions.datetime.Now())),
-                ('listing', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='media', to='listings.listing')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[("video", "Vidéo"), ("photo", "Photo")], max_length=5
+                    ),
+                ),
+                ("position", models.SmallIntegerField(db_default=0, default=0)),
+                ("is_cover", models.BooleanField(db_default=False, default=False)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("uploading", "Envoi en cours"),
+                            ("uploaded", "Envoyé"),
+                            ("processing", "Traitement"),
+                            ("ready", "Prêt"),
+                            ("failed", "Échec"),
+                            ("deleted", "Supprimé"),
+                        ],
+                        db_default="uploading",
+                        default="uploading",
+                        max_length=12,
+                    ),
+                ),
+                ("declared_size_bytes", models.BigIntegerField()),
+                ("received_bytes", models.BigIntegerField(db_default=0, default=0)),
+                ("upload_expires_at", models.DateTimeField(blank=True, null=True)),
+                ("original_path", models.CharField(blank=True, max_length=255, null=True)),
+                ("mime_type", models.CharField(blank=True, max_length=60, null=True)),
+                ("size_bytes", models.BigIntegerField(blank=True, null=True)),
+                ("sha256", models.CharField(blank=True, max_length=64, null=True)),
+                ("width", models.IntegerField(blank=True, null=True)),
+                ("height", models.IntegerField(blank=True, null=True)),
+                (
+                    "duration_s",
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
+                ),
+                ("playback_path", models.CharField(blank=True, max_length=255, null=True)),
+                ("poster_path", models.CharField(blank=True, max_length=255, null=True)),
+                ("variants", models.JSONField(blank=True, null=True)),
+                ("error_code", models.CharField(blank=True, max_length=40, null=True)),
+                ("error_detail", models.TextField(blank=True, null=True)),
+                ("delete_after", models.DateTimeField(blank=True, null=True)),
+                ("deleted_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        db_default=django.db.models.functions.datetime.Now(),
+                        default=django.utils.timezone.now,
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_default=django.db.models.functions.datetime.Now()
+                    ),
+                ),
+                (
+                    "listing",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="media",
+                        to="listings.listing",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'listing_media',
+                "db_table": "listing_media",
             },
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['status', '-published_at'], name='listings_fil_idx'),
+            model_name="listing",
+            index=models.Index(fields=["status", "-published_at"], name="listings_fil_idx"),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['district', 'status'], name='listings_quartier_idx'),
+            model_name="listing",
+            index=models.Index(fields=["district", "status"], name="listings_quartier_idx"),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['gerant', 'status'], name='listings_gerant_idx'),
+            model_name="listing",
+            index=models.Index(fields=["gerant", "status"], name="listings_gerant_idx"),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['rent_amount'], name='listings_loyer_idx'),
+            model_name="listing",
+            index=models.Index(fields=["rent_amount"], name="listings_loyer_idx"),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(fields=['distance_to_campus_m'], name='listings_distance_idx'),
+            model_name="listing",
+            index=models.Index(fields=["distance_to_campus_m"], name="listings_distance_idx"),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['search_vector'], name='listings_recherche_idx'),
+            model_name="listing",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["search_vector"], name="listings_recherche_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('rent_amount__gt', 0)), name='listings_loyer_positif'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("rent_amount__gt", 0)), name="listings_loyer_positif"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('deposit_months__gte', 0), ('deposit_months__lte', 12)), name='listings_caution_bornee'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("deposit_months__gte", 0), ("deposit_months__lte", 12)),
+                name="listings_caution_bornee",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('advance_months__gte', 0), ('advance_months__lte', 12)), name='listings_avance_bornee'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("advance_months__gte", 0), ("advance_months__lte", 12)),
+                name="listings_avance_bornee",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('agent_fee_amount__gte', 0)), name='listings_frais_positifs'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("agent_fee_amount__gte", 0)), name="listings_frais_positifs"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('title__regex', '^.{5,}$')), name='listings_titre_5_caracteres'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("title__regex", "^.{5,}$")), name="listings_titre_5_caracteres"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('room_type__in', ['single', 'entree_coucher', 'chambre_salon', 'studio'])), name='listings_type_valide'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("room_type__in", ["single", "entree_coucher", "chambre_salon", "studio"])
+                ),
+                name="listings_type_valide",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['draft', 'processing', 'published', 'hidden', 'rented', 'archived', 'removed'])), name='listings_statut_valide'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "status__in",
+                        [
+                            "draft",
+                            "processing",
+                            "published",
+                            "hidden",
+                            "rented",
+                            "archived",
+                            "removed",
+                        ],
+                    )
+                ),
+                name="listings_statut_valide",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('water_source__in', ['running', 'well', 'borehole'])), name='listings_eau_valide'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("water_source__in", ["running", "well", "borehole"])),
+                name="listings_eau_valide",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('electricity_meter__in', ['individual', 'shared'])), name='listings_compteur_valide'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("electricity_meter__in", ["individual", "shared"])),
+                name="listings_compteur_valide",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listing',
-            constraint=models.CheckConstraint(condition=models.Q(('hidden_reason__isnull', True), ('hidden_reason__in', ['stale', 'moderation', 'owner', 'gerant_suspended']), _connector='OR'), name='listings_raison_valide'),
+            model_name="listing",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("hidden_reason__isnull", True),
+                    ("hidden_reason__in", ["stale", "moderation", "owner", "gerant_suspended"]),
+                    _connector="OR",
+                ),
+                name="listings_raison_valide",
+            ),
         ),
         migrations.AddIndex(
-            model_name='listingmedia',
-            index=models.Index(fields=['listing', 'position'], name='media_ordre_idx'),
+            model_name="listingmedia",
+            index=models.Index(fields=["listing", "position"], name="media_ordre_idx"),
         ),
         migrations.AddIndex(
-            model_name='listingmedia',
-            index=models.Index(fields=['sha256'], name='media_sha256_idx'),
+            model_name="listingmedia",
+            index=models.Index(fields=["sha256"], name="media_sha256_idx"),
         ),
         migrations.AddConstraint(
-            model_name='listingmedia',
-            constraint=models.CheckConstraint(condition=models.Q(('kind__in', ['video', 'photo'])), name='media_type_valide'),
+            model_name="listingmedia",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("kind__in", ["video", "photo"])), name="media_type_valide"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listingmedia',
-            constraint=models.CheckConstraint(condition=models.Q(('status__in', ['uploading', 'uploaded', 'processing', 'ready', 'failed', 'deleted'])), name='media_statut_valide'),
+            model_name="listingmedia",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "status__in",
+                        ["uploading", "uploaded", "processing", "ready", "failed", "deleted"],
+                    )
+                ),
+                name="media_statut_valide",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listingmedia',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_cover', True)), fields=('listing',), name='media_une_seule_couverture'),
+            model_name="listingmedia",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_cover", True)),
+                fields=("listing",),
+                name="media_une_seule_couverture",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='listingmedia',
-            constraint=models.UniqueConstraint(condition=models.Q(('kind', 'video'), models.Q(('status__in', ['deleted', 'failed']), _negated=True)), fields=('listing',), name='media_une_seule_video_active'),
+            model_name="listingmedia",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(
+                    ("kind", "video"),
+                    models.Q(("status__in", ["deleted", "failed"]), _negated=True),
+                ),
+                fields=("listing",),
+                name="media_une_seule_video_active",
+            ),
         ),
     ]

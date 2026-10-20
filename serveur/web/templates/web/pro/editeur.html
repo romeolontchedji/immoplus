@@ -159,13 +159,13 @@
             {% with champ=form.electricity_meter %}
               {% include "web/composants/champ.html" %}
             {% endwith %}
-            {% with champ=form.water_source %}
-              {% include "web/composants/champ.html" %}
-            {% endwith %}
             {% with champ=form.kitchen %}
               {% include "web/composants/champ.html" %}
             {% endwith %}
           </div>
+          {% with champ=form.water_sources %}
+            {% include "web/composants/champ.html" %}
+          {% endwith %}
           <div class="grille grille--2">
             {% with champ=form.has_private_bathroom %}
               {% include "web/composants/champ.html" %}

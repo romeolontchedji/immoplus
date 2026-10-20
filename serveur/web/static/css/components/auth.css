@@ -12,9 +12,9 @@
 }
 .auth-lateral__logo { display: none; } /* l'en-tête du site porte déjà le logo */
 .auth-lateral__contenu {
-  position: relative; z-index: 1;
-  margin-bottom: var(--sp-8); flex: 1;
-  display: flex; flex-direction: column; justify-content: flex-end;
+  position: relative; z-index: 1; flex: 1;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center;
 }
 .auth-lateral__titre {
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
@@ -26,7 +26,8 @@
 }
 .auth-lateral__promesses {
   list-style: none; margin: 0; padding: 0;
-  display: flex; flex-direction: column; gap: var(--sp-3);
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3);
+  text-align: left; /* liste centrée en bloc, coches alignées entre elles */
 }
 .auth-lateral__promesses li {
   display: flex; align-items: center; gap: var(--sp-3);
@@ -79,7 +80,6 @@
 .auth-formulaire__titre, .auth-formulaire__sous-titre { text-align: center; }
 .auth-formulaire__sous-titre { margin-inline: auto; max-width: 28rem; }
 .auth-etapes { display: flex; justify-content: center; }
-.auth-lateral__contenu { margin-top: auto; }
 @media (min-width: 1280px) {
   .auth-lateral { background-image: var(--voile-auth), url("../../design/photos/accueil-2-1600.webp"); }
 }

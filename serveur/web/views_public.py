@@ -223,10 +223,13 @@ def _partage(request, f) -> dict:
                 ("Douche intérieure", f.get("has_private_bathroom")),
                 ("Cour clôturée", f.get("is_fenced")),
                 (f.get("electricity_label"), bool(f.get("electricity_label"))),
-                (f.get("water_label"), bool(f.get("water_label"))),
                 (f.get("kitchen_label"), f.get("kitchen") in ("private", "shared")),
             )
             if present
+        ]
+        + [
+            {"@type": "LocationFeatureSpecification", "name": nom, "value": True}
+            for nom in f.get("water_labels") or []
         ],
     }
     if f["reviews"]["count"]:

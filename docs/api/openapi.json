@@ -3224,8 +3224,13 @@
                     "is_fenced": {
                         "type": "boolean"
                     },
-                    "water_source": {
-                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WaterSourcesEnum"
+                        },
+                        "description": "Une ou plusieurs sources : individual, sub_meter, running, borehole, well.",
+                        "maxItems": 5
                     },
                     "electricity_meter": {
                         "$ref": "#/components/schemas/ElectricityMeterEnum"
@@ -3263,7 +3268,7 @@
                     "rent_amount",
                     "room_type",
                     "title",
-                    "water_source"
+                    "water_sources"
                 ]
             },
             "AnnonceProOut": {
@@ -3332,8 +3337,11 @@
                     "is_fenced": {
                         "type": "boolean"
                     },
-                    "water_source": {
-                        "type": "string"
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "electricity_meter": {
                         "type": "string"
@@ -3409,7 +3417,7 @@
                     "title",
                     "updated_at",
                     "views_total",
-                    "water_source"
+                    "water_sources"
                 ]
             },
             "AnnonceProOutStatusEnum": {
@@ -4184,11 +4192,21 @@
                     "is_fenced": {
                         "type": "boolean"
                     },
-                    "water_source": {
-                        "type": "string"
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "water_labels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "water_label": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Sources d'eau en une phrase (« Forage, Puits »)."
                     },
                     "electricity_meter": {
                         "type": "string"
@@ -4275,7 +4293,8 @@
                     "status",
                     "title",
                     "water_label",
-                    "water_source"
+                    "water_labels",
+                    "water_sources"
                 ]
             },
             "FilOut": {
@@ -5163,8 +5182,13 @@
                     "is_fenced": {
                         "type": "boolean"
                     },
-                    "water_source": {
-                        "$ref": "#/components/schemas/WaterSourceEnum"
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WaterSourcesEnum"
+                        },
+                        "description": "Une ou plusieurs sources : individual, sub_meter, running, borehole, well.",
+                        "maxItems": 5
                     },
                     "electricity_meter": {
                         "$ref": "#/components/schemas/ElectricityMeterEnum"
@@ -5823,7 +5847,7 @@
                     "counted"
                 ]
             },
-            "WaterSourceEnum": {
+            "WaterSourcesEnum": {
                 "enum": [
                     "individual",
                     "sub_meter",

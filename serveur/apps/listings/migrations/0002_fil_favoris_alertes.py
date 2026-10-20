@@ -11,89 +11,161 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0003_index_rafraichissement_precedent'),
-        ('listings', '0001_initial'),
-        ('core', '0002_extensions'),
+        ("accounts", "0003_index_rafraichissement_precedent"),
+        ("listings", "0001_initial"),
+        ("core", "0002_extensions"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Alert',
+            name="Alert",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('label', models.CharField(blank=True, default='', max_length=80)),
-                ('district_ids', django.contrib.postgres.fields.ArrayField(base_field=models.UUIDField(), db_default=[], default=list, size=None)),
-                ('room_types', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=16), db_default=[], default=list, size=None)),
-                ('max_rent', models.IntegerField(blank=True, null=True)),
-                ('private_bathroom_required', models.BooleanField(db_default=False, default=False)),
-                ('max_distance_m', models.IntegerField(blank=True, null=True)),
-                ('is_active', models.BooleanField(db_default=True, default=True)),
-                ('created_at', models.DateTimeField(db_default=django.db.models.functions.datetime.Now(), default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True, db_default=django.db.models.functions.datetime.Now())),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("label", models.CharField(blank=True, default="", max_length=80)),
+                (
+                    "district_ids",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.UUIDField(), db_default=[], default=list, size=None
+                    ),
+                ),
+                (
+                    "room_types",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=16),
+                        db_default=[],
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                ("max_rent", models.IntegerField(blank=True, null=True)),
+                ("private_bathroom_required", models.BooleanField(db_default=False, default=False)),
+                ("max_distance_m", models.IntegerField(blank=True, null=True)),
+                ("is_active", models.BooleanField(db_default=True, default=True)),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        db_default=django.db.models.functions.datetime.Now(),
+                        default=django.utils.timezone.now,
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_default=django.db.models.functions.datetime.Now()
+                    ),
+                ),
             ],
             options={
-                'db_table': 'alerts',
+                "db_table": "alerts",
             },
         ),
         migrations.CreateModel(
-            name='Favorite',
+            name="Favorite",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(db_default=django.db.models.functions.datetime.Now(), default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        db_default=django.db.models.functions.datetime.Now(),
+                        default=django.utils.timezone.now,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'favorites',
+                "db_table": "favorites",
             },
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(condition=models.Q(('status', 'published')), fields=['-published_at', '-id'], name='listings_fil_publie_idx'),
+            model_name="listing",
+            index=models.Index(
+                condition=models.Q(("status", "published")),
+                fields=["-published_at", "-id"],
+                name="listings_fil_publie_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(condition=models.Q(('status', 'published')), fields=['district', 'rent_amount'], name='listings_quartier_loyer_idx'),
+            model_name="listing",
+            index=models.Index(
+                condition=models.Q(("status", "published")),
+                fields=["district", "rent_amount"],
+                name="listings_quartier_loyer_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='listing',
-            index=models.Index(condition=models.Q(('status', 'published')), fields=['last_confirmed_at'], name='listings_fraicheur_idx'),
+            model_name="listing",
+            index=models.Index(
+                condition=models.Q(("status", "published")),
+                fields=["last_confirmed_at"],
+                name="listings_fraicheur_idx",
+            ),
         ),
         migrations.AddField(
-            model_name='alert',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to=settings.AUTH_USER_MODEL),
+            model_name="alert",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="+",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='favorite',
-            name='listing',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='favorites', to='listings.listing'),
+            model_name="favorite",
+            name="listing",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="favorites",
+                to="listings.listing",
+            ),
         ),
         migrations.AddField(
-            model_name='favorite',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to=settings.AUTH_USER_MODEL),
+            model_name="favorite",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="+",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddIndex(
-            model_name='alert',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['district_ids'], name='alerts_quartiers_idx'),
+            model_name="alert",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["district_ids"], name="alerts_quartiers_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='alert',
-            index=models.Index(fields=['user', 'is_active'], name='alerts_utilisateur_idx'),
+            model_name="alert",
+            index=models.Index(fields=["user", "is_active"], name="alerts_utilisateur_idx"),
         ),
         migrations.AddConstraint(
-            model_name='alert',
-            constraint=models.CheckConstraint(condition=models.Q(('max_rent__isnull', True), ('max_rent__gt', 0), _connector='OR'), name='alerts_loyer_positif'),
+            model_name="alert",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("max_rent__isnull", True), ("max_rent__gt", 0), _connector="OR"
+                ),
+                name="alerts_loyer_positif",
+            ),
         ),
         migrations.AddIndex(
-            model_name='favorite',
-            index=models.Index(fields=['listing'], name='favorites_annonce_idx'),
+            model_name="favorite",
+            index=models.Index(fields=["listing"], name="favorites_annonce_idx"),
         ),
         migrations.AddConstraint(
-            model_name='favorite',
-            constraint=models.UniqueConstraint(fields=('user', 'listing'), name='favorites_un_par_couple'),
+            model_name="favorite",
+            constraint=models.UniqueConstraint(
+                fields=("user", "listing"), name="favorites_un_par_couple"
+            ),
         ),
         migrations.RunSQL(
             "CREATE INDEX listings_titre_trgm_idx ON listings USING gin (title gin_trgm_ops);",

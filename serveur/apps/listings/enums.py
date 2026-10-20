@@ -12,8 +12,8 @@ class TypeChambre(models.TextChoices):
     """Types officiels de départ (décision V1) : la liste vivante est la table `room_types`."""
 
     SINGLE = "single", "Chambre simple"
-    ENTREE_COUCHER = "entree_coucher", "Entrée-coucher"
-    CHAMBRE_SALON = "chambre_salon", "Chambre-salon"
+    ENTREE_COUCHER = "entree_coucher", "Entrée-couché simple"
+    CHAMBRE_SALON = "chambre_salon", "Chambre-salon simple"
     STUDIO = "studio", "Studio"
 
 
