@@ -56,6 +56,7 @@ def creer_officiels(apps, schema_editor):
         )
 
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0005_occupation_utilisateur"),

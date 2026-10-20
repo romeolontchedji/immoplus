@@ -35,9 +35,7 @@ def creer(apps, schema_editor):
 def retirer(apps, schema_editor):
     RoomType = apps.get_model("listings", "RoomType")
     Listing = apps.get_model("listings", "Listing")
-    utilises = set(
-        Listing.objects.filter(room_type__in=NOUVEAUX).values_list("room_type", flat=True)
-    )
+    utilises = set(Listing.objects.filter(room_type__in=NOUVEAUX).values_list("room_type", flat=True))
     RoomType.objects.filter(slug__in=set(NOUVEAUX) - utilises, proposed_by__isnull=True).delete()
 
 

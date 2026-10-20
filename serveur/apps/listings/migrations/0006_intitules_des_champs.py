@@ -1,5 +1,6 @@
 """Intitulés français des champs dans l'administration (aucune instruction SQL)."""
 
+
 import django.db.models.deletion
 import django.db.models.functions.datetime
 import django.utils.timezone
@@ -15,7 +16,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="district",
             name="is_active",
-            field=models.BooleanField(db_default=True, default=True, verbose_name="actif"),
+            field=models.BooleanField(
+                db_default=True, default=True, verbose_name="actif"
+            ),
         ),
         migrations.AlterField(
             model_name="district",
@@ -25,12 +28,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="district",
             name="slug",
-            field=models.CharField(max_length=80, unique=True, verbose_name="identifiant d'URL"),
+            field=models.CharField(
+                max_length=80, unique=True, verbose_name="identifiant d'URL"
+            ),
         ),
         migrations.AlterField(
             model_name="district",
             name="sort_order",
-            field=models.SmallIntegerField(db_default=0, default=0, verbose_name="ordre"),
+            field=models.SmallIntegerField(
+                db_default=0, default=0, verbose_name="ordre"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
@@ -68,7 +75,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="listing",
             name="deleted_at",
-            field=models.DateTimeField(blank=True, null=True, verbose_name="supprimé le"),
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="supprimé le"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
@@ -78,7 +87,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="listing",
             name="description_md",
-            field=models.TextField(db_default="", default="", verbose_name="description"),
+            field=models.TextField(
+                db_default="", default="", verbose_name="description"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
@@ -138,12 +149,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="listing",
             name="last_confirmed_at",
-            field=models.DateTimeField(blank=True, null=True, verbose_name="confirmée le"),
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="confirmée le"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
             name="published_at",
-            field=models.DateTimeField(blank=True, null=True, verbose_name="publiée le"),
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="publiée le"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
@@ -158,7 +173,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="listing",
             name="slug",
-            field=models.CharField(max_length=160, unique=True, verbose_name="identifiant d'URL"),
+            field=models.CharField(
+                max_length=160, unique=True, verbose_name="identifiant d'URL"
+            ),
         ),
         migrations.AlterField(
             model_name="listing",
@@ -223,17 +240,23 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="roomtype",
             name="reviewed_at",
-            field=models.DateTimeField(blank=True, null=True, verbose_name="examiné le"),
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="examiné le"
+            ),
         ),
         migrations.AlterField(
             model_name="roomtype",
             name="slug",
-            field=models.CharField(max_length=40, unique=True, verbose_name="identifiant d'URL"),
+            field=models.CharField(
+                max_length=40, unique=True, verbose_name="identifiant d'URL"
+            ),
         ),
         migrations.AlterField(
             model_name="roomtype",
             name="sort_order",
-            field=models.SmallIntegerField(db_default=100, default=100, verbose_name="ordre"),
+            field=models.SmallIntegerField(
+                db_default=100, default=100, verbose_name="ordre"
+            ),
         ),
         migrations.AlterField(
             model_name="roomtype",
