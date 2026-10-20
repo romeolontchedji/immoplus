@@ -73,6 +73,7 @@ Commit : `type(portée): sujet`.
 - `!` après la portée = changement cassant (corps obligatoire).
 - `feat` et `fix` portent une ligne `Refs: EF-…` ou `Refs: n/a`.
 - `fixup!`, `squash!`, `wip` : refusés au push.
+- Aucune ligne `Co-Authored-By` ni mention d'outil ou d'assistant dans les commits, PR et fichiers (confidentialité).
 
 Branche : `^(main|(feat|fix|refactor|perf|test|docs|style|build|ci|chore|sec)/[a-z0-9]+(-[a-z0-9]+)*)$`, 60 caractères au plus.
 Pas de push direct sur `main` (sauf premier push : `IMMOPLUS_PREMIER_PUSH=1`). Pas de fusion « squash ».
