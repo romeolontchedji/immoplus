@@ -12,13 +12,13 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "channel": "preview",
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.staging.immoplus.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.bj", "EXPO_PUBLIC_WEB_HOST": "www.immoplus.bj" }
     },
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "channel": "production",
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.bj", "EXPO_PUBLIC_WEB_HOST": "www.immoplus.bj" }
     }
   },
   "submit": { "production": { "android": { "track": "internal" } } }

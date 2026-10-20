@@ -149,9 +149,14 @@ l'administration.
 4. Valeurs pour `.env` : `EMAIL_HOST=smtp-relay.brevo.com`, `EMAIL_PORT=587`, `EMAIL_USE_TLS=1`,
    `EMAIL_HOST_USER=<identifiant>`, `EMAIL_HOST_PASSWORD=<clé>`, `DEFAULT_FROM_EMAIL=Immo+ <no-reply@immoplus.bj>`.
 
-### 4.2 Stockage des sauvegardes hors du serveur : Cloudflare R2 (ou Backblaze B2)
+### 4.2 (Facultatif) Copie des sauvegardes hors du serveur : Cloudflare R2
 
-Le VPS LWS a une sauvegarde « sans garantie » : il faut une copie ailleurs.
+**Les photos, les vidéos et la base restent sur le disque du VPS** (ADR 0007) : Immo+ n'a besoin d'aucun stockage
+externe pour fonctionner. R2 (le stockage de fichiers de Cloudflare, 10 Go gratuits) ne sert qu'à garder une **copie
+chiffrée des sauvegardes** ailleurs que sur le VPS (ADR 0008). Sans R2, la sauvegarde de chaque nuit continue, mais
+sur le même disque : si le VPS est perdu (panne LWS, erreur, piratage), base, photos et sauvegardes disparaissent
+ensemble. Tu peux ouvrir sans R2 et l'ajouter plus tard : il suffit de remplir les trois lignes ci-dessous dans
+`.env`, puis de relancer `deployer.sh`. Pour t'en passer, laisse-les vides et saute cette étape.
 
 1. Cloudflare › **R2** › activer (10 Go gratuits) › **Créer un compartiment** `immoplus-sauvegardes` (privé).
 2. **R2 › Gérer les jetons d'API › Créer un jeton** : permission « Lecture et écriture d'objets », limitée au seul
@@ -244,7 +249,7 @@ clé des sauvegardes. Ouvre-le (`nano .env`) et renseigne seulement :
 | `EMAIL_BACKEND` | vide (envoi SMTP) |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL` | Brevo (étape 4.1) |
 | `ERREURS_DESTINATAIRES` | Ton adresse : un courriel à chaque nouvelle erreur (au plus un par heure et par erreur) |
-| `RESTIC_REPOSITORY`, `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE` | Cloudflare R2 (étape 4.2) |
+| `RESTIC_REPOSITORY`, `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE` | Cloudflare R2 (étape 4.2, facultatif : vide = pas de copie hors du VPS) |
 
 Ne touche pas aux secrets générés. Régénère ensuite les fichiers des services **sans changer les secrets** :
 
@@ -332,6 +337,25 @@ depuis une adresse autorisée.
 
 ## 11. Données de base et premier administrateur
 
+Ce qui existe **dès le premier démarrage**, sans rien lancer :
+
+| Données | D'où elles viennent |
+|---|---|
+| Types de logement (chambre simple, chambre sanitaire, chambre-salon, entrée-coucher, meublé…) | Créés par les migrations, appliquées automatiquement au démarrage |
+| Équipements (eau, électricité, douche, cuisine, cour clôturée…) et leurs choix | Écrits dans le code : rien à créer |
+| Images du site (logos, illustrations, photos de l'accueil, image de partage, polices) | Incluses dans l'image Docker (`web/static/design/`) |
+| Textes légaux (conditions, confidentialité) | Inclus dans le code |
+
+Ce qu'il faut créer **une fois**, avec la commande `seed` :
+
+| Données | Remarque |
+|---|---|
+| Paramètres par défaut (tous ceux de `docs/administration.md`) | Une valeur déjà modifiée dans l'administration n'est jamais écrasée |
+| Les 12 quartiers de Parakou (Banikanni, Titirou, Zongo, Albarika, Madina, Arafat, Ganou, Kpébié, Guéma, Ladjifarani, Tourou, Wansirou) | Positions **approximatives** : à corriger dans Administration › Quartiers après un relevé sur le terrain ; d'autres quartiers s'y ajoutent |
+
+`seed` peut être relancée sans risque (elle ne crée que ce qui manque). Les comptes et annonces de démonstration
+(`--demo`) sont refusés en production.
+
 ```bash
 immoplus run --rm admin python manage.py seed      # paramètres par défaut et quartiers de Parakou (sans annonces de démo)
 immoplus run --rm admin python manage.py creer_personnel --email toi@immoplus.bj --nom "Ton nom" --role admin
@@ -390,29 +414,86 @@ Avant toute grosse opération sur le serveur, demande aussi au propriétaire un 
 
 ## 13. L'application mobile
 
-Sur ton ordinateur, dans `mobile/` :
+L'application se compile **dans le nuage d'Expo (EAS Build)** : pas besoin d'Android Studio. Le service gratuit suffit
+(file d'attente parfois longue). Tout se fait depuis ton ordinateur, dans `mobile/`.
+
+### 13.1 Une seule fois : le projet Expo
 
 ```bash
-npm install -g eas-cli && eas login && eas init       # crée le projet Expo (une seule fois)
+cd mobile
+npm install -g eas-cli
+eas login                    # compte expo.dev de l'étape 4.3
+eas init                     # crée le projet Expo et affiche son identifiant (projectId)
 ```
 
-Dans `mobile/.env` (ou dans les variables d'environnement du projet sur expo.dev) :
+`eas init` ne peut pas écrire lui-même l'identifiant (la configuration est dans `app.config.ts`). Copie-le dans
+`mobile/eas.json`, dans l'`env` des profils `preview` et `production` : `"EAS_PROJECT_ID": "<identifiant>"`, puis
+commite. Sans lui, les notifications push ne fonctionnent pas. Ce n'est pas un secret.
+
+L'adresse du serveur est déjà réglée dans `mobile/eas.json` : `https://api.immoplus.bj` et `www.immoplus.bj` pour
+`preview` et `production` (le fichier `mobile/.env` ne sert qu'au développement : il n'est pas envoyé à Expo). Si le
+domaine change, c'est là qu'il faut le modifier.
+
+### 13.2 Les trois profils de compilation (`mobile/eas.json`)
+
+| Profil | Produit | Pour quoi |
+|---|---|---|
+| `development` | APK de développement | Tester des modules natifs en local (rarement utile : Expo Go suffit) |
+| `preview` | **APK** à installer directement | Tester sur de vrais téléphones contre la production, avant le Play Store |
+| `production` | **AAB** (`.aab`) | Publier sur le Play Store ; numéro de version incrémenté automatiquement |
+
+### 13.3 Tester sur des téléphones (APK)
 
 ```bash
-EXPO_PUBLIC_API_URL=https://api.immoplus.bj
-EXPO_PUBLIC_WEB_HOST=www.immoplus.bj
+eas build --platform android --profile preview
 ```
 
+À la fin, Expo donne un lien et un code QR : ouvre-le sur le téléphone, télécharge l'APK et installe-le (autoriser
+« sources inconnues »). Tu peux envoyer le lien à quelques testeurs.
+
+### 13.4 Publier sur le Play Store
+
+1. Crée un compte **Google Play Console** (25 $ une seule fois) et l'application « Immo+ ». Le nom du paquet
+   `bj.immoplus.app` (`app.config.ts`) ne pourra **plus jamais changer** après la première publication.
+2. Compile :
+
+   ```bash
+   eas build --platform android --profile production
+   ```
+
+3. Envoie la version (piste « tests internes », réglée dans `eas.json`) :
+
+   ```bash
+   eas submit --platform android --profile production
+   ```
+
+   La première fois, Google exige un envoi à la main du fichier `.aab` dans la Play Console, puis `eas submit`
+   demande une clé de compte de service Google (la Play Console explique comment la créer).
+4. Dans la Play Console : fiche (textes, captures, icône), politique de confidentialité
+   (`https://www.immoplus.bj/confidentialite`), questionnaire sur les données, puis passage de « tests internes » à
+   « production ».
+
+### 13.5 Ouvrir les liens partagés dans l'application
+
 ```bash
-eas build --platform android --profile production     # fichier .aab pour le Play Store
-eas credentials                                        # empreinte SHA-256 du certificat de signature
+eas credentials              # Android › production › affiche l'empreinte SHA-256 du certificat de signature
 ```
 
 Colle cette empreinte dans `infra/caddy/wellknown/assetlinks.json` (`sha256_cert_fingerprints` ; le paquet
-`bj.immoplus.app` y est déjà), commite, pousse, puis `bash infra/vps/deployer.sh` sur le serveur. Les liens
-`https://www.immoplus.bj/annonces/…` partagés ouvriront alors directement l'application.
+`bj.immoplus.app` y est déjà). Si l'application est publiée sur le Play Store avec la signature gérée par Google,
+ajoute aussi l'empreinte affichée dans Play Console › Intégrité de l'application. Commite, pousse, puis
+`bash infra/vps/deployer.sh` sur le serveur. Les liens `https://www.immoplus.bj/annonces/…` ouvriront alors
+directement l'application.
 
 Vérifie : `curl -s https://www.immoplus.bj/.well-known/assetlinks.json` affiche ton empreinte.
+
+### 13.6 Nouvelles versions
+
+- Change `version` dans `mobile/app.config.ts` (ex. `1.0.0` → `1.1.0`), recompile en `production`, puis
+  `eas submit`.
+- Pour obliger les anciennes versions à se mettre à jour : Administration › Paramètres › **version minimale de
+  l'application**. Ne la monte qu'une fois la nouvelle version disponible sur le Play Store.
+- Le serveur se met à jour indépendamment (étape 15) : garde l'API compatible avec les versions encore installées.
 
 ## 14. Surveiller
 
@@ -478,7 +559,7 @@ docker stats --no-stream | grep immoplus     # mémoire et processeur des conten
 - [ ] `ADMIN_ALLOWED_IPS` limité à ton adresse ou ton VPN.
 - [ ] Courriels testés : code de connexion à l'administration reçu, une erreur reçue par courriel, pas en indésirables.
 - [ ] Vraies clés Turnstile (pas les clés de test) : rien dans Administration › Erreurs à ce sujet.
-- [ ] Sauvegardes copiées sur R2 et restauration testée.
+- [ ] Restauration d'une sauvegarde testée (et copie sur R2 si tu as choisi de l'activer).
 - [ ] Surveillance externe de `/readyz` active.
 - [ ] `.env` conservé dans le coffre de l'équipe.
 - [ ] Empreinte Android dans `assetlinks.json` : un lien partagé ouvre l'application.

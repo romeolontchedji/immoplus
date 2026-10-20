@@ -434,19 +434,19 @@ class Command(BaseCommand):
 Identifiants de test (Mot de passe commun : {MOT_DE_PASSE_DEMO}) :
 ------------------------------------------------------------------------
 1. Locataire (Awa) :
-   - Numéro : +22901970000002
+   - Nom d'utilisateur : awa.etudiante
    - Données : 2 alertes, 2 favoris, 1 conversation active, 4 notifications.
 
 2. Gérant vérifié (Issa) :
-   - Numéro : +22901970000001
+   - Nom d'utilisateur : issa.b
    - Données : Profil vérifié, 6 annonces (avec photos et vidéos), contacts reçus.
 
 3. Gérant en attente (Koffi) :
-   - Numéro : +22901970000003
+   - Nom d'utilisateur : koffi.enattente
    - Données : Profil non vérifié (idéal pour tester la modération admin).
 
 4. Administrateur (Admin Immo+) :
-   - Email  : demo-admin@immoplus.test (ou +22901970000099)
+   - Email  : demo-admin@immoplus.test (code de connexion sur /dev/boite)
    - Accès  : http://pilotage.localhost:8080/ (ou port d'admin)
 ========================================================================
 """
