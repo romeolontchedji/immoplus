@@ -21,17 +21,6 @@
         {% endfor %}
       </div>
       <div class="pile">
-        <h2>SMS</h2>
-        {% for m in sms %}
-          <article class="carte p-5">
-            <p class="texte-doux texte-petit mb-0">à {{ m.a }}</p>
-            <strong>{{ m.message }}</strong>
-          </article>
-        {% empty %}
-          <p class="texte-doux">Aucun SMS.</p>
-        {% endfor %}
-      </div>
-      <div class="pile">
         <h2>Notifications push</h2>
         {% for m in push %}
           <article class="carte p-5">

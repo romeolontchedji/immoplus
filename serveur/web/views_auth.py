@@ -123,7 +123,7 @@ def inscription_page(request):
             _exiger_captcha(request, d["captcha"])
             utilisateur, cle = inscription.inscrire_client(
                 nom_utilisateur=d["username"], prenom=d["first_name"], nom=d["last_name"],
-                telephone=d["phone"], mot_de_passe=d["password"], cgu_acceptees=d["terms_accepted"],
+                mot_de_passe=d["password"], cgu_acceptees=d["terms_accepted"],
                 occupation=d["occupation"] or None, ip=ip_client(request), user_agent=user_agent(request),
             )  # fmt: skip
         except ErreurMetier as erreur:
@@ -293,7 +293,7 @@ def espace_compte(request):
 
 @connecte_obligatoire
 def mon_profil(request):
-    """Mon profil : prénom et nom, numéro, e-mail, clé de secours, mot de passe, suppression (ADR 0009)."""
+    """Mon profil : prénom et nom, e-mail, clé de secours, mot de passe, suppression (ADR 0009)."""
     u = request.user
     action = request.POST.get("action") if request.method == "POST" else None
 
@@ -303,7 +303,6 @@ def mon_profil(request):
     formulaires = {
         "nom": lie("nom", forms.ChangementNom, initial={"first_name": u.first_name, "last_name": u.last_name,
                                                        "occupation": u.occupation or ""}),
-        "numero": lie("numero", forms.ChangementNumero),
         "email": lie("email", forms.AjoutEmail),
         "cle": lie("cle", forms.MotDePasseActuel),
         "mot-de-passe": lie("mot-de-passe", forms.ChangementMotDePasse),
@@ -329,9 +328,6 @@ def mon_profil(request):
                     occupation=d["occupation"] or None,
                 )
                 message = "Ton profil a été mis à jour."
-            elif action == "numero":
-                compte.changer_numero(u, d["password"], d["phone"])
-                message = "Ton numéro a été changé."
             elif action == "email":
                 compte.demander_ajout_email(u, d["email"])
                 message = (
@@ -357,8 +353,7 @@ def mon_profil(request):
     return render(
         request,
         "web/auth/profil.html",
-        {"u": u, "titre": "Mon profil", "message": message, **{k.replace("-", "_"): f for k, f in formulaires.items()},
-         "numero_actuel": _lisible((u.phone_e164 or "").removeprefix("+229"))},
+        {"u": u, "titre": "Mon profil", "message": message, **{k.replace("-", "_"): f for k, f in formulaires.items()}},
     )  # fmt: skip
 
 
@@ -446,10 +441,3 @@ def revoquer_appareil(request, appareil_id):
     except ErreurMetier:
         pass  # 404 silencieux : ne révèle pas l'existence d'un appareil d'autrui
     return redirect("/compte/appareils")
-
-
-# --------------------------------------------------------------- changement de numéro
-def _lisible(numero: str) -> str:
-    """« 97777888 » → « 97 77 78 88 » (chiffres groupés par deux, comme sur une carte de visite)."""
-    chiffres = "".join(c for c in str(numero) if c.isdigit())
-    return " ".join(chiffres[i : i + 2] for i in range(0, len(chiffres), 2))

@@ -9,7 +9,7 @@ DEBUG = True
 SITE_URL = env.texte("SITE_URL") or "http://www.localhost:8080"
 ALLOWED_HOSTS = ["*"]
 # Développement : les courriels (codes de l'administration…) sont rangés dans la boîte de développement,
-# lisible sur http://www.localhost:8080/dev/boite (avec les SMS et les push).
+# lisible sur http://www.localhost:8080/dev/boite (avec les push).
 EMAIL_BACKEND = env.texte("EMAIL_BACKEND") or "apps.core.courriel_dev.BoiteDevCourriels"
 INSTALLED_APPS = [*INSTALLED_APPS, "django.contrib.messages"]
 STYLEGUIDE_ENABLED = True

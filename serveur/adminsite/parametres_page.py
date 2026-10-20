@@ -21,9 +21,9 @@ SECTIONS = [
       "RENTED_VIDEO_DELETE_DAYS", "READONLY_AFTER_RENT_DAYS", "ARCHIVE_AFTER_RENT_DAYS", "CAMPUS_REFERENCE"]),
     ("messagerie", "Messagerie, alertes et notifications", "Limites d'envoi et protection des coordonnées.",
      ["CONTACT_LEAK_MODE", "MESSAGE_PER_MINUTE", "NEW_CONVERSATIONS_PER_DAY", "ALERTS_MAX_PER_USER",
-      "UNANSWERED_REMINDER_H", "SMS_FALLBACK_ENABLED"]),
-    ("securite", "Sécurité", "Verrouillages, défi anti-robot et numéros acceptés.",
-     ["OTP_ALLOWED_COUNTRIES", "LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE",
+      "UNANSWERED_REMINDER_H"]),
+    ("securite", "Sécurité", "Verrouillages et défi anti-robot.",
+     ["LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE",
       "TURNSTILE_ENABLED", "ADMIN_LOCK_THRESHOLD", "ADMIN_SESSION_IDLE_MIN", "ADMIN_SESSION_MAX_H"]),
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
@@ -82,14 +82,10 @@ NOTES = {
     "NEW_CONVERSATIONS_PER_DAY": "Nombre maximum de nouveaux gérants qu'un locataire peut contacter par jour.",
     "ALERTS_MAX_PER_USER": "Nombre maximum d'alertes actives par locataire.",
     "UNANSWERED_REMINDER_H": "Un gérant qui n'a pas lu un message reçoit un rappel après ce nombre d'heures.",
-    "SMS_FALLBACK_ENABLED": "Coché : un gérant sans notification push reçoit un SMS pour un nouveau message (payant, "
-    "chaque SMS est facturé par l'agrégateur).",
-    "OTP_ALLOWED_COUNTRIES": 'Pays dont les numéros de téléphone sont acceptés, en codes à deux lettres. Ex. ["BJ"] '
-    "pour le Bénin seulement.",
     "LOGIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe d'affilée avant de bloquer temporairement la connexion "
     "(site et application).",
     "LOGIN_LOCK_MINUTES": "Durée du premier blocage, en minutes ; elle double à chaque nouveau blocage du même compte.",
-    "LOGIN_FAILS_PER_HOUR_PER_PHONE": "Plafond d'échecs par heure pour un numéro, tous appareils confondus (contre les "
+    "LOGIN_FAILS_PER_HOUR_PER_PHONE": "Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les "
     "attaques réparties).",
     "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
     "oublié sur le site.",

@@ -226,7 +226,7 @@ class TestFiche:
         )
         assert fiche["gerant"]["verified"] is True
         assert "Rue 12" not in str(fiche) and "address_private" not in fiche
-        assert str(p.user.phone_e164) not in str(fiche)
+        assert "phone" not in str(fiche)
         assert fiche["media"][0]["kind"] in ("video", "photo")
 
     def test_par_identifiant_ou_slug_et_statuts(self):

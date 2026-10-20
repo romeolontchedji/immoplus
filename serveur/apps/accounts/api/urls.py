@@ -12,7 +12,6 @@ urlpatterns = [
     path("auth/password/recovery-key", v.CleDeSecours.as_view(), name="auth-password-recovery-key"),
     path("auth/password/change", v.ChangementMotDePasse.as_view(), name="auth-password-change"),
     path("me", v.Moi.as_view(), name="me"),
-    path("me/phone/change", v.ChangementNumero.as_view(), name="me-phone-change"),
     path("me/email", v.AjoutEmail.as_view(), name="me-email"),
     path("me/recovery-key", v.NouvelleCleDeSecours.as_view(), name="me-recovery-key"),
     path("me/preferences", v.Preferences.as_view(), name="me-preferences"),

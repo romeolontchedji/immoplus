@@ -172,7 +172,7 @@ class TestProfilPublicDuGerant:
         assert r.status_code == 200
         profil = r.json()
         assert profil["verified"] is True and [c["title"] for c in profil["listings"]] == [a.title]
-        assert p.user.phone_e164 not in r.content.decode()
+        assert "phone" not in r.json()
 
     def test_gerant_inconnu(self):
         assert APIClient().get(f"/v1/gerants/{uuid.uuid4()}").status_code == 404

@@ -48,13 +48,8 @@ class User(AbstractBaseUser):
     username = models.CharField(
         max_length=30, null=True, blank=True, verbose_name="nom d'utilisateur"
     )
-    # Conservé mais ni vérifié ni unique depuis l'abandon des codes SMS (ADR 0009).
-    phone_e164 = models.CharField(max_length=16, null=True, blank=True, verbose_name="téléphone")
     email = models.EmailField(
         max_length=254, unique=True, null=True, blank=True, verbose_name="e-mail"
-    )
-    phone_verified_at = models.DateTimeField(
-        null=True, blank=True, verbose_name="numéro vérifié le"
     )
     email_verified_at = models.DateTimeField(
         null=True, blank=True, verbose_name="e-mail confirmé le"
@@ -121,11 +116,6 @@ class User(AbstractBaseUser):
                 name="users_occupation_valide",
             ),
             models.CheckConstraint(
-                condition=~models.Q(role__in=["client", "gerant"])
-                | models.Q(phone_e164__isnull=False),
-                name="users_clientele_a_un_numero",
-            ),
-            models.CheckConstraint(
                 condition=~models.Q(role__in=["moderator", "admin"])
                 | models.Q(email__isnull=False),
                 name="users_personnel_a_un_email",
@@ -143,7 +133,6 @@ class User(AbstractBaseUser):
         ]
         indexes = [
             models.Index(fields=["role", "status"], name="users_role_status_idx"),
-            models.Index(fields=["phone_e164"], name="users_telephone_idx"),
         ]
 
     def __str__(self) -> str:

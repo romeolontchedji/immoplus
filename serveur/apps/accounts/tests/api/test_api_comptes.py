@@ -11,8 +11,6 @@ from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
 pytestmark = [pytest.mark.api, pytest.mark.pg, pytest.mark.django_db]
 
 FORT = "un-Mot-de-passe-solide-42"
-TEL = "97565656"
-E164 = "+2290197565656"
 
 
 def api(installation="installation-test-1", **extra) -> APIClient:
@@ -26,7 +24,7 @@ def avec_jeton(client: APIClient, acces: str) -> APIClient:
 
 def corps_inscription(**extra) -> dict:
     return {
-        "username": "awa.bio", "first_name": "Awa", "last_name": "Bio", "phone": TEL, "password": FORT,
+        "username": "awa.bio", "first_name": "Awa", "last_name": "Bio", "password": FORT,
         "terms_accepted": True, "platform": "android", **extra,
     }  # fmt: skip
 
@@ -66,7 +64,7 @@ class TestParcours:
         r = inscrire(c, django_capture_on_commit_callbacks)
         assert r.status_code == 201
         corps = r.json()
-        assert corps["user"]["role"] == "client" and corps["user"]["phone"] == E164
+        assert corps["user"]["role"] == "client" and "phone" not in corps["user"]
         assert corps["user"]["username"] == "awa.bio" and corps["user"]["first_name"] == "Awa"
         assert corps["tokens"]["expires_in"] == 900 and corps["device_id"]
         assert len(corps["recovery_key"]) == 19  # XXXX-XXXX-XXXX-XXXX, donnée une seule fois
@@ -89,27 +87,15 @@ class TestParcours:
         assert r.status_code == 401
 
     def test_connexion(self):
-        ClientFactory(phone_e164=E164, username="kofi.zongo")
+        ClientFactory(username="kofi.zongo")
         r = api().post(
             "/v1/auth/login",
             {"username": "Kofi.Zongo", "password": MOT_DE_PASSE, "platform": "ios"},
             format="json",
         )
         assert r.status_code == 200  # majuscules ignorées
-        assert r.json()["user"]["phone"] == E164
+        assert r.json()["user"]["username"] == "kofi.zongo"
         assert Device.objects.get().platform == "ios"
-
-    def test_connexion_par_numero_pendant_la_transition(self):
-        ClientFactory(phone_e164=E164, username="ancien.compte")
-        corps = {"username": TEL, "password": MOT_DE_PASSE, "platform": "ios"}
-        assert api().post("/v1/auth/login", corps, format="json").status_code == 200
-        ClientFactory(
-            phone_e164=E164
-        )  # le numéro désigne deux comptes : plus de connexion par numéro
-        assert (
-            api("installation-test-3").post("/v1/auth/login", corps, format="json").status_code
-            == 401
-        )
 
     def test_mot_de_passe_oublie_par_cle_de_secours(self, session):
         _, corps = session
@@ -151,11 +137,10 @@ class TestIdentifiantsApi:
         reserve = api().get("/v1/auth/username-available", {"username": "admin"}).json()
         assert reserve["available"] is False and "réservé" in reserve["message"]
 
-    def test_nom_deja_pris_et_numero_partage(self, session):
+    def test_nom_deja_pris(self, session):
         r = inscrire(api("installation-test-2"))
         assert r.status_code == 409
         verifier_format_erreur(r, "username_taken")
-        # le numéro n'est plus unique (ADR 0009) : un autre compte peut l'indiquer
         assert inscrire(api("installation-test-3"), username="awa.bio.2").status_code == 201
 
     def test_lien_par_email_reponse_identique(self, session):
@@ -231,7 +216,7 @@ class TestFormatsEtEntetes:
         assert {"username", "platform"} <= set(r.json()["error"]["fields"])
 
     def test_corps_non_json(self):
-        r = api().post("/v1/auth/login", "phone=1", content_type="text/plain")
+        r = api().post("/v1/auth/login", "username=1", content_type="text/plain")
         assert r.status_code == 415
         verifier_format_erreur(r, "unsupported_media_type")
 
@@ -296,7 +281,7 @@ class TestSecuriteDesAcces:
         verifier_format_erreur(r, "account_suspended")
 
     def test_connexion_en_echec_est_uniforme_et_verrouille(self):
-        ClientFactory(phone_e164=E164, username="kofi.zongo")
+        ClientFactory(username="kofi.zongo")
         c = api()
         corps = {"username": "kofi.zongo", "password": "faux", "platform": "android"}
         reponses = [c.post("/v1/auth/login", corps, format="json") for _ in range(5)]
@@ -357,7 +342,6 @@ class TestCompteApi:
             "recovery_key_created_at",
             "occupation",
             "role",
-            "phone",
             "terms_version",
             "created_at",
         }
@@ -410,17 +394,6 @@ class TestCompteApi:
         assert r.status_code == 200 and r.json()["messages"]["push"] is False
         r = client.put("/v1/me/preferences", {"securite": {"push": False}}, format="json")
         assert r.status_code == 400
-
-    def test_changement_de_numero(self, session):
-        client, _ = session
-        r = client.post(
-            "/v1/me/phone/change", {"password": "faux", "phone": "97787878"}, format="json"
-        )
-        assert r.status_code == 400
-        r = client.post(
-            "/v1/me/phone/change", {"password": FORT, "phone": "97787878"}, format="json"
-        )
-        assert r.status_code == 200 and r.json()["phone"] == "+2290197787878"
 
     def test_ajout_d_un_email_confirme_par_lien(self, session, django_capture_on_commit_callbacks):
         from apps.accounts.services import compte
@@ -475,7 +448,7 @@ class TestAppareilsApi:
 
     def test_impossible_de_deconnecter_l_appareil_d_un_autre_compte(self, session):
         client, _ = session
-        victime = ClientFactory(phone_e164="+2290197343434")
+        victime = ClientFactory()
         d = Device.objects.create(
             user=victime, installation_id="installation-victime", platform="android",
             refresh_expires_at="2099-01-01T00:00:00Z",

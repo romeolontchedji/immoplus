@@ -99,7 +99,7 @@ class TestSignalements:
         a = ListingFactory(gerant=p)
         r, _ = services.signaler(ClientFactory(), "listing", a.pk, "scam")
         liste = c.get(reverse("admin:moderation_report_changelist")).content.decode()
-        assert p.user.full_name in liste and p.user.phone_e164 in liste
+        assert p.user.full_name in liste and f"@{p.user.username}" in liste
         fiche = c.get(reverse("admin:moderation_report_change", args=[r.pk])).content.decode()
         assert "Prendre une décision" in fiche and f"target_user={p.user.pk}" in fiche
 

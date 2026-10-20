@@ -9,7 +9,6 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.accounts.models import ROLES_CLIENTELE, Occupation, Role, User
-from apps.accounts.phone import NumeroInvalide, normaliser
 from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
@@ -30,16 +29,6 @@ def _nom_valide(valeur: str, champ: str, libelle: str) -> str:
 
 def noms_valides(prenom: str, nom: str) -> tuple[str, str]:
     return _nom_valide(prenom, "first_name", "prénom"), _nom_valide(nom, "last_name", "nom")
-
-
-def telephone_valide(saisie: str) -> str:
-    """Numéro conservé mais ni vérifié ni unique (ADR 0009) : seul son format est contrôlé."""
-    try:
-        return normaliser(saisie, tuple(parametres.lire("OTP_ALLOWED_COUNTRIES")))
-    except NumeroInvalide as erreur:
-        raise ErreurMetier(
-            "validation_error", "Numéro de téléphone invalide.", champs={"phone": [str(erreur)]}
-        ) from erreur
 
 
 def occupation_valide(occupation: str | None) -> str | None:
@@ -83,7 +72,6 @@ def inscrire_client(
     nom_utilisateur: str,
     prenom: str,
     nom: str,
-    telephone: str,
     mot_de_passe: str,
     cgu_acceptees: bool,
     occupation: str | None = None,
@@ -93,12 +81,9 @@ def inscrire_client(
     """Crée le compte tout de suite (aucun code) et retourne (compte, clé de secours à afficher une seule fois)."""
     prenom, nom = noms_valides(prenom, nom)
     nom_utilisateur = identifiants.valider_nom_utilisateur(nom_utilisateur)
-    e164 = telephone_valide(telephone)
     occupation = occupation_valide(occupation)
     _exiger_cgu(cgu_acceptees)
-    utilisateur = User(
-        username=nom_utilisateur, phone_e164=e164, occupation=occupation, role=Role.CLIENT
-    )
+    utilisateur = User(username=nom_utilisateur, occupation=occupation, role=Role.CLIENT)
     utilisateur.definir_noms(prenom, nom)
     mots_de_passe.valider(mot_de_passe, utilisateur=utilisateur)
     utilisateur.password = mots_de_passe.hacher(mot_de_passe)

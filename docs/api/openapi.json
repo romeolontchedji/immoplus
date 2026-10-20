@@ -1921,53 +1921,6 @@
                 }
             }
         },
-        "/v1/me/phone/change": {
-            "post": {
-                "operationId": "v1_me_phone_change_create",
-                "description": "Sans code (ADR 0009) : le mot de passe actuel suffit.",
-                "summary": "Changer de numéro",
-                "tags": [
-                    "Compte"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ChangementNumeroIn"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ChangementNumeroIn"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ChangementNumeroIn"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "security": [
-                    {
-                        "BearerJwt": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UtilisateurOut"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/v1/me/preferences": {
             "get": {
                 "operationId": "v1_me_preferences_retrieve",
@@ -3958,23 +3911,6 @@
                     "new_password"
                 ]
             },
-            "ChangementNumeroIn": {
-                "type": "object",
-                "properties": {
-                    "password": {
-                        "type": "string",
-                        "maxLength": 128
-                    },
-                    "phone": {
-                        "type": "string",
-                        "maxLength": 40
-                    }
-                },
-                "required": [
-                    "password",
-                    "phone"
-                ]
-            },
             "CleDeSecoursIn": {
                 "type": "object",
                 "properties": {
@@ -4703,11 +4639,6 @@
                         "type": "string",
                         "maxLength": 60
                     },
-                    "phone": {
-                        "type": "string",
-                        "description": "Conservé, ni vérifié ni unique.",
-                        "maxLength": 40
-                    },
                     "password": {
                         "type": "string",
                         "maxLength": 128
@@ -4732,7 +4663,6 @@
                     "first_name",
                     "last_name",
                     "password",
-                    "phone",
                     "platform",
                     "terms_accepted",
                     "username"
@@ -6075,10 +6005,6 @@
                     "role": {
                         "$ref": "#/components/schemas/RoleEnum"
                     },
-                    "phone": {
-                        "type": "string",
-                        "nullable": true
-                    },
                     "terms_version": {
                         "type": "string",
                         "nullable": true
@@ -6096,7 +6022,6 @@
                     "id",
                     "last_name",
                     "occupation",
-                    "phone",
                     "recovery_key_created_at",
                     "role",
                     "terms_version",

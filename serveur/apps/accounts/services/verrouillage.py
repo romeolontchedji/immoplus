@@ -2,7 +2,7 @@
 
 Les compteurs vivent dans `redis-queue` (jamais le cache à éviction). Le verrou porte sur le couple
 (identifiant saisi, appareil ou adresse IP), y compris pour un identifiant inconnu : il ne révèle donc rien et personne
-ne peut bloquer le compte d'autrui à distance. Un plafond horaire par numéro, tous appareils confondus,
+ne peut bloquer le compte d'autrui à distance. Un plafond horaire par identifiant, tous appareils confondus,
 ralentit les attaques réparties.
 """
 
@@ -21,18 +21,18 @@ def _h(valeur: str) -> str:
     return hashlib.sha256(valeur.encode()).hexdigest()[:32]
 
 
-def _cles(telephone: str, client: str) -> dict[str, str]:
-    couple = _h(f"{telephone}|{client}")
+def _cles(identifiant: str, client: str) -> dict[str, str]:
+    couple = _h(f"{identifiant}|{client}")
     return {
         "echecs": f"login:echecs:{couple}",
         "niveau": f"login:niveau:{couple}",
         "verrou": f"login:verrou:{couple}",
-        "heure": f"login:heure:{_h(telephone)}",
+        "heure": f"login:heure:{_h(identifiant)}",
     }
 
 
 def refus_uniforme(attente_s: int) -> ErreurMetier:
-    """La réponse 401 est identique pour un mauvais mot de passe, un numéro inconnu et un verrouillage."""
+    """La réponse 401 est identique pour un mauvais mot de passe, un nom inconnu et un verrouillage."""
     return ErreurMetier(
         "invalid_credentials",
         "Nom d'utilisateur ou mot de passe incorrect.",
@@ -41,10 +41,10 @@ def refus_uniforme(attente_s: int) -> ErreurMetier:
     )
 
 
-def controler(telephone: str, client: str) -> None:
-    """Lève le refus uniforme si le couple est verrouillé ou si le plafond horaire du numéro est atteint."""
+def controler(identifiant: str, client: str) -> None:
+    """Lève le refus uniforme si le couple est verrouillé ou si le plafond horaire de l'identifiant est atteint."""
     r = redis_file.client()
-    cles = _cles(telephone, client)
+    cles = _cles(identifiant, client)
     attente = r.ttl(cles["verrou"])
     if attente and attente > 0:
         raise refus_uniforme(attente)
@@ -53,10 +53,10 @@ def controler(telephone: str, client: str) -> None:
         raise refus_uniforme(max(1, r.ttl(cles["heure"])))
 
 
-def enregistrer_echec(telephone: str, client: str) -> bool:
+def enregistrer_echec(identifiant: str, client: str) -> bool:
     """Compte un échec ; retourne vrai si cet échec déclenche le verrouillage."""
     r = redis_file.client()
-    cles = _cles(telephone, client)
+    cles = _cles(identifiant, client)
     seuil = int(parametres.lire("LOGIN_LOCK_THRESHOLD"))
     base_s = int(parametres.lire("LOGIN_LOCK_MINUTES")) * 60
 
@@ -75,7 +75,7 @@ def enregistrer_echec(telephone: str, client: str) -> bool:
     return False
 
 
-def enregistrer_succes(telephone: str, client: str) -> None:
-    """Efface le compteur et le niveau de récidive du couple ; le plafond horaire du numéro reste."""
-    cles = _cles(telephone, client)
+def enregistrer_succes(identifiant: str, client: str) -> None:
+    """Efface le compteur et le niveau de récidive du couple ; le plafond horaire de l'identifiant reste."""
+    cles = _cles(identifiant, client)
     redis_file.client().delete(cles["echecs"], cles["niveau"], cles["verrou"])

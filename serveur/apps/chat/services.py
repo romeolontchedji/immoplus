@@ -1,6 +1,5 @@
 """Messagerie : ouverture, envoi idempotent, lecture, blocage, silence (CDC §7.6, §10.5, §11.7, §11.9)."""
 
-import logging
 import statistics
 
 from django.db import IntegrityError, transaction
@@ -19,8 +18,6 @@ from apps.notifications import textes
 
 from . import selectors, signals
 from .models import Conversation, Message
-
-journal = logging.getLogger(__name__)
 
 LONGUEUR_MAX = 2000
 APERCU_MAX = 80
@@ -525,24 +522,7 @@ def rappeler_gerants_sans_reponse() -> int:
         )
         if n is not None:
             envoyes += 1
-            if parametres.lire("SMS_FALLBACK_ENABLED"):
-                _sms_de_repli(c.gerant_id)
     return envoyes
-
-
-def _sms_de_repli(gerant_id) -> None:
-    """SMS de repli au gérant (désactivé par défaut) : un échec n'interrompt jamais le rappel."""
-    from apps.core.providers import sms
-
-    numero = comptes.telephone(gerant_id)
-    if not numero:
-        return
-    try:
-        sms.fournisseur().envoyer(
-            numero, "Immo+ : un locataire attend ta réponse. Ouvre l'application."
-        )
-    except Exception:  # noqa: BLE001
-        journal.warning("sms_repli_echoue")
 
 
 def prevenir_conversations(annonce_id, nouveau_statut: str) -> int:

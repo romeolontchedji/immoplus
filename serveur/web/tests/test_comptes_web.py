@@ -20,7 +20,7 @@ FORT = "un-Mot-de-passe-solide-42"
 
 
 INSCRIPTION = {
-    "first_name": "Awa", "last_name": "Bio", "username": "awa.bio", "phone": "97121212", "password": FORT,
+    "first_name": "Awa", "last_name": "Bio", "username": "awa.bio", "password": FORT,
     "terms_accepted": "on", "captcha": "captcha-ok",
 }  # fmt: skip
 
@@ -28,7 +28,7 @@ INSCRIPTION = {
 def gerant_active(nom_utilisateur="idris.adam"):
     """Gérant créé par l'administration puis activé par son lien (ADR 0009)."""
     gerant = service_administration.creer_gerant(
-        acteur=AdminFactory(), telephone="97565656", prenom="Idris", nom="Adam", zone="Banikanni"
+        acteur=AdminFactory(), prenom="Idris", nom="Adam", zone="Banikanni"
     )
     url = service_administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
     c = Client()
@@ -47,7 +47,7 @@ def test_inscription_sur_une_page_puis_cle_de_secours():
     r = c.post("/inscription", INSCRIPTION)
     assert r.status_code == 302 and r["Location"] == "/compte/cle-de-secours"
     u = User.objects.get(username="awa.bio")
-    assert u.phone_e164 == "+2290197121212" and u.full_name == "Awa Bio"
+    assert u.full_name == "Awa Bio"
     page = c.get("/compte/cle-de-secours").content.decode()
     cle = re.search(r"data-cle>\s*([A-Z0-9-]{19})\s*<", page).group(1)
     assert identifiants.cle_correcte(u, cle)
@@ -188,7 +188,8 @@ def test_suppression_du_compte():
     )
     r = c.post("/compte/profil", {"action": "suppression", "password": MOT_DE_PASSE})
     assert (
-        r.status_code == 302 and User.objects.get(phone_e164__startswith="del:").status == "deleted"
+        r.status_code == 302
+        and User.objects.get(username__startswith="supprime.").status == "deleted"
     )
 
 
@@ -234,20 +235,6 @@ def test_revoquer_un_appareil_d_autrui_repond_sans_fuite():
     assert r.status_code == 302
     autre.refresh_from_db()
     assert autre.revoked_at is None
-
-
-def test_changement_de_numero_sans_code():
-    u = ClientFactory(username="kofi.web")
-    c = Client()
-    c.post("/connexion", {"username": "kofi.web", "password": MOT_DE_PASSE})
-    r = c.post("/compte/profil", {"action": "numero", "phone": "97565656", "password": "faux"})
-    assert r.status_code == 200 and "incorrect" in r.content.decode()
-    r = c.post(
-        "/compte/profil", {"action": "numero", "phone": "97565656", "password": MOT_DE_PASSE}
-    )
-    assert "Ton numéro a été changé" in r.content.decode()
-    u.refresh_from_db()
-    assert u.phone_e164 == "+2290197565656"
 
 
 def test_ajout_d_un_email_puis_confirmation():

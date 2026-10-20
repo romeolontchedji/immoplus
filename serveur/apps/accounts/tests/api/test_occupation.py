@@ -16,9 +16,7 @@ pytestmark = [pytest.mark.api, pytest.mark.pg, pytest.mark.django_db]
 
 
 def _inscrire(client, capture=None, **extra):
-    corps = corps_inscription(
-        username="koffi.adjovi", first_name="Koffi", last_name="Adjovi", phone="97575757"
-    )
+    corps = corps_inscription(username="koffi.adjovi", first_name="Koffi", last_name="Adjovi")
     return client.post("/v1/auth/register", {**corps, **extra}, format="json")
 
 
@@ -27,7 +25,7 @@ class TestInscription:
         r = _inscrire(api(), django_capture_on_commit_callbacks, occupation="employee")
         assert r.status_code == 201, r.content
         assert r.json()["user"]["occupation"] == "employee"
-        assert User.objects.get(phone_e164="+2290197575757").occupation == "employee"
+        assert User.objects.get(username="koffi.adjovi").occupation == "employee"
 
     def test_occupation_facultative(self, django_capture_on_commit_callbacks):
         r = _inscrire(api(), django_capture_on_commit_callbacks)
@@ -40,7 +38,7 @@ class TestInscription:
         r = _inscrire(api(), django_capture_on_commit_callbacks, occupation="astronaute")
         assert r.status_code == 400
         assert "occupation" in r.json()["error"]["fields"]
-        assert not User.objects.filter(phone_e164="+2290197575757").exists()
+        assert not User.objects.filter(username="koffi.adjovi").exists()
 
 
 class TestProfil:
@@ -89,7 +87,7 @@ def test_site_inscription_et_compte(django_capture_on_commit_callbacks):
     r = c.post(
         "/inscription",
         {
-            "first_name": "Awa", "last_name": "Bio", "username": "awa.bio", "phone": "97585858",
+            "first_name": "Awa", "last_name": "Bio", "username": "awa.bio",
             "occupation": "student_other", "password": FORT, "terms_accepted": "on", "captcha": "captcha-ok",
         },
     )  # fmt: skip

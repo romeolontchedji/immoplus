@@ -12,7 +12,7 @@
         </summary>
         <ul class="navigation__liste" role="menu">
           <li class="navigation__menu-identite">
-            <strong>{{ request.user.full_name|default:request.user.phone_e164 }}</strong>
+            <strong>{{ request.user.full_name|default:request.user.username }}</strong>
             <span class="navigation__menu-role">{% if request.user.role == "gerant" %}Gérant{% else %}Locataire{% endif %}</span>
           </li>
           <li role="none"><a class="navigation__lien" href="/compte/profil" role="menuitem">Mon profil</a></li>
@@ -204,8 +204,8 @@
         </summary>
         <ul class="navigation__liste" role="menu">
           <li class="navigation__menu-identite">
-            <strong>{{ request.user.full_name|default:request.user.phone_e164 }}</strong>
-            <span class="navigation__menu-role">Locataire · {{ request.user.phone_e164 }}</span>
+            <strong>{{ request.user.full_name|default:request.user.username }}</strong>
+            <span class="navigation__menu-role">Locataire · @{{ request.user.username }}</span>
           </li>
           <li role="none"><a class="navigation__lien" href="/compte/favoris" role="menuitem">Mes favoris</a></li>
           <li role="none"><a class="navigation__lien"

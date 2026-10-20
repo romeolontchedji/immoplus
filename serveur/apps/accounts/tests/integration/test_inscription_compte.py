@@ -25,7 +25,6 @@ from apps.core.errors import ErreurMetier
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 
-TEL = "+2290197121212"
 FORT = "un-Mot-de-passe-solide-42"
 
 
@@ -37,7 +36,7 @@ def refus(fonction, *args, **kwargs) -> ErreurMetier:
 
 def inscrire(**kw):
     base = {
-        "nom_utilisateur": "awa.bio", "prenom": "Awa", "nom": "Bio", "telephone": "97121212",
+        "nom_utilisateur": "awa.bio", "prenom": "Awa", "nom": "Bio",
         "mot_de_passe": FORT, "cgu_acceptees": True,
     }  # fmt: skip
     return inscription.inscrire_client(**{**base, **kw})
@@ -50,10 +49,11 @@ def jeton_du_lien(url: str) -> str:
 class TestInscription:
     def test_cree_le_locataire_sans_code(self):
         u, cle = inscrire(ip="41.0.0.1")
-        assert (u.role, u.username, u.phone_e164, u.full_name, u.status) == (
-            "client", "awa.bio", TEL, "Awa Bio", "active",
+        assert (u.role, u.username, u.full_name, u.status) == (
+            "client", "awa.bio", "Awa Bio", "active",
         )  # fmt: skip
-        assert (u.first_name, u.last_name) == ("Awa", "Bio") and u.phone_verified_at is None
+        assert (u.first_name, u.last_name) == ("Awa", "Bio")
+        assert not hasattr(u, "phone_e164")  # aucun numéro conservé (ADR 0009)
         assert u.terms_version == "1" and u.terms_accepted_at
         assert u.check_password(FORT) and u.password.startswith(("md5$", "argon2$"))
         assert identifiants.cle_correcte(u, cle) and u.recovery_key_created_at
@@ -87,17 +87,9 @@ class TestInscription:
         assert u.username == "aicha.zongo"
         assert refus(inscrire, nom_utilisateur="AICHA.ZONGO").code == "username_taken"
 
-    def test_le_numero_n_est_pas_unique(self):
-        inscrire()
-        u, _ = inscrire(nom_utilisateur="autre.compte")
-        assert User.objects.filter(phone_e164=u.phone_e164).count() == 2
-
     @pytest.mark.parametrize("mdp", ["123", "court-9", "password123", "awabio2026"])
     def test_mot_de_passe_faible(self, mdp):
         assert refus(inscrire, mot_de_passe=mdp).code == "validation_error"
-
-    def test_numero_invalide(self):
-        assert refus(inscrire, telephone="12").code == "validation_error"
 
     def test_les_espaces_des_noms_sont_normalises(self):
         u, _ = inscrire(prenom="  Awa  ", nom=" Bio   Kora ")
@@ -193,7 +185,7 @@ class TestMotDePasseOublie:
 class TestGerant:
     def test_creation_sans_mot_de_passe_puis_activation(self):
         gerant = administration.creer_gerant(
-            acteur=AdminFactory(), telephone="97454545", prenom="Kofi", nom="Gérant", zone="Zongo"
+            acteur=AdminFactory(), prenom="Kofi", nom="Gérant", zone="Zongo"
         )
         assert gerant.username is None and not gerant.has_usable_password()
         url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
@@ -240,19 +232,6 @@ class TestCompte:
         assert (
             refus(compte.changer_mot_de_passe, ClientFactory(), MOT_DE_PASSE, "123").code
             == "validation_error"
-        )
-
-    def test_changer_de_numero_sans_code(self):
-        u = ClientFactory(phone_e164=TEL)
-        compte.changer_numero(u, MOT_DE_PASSE, "97787878")
-        u.refresh_from_db()
-        assert u.phone_e164 == "+2290197787878"
-        assert AuditLog.objects.filter(action="auth.numero_change").exists()
-
-    def test_changer_de_numero_exige_le_mot_de_passe(self):
-        assert (
-            refus(compte.changer_numero, ClientFactory(), "faux", "97787878").code
-            == "invalid_password"
         )
 
     def test_email_confirme_par_lien_unique(self, django_capture_on_commit_callbacks):
@@ -307,7 +286,7 @@ class TestCompte:
 
 class TestSuppression:
     def test_anonymise_et_deconnecte(self):
-        u = ClientFactory(phone_e164=TEL, username="awa.bio", email="awa@exemple.bj")
+        u = ClientFactory(username="awa.bio", email="awa@exemple.bj")
         appareils.ouvrir(u, installation_id="a", platform="android")
         recus = []
         signals.compte_supprime.connect(
@@ -316,7 +295,7 @@ class TestSuppression:
         compte.supprimer(u, MOT_DE_PASSE)
         u.refresh_from_db()
         assert u.status == "deleted" and u.full_name == "Compte supprimé" and u.deleted_at
-        assert u.phone_e164.startswith("del:") and len(u.phone_e164) <= 16 and u.email is None
+        assert u.email is None
         assert u.username.startswith("supprime.") and u.recovery_key_hash is None
         assert not u.has_usable_password() and u.token_version == 1
         assert not Device.objects.filter(user=u).exists()

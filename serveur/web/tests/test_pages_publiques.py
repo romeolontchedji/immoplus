@@ -93,7 +93,7 @@ class TestFilEtFiche:
         r = Client().get(f"/annonces/{a.slug}")
         page = html(r)
         assert r.status_code == 200 and "Belle chambre" in page and "<video" in page
-        assert "Rue 12" not in page and p.user.phone_e164 not in page
+        assert "Rue 12" not in page
         assert "Connecte-toi pour écrire" in page
 
     def test_fiche_galerie_visionneuse_et_alerte(self):
@@ -455,7 +455,7 @@ class TestMiseEnPageDesEspaces:
 
     def test_oeil_sur_les_champs_mot_de_passe(self):
         page = html(connecte(ClientFactory()).get("/compte/profil"))
-        assert page.count("data-voir-mdp") == 6 and "js/mot-de-passe" in page
+        assert page.count("data-voir-mdp") == 5 and "js/mot-de-passe" in page
 
 
 class TestQuartiersDeLAccueil:

@@ -80,7 +80,6 @@ class TestProfilDuGerant:
         assert (
             r.status_code == 200 and "Studio de démonstration" in page and "Gérant vérifié" in page
         )
-        assert p.user.phone_e164 not in page
         assert Client().get(f"/gerants/{uuid.uuid4()}").status_code == 404
 
     def test_lien_depuis_la_discussion(self):

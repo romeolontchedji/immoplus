@@ -44,25 +44,24 @@ class NouveauGerantForm(forms.Form):
 
     first_name = forms.CharField(label="Prénom", max_length=60)
     last_name = forms.CharField(label="Nom", max_length=60)
-    phone = forms.CharField(label="Numéro de téléphone", max_length=40)
     display_name = forms.CharField(label="Nom affiché", max_length=120, required=False)
     zone = forms.CharField(label="Zone d'activité", max_length=160)
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "username", "role", "status", "phone_e164", "email", "created_at")
+    list_display = ("full_name", "username", "role", "status", "email", "created_at")
     list_filter = ("role", "status")
-    search_fields = ("username", "full_name", "first_name", "last_name", "phone_e164", "email")
+    search_fields = ("username", "full_name", "first_name", "last_name", "email")
     ordering = ("-created_at",)
     readonly_fields = (
-        "id", "username", "full_name", "phone_e164", "email", "email_verified_at", "recovery_key_created_at", "role",
+        "id", "username", "full_name", "email", "email_verified_at", "recovery_key_created_at", "role",
         "token_version", "terms_version", "terms_accepted_at", "last_seen_at", "deleted_at", "created_at",
         "updated_at", "avatar_path", "liens_compte",
     )  # fmt: skip
     fields = (
         "id", "username", "first_name", "last_name", "full_name", "liens_compte", "role", "status",
-        "suspended_until", "phone_e164", "email", "email_verified_at", "recovery_key_created_at", "token_version",
+        "suspended_until", "email", "email_verified_at", "recovery_key_created_at", "token_version",
         "terms_version", "terms_accepted_at", "last_seen_at", "deleted_at", "created_at", "updated_at",
         "avatar_path",
     )  # fmt: skip
@@ -112,12 +111,12 @@ class UserAdmin(admin.ModelAdmin):
             else f"Bonjour {compte.first_name}, voici le lien pour choisir un nouveau mot de passe Immo+ "
             f"(valable 24 heures, une seule fois) : {url}"
         )
-        numero = (compte.phone_e164 or "").lstrip("+")
         contexte = {
             **self.admin_site.each_context(request),
             "title": "Lien d'activation" if activation else "Lien de réinitialisation",
             "compte": compte, "url": url, "activation": activation, "opts": self.model._meta,
-            "whatsapp": f"https://wa.me/{numero}?text={quote(texte)}" if numero.isdigit() else None,
+            # Aucun numéro conservé (ADR 0009) : WhatsApp s'ouvre avec le message, on choisit le contact.
+            "whatsapp": f"https://wa.me/?text={quote(texte)}",
         }  # fmt: skip
         return render(request, "admin/lien-compte.html", contexte)
 
@@ -155,7 +154,6 @@ class UserAdmin(admin.ModelAdmin):
             try:
                 gerant = administration.creer_gerant(
                     acteur=request.user,
-                    telephone=d["phone"],
                     prenom=d["first_name"],
                     nom=d["last_name"],
                     zone=d["zone"],
@@ -422,7 +420,7 @@ if AccessLog is not None and admin.site.is_registered(AccessLog):
             )
             if utilisateur is None:
                 return obj.username
-            return f"{utilisateur.full_name or 'Sans nom'} · {utilisateur.email or utilisateur.phone_e164}"
+            return f"{utilisateur.full_name or 'Sans nom'} · {utilisateur.email or '@' + (utilisateur.username or '')}"
 
 
 def _uuid(valeur) -> bool:

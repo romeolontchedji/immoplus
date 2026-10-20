@@ -1,4 +1,4 @@
-"""Gestion du compte connecté : mot de passe, numéro, e-mail, clé de secours, profil, suppression (ADR 0009)."""
+"""Gestion du compte connecté : mot de passe, e-mail, clé de secours, profil, suppression (ADR 0009)."""
 
 import uuid
 
@@ -8,7 +8,6 @@ from django.utils import timezone
 
 from apps.accounts import signals
 from apps.accounts.models import Role, Statut, User
-from apps.accounts.phone import masquer
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 
@@ -57,20 +56,6 @@ def deconnecter_partout(utilisateur: User) -> int:
         metadata={"appareils": nombre},
     )
     return nombre
-
-
-def changer_numero(utilisateur: User, mot_de_passe: str, telephone: str) -> User:
-    """Nouveau numéro, sans code (ADR 0009) : le mot de passe actuel suffit ; le changement est journalisé."""
-    _exiger_mot_de_passe(utilisateur, mot_de_passe)
-    nouveau = inscription.telephone_valide(telephone)
-    ancien = utilisateur.phone_e164
-    utilisateur.phone_e164 = nouveau
-    utilisateur.save(update_fields=["phone_e164", "updated_at"])
-    audit.enregistrer(
-        "auth.numero_change", acteur=utilisateur, cible=utilisateur,
-        metadata={"ancien": masquer(ancien), "nouveau": masquer(nouveau)},
-    )  # fmt: skip
-    return utilisateur
 
 
 def demander_ajout_email(utilisateur: User, email: str) -> None:
@@ -205,7 +190,6 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
     _exiger_mot_de_passe(utilisateur, mot_de_passe)
     role, uid = utilisateur.role, utilisateur.pk
     with transaction.atomic():
-        utilisateur.phone_e164 = f"del:{uuid.uuid4().hex[:12]}"
         # Le nom d'utilisateur est libéré pour un autre (format valide, unique, sans rien d'identifiant).
         utilisateur.username = f"supprime.{uuid.uuid4().hex[:12]}"
         utilisateur.definir_noms("Compte", "supprimé")
@@ -220,7 +204,7 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
         # Colonnes nommées : le rôle `app` ne peut modifier que certaines colonnes (jamais `role`).
         utilisateur.save(
             update_fields=[
-                "phone_e164", "username", "first_name", "last_name", "full_name", "email", "email_verified_at",
+                "username", "first_name", "last_name", "full_name", "email", "email_verified_at",
                 "recovery_key_hash", "recovery_key_created_at", "avatar_path", "status", "deleted_at",
                 "notif_prefs", "token_version", "password", "updated_at",
             ]

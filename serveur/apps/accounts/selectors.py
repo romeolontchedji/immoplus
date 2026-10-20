@@ -114,11 +114,6 @@ def utilisateur_actif(utilisateur_id) -> bool:
     return User(**{k: v for k, v in ligne.items() if k != "deleted_at"}).is_active
 
 
-def telephone(utilisateur_id) -> str | None:
-    """Numéro d'un compte, pour un usage interne (SMS de repli) : jamais exposé par l'API."""
-    return User.objects.filter(pk=utilisateur_id).values_list("phone_e164", flat=True).first()
-
-
 def suspensions_echues() -> list:
     """Comptes dont la suspension est arrivée à son terme (la levée automatique les réactive)."""
     from django.utils import timezone

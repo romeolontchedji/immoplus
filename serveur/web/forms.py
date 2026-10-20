@@ -8,15 +8,13 @@ _OCCUPATIONS = [("", "Je préfère ne pas répondre"), *Occupation.choices]
 
 
 class _Base(forms.Form):
-    """Applique la classe CSS des champs à tous les widgets ; préfixe +229 sur les numéros."""
+    """Applique la classe CSS des champs à tous les widgets."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for nom, champ in self.fields.items():
+        for champ in self.fields.values():
             if not isinstance(champ.widget, (forms.HiddenInput, forms.CheckboxInput)):
                 champ.widget.attrs.setdefault("class", "champ__saisie")
-            if nom == "phone":
-                champ.prefixe = "+229"  # lu par composants/champ.html (plan v2, W8)
 
 
 _MOT_DE_PASSE_NOUVEAU = {
@@ -52,13 +50,6 @@ class Inscription(_Base):
         label="Nom", max_length=60, widget=forms.TextInput(attrs={"autocomplete": "family-name"})
     )
     username = _nom_utilisateur(placeholder="awa.bio")
-    phone = forms.CharField(
-        label="Numéro de téléphone",
-        max_length=40,
-        widget=forms.TextInput(
-            attrs={"inputmode": "tel", "autocomplete": "tel", "placeholder": "97 12 34 56"}
-        ),
-    )
     occupation = forms.ChoiceField(label="Tu es", choices=_OCCUPATIONS, required=False)
     password = forms.CharField(label="Mot de passe", **_MOT_DE_PASSE_NOUVEAU)
     terms_accepted = forms.BooleanField(
@@ -222,21 +213,3 @@ class Preferences(_Base):
             }
             for categorie, _ in self.CATEGORIES
         }
-
-
-class ChangementNumero(_Base):
-    """Sans code (ADR 0009) : le mot de passe actuel suffit."""
-
-    phone = forms.CharField(
-        label="Nouveau numéro de téléphone",
-        max_length=40,
-        widget=forms.TextInput(
-            attrs={"inputmode": "tel", "autocomplete": "tel", "placeholder": "97 12 34 56"}
-        ),
-    )
-    password = forms.CharField(
-        label="Mot de passe actuel",
-        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
-        strip=False,
-        max_length=128,
-    )

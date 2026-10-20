@@ -1,27 +1,18 @@
 """Fabriques de données de test pour les comptes."""
 
-import itertools
-
 import factory
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 
 from apps.accounts.models import Device, GerantProfile, Role, User
 
-_compteur = itertools.count(1)
 MOT_DE_PASSE = "motdepasse-solide-1"
-
-
-def _numero(n: int) -> str:
-    # Mobiles béninois valides : +22901 puis 8 chiffres commençant par 97.
-    return f"+2290197{n:06d}"
 
 
 class ClientFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
 
-    phone_e164 = factory.LazyFunction(lambda: _numero(next(_compteur)))
     username = factory.Sequence(lambda n: f"locataire{n}")
     first_name = "Locataire"
     last_name = factory.Sequence(lambda n: f"N{n}")

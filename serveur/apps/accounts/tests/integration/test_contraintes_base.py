@@ -54,27 +54,16 @@ def execute(requete: str, params=None, role: str = "app"):
 class TestUsers:
     def test_role_inconnu_refuse(self):
         with pytest.raises(IntegrityError), transaction.atomic():
-            User.objects.create(phone_e164="+2290197000001", full_name="X", role="pirate")
+            User.objects.create(username="pirate", full_name="X", role="pirate")
 
     def test_statut_inconnu_refuse(self):
         with pytest.raises(IntegrityError), transaction.atomic():
-            User.objects.create(
-                phone_e164="+2290197000002", full_name="X", role="client", status="zombie"
-            )
-
-    @pytest.mark.parametrize("role", ["client", "gerant"])
-    def test_clientele_exige_un_numero(self, role):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            User.objects.create(full_name="X", role=role)
+            User.objects.create(username="zombie", full_name="X", role="client", status="zombie")
 
     @pytest.mark.parametrize("role", ["moderator", "admin"])
     def test_personnel_exige_un_email(self, role):
         with pytest.raises(IntegrityError), transaction.atomic():
             User.objects.create(full_name="X", role=role)
-
-    def test_numero_partage_permis(self):
-        ClientFactory(phone_e164="+2290197111111")
-        ClientFactory(phone_e164="+2290197111111")  # ADR 0009 : le numéro n'est plus unique
 
     def test_nom_d_utilisateur_unique(self):
         # Le format n'admet que des minuscules : l'unicité vaut donc sans tenir compte des majuscules.
@@ -104,8 +93,8 @@ class TestUsers:
     def test_valeurs_par_defaut_posees_par_la_base(self):
         with connection.cursor() as c:
             c.execute(
-                "INSERT INTO users (id, username, phone_e164, password_hash, full_name, role) "
-                "VALUES (gen_random_uuid(), 'par.defaut', '+2290197222222', 'x', 'Y', 'client') "
+                "INSERT INTO users (id, username, password_hash, full_name, role) "
+                "VALUES (gen_random_uuid(), 'par.defaut', 'x', 'Y', 'client') "
                 "RETURNING status, token_version, notif_prefs, created_at IS NOT NULL"
             )
             statut, version, prefs, cree = c.fetchone()
@@ -293,8 +282,8 @@ class TestDroitsDuRoleApp:
     def test_peut_creer_un_locataire(self):
         assert (
             execute(
-                "INSERT INTO users (id, username, phone_e164, password_hash, full_name, role) "
-                "VALUES (gen_random_uuid(), 'role.app', '+2290197444444', 'x', 'Y', 'client')"
+                "INSERT INTO users (id, username, password_hash, full_name, role) "
+                "VALUES (gen_random_uuid(), 'role.app', 'x', 'Y', 'client')"
             )
             == 1
         )
@@ -302,8 +291,8 @@ class TestDroitsDuRoleApp:
     @pytest.mark.parametrize("role", ["gerant", "moderator", "admin"])
     def test_ne_peut_pas_creer_un_autre_role(self, role):
         refuse(
-            "INSERT INTO users (id, phone_e164, email, password_hash, full_name, role) "
-            "VALUES (gen_random_uuid(), '+2290197444445', 'a@b.c', 'x', 'Y', %s)",
+            "INSERT INTO users (id, email, password_hash, full_name, role) "
+            "VALUES (gen_random_uuid(), 'a@b.c', 'x', 'Y', %s)",
             [role],
         )
 
@@ -387,8 +376,8 @@ class TestDroitsDuRoleApp:
 class TestDroitsDuRoleAdminApp:
     def test_peut_creer_un_gerant_et_un_profil(self):
         u = execute(
-            "INSERT INTO users (id, phone_e164, password_hash, full_name, role) "
-            "VALUES (gen_random_uuid(), '+2290197555555', 'x', 'G', 'gerant')",
+            "INSERT INTO users (id, password_hash, full_name, role) "
+            "VALUES (gen_random_uuid(), 'x', 'G', 'gerant')",
             role="admin_app",
         )
         assert u == 1

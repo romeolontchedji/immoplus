@@ -512,22 +512,6 @@ class TestNotificationsDeMessage:
         )
         assert services.rappeler_gerants_sans_reponse() == 0
 
-    def test_sms_de_repli_derriere_le_drapeau(self, decor, monkeypatch):
-        envoyes = []
-
-        class Faux:
-            def envoyer(self, numero, message):
-                envoyes.append(numero)
-
-        monkeypatch.setattr("apps.core.providers.sms.fournisseur", lambda: Faux())
-        conversation, *_ = ouvrir(decor)
-        Conversation.objects.filter(pk=conversation.pk).update(
-            last_message_at=timezone.now() - datetime.timedelta(hours=3)
-        )
-        parametres.definir("SMS_FALLBACK_ENABLED", True)
-        services.rappeler_gerants_sans_reponse()
-        assert envoyes == [decor.gerant.user.phone_e164]
-
     def test_annonce_louee_previent_les_conversations_sans_doublon_avec_les_favoris(
         self, decor, django_capture_on_commit_callbacks
     ):

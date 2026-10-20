@@ -58,7 +58,7 @@ def _compte(utilisateur: User | None):
         '<a href="{}"><strong>{}</strong></a><br><span class="lg-discret">{}</span>',
         reverse("admin:accounts_user_change", args=[utilisateur.pk]),
         utilisateur.full_name or "Sans nom",
-        utilisateur.phone_e164 or utilisateur.email or "",
+        f"@{utilisateur.username}" if utilisateur.username else (utilisateur.email or ""),
     )
 
 

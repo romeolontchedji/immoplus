@@ -14,17 +14,17 @@ les abandonner complètement.
 
 - **Clé du compte : le nom d'utilisateur.** Unique sans tenir compte des majuscules, 3 à 30 caractères (lettres
   minuscules, chiffres, `.` et `_`), noms réservés refusés. Prénom et nom sont demandés séparément.
-- **Le numéro de téléphone est conservé** (obligatoire pour les locataires et les gérants), mais il n'est **plus
-  vérifié ni unique** : sinon n'importe qui pourrait bloquer le numéro d'autrui.
-- **Connexion** : nom d'utilisateur et mot de passe. Pendant 30 jours, la connexion par numéro reste acceptée
-  pour les comptes créés avant ce changement, à condition que le numéro ne désigne qu'un seul compte.
+- **Aucun numéro de téléphone n'est conservé** (amendement du 2026-10-20) : ni demandé à l'inscription, ni gardé
+  pour les gérants. Les numéros déjà enregistrés sont supprimés avec la colonne (migration accounts 0011). Seul
+  le numéro de paiement Mobile Money, saisi au moment de payer, reste attaché à une transaction.
+- **Connexion** : nom d'utilisateur et mot de passe, et rien d'autre.
 - **Mot de passe oublié**, sans SMS, dans cet ordre de mise en avant :
   1. lien par **e-mail**, si l'utilisateur en a ajouté un et l'a confirmé (30 min, usage unique) ;
   2. **clé de secours** (16 caractères) affichée une seule fois à l'inscription, à noter ou capturer ; elle se
      régénère depuis le profil et après chaque usage ; seule son empreinte Argon2 est enregistrée ;
-  3. **l'équipe**, en dernier recours : vérification de l'identité, puis lien de réinitialisation (24 h) généré
-     dans l'administration et journalisé.
-- **Gérants** : l'équipe crée le compte (nom, prénom, numéro, zone) sans mot de passe et obtient un **lien
+  3. **l'équipe**, en dernier recours : vérification de l'identité (questions sur le compte : annonces, messages,
+     date d'inscription), puis lien de réinitialisation (24 h) généré dans l'administration et journalisé.
+- **Gérants** : l'équipe crée le compte (prénom, nom, zone) sans mot de passe et obtient un **lien
   d'activation** (72 h, usage unique) qu'elle transmet par WhatsApp ou e-mail. Le gérant y choisit son nom
   d'utilisateur et son mot de passe, puis reçoit sa clé de secours. Aucun mot de passe ne circule.
 - Les liens (activation, réinitialisation, confirmation d'e-mail) sont **signés** (`django.core.signing`) et
@@ -33,7 +33,8 @@ les abandonner complètement.
 - Toute réinitialisation coupe toutes les sessions et tous les appareils (`token_version`).
 - **Anti-robots** : Turnstile reste sur l'inscription et le mot de passe oublié du site ; verrouillage progressif
   (Redis) sur la connexion et la clé de secours, par nom d'utilisateur et par appareil ou adresse IP.
-- Supprimés : demande et vérification de code (`auth/otp/*`), changement de numéro par code, SMS « compte prêt ».
+- Supprimés : demande et vérification de code (`auth/otp/*`), changement de numéro, SMS « compte prêt », SMS de
+  repli au gérant et fournisseur SMS : plus aucun SMS n'est envoyé par Immo+.
 
 ## Conséquences
 

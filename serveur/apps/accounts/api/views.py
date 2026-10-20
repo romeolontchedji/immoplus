@@ -49,7 +49,6 @@ def _utilisateur_out(u) -> dict:
         "recovery_key_created_at": u.recovery_key_created_at,
         "occupation": u.occupation,
         "role": u.role,
-        "phone": u.phone_e164,
         "terms_version": u.terms_version,
         "created_at": u.created_at,
     }
@@ -150,7 +149,6 @@ class Inscription(_Public):
             nom_utilisateur=d["username"],
             prenom=d["first_name"],
             nom=d["last_name"],
-            telephone=d["phone"],
             mot_de_passe=d["password"],
             cgu_acceptees=d["terms_accepted"],
             occupation=d.get("occupation"),
@@ -276,20 +274,6 @@ class Moi(_Prive):
         d = _valide(s.SuppressionIn, request)
         compte.supprimer(request.user, d["password"])
         return Response(status=204)
-
-
-class ChangementNumero(_Prive):
-    @extend_schema(
-        tags=TAG_COMPTE,
-        summary="Changer de numéro",
-        description="Sans code (ADR 0009) : le mot de passe actuel suffit.",
-        request=s.ChangementNumeroIn,
-        responses={200: s.UtilisateurOut},
-    )
-    def post(self, request):
-        d = _valide(s.ChangementNumeroIn, request)
-        utilisateur = compte.changer_numero(request.user, d["password"], d["phone"])
-        return Response(_utilisateur_out(utilisateur))
 
 
 class AjoutEmail(_Prive):

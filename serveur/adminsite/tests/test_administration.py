@@ -242,11 +242,11 @@ class TestActions:
         c, admin_ = self.connecte()
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "first_name": "Koffi", "last_name": "Gérant", "display_name": "Koffi",
+            {"first_name": "Koffi", "last_name": "Gérant", "display_name": "Koffi",
              "zone": "Banikanni"},
         )  # fmt: skip
         page = r.content.decode()
-        assert r.status_code == 200 and "/activer/" in page and "wa.me/2290197343434" in page
+        assert r.status_code == 200 and "/activer/" in page and "wa.me/?text=" in page
         g = User.objects.get(role="gerant")
         assert g.full_name == "Koffi Gérant" and not g.has_usable_password() and g.username is None
         assert GerantProfile.complets.get(user=g).created_by == admin_
@@ -268,7 +268,7 @@ class TestActions:
         c, _ = self.connecte(PersonnelFactory)
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "first_name": "X", "last_name": "Y", "zone": "Z"},
+            {"first_name": "X", "last_name": "Y", "zone": "Z"},
         )
         assert r.status_code in (302, 403) and not User.objects.filter(role="gerant").exists()
 

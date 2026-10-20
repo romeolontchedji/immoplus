@@ -9,13 +9,11 @@ from django.core.cache import cache
 from .models import AppSetting
 
 DEFAUTS: dict[str, tuple[object, str]] = {
-    # Nom historique : sert aujourd'hui à valider les numéros de téléphone (plus aucun code SMS, ADR 0009).
-    "OTP_ALLOWED_COUNTRIES": (["BJ"], "Pays autorisés pour les numéros de téléphone (codes ISO)."),
     "LOGIN_LOCK_THRESHOLD": (5, "Échecs de connexion avant verrouillage."),
     "LOGIN_LOCK_MINUTES": (15, "Durée du premier verrouillage (doublée à chaque récidive)."),
     "LOGIN_FAILS_PER_HOUR_PER_PHONE": (
         30,
-        "Échecs par heure et par numéro, tous appareils confondus.",
+        "Échecs par heure et par nom d'utilisateur, tous appareils confondus.",
     ),
     "ADMIN_LOCK_THRESHOLD": (
         5,
@@ -73,7 +71,6 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "ARCHIVE_AFTER_RENT_DAYS": (90, "Jours après la location avant l'archivage de l'annonce."),
     "RENTED_VIDEO_DELETE_DAYS": (7, "Jours après la location avant la suppression de la vidéo."),
     "UNANSWERED_REMINDER_H": (2, "Heures avant le rappel au gérant pour un message non lu."),
-    "SMS_FALLBACK_ENABLED": (False, "SMS de repli au gérant (désactivé par défaut)."),
     "LISTING_PREMODERATION": (
         False,
         "Pré-modération de toutes les annonces (désactivée par défaut).",

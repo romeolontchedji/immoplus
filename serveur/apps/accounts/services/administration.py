@@ -19,7 +19,6 @@ journal = logging.getLogger(__name__)
 def creer_gerant(
     *,
     acteur: User,
-    telephone: str,
     prenom: str,
     nom: str,
     zone: str,
@@ -29,10 +28,9 @@ def creer_gerant(
     d'activation (`lien_activation`) que l'équipe lui transmet."""
     from . import inscription
 
-    e164 = inscription.telephone_valide(telephone)
     prenom, nom = inscription.noms_valides(prenom, nom)
     with transaction.atomic():
-        gerant = User(phone_e164=e164, role=Role.GERANT)
+        gerant = User(role=Role.GERANT)
         gerant.definir_noms(prenom, nom)
         gerant.set_unusable_password()
         gerant.save()

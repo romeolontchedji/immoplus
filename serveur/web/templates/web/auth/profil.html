@@ -13,7 +13,7 @@
           {% else %}
             Locataire
           {% endif %}
-          · @{{ u.username }} · +229 {{ numero_actuel }}
+          · @{{ u.username }}
         </p>
       </div>
       {% if u.role == "gerant" %}
@@ -64,18 +64,6 @@
           {% endif %}
         </p>
         {% include "web/auth/section-formulaire.html" with action="cle" f=cle bouton="Créer une nouvelle clé" %}
-      </section>
-      <section class="compte-section-carte"
-               id="numero"
-               aria-labelledby="titre-numero">
-        <h2 class="compte-section-carte__titre" id="titre-numero">
-          {% include "web/composants/icone.html" with nom="phone" taille=18 %}
-          Numéro de téléphone
-        </h2>
-        <p class="texte-doux mb-0">
-          Numéro actuel : <strong>+229 {{ numero_actuel }}</strong>. Il n'est jamais montré aux autres utilisateurs.
-        </p>
-        {% include "web/auth/section-formulaire.html" with action="numero" f=numero bouton="Changer mon numéro" %}
       </section>
       <section class="compte-section-carte" aria-labelledby="titre-mdp">
         <h2 class="compte-section-carte__titre" id="titre-mdp">

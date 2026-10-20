@@ -30,7 +30,7 @@ def _en_tant_que_app():
 def test_inscription_avec_le_role_app():
     with _en_tant_que_app():
         u, cle = inscription.inscrire_client(
-            nom_utilisateur="role.app", prenom="Rôle", nom="App", telephone="97121212",
+            nom_utilisateur="role.app", prenom="Rôle", nom="App",
             mot_de_passe=FORT, cgu_acceptees=True,
         )  # fmt: skip
     assert identifiants.cle_correcte(User.objects.get(pk=u.pk), cle)
@@ -54,24 +54,19 @@ def test_lien_de_l_equipe_avec_le_role_app():
     assert mots_de_passe.verifier(User.objects.get(pk=u.pk), FORT)
 
 
-def test_profil_numero_et_email_avec_le_role_app():
+def test_profil_et_email_avec_le_role_app():
     u = ClientFactory()
     with _en_tant_que_app():
         moi = User.objects.get(pk=u.pk)
         compte.modifier_profil(moi, prenom="Aïcha", nom="Sanni")
-        compte.changer_numero(moi, MOT_DE_PASSE, "97343434")
         compte.confirmer_email(identifiants.creer_jeton(moi, "email", a="aicha@exemple.bj"))
     moi = User.objects.get(pk=u.pk)
-    assert (moi.full_name, moi.phone_e164, moi.email) == (
-        "Aïcha Sanni",
-        "+2290197343434",
-        "aicha@exemple.bj",
-    )
+    assert (moi.full_name, moi.email) == ("Aïcha Sanni", "aicha@exemple.bj")
 
 
 def test_activation_d_un_gerant_avec_le_role_app():
     gerant = administration.creer_gerant(
-        acteur=AdminFactory(), telephone="97454545", prenom="Kofi", nom="Gérant", zone="Zongo"
+        acteur=AdminFactory(), prenom="Kofi", nom="Gérant", zone="Zongo"
     )
     url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
     with _en_tant_que_app():

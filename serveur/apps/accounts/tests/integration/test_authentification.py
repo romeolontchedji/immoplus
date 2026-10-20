@@ -16,13 +16,13 @@ from apps.core.errors import ErreurMetier
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 
-NUMERO = "+2290197888888"
-SAISIE = "97888888"
+NOM = "kofi.zongo"
+SAISIE = "kofi.zongo"
 
 
 @pytest.fixture
 def client_inscrit():
-    return ClientFactory(phone_e164=NUMERO)
+    return ClientFactory(username=NOM)
 
 
 def connexion(mdp=MOT_DE_PASSE, saisie=SAISIE, client="inst-1"):
@@ -45,12 +45,12 @@ class TestConnexion:
     def test_identifiants_corrects(self, client_inscrit):
         assert connexion() == client_inscrit
 
-    @pytest.mark.parametrize("saisie", ["97888888", "0197888888", "+229 97 88 88 88"])
-    def test_formats_de_numero_acceptes(self, client_inscrit, saisie):
+    @pytest.mark.parametrize("saisie", ["Kofi.Zongo", "@kofi.zongo", " kofi.zongo "])
+    def test_ecritures_du_nom_acceptees(self, client_inscrit, saisie):
         assert connexion(saisie=saisie) == client_inscrit
 
     def test_gerant_active(self):
-        g = GerantFactory(phone_e164=NUMERO)
+        g = GerantFactory(username=NOM)
         assert connexion() == g
 
     def test_mauvais_mot_de_passe(self, client_inscrit):
@@ -60,7 +60,7 @@ class TestConnexion:
 
     def test_les_trois_echecs_ont_la_meme_reponse(self, client_inscrit):
         mauvais_mdp = echec()
-        inconnu = echec(saisie="97000000")
+        inconnu = echec(saisie="personne.inconnue")
         illisible = echec(saisie="n'importe quoi")
         for e in (inconnu, illisible):
             assert (e.code, e.message, e.statut) == (
@@ -70,13 +70,13 @@ class TestConnexion:
             )
 
     def test_le_personnel_ne_peut_pas_se_connecter_au_site_ni_a_l_api(self):
-        PersonnelFactory(phone_e164=NUMERO)  # même avec un numéro renseigné
+        PersonnelFactory(username=NOM)  # même avec un nom d'utilisateur renseigné
         assert echec(mdp=MOT_DE_PASSE).code == "invalid_credentials"
-        AdminFactory(phone_e164="+2290197999999")
-        assert echec(mdp=MOT_DE_PASSE, saisie="97999999").code == "invalid_credentials"
+        AdminFactory(username="chef.equipe")
+        assert echec(mdp=MOT_DE_PASSE, saisie="chef.equipe").code == "invalid_credentials"
 
     def test_gerant_non_active_ne_peut_pas_se_connecter(self):
-        g = GerantFactory(phone_e164=NUMERO)
+        g = GerantFactory(username=NOM)
         g.set_unusable_password()
         g.save()
         assert echec(mdp="").code == "invalid_credentials"
@@ -93,7 +93,7 @@ class TestConnexion:
         from django.utils import timezone
 
         ClientFactory(
-            phone_e164=NUMERO,
+            username=NOM,
             status=statut,
             suspended_until=timezone.now() + timezone.timedelta(days=3),
         )
@@ -105,15 +105,15 @@ class TestConnexion:
         from django.utils import timezone
 
         ClientFactory(
-            phone_e164=NUMERO,
+            username=NOM,
             status="suspended",
             suspended_until=timezone.now() - timezone.timedelta(hours=1),
         )
-        assert connexion().phone_e164 == NUMERO
+        assert connexion().username == NOM
 
 
 class TestTravailAVide:
-    """Le temps de réponse ne doit pas dépendre de l'existence du numéro (CDC EF-AUT-05)."""
+    """Le temps de réponse ne doit pas dépendre de l'existence du compte (CDC EF-AUT-05)."""
 
     @pytest.fixture
     def compteur(self, monkeypatch):
@@ -127,16 +127,16 @@ class TestTravailAVide:
         monkeypatch.setattr(mots_de_passe, "check_password", espion)
         return appels
 
-    def test_un_numero_inconnu_declenche_un_hachage_complet(self, client_inscrit, compteur):
-        echec(saisie="97000000")
+    def test_un_nom_inconnu_declenche_un_hachage_complet(self, client_inscrit, compteur):
+        echec(saisie="personne.inconnue")
         assert len(compteur) == 1
 
-    def test_un_numero_connu_declenche_un_hachage_et_un_seul(self, client_inscrit, compteur):
+    def test_un_nom_connu_declenche_un_hachage_et_un_seul(self, client_inscrit, compteur):
         echec()
         assert len(compteur) == 1
 
     def test_un_compte_sans_mot_de_passe_utilisable_declenche_aussi_un_hachage(self, compteur):
-        g = GerantFactory(phone_e164=NUMERO)
+        g = GerantFactory(username=NOM)
         g.set_unusable_password()
         g.save()
         echec()
@@ -149,7 +149,7 @@ class TestTravailAVide:
         client_inscrit.password = make_password(MOT_DE_PASSE)
         client_inscrit.save()
         mots_de_passe._HACHAGE_FACTICE = None
-        echec(saisie="97000000")
+        echec(saisie="personne.inconnue")
         echec()
         assert (
             compteur[0].split("$")[:3]
@@ -172,24 +172,24 @@ class TestVerrouillage:
             echec()
         assert connexion() == client_inscrit
 
-    def test_un_numero_inconnu_se_verrouille_de_la_meme_facon(self):
+    def test_un_nom_inconnu_se_verrouille_de_la_meme_facon(self):
         for _ in range(5):
-            echec(saisie="97000000")
-        e = echec(saisie="97000000")
+            echec(saisie="personne.inconnue")
+        e = echec(saisie="personne.inconnue")
         assert 890 <= int(e.entetes["Retry-After"]) <= 900
 
-    def test_le_verrou_est_par_couple_numero_et_appareil(self, client_inscrit):
+    def test_le_verrou_est_par_couple_nom_et_appareil(self, client_inscrit):
         for _ in range(5):
             echec(client="inst-pirate")
         assert (
             connexion(client="inst-legitime") == client_inscrit
         )  # le propriétaire n'est pas bloqué à distance
 
-    def test_un_autre_numero_n_est_pas_touche(self, client_inscrit):
-        ClientFactory(phone_e164="+2290197777777")
+    def test_un_autre_compte_n_est_pas_touche(self, client_inscrit):
+        ClientFactory(username="autre.compte")
         for _ in range(5):
             echec()
-        assert connexion(saisie="97777777").phone_e164 == "+2290197777777"
+        assert connexion(saisie="autre.compte").username == "autre.compte"
 
     def test_duree_doublee_a_chaque_recidive(self, client_inscrit):
         durees = []
@@ -217,18 +217,18 @@ class TestVerrouillage:
             echec()
         assert round(int(echec().entetes["Retry-After"]) / 60) == 15
 
-    def test_plafond_de_trente_echecs_par_heure_et_par_numero(self, client_inscrit):
+    def test_plafond_de_trente_echecs_par_heure_et_par_nom(self, client_inscrit):
         for n in range(30):
             echec(client=f"appareil-{n}")  # 30 appareils différents : aucun couple ne se verrouille
         e = echec(mdp=MOT_DE_PASSE, client="appareil-neuf")
         assert e.code == "invalid_credentials"
         assert 3500 <= int(e.entetes["Retry-After"]) <= 3600
 
-    def test_le_plafond_horaire_ne_touche_pas_les_autres_numeros(self, client_inscrit):
-        ClientFactory(phone_e164="+2290197777777")
+    def test_le_plafond_horaire_ne_touche_pas_les_autres_comptes(self, client_inscrit):
+        ClientFactory(username="autre.compte")
         for n in range(30):
             echec(client=f"appareil-{n}")
-        assert connexion(saisie="97777777", client="x").phone_e164 == "+2290197777777"
+        assert connexion(saisie="autre.compte", client="x").username == "autre.compte"
 
     def test_les_compteurs_sont_dans_redis_queue_pas_dans_le_cache(self, client_inscrit):
         from django.core.cache import cache
@@ -239,10 +239,10 @@ class TestVerrouillage:
         assert echec(mdp=MOT_DE_PASSE).code == "invalid_credentials"
         assert redis_file.client().keys("login:verrou:*")
 
-    def test_les_cles_ne_contiennent_pas_le_numero(self, client_inscrit):
+    def test_les_cles_ne_contiennent_pas_le_nom(self, client_inscrit):
         echec()
         for cle in redis_file.client().keys("login:*"):
-            assert "97888888" not in cle and "2290197" not in cle
+            assert NOM not in cle
 
     def test_parametres_modifiables(self, client_inscrit):
         from apps.core import parametres

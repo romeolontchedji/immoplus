@@ -192,7 +192,6 @@ class Command(BaseCommand):
             defaults={
                 "full_name": "Admin Immo+",
                 "role": Role.ADMIN,
-                "phone_e164": "+22901970000099",
             },
         )
         admin.set_password(MOT_DE_PASSE_DEMO)
@@ -200,16 +199,14 @@ class Command(BaseCommand):
 
         # 2. Gérant vérifié de démo
         gerant, _ = User.objects.get_or_create(
-            phone_e164="+22901970000001",
+            username="issa.b",
             defaults={
                 "full_name": "Issa B.",
                 "first_name": "Issa",
                 "last_name": "B.",
                 "role": Role.GERANT,
-                "username": "issa.gerant",
             },
         )
-        gerant.username = gerant.username or "issa.gerant"
         gerant.set_password(MOT_DE_PASSE_DEMO)
         gerant.save()
 
@@ -225,16 +222,14 @@ class Command(BaseCommand):
 
         # 3. Gérant en attente de validation (pour tester l'admin de modération)
         gerant_attente, _ = User.objects.get_or_create(
-            phone_e164="+22901970000003",
+            username="koffi.enattente",
             defaults={
                 "full_name": "Koffi EnAttente",
                 "first_name": "Koffi",
                 "last_name": "EnAttente",
                 "role": Role.GERANT,
-                "username": "koffi.attente",
             },
         )
-        gerant_attente.username = gerant_attente.username or "koffi.attente"
         gerant_attente.set_password(MOT_DE_PASSE_DEMO)
         gerant_attente.save()
         if not GerantProfile.complets.filter(pk=gerant_attente.pk).exists():
@@ -242,16 +237,14 @@ class Command(BaseCommand):
 
         # 4. Locataire étudiant de démo
         locataire, _ = User.objects.get_or_create(
-            phone_e164="+22901970000002",
+            username="awa.etudiante",
             defaults={
                 "full_name": "Awa Étudiante",
                 "first_name": "Awa",
                 "last_name": "Étudiante",
                 "role": Role.CLIENT,
-                "username": "awa.etudiante",
             },
         )
-        locataire.username = locataire.username or "awa.etudiante"
         locataire.set_password(MOT_DE_PASSE_DEMO)
         locataire.save()
 

@@ -17,7 +17,6 @@ class InscriptionIn(AppareilIn):
     )
     first_name = serializers.CharField(max_length=60)
     last_name = serializers.CharField(max_length=60)
-    phone = serializers.CharField(max_length=40, help_text="Conservé, ni vérifié ni unique.")
     password = serializers.CharField(max_length=128, trim_whitespace=False)
     terms_accepted = serializers.BooleanField()
     occupation = serializers.ChoiceField(
@@ -67,11 +66,6 @@ class ChangementMotDePasseIn(serializers.Serializer):
     new_password = serializers.CharField(max_length=128, trim_whitespace=False)
 
 
-class ChangementNumeroIn(serializers.Serializer):
-    password = serializers.CharField(max_length=128, trim_whitespace=False)
-    phone = serializers.CharField(max_length=40)
-
-
 class EmailIn(serializers.Serializer):
     email = serializers.CharField(max_length=254)
 
@@ -111,7 +105,6 @@ class UtilisateurOut(serializers.Serializer):
     recovery_key_created_at = serializers.DateTimeField(allow_null=True)
     occupation = serializers.ChoiceField(choices=Occupation.values, allow_null=True)
     role = serializers.ChoiceField(choices=["client", "gerant"])
-    phone = serializers.CharField(allow_null=True)
     terms_version = serializers.CharField(allow_null=True)
     created_at = serializers.DateTimeField()
 

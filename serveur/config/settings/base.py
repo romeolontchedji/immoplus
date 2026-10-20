@@ -175,7 +175,6 @@ SPECTACULAR_SETTINGS = {
 }
 
 # --- Fournisseurs (interfaces dans apps.core.providers) ---
-SMS_PROVIDER = env.texte("SMS_PROVIDER", "console")
 PUSH_PROVIDER = env.texte("PUSH_PROVIDER", "console")
 STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
 VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
@@ -196,9 +195,6 @@ TURNSTILE_SITE_KEY = env.texte(
 # Clés de test publiées par Cloudflare (le défi réussit toujours) : signalées comme erreur en production.
 TURNSTILE_CLES_DE_TEST = ("1x00000000000000000000AA", "1x0000000000000000000000000000000AA")
 PRODUCTION = False  # vrai dans les réglages public, admin et taches (garde-fous de démarrage)
-SMS_HTTP_URL = env.texte("SMS_HTTP_URL")
-SMS_HTTP_TOKEN = env.texte("SMS_HTTP_TOKEN")
-SMS_HTTP_SECRET = env.texte("SMS_HTTP_SECRET")
 
 # --- Clés de sécurité : distinctes entre elles et de SECRET_KEY ; refusées en production si elles viennent d'ici ---
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY", "dev-jwt-ne-jamais-utiliser-en-production")

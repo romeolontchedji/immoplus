@@ -5,7 +5,7 @@
   <div class="espace-barre__identite">
     <span class="espace-barre__avatar" aria-hidden="true">{{ request.user.initiales|default:"?" }}</span>
     <span class="espace-barre__qui">
-      <strong class="espace-barre__nom">{{ request.user.full_name|default:request.user.phone_e164 }}</strong>
+      <strong class="espace-barre__nom">{{ request.user.full_name|default:request.user.username }}</strong>
       <span class="espace-barre__role">{{ menu.role }}</span>
     </span>
   </div>
