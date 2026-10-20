@@ -114,10 +114,10 @@
                  aria-label="Vues de fiches par jour : site {{ t.web_7j }}, application {{ t.app_7j }} sur 7 jours">
               {% for j in t.jours %}
                 <rect class="lg-barres__app" x="{{ j.x }}" y="{{ j.y_app }}" width="{{ j.largeur }}" height="{{ j.h_app }}">
-                  <title>{{ j.jour|date:"d/m" }} · application {{ j.app }}</title>
+                <title>{{ j.jour|date:"d/m" }} · application {{ j.app }}</title>
                 </rect>
                 <rect class="lg-barres__web" x="{{ j.x }}" y="{{ j.y_web }}" width="{{ j.largeur }}" height="{{ j.h_web }}">
-                  <title>{{ j.jour|date:"d/m" }} · site {{ j.web }}</title>
+                <title>{{ j.jour|date:"d/m" }} · site {{ j.web }}</title>
                 </rect>
               {% endfor %}
             </svg>
@@ -133,7 +133,9 @@
               <span class="lg-chiffre__libelle">Vues sur le site · 7 jours</span>
             </div>
             <div class="lg-chiffre">
-              <span class="lg-chiffre__icone lg-chiffre__icone--soleil">{% include "admin/includes_icone.html" with nom="smartphone" %}</span>
+              <span class="lg-chiffre__icone lg-chiffre__icone--soleil">
+                {% include "admin/includes_icone.html" with nom="smartphone" %}
+              </span>
               <span class="lg-chiffre__nombre">{{ t.app_7j }}</span>
               <span class="lg-chiffre__libelle">
                 Vues dans l'application · 7 jours
@@ -141,7 +143,9 @@
               </span>
             </div>
             <div class="lg-chiffre">
-              <span class="lg-chiffre__icone lg-chiffre__icone--vert">{% include "admin/includes_icone.html" with nom="trending" %}</span>
+              <span class="lg-chiffre__icone lg-chiffre__icone--vert">
+                {% include "admin/includes_icone.html" with nom="trending" %}
+              </span>
               <span class="lg-chiffre__nombre">{{ t.android|add:t.ios }}</span>
               <span class="lg-chiffre__libelle">Téléphones actifs · 7 jours ({{ t.android }} Android, {{ t.ios }} iOS)</span>
             </div>

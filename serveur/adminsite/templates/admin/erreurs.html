@@ -21,7 +21,10 @@
           <pre class="lg-erreur__detail">{{ e.detail }}</pre>
           <form method="post">
             {% csrf_token %}
-            <button type="submit" name="resoudre" value="{{ e.id }}" class="lg-lien-action">Corrigée</button>
+            <button type="submit"
+                    name="resoudre"
+                    value="{{ e.id }}"
+                    class="lg-lien-action">Corrigée</button>
           </form>
         </details>
       {% endfor %}

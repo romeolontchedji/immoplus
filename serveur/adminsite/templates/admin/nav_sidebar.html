@@ -2,7 +2,9 @@
 <button class="sticky toggle-nav-sidebar"
         id="toggle-nav-sidebar"
         aria-label="Afficher ou masquer le menu"></button>
-<nav class="sticky lg-nav" id="nav-sidebar" aria-label="Menu de l'administration">
+<nav class="sticky lg-nav"
+     id="nav-sidebar"
+     aria-label="Menu de l'administration">
   {% url 'admin:index' as accueil %}
   <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == accueil %} lg-nav__lien--actif{% endif %}"
      href="{{ accueil }}"

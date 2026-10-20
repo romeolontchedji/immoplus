@@ -12,7 +12,8 @@
       Un code à 6 chiffres vient d'être envoyé à <strong>{{ courriel }}</strong>. Il est valable 10 minutes.
     </p>
     {% if message %}
-      <p class="{% if niveau == 'erreur' %}errornote{% else %}lg-bandeau{% endif %}" role="status">{{ message }}</p>
+      <p class="{% if niveau == 'erreur' %}errornote{% else %}lg-bandeau{% endif %}"
+         role="status">{{ message }}</p>
     {% endif %}
     <form method="post" action="/verification/">
       {% csrf_token %}
@@ -33,10 +34,15 @@
         <input type="submit" value="Vérifier">
       </div>
     </form>
-    <form method="post" action="/verification/" class="lg-double-auth__secondaire">
+    <form method="post"
+          action="/verification/"
+          class="lg-double-auth__secondaire">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">
-      <button type="submit" name="renvoyer" value="1" class="lg-lien-bouton">Je n'ai rien reçu : renvoyer un code</button>
+      <button type="submit"
+              name="renvoyer"
+              value="1"
+              class="lg-lien-bouton">Je n'ai rien reçu : renvoyer un code</button>
     </form>
     <form method="post" action="/logout/" class="lg-double-auth__secondaire">
       {% csrf_token %}
