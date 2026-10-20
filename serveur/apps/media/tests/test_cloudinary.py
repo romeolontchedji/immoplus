@@ -99,6 +99,7 @@ def test_supprimer_derives_ne_contacte_cloudinary_que_pour_un_media_distant(appe
     assert len(appels) == 3
 
 
+@pytest.mark.pg
 @pytest.mark.django_db
 def test_les_envois_vont_chez_cloudinary_seulement_si_active_et_configure(settings):
     from apps.core import parametres
