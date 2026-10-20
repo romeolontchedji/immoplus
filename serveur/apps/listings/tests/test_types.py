@@ -211,10 +211,10 @@ def test_site_proposer_un_type_depuis_l_editeur():
 
 
 @pytest.mark.integration
-def test_site_les_onglets_de_l_accueil_viennent_de_la_base():
-    ListingFactory.create_batch(3, room_type="single")
+def test_l_accueil_cherche_par_un_seul_champ():
+    """Plus d'onglets de types sur l'accueil (2026-10-20) : un champ cherche quartier, type ou équipement."""
     page = Client().get("/").content.decode()
-    assert 'data-type="single"' in page
+    assert 'id="recherche-hero"' in page and 'name="q"' in page and "data-type=" not in page
 
 
 class TestOptionsAlerte:

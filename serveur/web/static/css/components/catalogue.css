@@ -51,8 +51,6 @@
     overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
     border-radius: var(--r-card);
   }
-  .filtres__entete { pointer-events: none; }
-  .filtres__chevron { display: none; }
 }
 
 /* Sidebar filtres */
@@ -227,7 +225,6 @@
 .filtres--auto .filtres__appliquer { display: none; }
 .filtres--auto .filtres__pied { justify-content: flex-end; margin-top: var(--sp-3); }
 .catalogue-compte { font-size: var(--fs-14); font-weight: 700; color: var(--text-muted); }
-.catalogue-contenu--chargement { opacity: 0.55; transition: opacity var(--duree-1); }
 .catalogue-entete-barre { margin-bottom: 0; }
 .recapitulatif { margin-bottom: 0; }
 

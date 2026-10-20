@@ -123,7 +123,14 @@ class Listing(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     distance_to_campus_m = models.IntegerField(verbose_name="distance à l'UP (m)")
     rent_amount = models.IntegerField(verbose_name="loyer (F)")
-    deposit_months = models.SmallIntegerField(verbose_name="caution (mois)")
+    deposit_months = models.SmallIntegerField(verbose_name="caution du loyer (mois)")
+    # Cautions des compteurs, distinctes de la caution du loyer (demande du 2026-10-20) : montants en F, 0 = aucune.
+    water_deposit_amount = models.IntegerField(
+        default=0, db_default=0, verbose_name="caution eau (F)"
+    )
+    electricity_deposit_amount = models.IntegerField(
+        default=0, db_default=0, verbose_name="caution électricité (F)"
+    )
     advance_months = models.SmallIntegerField(verbose_name="avance (mois)")
     agent_fee_amount = models.IntegerField(
         default=0, db_default=0, verbose_name="frais de démarcheur (F)"
@@ -195,6 +202,10 @@ class Listing(models.Model):
             ),
             models.CheckConstraint(
                 condition=models.Q(agent_fee_amount__gte=0), name="listings_frais_positifs"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(water_deposit_amount__gte=0, electricity_deposit_amount__gte=0),
+                name="listings_cautions_compteurs_positives",
             ),
             models.CheckConstraint(
                 condition=models.Q(title__regex=r"^.{5,}$"), name="listings_titre_5_caracteres"
@@ -335,6 +346,20 @@ class Alert(models.Model):
     max_rent = models.IntegerField(null=True, blank=True)
     private_bathroom_required = models.BooleanField(default=False, db_default=False)
     max_distance_m = models.IntegerField(null=True, blank=True)
+    # Équipements souhaités (demande du 2026-10-20) : liste vide = peu importe ; une annonce convient si elle a
+    # au moins une des valeurs demandées.
+    water_sources = ArrayField(
+        models.CharField(max_length=10), default=list, db_default=[], verbose_name="eau"
+    )
+    electricity_meters = ArrayField(
+        models.CharField(max_length=10), default=list, db_default=[], verbose_name="électricité"
+    )
+    kitchens = ArrayField(
+        models.CharField(max_length=10), default=list, db_default=[], verbose_name="cuisine"
+    )
+    fenced_required = models.BooleanField(
+        default=False, db_default=False, verbose_name="cour clôturée"
+    )
     is_active = models.BooleanField(default=True, db_default=True)
     created_at = models.DateTimeField(default=timezone.now, db_default=Now())
     updated_at = models.DateTimeField(auto_now=True, db_default=Now())

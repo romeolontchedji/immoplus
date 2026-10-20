@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.services import appareils, jetons
 from apps.accounts.tests.fabriques import ClientFactory
+from apps.listings.enums import PHOTOS_MIN
 from apps.listings.models import ListingMedia
 from apps.listings.services import medias
 
@@ -431,7 +432,7 @@ class TestGestion:
 
     def test_une_annonce_publiee_garde_sa_video_et_trois_photos(self, pro, gerant):
         publiee = ListingFactory(gerant=gerant)
-        medias_prets(publiee, photos=3)
+        medias_prets(publiee, photos=5)
         video = ListingMedia.objects.get(listing=publiee, kind="video")
         r = pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{video.pk}")
         assert r.status_code == 409 and r.json()["error"]["code"] == "media_required"
@@ -488,7 +489,7 @@ class TestVideo:
     ):
         ListingFactory(gerant=gerant)  # le gérant a déjà une annonce publiée : pas de relecture
         a = ListingFactory(gerant=gerant, status="processing", published_at=None)
-        for _ in range(3):
+        for _ in range(PHOTOS_MIN):
             envoyer(pro, a.pk, jpeg(taille=(640, 480)), "photo", django_capture_on_commit_callbacks)
         envoyer(pro, a.pk, video(tmp_path), "video", django_capture_on_commit_callbacks)
         a.refresh_from_db()

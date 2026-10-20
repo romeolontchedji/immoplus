@@ -122,7 +122,7 @@ def test_l_annonce_d_un_autre_gerant_est_introuvable(session_gerant):
 def test_gerer_les_medias_couverture_ordre_suppression(session_gerant):
     c, g = session_gerant
     a = ListingFactory(gerant=g, status="draft")
-    medias_prets(a, photos=3, video=False)
+    medias_prets(a, photos=5, video=False)
     page = c.get(f"/pro/annonces/{a.pk}").content.decode()
     assert "Définir en couverture" in page and "Monter" in page and "Descendre" in page
     assert (

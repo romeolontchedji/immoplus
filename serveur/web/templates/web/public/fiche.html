@@ -186,9 +186,29 @@
                 </dd>
               </div>
               <div class="conditions__ligne">
-                <dt>Caution</dt>
+                <dt>Caution du loyer</dt>
                 <dd>
                   {{ f.deposit_months }} mois
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Caution eau</dt>
+                <dd>
+                  {% if f.water_deposit_amount %}
+                    {{ f.water_deposit_amount|fcfa }} F
+                  {% else %}
+                    Aucune
+                  {% endif %}
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Caution électricité</dt>
+                <dd>
+                  {% if f.electricity_deposit_amount %}
+                    {{ f.electricity_deposit_amount|fcfa }} F
+                  {% else %}
+                    Aucune
+                  {% endif %}
                 </dd>
               </div>
               <div class="conditions__ligne">
@@ -307,24 +327,6 @@
         </div>
         <aside class="fiche-sidebar">
           <div class="fiche-carte-principale">
-            <a class="fiche-gerant-entete" href="/gerants/{{ f.gerant.id }}">
-              <div class="fiche-gerant-avatar" aria-hidden="true">{{ f.gerant.name|default:"G"|slice:":2"|upper }}</div>
-              <div class="fiche-gerant-meta">
-                <div class="fiche-gerant-ligne">
-                  <h2 class="fiche-gerant-nom">{{ f.gerant.name|default:"Gérant Immo+" }}</h2>
-                  {% if f.gerant.verified %}
-                    <span class="badge-verifie-pill badge-verifie-pill--petit">
-                      {% include "web/composants/icone.html" with nom="check" taille=10 %}
-                      <span>Vérifié</span>
-                    </span>
-                  {% endif %}
-                </div>
-                <p class="fiche-gerant-delai">
-                  Voir son profil et ses chambres
-                  {% if f.gerant.median_response_min is not None %}· répond en {{ f.gerant.median_response_min|delai_reponse }} environ{% endif %}
-                </p>
-              </div>
-            </a>
             {% if est_proprietaire %}
               <a class="bouton bouton--primaire bouton--pilule largeur-pleine"
                  href="/pro/annonces/{{ f.id }}">Gérer cette annonce</a>

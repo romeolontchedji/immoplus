@@ -8,6 +8,10 @@ class StatutTypeChambre(models.TextChoices):
     PENDING = "pending", "Proposé, à valider"
 
 
+# Photos prêtes exigées pour publier une annonce (et gardées tant qu'elle est en ligne) : 5 (demande du 2026-10-20).
+PHOTOS_MIN = 5
+
+
 class TypeChambre(models.TextChoices):
     """Types officiels de départ (décision V1) : la liste vivante est la table `room_types`."""
 

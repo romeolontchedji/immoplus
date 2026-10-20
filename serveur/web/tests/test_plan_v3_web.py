@@ -22,10 +22,10 @@ class TestFiche:
             kitchen="private", rent_negotiable=True, description_md="Près du marché",
             description_html="<p>Près du marché</p>",
         )  # fmt: skip
-        medias_prets(a, photos=3, video=True)
+        medias_prets(a, photos=5, video=True)
         page = html(Client().get(f"/annonces/{a.slug}"))
         assert page.index("fiche-quartier") < page.index("fiche-titre")  # le quartier d'abord
-        assert "data-galerie" in page and "1 / 4" in page
+        assert "data-galerie" in page and "1 / 6" in page
         assert "Cuisine interne" in page and "Prix à débattre" in page
         assert "Près du marché" in page  # les « Autres détails » s'affichent enfin
 

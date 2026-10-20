@@ -14,7 +14,7 @@ from apps.media import stockage, traitement
 from apps.notifications import services as notifications
 
 from .. import selectors
-from ..enums import StatutAnnonce, StatutMedia, TypeMedia
+from ..enums import PHOTOS_MIN, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import Listing, ListingMedia
 
 if TYPE_CHECKING:
@@ -292,9 +292,9 @@ def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
         pret = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
         restant_video = pret.filter(kind=TypeMedia.VIDEO).exclude(pk=media.pk).exists()
         restant_photos = pret.filter(kind=TypeMedia.PHOTO).exclude(pk=media.pk).count()
-        if not restant_video or restant_photos < 3:
+        if not restant_video or restant_photos < PHOTOS_MIN:
             raise ErreurMetier(
-                "media_required", "Une annonce publiée garde sa vidéo et au moins 3 photos. Masque l'annonce avant de supprimer.",
+                "media_required", f"Une annonce publiée garde sa vidéo et au moins {PHOTOS_MIN} photos. Masque l'annonce avant de supprimer.",
                 statut=409,
             )  # fmt: skip
     media.status, media.deleted_at, media.is_cover = StatutMedia.DELETED, timezone.now(), False

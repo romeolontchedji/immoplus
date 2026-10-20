@@ -16,7 +16,7 @@ from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
 
 from .. import selectors, signals
-from ..enums import Compteur, Cuisine, Eau, StatutAnnonce, StatutMedia, TypeMedia
+from ..enums import PHOTOS_MIN, Compteur, Cuisine, Eau, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import District, Listing, ListingMedia
 from . import contenu, geo, types
 
@@ -28,7 +28,8 @@ if TYPE_CHECKING:
 CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "description_md")
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
-    "deposit_months", "advance_months", "agent_fee_amount", "available_from", "has_private_bathroom", "is_fenced",
+    "deposit_months", "advance_months", "agent_fee_amount", "water_deposit_amount", "electricity_deposit_amount",
+    "available_from", "has_private_bathroom", "is_fenced",
     "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
@@ -74,6 +75,9 @@ def _valider(d: dict) -> None:
         isinstance(d["agent_fee_amount"], int) and d["agent_fee_amount"] >= 0
     ):
         raise _champ("agent_fee_amount", "Les frais doivent être un entier positif ou nul.")
+    for nom in ("water_deposit_amount", "electricity_deposit_amount"):
+        if nom in d and not (isinstance(d[nom], int) and 0 <= d[nom] <= 10_000_000):
+            raise _champ(nom, "La caution doit être un montant positif ou nul, en francs.")
     if (d.get("latitude") is None) != (d.get("longitude") is None):
         raise _champ("latitude", "La position doit avoir une latitude et une longitude.")
     for nom, (bas, haut) in LIMITES_BENIN.items():
@@ -130,7 +134,7 @@ def _vecteur_de_recherche(annonce: Listing) -> None:
     )
     texte = (
         f"{annonce.title} {contenu.texte_brut(annonce.description_html)} {annonce.district.name} "
-        f"{annonce.landmark_text} {equipements}"
+        f"{annonce.landmark_text} {types.libelle(annonce.room_type) or ''} {equipements}"
     )
     with connection.cursor() as c:
         c.execute(
@@ -322,7 +326,7 @@ MANQUES_PUBLICATION = {
     "gerant_non_verifie": "ton compte gérant n'est pas encore vérifié",
     "gerant_suspendu": "ton compte gérant est suspendu",
     "video_prete": "la vidéo n'est pas encore prête",
-    "trois_photos_pretes": "il faut au moins 3 photos prêtes",
+    "trois_photos_pretes": f"il faut au moins {PHOTOS_MIN} photos prêtes",
 }
 CHAMPS_ANNONCE = {
     "title": "le titre", "room_type": "le type de chambre", "district": "le quartier", "landmark_text": "le repère",
@@ -356,7 +360,7 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
     media = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
     if not media.filter(kind=TypeMedia.VIDEO).exists():
         manques.append("video_prete")
-    if media.filter(kind=TypeMedia.PHOTO).count() < 3:
+    if media.filter(kind=TypeMedia.PHOTO).count() < PHOTOS_MIN:
         manques.append("trois_photos_pretes")
     return manques
 

@@ -11,6 +11,7 @@ from apps.notifications import services as notifications
 from apps.notifications import textes
 
 from .. import selectors
+from ..enums import Compteur, Cuisine, Eau
 from ..models import Alert, District, Listing
 from . import types as types_chambre
 
@@ -21,8 +22,15 @@ CHAMPS = (
     "max_rent",
     "private_bathroom_required",
     "max_distance_m",
+    "water_sources",
+    "electricity_meters",
+    "kitchens",
+    "fenced_required",
     "is_active",
 )
+# Critères : il en faut au moins un pour créer une alerte (le nom seul ne suffit pas).
+CRITERES = tuple(c for c in CHAMPS if c not in ("label", "is_active"))
+EQUIPEMENTS = {"water_sources": Eau, "electricity_meters": Compteur, "kitchens": Cuisine}
 
 
 BUDGETS_DE_BASE = (10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 75_000)
@@ -114,6 +122,16 @@ def _valider(d: dict) -> dict:
             propre[nom] = valeur
     if "private_bathroom_required" in d:
         propre["private_bathroom_required"] = bool(d["private_bathroom_required"])
+    if "fenced_required" in d:
+        propre["fenced_required"] = bool(d["fenced_required"])
+    for nom, valeurs in EQUIPEMENTS.items():
+        if nom in d:
+            choix = list(d[nom] or [])
+            if any(v not in valeurs.values for v in choix):
+                raise ErreurMetier(
+                    "validation_error", "Valeur inconnue.", champs={nom: ["Valeur inconnue"]}
+                )
+            propre[nom] = [v for v in valeurs.values if v in choix]
     if "is_active" in d:
         propre["is_active"] = bool(d["is_active"])
     return propre
@@ -131,9 +149,25 @@ def _verifier_plafond(utilisateur, ignorer=None) -> None:
         )
 
 
+def a_un_critere(criteres: dict) -> bool:
+    """Vrai si au moins une option est choisie (quartier, type, budget, équipement…)."""
+    return any(criteres.get(c) not in (None, False, "", [], ()) for c in CRITERES)
+
+
+def _exiger_un_critere(criteres: dict) -> None:
+    if not a_un_critere(criteres):
+        raise ErreurMetier(
+            "alert_empty",
+            "Choisis d'abord au moins une option : quartier, type, budget ou équipement.",
+            champs={"non_field_errors": ["Choisis d'abord au moins une option."]},
+        )
+
+
 def creer(utilisateur, donnees: dict) -> Alert:
+    propre = _valider(donnees)
+    _exiger_un_critere(propre)
     _verifier_plafond(utilisateur)
-    return Alert.objects.create(user=utilisateur, **_valider(donnees))
+    return Alert.objects.create(user=utilisateur, **propre)
 
 
 def _trouver(utilisateur, alerte_id) -> Alert:
@@ -162,6 +196,8 @@ def modifier(utilisateur, alerte_id, donnees: dict) -> Alert:
         _verifier_plafond(utilisateur, ignorer=alerte.pk)
     for nom, valeur in propre.items():
         setattr(alerte, nom, valeur)
+    if set(propre) & set(CRITERES):  # pause, reprise ou nom seul : pas de contrôle des critères
+        _exiger_un_critere({c: getattr(alerte, c) for c in CRITERES})
     alerte.save()
     return alerte
 

@@ -3100,6 +3100,37 @@
                         "minimum": 1,
                         "nullable": true
                     },
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Eau souhaitée (au moins une) : individual, sub_meter, running, borehole, well. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "electricity_meters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Électricité souhaitée : individual, sub_meter, shared. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "kitchens": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Cuisine souhaitée : private, shared. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "fenced_required": {
+                        "type": "boolean",
+                        "description": "Cour clôturée exigée."
+                    },
                     "is_active": {
                         "type": "boolean"
                     }
@@ -3139,6 +3170,27 @@
                         "type": "integer",
                         "nullable": true
                     },
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "electricity_meters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kitchens": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "fenced_required": {
+                        "type": "boolean"
+                    },
                     "is_active": {
                         "type": "boolean"
                     },
@@ -3150,13 +3202,17 @@
                 "required": [
                     "created_at",
                     "district_ids",
+                    "electricity_meters",
+                    "fenced_required",
                     "id",
                     "is_active",
+                    "kitchens",
                     "label",
                     "max_distance_m",
                     "max_rent",
                     "private_bathroom_required",
-                    "room_types"
+                    "room_types",
+                    "water_sources"
                 ]
             },
             "AnnonceIn": {
@@ -3213,6 +3269,18 @@
                     "agent_fee_amount": {
                         "type": "integer",
                         "minimum": 0
+                    },
+                    "water_deposit_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Caution eau en F (0 = aucune)."
+                    },
+                    "electricity_deposit_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Caution électricité en F (0 = aucune)."
                     },
                     "available_from": {
                         "type": "string",
@@ -3327,6 +3395,12 @@
                     "agent_fee_amount": {
                         "type": "integer"
                     },
+                    "water_deposit_amount": {
+                        "type": "integer"
+                    },
+                    "electricity_deposit_amount": {
+                        "type": "integer"
+                    },
                     "available_from": {
                         "type": "string",
                         "format": "date"
@@ -3397,6 +3471,7 @@
                     "distance_to_campus_m",
                     "district",
                     "district_name",
+                    "electricity_deposit_amount",
                     "electricity_meter",
                     "has_private_bathroom",
                     "hidden_reason",
@@ -3417,6 +3492,7 @@
                     "title",
                     "updated_at",
                     "views_total",
+                    "water_deposit_amount",
                     "water_sources"
                 ]
             },
@@ -4182,6 +4258,14 @@
                     "agent_fee_amount": {
                         "type": "integer"
                     },
+                    "water_deposit_amount": {
+                        "type": "integer",
+                        "description": "Caution eau en F (0 = aucune)."
+                    },
+                    "electricity_deposit_amount": {
+                        "type": "integer",
+                        "description": "Caution électricité en F (0 = aucune)."
+                    },
                     "available_from": {
                         "type": "string",
                         "format": "date"
@@ -4269,6 +4353,7 @@
                     "description_md",
                     "distance_m",
                     "district",
+                    "electricity_deposit_amount",
                     "electricity_label",
                     "electricity_meter",
                     "gerant",
@@ -4292,6 +4377,7 @@
                     "slug",
                     "status",
                     "title",
+                    "water_deposit_amount",
                     "water_label",
                     "water_labels",
                     "water_sources"
@@ -5112,6 +5198,37 @@
                         "minimum": 1,
                         "nullable": true
                     },
+                    "water_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Eau souhaitée (au moins une) : individual, sub_meter, running, borehole, well. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "electricity_meters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Électricité souhaitée : individual, sub_meter, shared. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "kitchens": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10
+                        },
+                        "description": "Cuisine souhaitée : private, shared. Vide = peu importe.",
+                        "maxItems": 10
+                    },
+                    "fenced_required": {
+                        "type": "boolean",
+                        "description": "Cour clôturée exigée."
+                    },
                     "is_active": {
                         "type": "boolean"
                     }
@@ -5171,6 +5288,18 @@
                     "agent_fee_amount": {
                         "type": "integer",
                         "minimum": 0
+                    },
+                    "water_deposit_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Caution eau en F (0 = aucune)."
+                    },
+                    "electricity_deposit_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Caution électricité en F (0 = aucune)."
                     },
                     "available_from": {
                         "type": "string",

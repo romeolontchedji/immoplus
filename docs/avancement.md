@@ -2,6 +2,18 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 (soir) : retours sur les alertes, la recherche et la publication.**
+- Alertes (site et application) : seules les alertes actives sont listées (celles en pause repliées en bas), un
+  bouton « Créer une nouvelle alerte » ouvre le formulaire ; tous les critères en listes déroulantes à choix
+  multiples, avec l'eau, l'électricité, la cuisine, la douche interne, la cour clôturée et la distance de l'UP ;
+  une alerte sans aucune option est refusée (« Choisis d'abord au moins une option »).
+- Recherche : chaque lettre affine (début de mot sur le titre, le quartier, le repère, le type et les équipements),
+  sans effet de rechargement ; tous les filtres repliés sous « Filtres », y compris sur ordinateur ; l'accueil n'a
+  plus qu'un champ de recherche.
+- Publication : cautions eau et électricité (montants) distinctes de la caution du loyer (mois) ; 5 photos minimum
+  (`PHOTOS_MIN`). Types sanitaires, eau à plusieurs sources (migrations listings 0010 à 0012).
+- Fiche : plus de bloc gérant ; contact avant les chambres similaires sur téléphone. Logo réduit sur téléphone.
+
 **2026-10-20 : partage des chambres.**
 - Bouton « Partager » très visible sur la fiche (site et application) et pour le gérant sur ses annonces en ligne :
   WhatsApp, Facebook, applications du téléphone (TikTok, Instagram…), lien à copier.

@@ -1,22 +1,18 @@
 /* Page Chambres : filtres appliqués en temps réel (plan d'actions v3, A3).
    Chaque changement de liste ou de case recharge seulement la zone des résultats (en-tête X-Fragment) et met
-   l'adresse à jour ; la recherche par mot-clé attend une courte pause de frappe. Sans JavaScript, le formulaire
-   garde son bouton « Appliquer ». */
+   l'adresse à jour ; la recherche par mot-clé suit la frappe lettre par lettre, sans effet de rechargement. Sans
+   JavaScript, le formulaire garde son bouton « Appliquer ». */
 (function () {
   "use strict";
   var form = document.querySelector("[data-filtres]");
   var zone = document.getElementById("resultats");
   if (!form || !zone || !window.fetch) return;
   form.classList.add("filtres--auto");
-  // Grand écran : la colonne de filtres est toujours dépliée ; sur téléphone, elle se replie sous la recherche.
-  var repli = form.querySelector(".filtres__repli");
-  var large = window.matchMedia("(min-width: 1024px)");
-  function deplier() { if (repli && large.matches) repli.open = true; }
-  deplier();
-  if (large.addEventListener) large.addEventListener("change", deplier);
+  // Tous les filtres restent repliés sous « Filtres » (téléphone comme ordinateur) : seule la recherche est visible.
 
   var enCours = null;
   var minuterie = null;
+  var dernier = zone.innerHTML;
 
   function adresse(params) {
     var chaine = params.toString();
@@ -54,14 +50,17 @@
     if (enCours) enCours.abort();
     enCours = new AbortController();
     zone.setAttribute("aria-busy", "true");
-    zone.classList.add("catalogue-contenu--chargement");
     fetch(url, { headers: { "X-Fragment": "resultats" }, cache: "no-store", signal: enCours.signal, credentials: "same-origin" })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.text();
       })
       .then(function (html) {
-        zone.innerHTML = html;
+        // Pas d'effet de rechargement : la liste change sur place, et rien ne bouge si le résultat est le même.
+        if (html !== dernier) {
+          zone.innerHTML = html;
+          dernier = html;
+        }
         history.replaceState(null, "", url);
         compterFiltres();
       })
@@ -70,7 +69,6 @@
       })
       .finally(function () {
         zone.setAttribute("aria-busy", "false");
-        zone.classList.remove("catalogue-contenu--chargement");
       });
   }
 
@@ -96,7 +94,7 @@
   form.addEventListener("input", function (e) {
     if (e.target.name !== "q") return;
     clearTimeout(minuterie);
-    minuterie = setTimeout(appliquer, 350);
+    minuterie = setTimeout(appliquer, 180); // à chaque lettre, après une très courte pause
   });
   form.addEventListener("submit", function (e) {
     e.preventDefault();

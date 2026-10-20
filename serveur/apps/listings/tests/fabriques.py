@@ -50,7 +50,7 @@ def donnees_annonce(quartier, **extra):
     }
 
 
-def medias_prets(annonce, photos=3, video=True):
+def medias_prets(annonce, photos=5, video=True):
     if video:
         ListingMedia.objects.create(
             listing=annonce, kind="video", status="ready", declared_size_bytes=1

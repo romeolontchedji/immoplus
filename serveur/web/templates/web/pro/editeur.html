@@ -147,6 +147,14 @@
               {% include "web/composants/champ.html" %}
             {% endwith %}
           </div>
+          <div class="grille grille--2">
+            {% with champ=form.water_deposit_amount %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+            {% with champ=form.electricity_deposit_amount %}
+              {% include "web/composants/champ.html" %}
+            {% endwith %}
+          </div>
         </div>
         {% include "web/pro/etape-navigation.html" with precedent=2 suivant=4 %}
       </section>
@@ -219,13 +227,13 @@
               à ajouter (obligatoire)
             {% endif %}
           </li>
-          <li class="depot-recap__item{% if photos_pretes >= 3 %} depot-recap__item--ok{% endif %}">
-            {% if photos_pretes >= 3 %}
+          <li class="depot-recap__item{% if photos_pretes >= photos_min %} depot-recap__item--ok{% endif %}">
+            {% if photos_pretes >= photos_min %}
               {% include "web/composants/icone.html" with nom="check" taille=16 %}
             {% else %}
               {% include "web/composants/icone.html" with nom="x" taille=16 %}
             {% endif %}
-            Photos : {{ photos_pretes }}/10 prêtes (3 au minimum)
+            Photos : {{ photos_pretes }}/10 prêtes ({{ photos_min }} au minimum)
           </li>
         </ul>
         <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="depot">

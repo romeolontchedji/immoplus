@@ -176,7 +176,7 @@ class TestFil:
 
     def test_carte_legere_sans_donnee_privee(self):
         a = ListingFactory(address_private="Rue 12 maison bleue")
-        medias_prets(a, photos=3, video=True)
+        medias_prets(a, photos=5, video=True)
         carte = selectors.fil(f())["items"][0]
         texte = str(carte)
         assert "Rue 12" not in texte and "address_private" not in carte and "phone" not in texte

@@ -36,6 +36,18 @@ class AnnonceIn(serializers.Serializer):
     deposit_months = serializers.IntegerField(min_value=0, max_value=12)
     advance_months = serializers.IntegerField(min_value=0, max_value=12)
     agent_fee_amount = serializers.IntegerField(min_value=0, required=False)
+    water_deposit_amount = serializers.IntegerField(
+        min_value=0,
+        max_value=10_000_000,
+        required=False,
+        help_text="Caution eau en F (0 = aucune).",
+    )
+    electricity_deposit_amount = serializers.IntegerField(
+        min_value=0,
+        max_value=10_000_000,
+        required=False,
+        help_text="Caution électricité en F (0 = aucune).",
+    )
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
@@ -72,6 +84,8 @@ class AnnonceProOut(serializers.Serializer):
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
     agent_fee_amount = serializers.IntegerField()
+    water_deposit_amount = serializers.IntegerField()
+    electricity_deposit_amount = serializers.IntegerField()
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()

@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import json
 import posixpath
+import re
 import uuid
 
 from django.core.cache import cache
@@ -176,8 +177,24 @@ def _appliquer_criteres(requete, f: dict):
     if f["q"]:
         # Gabarit constant : le texte saisi n'entre que par les paramètres liés. La tolérance aux fautes
         # (trigrammes) ne s'applique qu'à partir de 4 caractères : en dessous, elle ramènerait trop de bruit.
-        sql = "search_vector @@ websearch_to_tsquery('french', unaccent(%s))"
-        params = [f["q"]]
+        # Recherche au fil de la frappe : chaque mot compte comme un début de mot (« B », « Ba », « Bani »…) sur
+        # le titre, le quartier, le repère, le type, les équipements et les autres détails (vecteur de recherche).
+        # Lettres et chiffres seulement : la requête reste toujours valide.
+        mots = re.findall(r"[^\W_]+", f["q"])[:8]
+        prefixes = " & ".join(f"{m}:*" for m in mots)
+        # Que des symboles : seule la tolérance aux fautes (plus bas) peut encore trouver.
+        sql, params = "FALSE", []
+        if mots:
+            debut_de_mot = (
+                "unaccent(lower(listings.title || ' ' || listings.landmark_text))"
+                " ~ ('\\m' || unaccent(lower(%s)))"
+            )
+            # Repli : mots vides ou très courts (« a », « de »), ignorés par la recherche plein texte.
+            sql = (
+                "search_vector @@ to_tsquery('french', unaccent(%s))"
+                f" OR ({' AND '.join([debut_de_mot] * len(mots))})"
+            )
+            params = [prefixes, *mots]
         if len(f["q"]) >= 4:
             sql += (
                 " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
@@ -500,6 +517,8 @@ def fiche_publique(ident) -> dict | None:
         "deposit_months": annonce.deposit_months,
         "advance_months": annonce.advance_months,
         "agent_fee_amount": annonce.agent_fee_amount,
+        "water_deposit_amount": annonce.water_deposit_amount,
+        "electricity_deposit_amount": annonce.electricity_deposit_amount,
         "available_from": annonce.available_from,
         "has_private_bathroom": annonce.has_private_bathroom,
         "is_fenced": annonce.is_fenced,
@@ -659,6 +678,15 @@ def alertes_correspondantes(annonce_id) -> list[tuple[uuid.UUID, uuid.UUID]]:
     )
     if not annonce.has_private_bathroom:
         requete = requete.filter(private_bathroom_required=False)
+    if not annonce.is_fenced:
+        requete = requete.filter(fenced_required=False)
+    requete = requete.filter(
+        Q(water_sources=[]) | Q(water_sources__overlap=list(annonce.water_sources or []))
+    )
+    requete = requete.filter(
+        Q(electricity_meters=[]) | Q(electricity_meters__contains=[annonce.electricity_meter])
+    )
+    requete = requete.filter(Q(kitchens=[]) | Q(kitchens__contains=[annonce.kitchen or "-"]))
     return list(requete.values_list("pk", "user_id"))
 
 
@@ -675,6 +703,14 @@ def nombre_pour_alerte(alerte: Alert) -> int:
         requete = requete.filter(distance_to_campus_m__lte=alerte.max_distance_m)
     if alerte.private_bathroom_required:
         requete = requete.filter(has_private_bathroom=True)
+    if alerte.fenced_required:
+        requete = requete.filter(is_fenced=True)
+    if alerte.water_sources:
+        requete = requete.filter(water_sources__overlap=alerte.water_sources)
+    if alerte.electricity_meters:
+        requete = requete.filter(electricity_meter__in=alerte.electricity_meters)
+    if alerte.kitchens:
+        requete = requete.filter(kitchen__in=alerte.kitchens)
     return requete.count()
 
 

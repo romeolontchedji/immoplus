@@ -184,7 +184,7 @@ class TestEspaceLocataire:
         c = connecte(u)
         formulaire = html(c.get("/compte/alertes?district=zongo&rent_max=20000"))
         assert re.search(r'value="20000"', formulaire)
-        assert re.search(rf'value="{q.pk}"\s+selected', formulaire)
+        assert re.search(rf'value="{q.pk}"\s+checked', formulaire)
         r = c.post(
             "/compte/alertes",
             {
@@ -223,7 +223,7 @@ class TestEspaceLocataire:
         c = connecte(u)
         page_edition = html(c.get(f"/compte/alertes?modifier={alerte.pk}"))
         assert "Modifier l'alerte" in page_edition
-        assert re.search(rf'value="{q.pk}"\s+selected', page_edition)
+        assert re.search(rf'value="{q.pk}"\s+checked', page_edition)
         r = c.post(
             "/compte/alertes",
             {

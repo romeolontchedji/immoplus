@@ -72,20 +72,6 @@
   padding: var(--sp-4); box-shadow: var(--shadow-pop);
   max-width: 40rem; margin-bottom: var(--sp-6);
 }
-.accueil-recherche__onglets {
-  display: flex; gap: var(--sp-1); margin-bottom: var(--sp-4); flex-wrap: wrap;
-}
-.accueil-recherche__onglet {
-  padding: var(--sp-2) var(--sp-4);
-  border: none; background: transparent; cursor: pointer;
-  font-size: var(--fs-14); font-weight: 700; color: var(--text-muted);
-  border-radius: var(--r-pill); transition: color var(--duree-1), background var(--duree-1);
-}
-.accueil-recherche__onglet:hover { color: var(--blue); background: var(--blue-soft); }
-.accueil-recherche__onglet--actif {
-  color: var(--blue); border-bottom: 2px solid var(--blue);
-  background: transparent; border-radius: 0; padding-bottom: calc(var(--sp-2) - 2px);
-}
 .accueil-recherche__barre {
   display: flex; align-items: stretch; gap: 0;
   border: 1.5px solid var(--border); border-radius: var(--r-field); overflow: hidden;
@@ -105,9 +91,6 @@
   padding: 0; min-width: 0;
 }
 .accueil-recherche__saisie::placeholder { color: var(--text-muted); }
-.accueil-recherche__separateur {
-  width: 1px; background: var(--divider); margin-block: var(--sp-2);
-}
 .accueil-recherche__bouton {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0 var(--sp-6); margin: var(--sp-2);
@@ -275,7 +258,6 @@
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (min-width: 640px) {
   .accueil-recherche__barre { flex-wrap: nowrap; }
-  .accueil-recherche__separateur { display: block; }
 }
 @media (max-width: 639px) {
   .accueil-hero {
@@ -294,14 +276,9 @@
   .accueil-recherche {
     padding: var(--sp-3);
   }
-  .accueil-recherche__onglet {
-    padding: var(--sp-1) var(--sp-3);
-    font-size: var(--fs-13);
-  }
   .accueil-recherche__barre {
     flex-direction: column; gap: 0;
   }
-  .accueil-recherche__separateur { display: none; }
   .accueil-recherche__champ { border-bottom: 1px solid var(--border); padding: var(--sp-2) var(--sp-3); }
   .accueil-recherche__champ:last-of-type { border-bottom: none; }
   .accueil-recherche__bouton { margin: var(--sp-2); }

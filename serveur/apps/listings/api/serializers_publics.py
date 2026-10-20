@@ -129,6 +129,10 @@ class FicheOut(serializers.Serializer):
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
     agent_fee_amount = serializers.IntegerField()
+    water_deposit_amount = serializers.IntegerField(help_text="Caution eau en F (0 = aucune).")
+    electricity_deposit_amount = serializers.IntegerField(
+        help_text="Caution électricité en F (0 = aucune)."
+    )
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
@@ -171,6 +175,19 @@ class AlerteIn(serializers.Serializer):
     max_rent = serializers.IntegerField(min_value=1, required=False, allow_null=True)
     private_bathroom_required = serializers.BooleanField(required=False)
     max_distance_m = serializers.IntegerField(min_value=1, required=False, allow_null=True)
+    water_sources = serializers.ListField(
+        child=serializers.CharField(max_length=10), required=False, max_length=10,
+        help_text="Eau souhaitée (au moins une) : individual, sub_meter, running, borehole, well. Vide = peu importe.",
+    )  # fmt: skip
+    electricity_meters = serializers.ListField(
+        child=serializers.CharField(max_length=10), required=False, max_length=10,
+        help_text="Électricité souhaitée : individual, sub_meter, shared. Vide = peu importe.",
+    )  # fmt: skip
+    kitchens = serializers.ListField(
+        child=serializers.CharField(max_length=10), required=False, max_length=10,
+        help_text="Cuisine souhaitée : private, shared. Vide = peu importe.",
+    )  # fmt: skip
+    fenced_required = serializers.BooleanField(required=False, help_text="Cour clôturée exigée.")
     is_active = serializers.BooleanField(required=False)
 
 
@@ -182,6 +199,10 @@ class AlerteOut(serializers.Serializer):
     max_rent = serializers.IntegerField(allow_null=True)
     private_bathroom_required = serializers.BooleanField()
     max_distance_m = serializers.IntegerField(allow_null=True)
+    water_sources = serializers.ListField(child=serializers.CharField())
+    electricity_meters = serializers.ListField(child=serializers.CharField())
+    kitchens = serializers.ListField(child=serializers.CharField())
+    fenced_required = serializers.BooleanField()
     is_active = serializers.BooleanField()
     created_at = serializers.DateTimeField()
 

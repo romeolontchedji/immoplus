@@ -28,3 +28,37 @@
   .alertes-grille__formulaire { position: sticky; top: calc(var(--hauteur-entete) + var(--sp-6)); }
 }
 .alerte-carte__trouve { margin: var(--sp-2) 0 0; font-size: var(--fs-14); font-weight: 700; color: var(--success); }
+
+/* Page Alertes : formulaire replié sous « Créer une nouvelle alerte », alertes en pause à part (2026-10-20). */
+.alertes-nouvelle__bouton { list-style: none; cursor: pointer; align-self: flex-start; }
+.alertes-nouvelle__bouton::-webkit-details-marker { display: none; }
+.alertes-nouvelle[open] .alertes-nouvelle__bouton { display: none; }
+.alertes-nouvelle__carte { margin-top: var(--sp-4); }
+.alertes-pause { border-top: 1px solid var(--divider); padding-top: var(--sp-4); }
+.alertes-pause__titre { cursor: pointer; font-weight: 700; color: var(--text-muted); }
+.alertes-pause[open] .alertes-pause__titre { margin-bottom: var(--sp-4); }
+
+/* Liste déroulante à choix multiples */
+.liste-multiple { position: relative; }
+.liste-multiple__resume {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2);
+  min-height: var(--cible); padding: var(--sp-2) var(--sp-4);
+  border: 1.5px solid var(--border); border-radius: var(--r-field); background: var(--surface);
+  color: var(--text-muted); font-size: var(--fs-15); cursor: pointer; list-style: none;
+}
+.liste-multiple__resume::-webkit-details-marker { display: none; }
+.liste-multiple__resume:focus-visible { outline: none; box-shadow: var(--anneau-focus); }
+.liste-multiple--remplie .liste-multiple__resume { color: var(--night); font-weight: 700; border-color: var(--primary); }
+.liste-multiple__texte { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.liste-multiple[open] .liste-multiple__chevron { transform: rotate(180deg); }
+.liste-multiple__options {
+  position: absolute; z-index: 20; top: calc(100% + var(--sp-1)); left: 0; right: 0;
+  display: flex; flex-direction: column; max-height: 18rem; overflow-y: auto; padding: var(--sp-2);
+  border: 1px solid var(--divider); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-pop);
+}
+.liste-multiple__option {
+  display: flex; align-items: center; gap: var(--sp-3); min-height: var(--cible);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field); cursor: pointer; color: var(--night);
+}
+.liste-multiple__option:hover { background: var(--blue-soft); }
+.liste-multiple__option input { width: 1.1rem; height: 1.1rem; margin: 0; accent-color: var(--primary); }

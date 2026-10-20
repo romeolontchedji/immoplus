@@ -31,11 +31,20 @@ class AnnonceForm(_Base):
         label="Prix à débattre", required=False,
         help_text="Coche si tu acceptes de discuter du loyer : la fiche affichera « à débattre ».",
     )  # fmt: skip
-    deposit_months = forms.IntegerField(label="Caution (mois)", min_value=0, max_value=12)
+    deposit_months = forms.IntegerField(label="Caution du loyer (mois)", min_value=0, max_value=12)
     advance_months = forms.IntegerField(label="Avance (mois)", min_value=0, max_value=12)
     agent_fee_amount = forms.IntegerField(
         label="Frais de démarcheur (FCFA)", min_value=0, required=False, initial=0
     )
+    # Cautions des compteurs, à part de la caution du loyer (demande du 2026-10-20).
+    water_deposit_amount = forms.IntegerField(
+        label="Caution eau (FCFA)", min_value=0, max_value=10_000_000, required=False, initial=0,
+        help_text="0 s'il n'y en a pas.",
+    )  # fmt: skip
+    electricity_deposit_amount = forms.IntegerField(
+        label="Caution électricité (FCFA)", min_value=0, max_value=10_000_000, required=False, initial=0,
+        help_text="0 s'il n'y en a pas.",
+    )  # fmt: skip
     available_from = forms.DateField(
         label="Disponible à partir du",
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -89,6 +98,8 @@ class AnnonceForm(_Base):
     def donnees(self) -> dict:
         d = dict(self.cleaned_data)
         d["agent_fee_amount"] = d.get("agent_fee_amount") or 0
+        d["water_deposit_amount"] = d.get("water_deposit_amount") or 0
+        d["electricity_deposit_amount"] = d.get("electricity_deposit_amount") or 0
         d["address_private"] = d.get("address_private") or ""
         d["description_md"] = d.get("description_md") or ""
         d.pop(

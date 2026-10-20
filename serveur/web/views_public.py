@@ -433,29 +433,67 @@ def mes_favoris(request):
     )
 
 
+DISTANCES_ALERTE = ((500, "500 m"), (1000, "1 km"), (2000, "2 km"), (5000, "5 km"))
+
+
 def _donnees_alerte(post) -> dict:
+    """Formulaire d'alerte : chaque liste déroulante accepte plusieurs choix (demande du 2026-10-20)."""
     d: dict = {"label": post.get("label", "")}
-    if post.get("district_ids"):
-        d["district_ids"] = [post["district_ids"]]
-    if post.get("room_types"):
-        d["room_types"] = [post["room_types"]]
-    if post.get("max_rent"):
-        d["max_rent"] = int(post["max_rent"]) if post["max_rent"].isdigit() else -1
-    d["private_bathroom_required"] = bool(post.get("private_bathroom_required"))
+    for nom in ("district_ids", "room_types", "water_sources", "electricity_meters", "kitchens"):
+        d[nom] = [v for v in post.getlist(nom) if v]
+    for nom in ("max_rent", "max_distance_m"):
+        valeur = post.get(nom, "")
+        d[nom] = (int(valeur) if valeur.isdigit() else -1) if valeur else None
+    indispensables = post.getlist("indispensables")
+    d["private_bathroom_required"] = "douche" in indispensables
+    d["fenced_required"] = "cloture" in indispensables
     return d
+
+
+def _criteres_proposes(get) -> dict:
+    """Critères pré-remplis depuis une recherche ou une fiche (« Créer une alerte semblable »)."""
+    indispensables = []
+    if get.get("bathroom") == "true":
+        indispensables.append("douche")
+    if get.get("fenced") == "true":
+        indispensables.append("cloture")
+    return {
+        "label": "",
+        "district_ids": [v for v in get.get("district", "").split(",") if v],
+        "room_types": [v for v in get.get("type", "").split(",") if v],
+        "max_rent": get.get("rent_max", ""),
+        "max_distance_m": "",
+        "water_sources": [v for v in get.get("water", "").split(",") if v],
+        "electricity_meters": [v for v in get.get("meter", "").split(",") if v],
+        "kitchens": [v for v in get.get("kitchen", "").split(",") if v],
+        "indispensables": indispensables,
+    }
 
 
 def _lien_alerte(alerte, slugs_quartiers: dict) -> str:
     """Page Chambres filtrée comme l'alerte (le filtre « quartier » attend le slug, pas l'identifiant)."""
     params = {}
     if alerte.district_ids:
-        params["district"] = slugs_quartiers.get(str(alerte.district_ids[0]), "")
+        params["district"] = ",".join(
+            filter(None, (slugs_quartiers.get(str(i), "") for i in alerte.district_ids))
+        )
     if alerte.room_types:
-        params["type"] = alerte.room_types[0]
+        params["type"] = ",".join(alerte.room_types)
     if alerte.max_rent:
         params["rent_max"] = alerte.max_rent
+    if alerte.max_distance_m:
+        params["max_distance_m"] = alerte.max_distance_m
     if alerte.private_bathroom_required:
         params["bathroom"] = "true"
+    if alerte.fenced_required:
+        params["fenced"] = "true"
+    for cle, valeurs in (
+        ("water", alerte.water_sources),
+        ("meter", alerte.electricity_meters),
+        ("kitchen", alerte.kitchens),
+    ):
+        if valeurs:
+            params[cle] = ",".join(valeurs)
     params = {k: v for k, v in params.items() if v}
     return "/annonces" + (f"?{urlencode(params)}" if params else "")
 
@@ -487,22 +525,37 @@ def mes_alertes(request):
                 message = "Alerte créée : tu seras prévenu des nouvelles chambres."
         except ErreurMetier as e:
             message, niveau = _message(e), "danger"
-    proposition = {
-        "label": "", "district": request.GET.get("district", ""), "type": request.GET.get("type", ""),
-        "rent_max": request.GET.get("rent_max", ""), "bathroom": request.GET.get("bathroom") == "true",
-    }  # fmt: skip
+    proposition = _criteres_proposes(request.GET)
+    # Le formulaire reste replié sous « Créer une nouvelle alerte », sauf s'il y a quelque chose à y montrer.
+    ouvrir = request.GET.get("nouvelle") == "1" or any(
+        request.GET.get(c) for c in ("district", "type", "rent_max", "water", "meter", "kitchen")
+    )
+    if request.method == "POST" and niveau == "danger":
+        proposition, ouvrir = (
+            {
+                **_donnees_alerte(request.POST),
+                "indispensables": request.POST.getlist("indispensables"),
+            },
+            True,
+        )
     liste_alertes = selectors.alertes_de(request.user.pk)
     edition = None
     identifiant = request.GET.get("modifier")
     if identifiant:
         edition = next((a for a in liste_alertes if str(a.pk) == str(identifiant)), None)
         if edition is not None:
+            ouvrir = True
             proposition = {
                 "label": edition.label or "",
-                "district": str((edition.district_ids or [""])[0]),
-                "type": (edition.room_types or [""])[0],
-                "rent_max": edition.max_rent or "",
-                "bathroom": edition.private_bathroom_required,
+                "district_ids": [str(i) for i in edition.district_ids or []],
+                "room_types": list(edition.room_types or []),
+                "max_rent": edition.max_rent or "",
+                "max_distance_m": edition.max_distance_m or "",
+                "water_sources": list(edition.water_sources or []),
+                "electricity_meters": list(edition.electricity_meters or []),
+                "kitchens": list(edition.kitchens or []),
+                "indispensables": (["douche"] if edition.private_bathroom_required else [])
+                + (["cloture"] if edition.fenced_required else []),
             }
     quartiers = _quartiers()
     noms_quartiers = {str(q.id): q.name for q in quartiers}
@@ -515,6 +568,11 @@ def mes_alertes(request):
                 noms_quartiers.get(str(identifiant), "") for identifiant in a.district_ids or []
             ],
             "types": [libelles_types.get(t, t) for t in a.room_types or []],
+            "equipements": [dict(Eau.choices).get(v, v) for v in a.water_sources or []]
+            + [dict(Compteur.choices).get(v, v) for v in a.electricity_meters or []]
+            + [dict(Cuisine.choices).get(v, v) for v in a.kitchens or []]
+            + (["Douche interne"] if a.private_bathroom_required else [])
+            + (["Cour clôturée"] if a.fenced_required else []),
             "nombre": selectors.nombre_pour_alerte(
                 a
             ),  # ce que l'alerte trouve aujourd'hui (plan v3, H1)
@@ -525,11 +583,26 @@ def mes_alertes(request):
     options = (
         alertes.options()
     )  # plan v2, M5 : quartiers les plus demandés d'abord, budgets fréquents
+    # Une recherche donne le quartier par son slug ; la liste de l'alerte attend son identifiant.
+    par_slug = {d["slug"]: str(d["id"]) for d in options["districts"]}
+    proposition["district_ids"] = [par_slug.get(v, v) for v in proposition.get("district_ids", [])]
+    budgets = list(options["budgets"])
+    if (
+        str(proposition.get("max_rent") or "").isdigit()
+        and int(proposition["max_rent"]) not in budgets
+    ):
+        budgets = sorted([*budgets, int(proposition["max_rent"])])
     return render(
         request,
         "web/public/alertes.html",
-        {"alertes": alertes_vue, "quartiers": options["districts"], "budgets": options["budgets"], "types": _types(),
-         "message": message, "niveau": niveau, "proposition": proposition, "edition": edition},
+        {"alertes": [a for a in alertes_vue if a["objet"].is_active],
+         "en_pause": [a for a in alertes_vue if not a["objet"].is_active],
+         "quartiers": [(str(d["id"]), d["name"]) for d in options["districts"]],
+         "budgets": budgets, "types": _types(),
+         "distances": DISTANCES_ALERTE, "eaux": Eau.choices, "compteurs": Compteur.choices,
+         "cuisines": [c for c in Cuisine.choices if c[0] != Cuisine.NONE],
+         "indispensables": (("douche", "Douche et WC internes"), ("cloture", "Cour clôturée")),
+         "message": message, "niveau": niveau, "proposition": proposition, "edition": edition, "ouvrir": ouvrir},
     )  # fmt: skip
 
 

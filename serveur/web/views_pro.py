@@ -9,7 +9,7 @@ from apps.accounts import selectors as comptes
 from apps.chat import selectors as chat_selectors
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
-from apps.listings.enums import StatutAnnonce, StatutMedia
+from apps.listings.enums import PHOTOS_MIN, StatutAnnonce, StatutMedia
 from apps.listings.services import annonces, medias, types
 from apps.media import stockage
 
@@ -235,6 +235,8 @@ def _initial(annonce) -> dict:
         "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months, "advance_months": annonce.advance_months,
         "agent_fee_amount": annonce.agent_fee_amount, "available_from": annonce.available_from,
+        "water_deposit_amount": annonce.water_deposit_amount,
+        "electricity_deposit_amount": annonce.electricity_deposit_amount,
         "has_private_bathroom": annonce.has_private_bathroom, "is_fenced": annonce.is_fenced,
         "water_sources": annonce.water_sources, "electricity_meter": annonce.electricity_meter,
         "kitchen": annonce.kitchen, "rent_negotiable": annonce.rent_negotiable,
@@ -260,7 +262,7 @@ def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, ph
             return 7
         return 6 if annonce.status == StatutAnnonce.DRAFT else 1
     if annonce.status == StatutAnnonce.DRAFT:
-        return 7 if (video_prete and photos_pretes >= 3 and not en_cours) else 6
+        return 7 if (video_prete and photos_pretes >= PHOTOS_MIN and not en_cours) else 6
     return 6 if en_cours else 1
 
 
@@ -318,5 +320,6 @@ def editeur(request, profil, annonce_id=None):
                 "statut": STATUT_LIGNE.get(annonce.status, (annonce.status, "")) if annonce else None,
                 "erreur_media": erreur_media, "apercu": apercu, "titre": "Modifier l'annonce" if annonce else "Nouvelle annonce", "medias": liste_medias, "medias_en_cours": en_cours,
                 "photos_pretes": sum(1 for m in liste_medias if m["est_photo"] and m["pret"]),
+                "photos_min": PHOTOS_MIN,
                 "video_prete": any(not m["est_photo"] and m["pret"] for m in liste_medias), "commandes": commandes_autorisees(annonce) if annonce else []}  # fmt: skip
     return render(request, "web/pro/editeur.html", contexte)

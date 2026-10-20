@@ -19,44 +19,19 @@
         </p>
         {# Barre de recherche rapide #}
         <div class="accueil-recherche" role="search">
-          <div class="accueil-recherche__onglets"
-               role="tablist"
-               aria-label="Type de logement">
-            <button class="accueil-recherche__onglet accueil-recherche__onglet--actif"
-                    role="tab"
-                    aria-selected="true"
-                    data-type="">Toutes</button>
-            {% for t in types_accueil %}
-              <button class="accueil-recherche__onglet"
-                      role="tab"
-                      aria-selected="false"
-                      data-type="{{ t.slug }}">{{ t.label }}</button>
-            {% endfor %}
-          </div>
+          {# Un seul champ : quartier, type ou équipement ; les filtres détaillés sont sur la page Chambres. #}
           <form class="accueil-recherche__barre"
                 method="get"
                 action="/annonces"
                 id="form-recherche-hero">
-            <input type="hidden" name="type" id="input-type-hero" value="">
             <div class="accueil-recherche__champ">
-              <label class="accueil-recherche__label" for="quartier-hero">QUARTIER</label>
+              <label class="accueil-recherche__label" for="recherche-hero">RECHERCHER</label>
               <input class="accueil-recherche__saisie"
-                     id="quartier-hero"
+                     id="recherche-hero"
                      name="q"
-                     type="text"
-                     placeholder="Banikanni, Guéma…"
+                     type="search"
+                     placeholder="Quartier, type, forage, cuisine…"
                      autocomplete="off">
-            </div>
-            <div class="accueil-recherche__separateur" aria-hidden="true"></div>
-            <div class="accueil-recherche__champ">
-              <label class="accueil-recherche__label" for="budget-hero">BUDGET MAX</label>
-              <input class="accueil-recherche__saisie"
-                     id="budget-hero"
-                     name="rent_max"
-                     type="number"
-                     min="0"
-                     step="1000"
-                     placeholder="Ton budget en F">
             </div>
             <button class="accueil-recherche__bouton" type="submit">Voir les chambres</button>
           </form>
@@ -64,7 +39,7 @@
         {# Appel secondaire : « Voir les chambres » est déjà le bouton de la recherche juste au-dessus #}
         <div class="accueil-hero__actions">
           <a class="bouton bouton--contour-clair bouton--grand"
-             href="/compte/alertes">Créer une alerte</a>
+             href="/compte/alertes?nouvelle=1">Créer une alerte</a>
         </div>
         <p class="accueil-hero__lien-discret">
           <a href="#comment-ca-marche">Tu loues des chambres&nbsp;? Découvre comment publier</a>
@@ -443,5 +418,4 @@
       </div>
     </div>
   </section>
-  <script src="{% static 'js/accueil.js' %}" defer></script>
 {% endblock %}
