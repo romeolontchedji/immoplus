@@ -126,9 +126,10 @@ class TestFilEtFiche:
         for url in ("/", "/annonces", f"/annonces/{a.slug}"):
             page = html(Client().get(url))
             assert " style=" not in page and "<style" not in page
-            assert not re.search(r"<script(?![^>]*\bsrc=)", page) and not re.search(
-                r"\son[a-z]+=", page
-            )
+            # Les données structurées (JSON-LD) ne s'exécutent pas : seuls les scripts exécutables sont interdits.
+            assert not re.search(
+                r"<script(?![^>]*\bsrc=)(?![^>]*application/ld\+json)", page
+            ) and not re.search(r"\son[a-z]+=", page)
 
     def test_la_vue_est_comptee_une_fois_par_visiteur(self):
         from apps.core import stats
@@ -405,6 +406,7 @@ class TestNotificationsEtReferencement:
         DistrictFactory(slug="albarika")
         robots = html(Client().get("/robots.txt"))
         assert "Disallow: /compte" in robots and "Disallow: /pro" in robots
+        assert "Sitemap: http://testserver/sitemap.xml" in robots
         sitemap = html(Client().get("/sitemap.xml"))
         assert f"/annonces/{a.slug}" in sitemap and "/quartiers/albarika" in sitemap
         assert Client().get("/sitemap.xml")["Content-Type"].startswith("application/xml")

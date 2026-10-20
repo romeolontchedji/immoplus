@@ -1,5 +1,5 @@
 {% extends "web/espace.html" %}
-{% load immoplus %}
+{% load immoplus static %}
 {% block titre %}Mes annonces — Espace Gérant — Immo+{% endblock %}
 {% block espace %}
   <div class="pro-principal pile pile--large">
@@ -63,4 +63,5 @@
       </div>
     {% endif %}
   </div>
+  <script src="{% static 'js/partage.js' %}" defer></script>
 {% endblock %}

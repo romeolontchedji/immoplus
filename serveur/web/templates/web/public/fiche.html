@@ -1,7 +1,25 @@
 {% extends "web/base.html" %}
 {% load immoplus static %}
 {% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Immo+{% endblock %}
-{% block description %}{{ f.title }} à {{ f.district.name }}, {{ f.rent_amount|fcfa }} F par mois.{% endblock %}
+{% block description %}{{ partage.description }}{% endblock %}
+{% block partage %}
+  <link rel="canonical" href="{{ partage.url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ partage.titre }}">
+  <meta property="og:description" content="{{ partage.description }}">
+  <meta property="og:url" content="{{ partage.url }}">
+  <meta property="og:image" content="{{ partage.image }}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"
+        content="{{ f.title }}, {{ f.district.name }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ partage.titre }}">
+  <meta name="twitter:description" content="{{ partage.description }}">
+  <meta name="twitter:image" content="{{ partage.image }}">
+  <script type="application/ld+json">{{ partage.json_ld }}</script>
+{% endblock %}
 {% block contenu %}
   <section class="section">
     <div class="conteneur">
@@ -48,22 +66,25 @@
             {{ f.rent_amount|fcfa }} F<span class="fiche-prix-mois">/ mois</span>
           </p>
           {% if f.rent_negotiable %}<span class="fiche-debattre">Prix à débattre</span>{% endif %}
-          {% if request.user.is_authenticated and request.user.role == "client" %}
-            <form method="post" action="/annonces/{{ f.slug }}/favori">
-              {% csrf_token %}
-              <button type="submit"
-                      class="fiche-favori{% if f.is_favorite %} fiche-favori--actif{% endif %}"
-                      aria-pressed="{% if f.is_favorite %}true{% else %}false{% endif %}">
+          <div class="fiche-tete__actions">
+            {% include "web/composants/partage.html" with chemin="/annonces/"|add:f.slug texte=partage.texte ident="fiche" %}
+            {% if request.user.is_authenticated and request.user.role == "client" %}
+              <form method="post" action="/annonces/{{ f.slug }}/favori">
+                {% csrf_token %}
+                <button type="submit"
+                        class="fiche-favori{% if f.is_favorite %} fiche-favori--actif{% endif %}"
+                        aria-pressed="{% if f.is_favorite %}true{% else %}false{% endif %}">
+                  {% include "web/composants/icone.html" with nom="heart" taille=18 %}
+                  {% if f.is_favorite %}Dans mes favoris{% else %}Ajouter aux favoris{% endif %}
+                </button>
+              </form>
+            {% elif not request.user.is_authenticated %}
+              <a class="fiche-favori" href="/connexion?next=/annonces/{{ f.slug }}">
                 {% include "web/composants/icone.html" with nom="heart" taille=18 %}
-                {% if f.is_favorite %}Dans mes favoris{% else %}Ajouter aux favoris{% endif %}
-              </button>
-            </form>
-          {% elif not request.user.is_authenticated %}
-            <a class="fiche-favori" href="/connexion?next=/annonces/{{ f.slug }}">
-              {% include "web/composants/icone.html" with nom="heart" taille=18 %}
-              Ajouter aux favoris
-            </a>
-          {% endif %}
+                Ajouter aux favoris
+              </a>
+            {% endif %}
+          </div>
         </div>
       </header>
       <div class="fiche-layout">
@@ -431,4 +452,5 @@
     </div>
   {% endif %}
   <script src="{% static 'js/galerie.js' %}" defer></script>
+  <script src="{% static 'js/partage.js' %}" defer></script>
 {% endblock %}

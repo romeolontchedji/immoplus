@@ -10,11 +10,14 @@ l'original est effacé 24 h après un traitement réussi.
 
 import posixpath
 import shutil
+import urllib.request
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+
+LECTURE_MAX_OCTETS = 15 * 1024 * 1024
 
 
 class StorageProvider(ABC):
@@ -37,6 +40,10 @@ class StorageProvider(ABC):
     @abstractmethod
     def espace_suffisant(self) -> bool:
         """Faux quand il faut refuser les nouveaux envois (disque plein, quota atteint)."""
+
+    def lire(self, cle: str) -> bytes | None:
+        """Contenu d'un fichier publié (image d'aperçu des liens partagés) ; `None` s'il est absent."""
+        return None
 
     @staticmethod
     def cle(prefixe: str, nom_fichier: str) -> str:
@@ -67,6 +74,12 @@ class LocalStorageProvider(StorageProvider):
 
     def url_publique(self, cle):
         return f"{settings.MEDIA_URL}{cle}" if cle else None
+
+    def lire(self, cle):
+        try:
+            return self._chemin(cle).read_bytes()
+        except (OSError, ValueError):
+            return None
 
     def supprimer(self, prefixe):
         shutil.rmtree(self._chemin(prefixe), ignore_errors=True)
@@ -101,6 +114,17 @@ class S3StorageProvider(StorageProvider):
 
     def url_publique(self, cle):
         return f"{self.base_publique.rstrip('/')}/{cle}" if cle else None
+
+    def lire(self, cle):
+        # Lecture par l'URL publique du CDN (https seulement) : aucune dépendance, taille plafonnée.
+        url = self.url_publique(cle)
+        if not url or not url.startswith("https://"):
+            return None
+        try:
+            with urllib.request.urlopen(url, timeout=5) as reponse:  # noqa: S310  # nosec B310 - https vérifié
+                return reponse.read(LECTURE_MAX_OCTETS)
+        except (OSError, ValueError):
+            return None
 
     def supprimer(self, prefixe):
         shutil.rmtree(self.travail / prefixe, ignore_errors=True)

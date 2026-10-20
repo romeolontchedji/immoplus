@@ -3,13 +3,15 @@
 Adaptateurs minces : chaque vue appelle les mêmes services que l'API, sans règle métier propre.
 """
 
+import json
 import uuid
 from functools import wraps
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
+from django.templatetags.static import static
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 from apps.chat import selectors as chat_selectors
@@ -17,7 +19,7 @@ from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
 from apps.listings.enums import Compteur, Cuisine, Eau
-from apps.listings.services import alertes, avis, favoris, fil, vues
+from apps.listings.services import alertes, avis, favoris, fil, partage, vues
 from apps.listings.services import types as types_chambre
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
@@ -185,9 +187,129 @@ def _rendre_fiche(request, f, **extra):
         "peut_donner_avis": avis.peut_donner(request.user if est_client else None, f["id"]),
         "mon_avis": selectors.avis_de(request.user.pk, f["id"]) if est_client else None,
         "notes": (5, 4, 3, 2, 1),
+        "partage": _partage(request, f),
         **extra,
     }
     return render(request, "web/public/fiche.html", contexte)
+
+
+def _base_site(request) -> str:
+    """Adresse du site telle que vue par le visiteur (https derrière Caddy) : liens partagés et balises."""
+    return request.build_absolute_uri("/").rstrip("/")
+
+
+def _partage(request, f) -> dict:
+    """Lien canonique, aperçu Open Graph et données structurées schema.org d'une fiche (un seul lien suffit)."""
+    base = _base_site(request)
+    url = f"{base}/annonces/{f['slug']}"
+    image = f"{base}/annonces/{f['slug']}/apercu.jpg"
+    loyer = f"{f['rent_amount']:,}".replace(",", " ")
+    titre = f"{f['title']} — {loyer} F/mois · {f['district']['name']}, Parakou"
+    description = partage.resume({**f, "room_type_label": _libelle_type(f["room_type"])})
+    lieu = {
+        "@type": "Accommodation",
+        "name": f["title"],
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Parakou",
+            "addressRegion": "Borgou",
+            "addressCountry": "BJ",
+            "streetAddress": f["district"]["name"],
+        },
+        "geo": {"@type": "GeoCoordinates", "latitude": f["latitude"], "longitude": f["longitude"]},
+        "amenityFeature": [
+            {"@type": "LocationFeatureSpecification", "name": nom, "value": True}
+            for nom, present in (
+                ("Douche intérieure", f.get("has_private_bathroom")),
+                ("Cour clôturée", f.get("is_fenced")),
+                (f.get("electricity_label"), bool(f.get("electricity_label"))),
+                (f.get("water_label"), bool(f.get("water_label"))),
+                (f.get("kitchen_label"), f.get("kitchen") in ("private", "shared")),
+            )
+            if present
+        ],
+    }
+    if f["reviews"]["count"]:
+        lieu["aggregateRating"] = {
+            "@type": "AggregateRating",
+            "ratingValue": round(float(f["reviews"]["average"]), 1),
+            "reviewCount": f["reviews"]["count"],
+            "bestRating": 5,
+            "worstRating": 1,
+        }
+    donnees = [
+        {
+            "@context": "https://schema.org",
+            "@type": "RealEstateListing",
+            "name": f["title"],
+            "description": description,
+            "url": url,
+            "image": [image]
+            + [m["url"] for m in f["media"] if m["kind"] == "photo" and m["url"]][:5],
+            "datePosted": f["published_at"].isoformat() if f.get("published_at") else None,
+            "about": lieu,
+            "offers": {
+                "@type": "Offer",
+                "price": f["rent_amount"],
+                "priceCurrency": "XOF",
+                "availability": "https://schema.org/InStock"
+                if f["status"] == "published"
+                else "https://schema.org/SoldOut",
+                "businessFunction": "http://purl.org/goodrelations/v1#LeaseOut",
+                "priceSpecification": {
+                    "@type": "UnitPriceSpecification",
+                    "price": f["rent_amount"],
+                    "priceCurrency": "XOF",
+                    "unitCode": "MON",
+                },
+            },
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Chambres",
+                    "item": f"{base}/annonces",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": f["district"]["name"],
+                    "item": f"{base}/quartiers/{f['district']['slug']}",
+                },
+                {"@type": "ListItem", "position": 3, "name": f["title"], "item": url},
+            ],
+        },
+    ]
+    return {
+        "url": url,
+        "image": image,
+        "titre": titre,
+        "description": description,
+        "texte": f"{f['title']} à {f['district']['name']}, {loyer} F/mois, sur Immo+",
+        "json_ld": _json_ld(donnees),
+    }
+
+
+def _json_ld(donnees) -> str:
+    """JSON-LD inséré tel quel dans la page : `<`, `>` et `&` échappés, comme `json_script`."""
+    brut = json.dumps(donnees, ensure_ascii=False, default=str)
+    for car, code in (("<", "\\u003c"), (">", "\\u003e"), ("&", "\\u0026")):
+        brut = brut.replace(car, code)
+    return mark_safe(brut)  # noqa: S308  # nosec B308 B703 - <, > et & échappés ci-dessus
+
+
+def apercu_partage(request, slug):
+    """Image JPEG 1200 × 630 des aperçus de liens (WhatsApp, Facebook…), tirée de la couverture."""
+    image = partage.image_apercu(slug)
+    if image is None:
+        return redirect(static("design/partage.jpg"))
+    reponse = HttpResponse(image, content_type="image/jpeg")
+    reponse["Cache-Control"] = "public, max-age=86400"
+    return reponse
 
 
 def fiche(request, slug):
@@ -576,17 +698,21 @@ def mes_notifications(request):
 # --------------------------------------------------------------- référencement
 def robots(request):
     contenu = "User-agent: *\nAllow: /\nDisallow: /compte\nDisallow: /pro\nDisallow: /connexion\nDisallow: /inscription\n"
-    contenu += (
-        f"Sitemap: {settings.SITE_URL}/sitemap.xml\n" if getattr(settings, "SITE_URL", "") else ""
-    )
+    contenu += f"Sitemap: {_base_site(request)}/sitemap.xml\n"
     return HttpResponse(contenu, content_type="text/plain; charset=utf-8")
 
 
 def sitemap(request):
-    base = getattr(settings, "SITE_URL", "") or f"{request.scheme}://{request.get_host()}"
-    urls = [f"{base}/", f"{base}/annonces"]
-    urls += [f"{base}/quartiers/{d.slug}" for d in _quartiers()]
-    urls += [f"{base}/annonces/{slug}" for slug, _ in selectors.slugs_publies()]
+    base = _base_site(request)
+    urls = [(f"{base}/", None), (f"{base}/annonces", None)]
+    urls += [(f"{base}/quartiers/{d.slug}", None) for d in _quartiers()]
+    urls += [(f"{base}/annonces/{slug}", maj) for slug, maj in selectors.slugs_publies()]
     corps = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    corps += "".join(f"<url><loc>{u}</loc></url>\n" for u in urls) + "</urlset>\n"
+    corps += "".join(
+        f"<url><loc>{u}</loc>"
+        + (f"<lastmod>{maj.date().isoformat()}</lastmod>" if maj else "")
+        + "</url>\n"
+        for u, maj in urls
+    )
+    corps += "</urlset>\n"
     return HttpResponse(corps, content_type="application/xml; charset=utf-8")

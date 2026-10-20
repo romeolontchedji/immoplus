@@ -56,5 +56,10 @@ def url_publique(cle_fichier: str | None) -> str | None:
     return fournisseurs.fournisseur().url_publique(cle_fichier)
 
 
+def lire(cle_fichier: str) -> bytes | None:
+    """Contenu d'un dérivé publié, `None` s'il est absent."""
+    return fournisseurs.fournisseur().lire(cle_fichier)
+
+
 def supprimer_derives(annonce_id, media_id) -> None:
     fournisseurs.fournisseur().supprimer(_prefixe(annonce_id, media_id))

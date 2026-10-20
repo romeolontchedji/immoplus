@@ -230,6 +230,23 @@ def _url_variante(media: ListingMedia, largeur: str | None = None) -> str | None
     return stockage.url_publique(posixpath.join(dossier, choisi))
 
 
+def cle_image_partage(ident) -> str | None:
+    """Clé de la plus grande variante de la couverture (sinon de l'affiche de la vidéo) d'une annonce visible."""
+    annonce = _trouver_visible(ident)
+    if annonce is None:
+        return None
+    medias = _medias_prets([annonce.pk]).get(annonce.pk, [])
+    photos = [m for m in medias if m.kind == TypeMedia.PHOTO and m.variants and m.poster_path]
+    couverture = next((m for m in photos if m.is_cover), photos[0] if photos else None)
+    if couverture is not None:
+        variantes = couverture.variants
+        return posixpath.join(
+            posixpath.dirname(couverture.poster_path), variantes[max(variantes, key=int)]
+        )
+    video = next((m for m in medias if m.kind == TypeMedia.VIDEO and m.poster_path), None)
+    return video.poster_path if video else None
+
+
 def _medias_prets(ids) -> dict:
     par_annonce: dict = {}
     for m in ListingMedia.objects.filter(

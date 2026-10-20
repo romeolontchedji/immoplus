@@ -14,6 +14,7 @@ urlpatterns = [
     path("confidentialite", views.confidentialite, name="confidentialite"),
     path("annonces", pub.annonces, name="annonces"),
     path("annonces/<slug:slug>", pub.fiche, name="fiche"),
+    path("annonces/<slug:slug>/apercu.jpg", pub.apercu_partage, name="apercu-partage"),
     path("annonces/<slug:slug>/contacter", pub.contacter, name="contacter"),
     path("annonces/<slug:slug>/favori", pub.basculer_favori, name="favori"),
     path("annonces/<slug:slug>/signaler", pub.signaler, name="signaler"),

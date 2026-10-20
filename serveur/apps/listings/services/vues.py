@@ -9,7 +9,8 @@ from apps.core import redis_file, stats
 
 EXPIRATION_VISITEUR_S = 26 * 3600
 _ROBOTS = re.compile(
-    r"bot|crawl|spider|slurp|preview|facebookexternalhit|headless|curl|python-requests", re.I
+    r"bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|headless|curl|python-requests",
+    re.I,
 )
 PREFIXE_JOUR = "vues:jour:"
 PREFIXE_VIDAGE = "vues:vidage:"

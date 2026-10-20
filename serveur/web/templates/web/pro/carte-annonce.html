@@ -42,6 +42,9 @@
           Modifier
         {% endif %}
       </a>
+      {% if a.status == "published" %}
+        {% include "web/composants/partage.html" with chemin="/annonces/"|add:a.slug texte=a.title|add:" à "|add:a.district.name|add:", sur Immo+" ident=a.pk petit=True %}
+      {% endif %}
       {% for c in ligne.commandes %}
         {% if c.danger %}
           {% include "web/composants/confirmation.html" with action=c.action question="Supprimer définitivement cette annonce ? Elle disparaîtra pour tout le monde." libelle="Supprimer" form_action=ligne.url %}

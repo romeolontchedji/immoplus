@@ -2,6 +2,15 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 : partage des chambres.**
+- Bouton « Partager » très visible sur la fiche (site et application) et pour le gérant sur ses annonces en ligne :
+  WhatsApp, Facebook, applications du téléphone (TikTok, Instagram…), lien à copier.
+- Un seul lien suffit : balises Open Graph et Twitter (titre, prix, quartier, équipements), image d'aperçu JPEG
+  1200 × 630 tirée de la couverture (`/annonces/<slug>/apercu.jpg`, en cache), lien canonique, données structurées
+  schema.org (annonce, loyer en XOF, note, fil d'Ariane). Image par défaut pour les autres pages.
+- `robots.txt` annonce enfin le plan du site, qui donne la date de mise à jour de chaque annonce. Le robot de
+  WhatsApp ne compte plus de vue. `assetlinks.json` porte le paquet `bj.immoplus.app` (empreinte encore à fournir).
+
 **2026-10-20 : nouvelle identité Immo+ (domaine `immoplus.bj`).**
 - Nom, logos (site, administration, application, icônes Android et iOS, favicon), PDF de la documentation régénérés.
   Paquet mobile `bj.immoplus.app`, schéma `immoplus`. Palette inchangée.

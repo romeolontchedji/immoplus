@@ -251,6 +251,7 @@
   padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
   background: var(--accent-soft); color: var(--warning); font-size: var(--fs-13); font-weight: 800;
 }
+.fiche-tete__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .fiche-favori {
   display: inline-flex; align-items: center; gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-4); border: 1.5px solid var(--border); border-radius: var(--r-pill);
