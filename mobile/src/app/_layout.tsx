@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { VerrouHote } from "@/features/auth/verrou";
+import { CleSecoursHote } from "@/features/auth/cleSecours";
 import { BanniereInterne } from "@/features/notifications/BanniereInterne";
 import { AppGate } from "@/features/system/AppGate";
 import { FiltresProvider } from "@/features/listings/filtres";
@@ -68,6 +69,7 @@ function Racine() {
       <DemandeNotificationsHote />
       <BanniereInterne />
       <VerrouHote />
+      <CleSecoursHote />
       {animation && pret ? <DemarrageAnime onFin={finAnimation} /> : null}
     </>
   );

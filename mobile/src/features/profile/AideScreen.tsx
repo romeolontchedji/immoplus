@@ -22,7 +22,7 @@ const SECTIONS: Section[] = [
   {
     titre: "Mes données sont-elles protégées ?",
     contenu:
-      "Ton numéro de téléphone est utilisé uniquement pour la connexion et les notifications. Il n'est jamais transmis aux gérants ni aux autres utilisateurs.",
+      "Immo+ ne demande ni ne garde ton numéro de téléphone : tu te connectes avec ton nom d'utilisateur et ton mot de passe. Ajoute un e-mail dans « Retrouver mon compte » pour pouvoir changer de mot de passe si tu l'oublies.",
   },
   {
     titre: "Comment signaler un problème ?",

@@ -176,8 +176,8 @@ export function CompteGerantScreen() {
         </View>
 
         <Text variante="legende" muted>
-          Une fois le compte créé, l’équipe Immo+ te transmet tes identifiants : connecte-toi avec
-          ton numéro et ton mot de passe.
+          Une fois le compte créé, l’équipe Immo+ t’envoie un lien d’activation : tu y choisis ton nom
+          d’utilisateur et ton mot de passe, puis tu te connectes ici.
         </Text>
 
         {/* Actions directes */}

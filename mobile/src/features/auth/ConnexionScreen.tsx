@@ -8,7 +8,7 @@ import { messageErreur, t } from "@/i18n/fr";
 import { colors, sp } from "@/ui/theme/tokens";
 import { Button } from "@/ui/components/Button";
 import { Screen } from "@/ui/components/Screen";
-import { PasswordField, PhoneField } from "@/ui/components/TextField";
+import { PasswordField, TextField } from "@/ui/components/TextField";
 import { Logotype } from "@/ui/components/Logo";
 import { Text } from "@/ui/components/Text";
 import { useConnexion } from "./hooks";
@@ -19,8 +19,8 @@ type Valeurs = z.infer<typeof connexionSchema>;
 /**
  * ConnexionScreen fidèle à la maquette Mobile · Connexion@1x.png :
  * - Logo Immo+ avec puce solaire
- * - Titre "Entre ton numéro" + sous-titre
- * - Préfixe +229 et saisie du numéro
+ * - Titre « Connecte-toi » + sous-titre
+ * - Nom d'utilisateur (ADR 0009 : plus de numéro de téléphone)
  * - Champ mot de passe avec affichage/masquage
  * - Bouton primaire cobalt "Se connecter"
  * - Liens "Mot de passe oublié ?" et "Pas de compte ? Inscris-toi"
@@ -35,7 +35,7 @@ export function ConnexionScreen() {
     formState: { errors },
   } = useForm<Valeurs>({
     resolver: zodResolver(connexionSchema),
-    defaultValues: { phone: "", password: "" },
+    defaultValues: { username: "", password: "" },
   });
 
   const erreur = connexion.error;
@@ -58,7 +58,7 @@ export function ConnexionScreen() {
               letterSpacing: -0.5,
             }}
           >
-            Entre ton numéro
+            Connecte-toi
           </Text>
           <Text style={{ fontSize: 15, color: colors.textMuted, lineHeight: 22 }}>
             Connecte-toi pour retrouver tes alertes, tes favoris et tes conversations.
@@ -69,12 +69,18 @@ export function ConnexionScreen() {
         <View style={{ gap: sp[2], marginTop: sp[1] }}>
           <Controller
             control={control}
-            name="phone"
+            name="username"
             render={({ field }) => (
-              <PhoneField
+              <TextField
+                label="NOM D’UTILISATEUR"
+                placeholder="awa.bio"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="username"
+                textContentType="username"
                 value={field.value}
                 onChangeText={field.onChange}
-                erreur={errors.phone?.message}
+                erreur={errors.username?.message}
               />
             )}
           />
@@ -119,7 +125,7 @@ export function ConnexionScreen() {
 
           {/* Lien mot de passe oublié */}
           <Pressable
-            onPress={() => router.push("/mot-de-passe/telephone")}
+            onPress={() => router.push("/mot-de-passe" as never)}
             style={{ alignItems: "center", paddingVertical: 8 }}
           >
             <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "600" }}>
@@ -132,7 +138,7 @@ export function ConnexionScreen() {
         <View style={{ alignItems: "center", gap: 14, marginTop: sp[4] }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Text style={{ fontSize: 14, color: colors.night }}>Pas de compte ?</Text>
-            <Link href="/inscription/telephone">
+            <Link href={"/inscription" as never}>
               <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "700" }}>
                 Inscris–toi
               </Text>

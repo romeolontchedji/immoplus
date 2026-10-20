@@ -99,7 +99,7 @@ describe("renouvellement du jeton sur 401", () => {
   it("jamais de renouvellement pour la connexion elle-même", async () => {
     await storeTokens({ access: "A", refresh: "R" });
     scenario = () => ({ status: 401, corps: { error: { code: "invalid_credentials", message: "x" } } });
-    await expect(unwrap(api.POST("/v1/auth/login", { body: { platform: "android", label: "t", phone: "+22997123456", password: "x" } }))).rejects.toMatchObject({ code: "invalid_credentials" });
+    await expect(unwrap(api.POST("/v1/auth/login", { body: { platform: "android", label: "t", username: "awa.bio", password: "x" } }))).rejects.toMatchObject({ code: "invalid_credentials" });
     expect(journal).toHaveLength(1);
   });
 });

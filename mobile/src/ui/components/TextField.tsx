@@ -1,8 +1,7 @@
 import { forwardRef, useState } from "react";
 import { Pressable, TextInput, View, type TextInputProps } from "react-native";
 import { familleDe } from "@/ui/theme/polices";
-import { colors, fs, rayon, sp } from "@/ui/theme/tokens";
-import { formaterLocal } from "@/lib/phone";
+import { colors, fs, sp } from "@/ui/theme/tokens";
 import { Eye, EyeOff } from "lucide-react-native";
 import { Text } from "./Text";
 
@@ -93,74 +92,6 @@ export const PasswordField = forwardRef<TextInput, TextFieldProps>(function Pass
           <Eye size={20} color={colors.textMuted} />
         )}
       </Pressable>
-    </View>
-  );
-});
-
-/** Numéro béninois : préfixe +229 fixe et champ groupé conforme aux maquettes. */
-export const PhoneField = forwardRef<
-  TextInput,
-  Omit<TextFieldProps, "label"> & { label?: string }
->(function PhoneField({ label = "NUMÉRO DE TÉLÉPHONE", value, onChangeText, erreur, aide, ...rest }, ref) {
-  return (
-    <View style={{ gap: 6, marginBottom: sp[3] }}>
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "800",
-          color: colors.night,
-          letterSpacing: 0.5,
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <View
-          style={{
-            minHeight: 52,
-            justifyContent: "center",
-            alignItems: "center",
-            paddingHorizontal: 16,
-            borderRadius: 14,
-            backgroundColor: colors.white,
-            borderWidth: 1.5,
-            borderColor: "rgba(15, 27, 61, 0.12)",
-          }}
-        >
-          <Text style={{ fontSize: fs[16], fontWeight: "700", color: colors.night }}>+229</Text>
-        </View>
-        <TextInput
-          ref={ref}
-          accessibilityLabel={label}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          textContentType="telephoneNumber"
-          placeholder="01 97 42 18 06"
-          placeholderTextColor={colors.textMuted}
-          maxLength={14}
-          value={formaterLocal(String(value ?? ""))}
-          onChangeText={(v) => onChangeText?.(formaterLocal(v))}
-          {...rest}
-          style={{
-            flex: 1,
-            minHeight: 52,
-            borderWidth: 1.5,
-            borderRadius: 14,
-            paddingHorizontal: 16,
-            fontSize: fs[16],
-            fontFamily: familleDe("600"),
-            color: colors.night,
-            backgroundColor: colors.white,
-            borderColor: erreur ? colors.danger : "rgba(15, 27, 61, 0.12)",
-          }}
-        />
-      </View>
-      {erreur ? (
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.danger }}>{erreur}</Text>
-      ) : aide ? (
-        <Text style={{ fontSize: 12, color: colors.textMuted }}>{aide}</Text>
-      ) : null}
     </View>
   );
 });

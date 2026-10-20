@@ -101,46 +101,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/auth/otp/request": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Demander un code à usage unique
-         * @description Réponse identique que le numéro ait un compte ou non. Plafonds et coupe-circuit : CDC §5.3.
-         */
-        post: operations["v1_auth_otp_request_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/auth/otp/verify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Vérifier un code
-         * @description Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).
-         */
-        post: operations["v1_auth_otp_verify_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/auth/password/change": {
         parameters: {
             query?: never;
@@ -161,7 +121,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/auth/password/reset": {
+    "/v1/auth/password/email-link": {
         parameters: {
             query?: never;
             header?: never;
@@ -171,10 +131,30 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Réinitialiser le mot de passe
-         * @description Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).
+         * Mot de passe oublié : recevoir un lien par e-mail
+         * @description Réponse identique que le compte existe ou non. Le lien (30 min) s'ouvre sur le site.
          */
-        post: operations["v1_auth_password_reset_create"];
+        post: operations["v1_auth_password_email_link_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/password/recovery-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mot de passe oublié : clé de secours
+         * @description Nouveau mot de passe ; retourne la nouvelle clé (l'ancienne ne sert qu'une fois).
+         */
+        post: operations["v1_auth_password_recovery_key_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -212,9 +192,29 @@ export interface paths {
         put?: never;
         /**
          * Créer un compte locataire
-         * @description Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).
+         * @description Aucun code : le compte est créé tout de suite. La clé de secours n'est donnée qu'ici.
          */
         post: operations["v1_auth_register_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/username-available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Le nom d'utilisateur est-il libre ?
+         * @description Vérifié pendant la frappe à l'inscription ; propose des noms libres tirés du prénom et du nom.
+         */
+        get: operations["v1_auth_username_available_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -641,6 +641,26 @@ export interface paths {
         patch: operations["v1_me_alerts_partial_update"];
         trace?: never;
     };
+    "/v1/me/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ajouter ou changer mon e-mail
+         * @description Envoie un lien de confirmation (24 h) ; l'e-mail ne compte qu'une fois confirmé sur le site.
+         */
+        post: operations["v1_me_email_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/favorites": {
         parameters: {
             query?: never;
@@ -676,26 +696,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/me/phone/change": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Changer de numéro
-         * @description Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).
-         */
-        post: operations["v1_me_phone_change_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/me/preferences": {
         parameters: {
             query?: never;
@@ -714,6 +714,26 @@ export interface paths {
          */
         put: operations["v1_me_preferences_update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/recovery-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Régénérer ma clé de secours
+         * @description Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).
+         */
+        post: operations["v1_me_recovery_key_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1340,9 +1360,15 @@ export interface components {
             current_password: string;
             new_password: string;
         };
-        ChangementNumeroIn: {
-            password: string;
-            otp_token: string;
+        CleDeSecoursIn: {
+            username: string;
+            /** @description Ex. K7QM-2XPA-9RTD-H4WN. */
+            recovery_key: string;
+            new_password: string;
+        };
+        CleDeSecoursOut: {
+            /** @description Nouvelle clé : à montrer une seule fois. */
+            recovery_key: string;
         };
         CompteurOut: {
             unread_count: number;
@@ -1350,7 +1376,8 @@ export interface components {
         ConnexionIn: {
             platform: components["schemas"]["PlatformEnum"];
             label?: string;
-            phone: string;
+            /** @description Nom d'utilisateur (ou, jusqu'au 20/11/2026, numéro d'un ancien compte). */
+            username: string;
             password: string;
         };
         ContactOut: {
@@ -1399,6 +1426,11 @@ export interface components {
             /** Format: uuid */
             listing_id: string;
         };
+        DisponibiliteOut: {
+            available: boolean;
+            message: string;
+            suggestions: string[];
+        };
         DistrictOut: {
             /** Format: uuid */
             id: string;
@@ -1436,6 +1468,9 @@ export interface components {
          * @enum {string}
          */
         ElectricityMeterEnum: "individual" | "sub_meter" | "shared";
+        EmailIn: {
+            email: string;
+        };
         EnvoiOut: {
             message: components["schemas"]["MessageOut"];
             warning: string | null;
@@ -1529,8 +1564,10 @@ export interface components {
         InscriptionIn: {
             platform: components["schemas"]["PlatformEnum"];
             label?: string;
-            otp_token: string;
-            full_name: string;
+            /** @description 3 à 30 caractères : lettres, chiffres, point, tiret bas (ADR 0009). */
+            username: string;
+            first_name: string;
+            last_name: string;
             password: string;
             terms_accepted: boolean;
             /** @description « Tu es » (facultatif).
@@ -1541,6 +1578,14 @@ export interface components {
              *     * `self_employed` - self_employed
              *     * `other` - other */
             occupation?: (components["schemas"]["OccupationEnum"] | components["schemas"]["NullEnum"]) | null;
+        };
+        InscriptionOut: {
+            user: components["schemas"]["UtilisateurOut"];
+            tokens: components["schemas"]["JetonsOut"];
+            /** Format: uuid */
+            device_id: string;
+            /** @description Clé de secours : à montrer une seule fois (ADR 0009). */
+            recovery_key: string;
         };
         InterlocuteurOut: {
             /** Format: uuid */
@@ -1571,6 +1616,10 @@ export interface components {
         KitchenEnum: "private" | "shared" | "none";
         LectureIn: {
             up_to_seq: number;
+        };
+        LienParEmailIn: {
+            /** @description Nom d'utilisateur ou e-mail confirmé. */
+            identifier: string;
         };
         LimitesOut: {
             message_max_length: number;
@@ -1659,9 +1708,8 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
-        MotDePasseOublieIn: {
-            otp_token: string;
-            new_password: string;
+        MotDePasseIn: {
+            password: string;
         };
         NotificationOut: {
             /** Format: uuid */
@@ -1693,23 +1741,6 @@ export interface components {
             districts: components["schemas"]["QuartierFrequenceOut"][];
             /** @description Plafonds proposés, en F. */
             budgets: number[];
-        };
-        OtpDemandeIn: {
-            phone: string;
-            purpose: components["schemas"]["PurposeEnum"];
-            attestation_token?: string;
-        };
-        OtpDemandeOut: {
-            resend_after_s: number;
-        };
-        OtpJetonOut: {
-            otp_token: string;
-            expires_in: number;
-        };
-        OtpVerificationIn: {
-            phone: string;
-            purpose: components["schemas"]["PurposeEnum"];
-            code: string;
         };
         OuvertureOut: {
             message: components["schemas"]["MessageOut"];
@@ -1781,7 +1812,8 @@ export interface components {
             cover?: string | null;
         };
         PatchedProfilIn: {
-            full_name?: string;
+            first_name?: string;
+            last_name?: string;
             /** @description `null` efface la réponse.
              *
              *     * `student_up` - student_up
@@ -1818,13 +1850,6 @@ export interface components {
             /** @description Nom du type, 3 à 40 caractères. */
             label: string;
         };
-        /**
-         * @description * `signup` - signup
-         *     * `reset_password` - reset_password
-         *     * `change_phone` - change_phone
-         * @enum {string}
-         */
-        PurposeEnum: "signup" | "reset_password" | "change_phone";
         QuartierFrequenceOut: {
             /** Format: uuid */
             id: string;
@@ -1986,10 +2011,16 @@ export interface components {
         UtilisateurOut: {
             /** Format: uuid */
             id: string;
+            username: string | null;
+            first_name: string;
+            last_name: string;
             full_name: string;
+            /** @description Seulement s'il est confirmé. */
+            email: string | null;
+            /** Format: date-time */
+            recovery_key_created_at: string | null;
             occupation: (components["schemas"]["OccupationEnum"] | components["schemas"]["NullEnum"]) | null;
             role: components["schemas"]["RoleEnum"];
-            phone: string | null;
             terms_version: string | null;
             /** Format: date-time */
             created_at: string;
@@ -2124,56 +2155,6 @@ export interface operations {
             };
         };
     };
-    v1_auth_otp_request_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OtpDemandeIn"];
-                "application/x-www-form-urlencoded": components["schemas"]["OtpDemandeIn"];
-                "multipart/form-data": components["schemas"]["OtpDemandeIn"];
-            };
-        };
-        responses: {
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OtpDemandeOut"];
-                };
-            };
-        };
-    };
-    v1_auth_otp_verify_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OtpVerificationIn"];
-                "application/x-www-form-urlencoded": components["schemas"]["OtpVerificationIn"];
-                "multipart/form-data": components["schemas"]["OtpVerificationIn"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OtpJetonOut"];
-                };
-            };
-        };
-    };
     v1_auth_password_change_create: {
         parameters: {
             query?: never;
@@ -2198,7 +2179,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_password_reset_create: {
+    v1_auth_password_email_link_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2207,18 +2188,43 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MotDePasseOublieIn"];
-                "application/x-www-form-urlencoded": components["schemas"]["MotDePasseOublieIn"];
-                "multipart/form-data": components["schemas"]["MotDePasseOublieIn"];
+                "application/json": components["schemas"]["LienParEmailIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["LienParEmailIn"];
+                "multipart/form-data": components["schemas"]["LienParEmailIn"];
             };
         };
         responses: {
             /** @description No response body */
-            204: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_auth_password_recovery_key_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleDeSecoursIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["CleDeSecoursIn"];
+                "multipart/form-data": components["schemas"]["CleDeSecoursIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleDeSecoursOut"];
+                };
             };
         };
     };
@@ -2267,7 +2273,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SessionOut"];
+                    "application/json": components["schemas"]["InscriptionOut"];
+                };
+            };
+        };
+    };
+    v1_auth_username_available_retrieve: {
+        parameters: {
+            query: {
+                first_name?: string;
+                last_name?: string;
+                username: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisponibiliteOut"];
                 };
             };
         };
@@ -3016,6 +3045,30 @@ export interface operations {
             };
         };
     };
+    v1_me_email_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["EmailIn"];
+                "multipart/form-data": components["schemas"]["EmailIn"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     v1_me_favorites_list: {
         parameters: {
             query?: never;
@@ -3075,31 +3128,6 @@ export interface operations {
             };
         };
     };
-    v1_me_phone_change_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangementNumeroIn"];
-                "application/x-www-form-urlencoded": components["schemas"]["ChangementNumeroIn"];
-                "multipart/form-data": components["schemas"]["ChangementNumeroIn"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UtilisateurOut"];
-                };
-            };
-        };
-    };
     v1_me_preferences_retrieve: {
         parameters: {
             query?: never;
@@ -3140,6 +3168,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreferencesSchema"];
+                };
+            };
+        };
+    };
+    v1_me_recovery_key_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotDePasseIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["MotDePasseIn"];
+                "multipart/form-data": components["schemas"]["MotDePasseIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleDeSecoursOut"];
                 };
             };
         };

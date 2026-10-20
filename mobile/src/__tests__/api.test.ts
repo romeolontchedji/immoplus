@@ -26,7 +26,7 @@ describe("erreurs de l'API", () => {
     expect(isRetryable(new Error("autre"))).toBe(false);
   });
   it("message pour l'utilisateur : par code, puis message du serveur, puis générique", () => {
-    expect(messageErreur("invalid_credentials")).toBe("Numéro ou mot de passe incorrect.");
+    expect(messageErreur("invalid_credentials")).toBe("Nom d'utilisateur ou mot de passe incorrect.");
     expect(messageErreur("code_inconnu", "Texte du serveur")).toBe("Texte du serveur");
     expect(messageErreur(undefined)).toBe("Une erreur est survenue.");
   });

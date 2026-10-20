@@ -1,5 +1,4 @@
 import { dateCourte, distance, fcfa, heure, jourRelatif } from "@/lib/format";
-import { chiffres, formaterLocal, versE164 } from "@/lib/phone";
 import { estInferieure } from "@/lib/version";
 import { appliquerModeration, composerLignes, fusionner, type Message } from "@/lib/messages";
 
@@ -23,20 +22,6 @@ describe("format", () => {
     const iso = new Date(2026, 0, 5, 9, 7).toISOString();
     expect(heure(iso)).toBe("09:07");
     expect(dateCourte(iso)).toBe("5 janv. 2026");
-  });
-});
-
-describe("téléphone du Bénin", () => {
-  it.each([
-    ["97 12 34 56", "+22997123456"],
-    ["0197123456", "+2290197123456"],
-    ["+229 97 12 34 56", "+22997123456"],
-    ["0022997123456", "+22997123456"],
-  ])("%s → %s", (saisie, attendu) => expect(versE164(saisie)).toBe(attendu));
-  it.each(["", "123", "12345678901234", "abcdefgh"])("refuse « %s »", (s) => expect(versE164(s)).toBeNull());
-  it("groupe par deux", () => {
-    expect(formaterLocal("97123456")).toBe("97 12 34 56");
-    expect(chiffres("97 12-34.56")).toBe("97123456");
   });
 });
 

@@ -11,11 +11,12 @@ export type PreferencesNotif = { messages: boolean; apercu: boolean; alertes: bo
 /** Profil courant (cache court : rafraîchi à l'ouverture de l'écran). */
 export const useMe = () => useQuery({ queryKey: qk.me, queryFn: () => unwrap(api.GET("/v1/me")), staleTime: 30_000 });
 
-/** Modifier le nom complet et « Tu es » (`null` efface la réponse). */
+/** Modifier prénom, nom et « Tu es » (`null` efface la réponse). */
 export function useModifierProfil() {
   const { rafraichirProfil } = useSession();
   return useMutation({
-    mutationFn: (corps: { full_name: string; occupation: Occupation | null }) => unwrap(api.PATCH("/v1/me", { body: corps })),
+    mutationFn: (corps: { first_name: string; last_name: string; occupation: Occupation | null }) =>
+      unwrap(api.PATCH("/v1/me", { body: corps })),
     onSuccess: () => void rafraichirProfil(),
   });
 }
@@ -28,12 +29,16 @@ export function useChangerMotDePasse() {
   });
 }
 
-/** Finaliser le changement de numéro (après OTP). */
-export function useChangerTelephone() {
+/** Ajouter ou changer son e-mail : un lien de confirmation part ; l'e-mail ne compte qu'une fois confirmé (ADR 0009). */
+export function useAjouterEmail() {
+  return useMutation({ mutationFn: (email: string) => unwrap(api.POST("/v1/me/email", { body: { email: email.trim() } })) });
+}
+
+/** Nouvelle clé de secours (mot de passe actuel exigé) ; l'ancienne cesse de valoir. */
+export function useNouvelleCle() {
   const { rafraichirProfil } = useSession();
   return useMutation({
-    mutationFn: (corps: { otp_token: string; password: string }) =>
-      unwrap(api.POST("/v1/me/phone/change", { body: corps })),
+    mutationFn: async (password: string) => (await unwrap(api.POST("/v1/me/recovery-key", { body: { password } }))).recovery_key,
     onSuccess: () => void rafraichirProfil(),
   });
 }

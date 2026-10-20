@@ -12,7 +12,6 @@ import {
   LogOut,
   MessageCircle,
   ShieldCheck,
-  Smartphone,
   UserRound,
   BellRing,
 } from "lucide-react-native";
@@ -21,7 +20,6 @@ import { OCCUPATIONS } from "@/features/auth/ChoixOccupation";
 import { useVerrouBiometrique } from "@/features/auth/verrou";
 import { useContactEquipe } from "@/features/system/useAppConfig";
 import { APP_VERSION } from "@/config/env";
-import { formaterLocal } from "@/lib/phone";
 import { t } from "@/i18n/fr";
 import { useSession } from "@/state/session";
 import { colors, sp } from "@/ui/theme/tokens";
@@ -68,7 +66,7 @@ export function ProfilScreen() {
           <Avatar nom={user.full_name} id={user.id} taille={60} surFondSombre />
           <View style={{ flex: 1, gap: 2 }}>
             <Text variante="sousTitre" couleur={colors.white}>{user.full_name}</Text>
-            {user.phone ? <Text variante="legende" couleur="rgba(255,255,255,0.82)">+229 {formaterLocal(user.phone.replace(/^\+229/, ""))}</Text> : null}
+            {user.username ? <Text variante="legende" couleur="rgba(255,255,255,0.82)">@{user.username}</Text> : null}
           </View>
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
@@ -86,7 +84,7 @@ export function ProfilScreen() {
 
       <GroupeListe titre="Compte et sécurité">
         <LigneListe titre="Mon profil" sousTitre="Nom, « Tu es »" icone={UserRound} onPress={aller("/parametres/nom")} />
-        <LigneListe titre="Numéro de téléphone" icone={Smartphone} onPress={aller("/parametres/telephone")} />
+        <LigneListe titre="Retrouver mon compte" sousTitre="E-mail et clé de secours" icone={LifeBuoy} onPress={aller("/parametres/securite")} />
         <LigneListe titre="Mot de passe" icone={KeyRound} onPress={aller("/parametres/mot-de-passe")} />
         <LigneListe titre="Appareils connectés" sousTitre="Déconnecte un téléphone perdu" icone={ShieldCheck} onPress={aller("/parametres/appareils")} />
         {verrou.disponible ? (

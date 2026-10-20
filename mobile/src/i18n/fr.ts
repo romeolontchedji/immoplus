@@ -7,12 +7,15 @@ const fr = {
   },
   onglets: { accueil: "Accueil", recherche: "Recherche", messages: "Messages", alertes: "Alertes", profil: "Profil", tableau: "Tableau de bord", annonces: "Annonces" },
   auth: {
-    telephone: "Numéro de téléphone", motDePasse: "Mot de passe", code: "Code reçu par SMS", nom: "Nom complet", cgu: "J'accepte les conditions d'utilisation",
-    seConnecter: "Se connecter", creerCompte: "Créer un compte", motDePasseOublie: "Mot de passe oublié ?", envoyerCode: "Recevoir le code", renvoyerDans: "Renvoyer le code dans",
+    nomUtilisateur: "Nom d'utilisateur", motDePasse: "Mot de passe", cgu: "J'accepte les conditions d'utilisation",
+    seConnecter: "Se connecter", creerCompte: "Créer un compte", motDePasseOublie: "Mot de passe oublié ?",
   },
   erreurs: {
     // Messages montrés à l'utilisateur, par code d'erreur de l'API. Le serveur renvoie aussi un message : il sert de repli.
-    invalid_credentials: "Numéro ou mot de passe incorrect.",
+    invalid_credentials: "Nom d'utilisateur ou mot de passe incorrect.",
+    invalid_recovery_key: "Nom d'utilisateur ou clé de secours incorrects.",
+    username_taken: "Ce nom d'utilisateur est déjà pris.",
+    email_taken: "Cette adresse est déjà liée à un autre compte.",
     account_suspended: "Ton compte est suspendu. Tu peux consulter les annonces mais pas écrire.",
     rate_limited: "Trop de tentatives. Réessaie dans un moment.",
     contact_detected: "Les coordonnées (numéro, e-mail, lien) ne sont pas autorisées : garde les échanges dans Immo+.",

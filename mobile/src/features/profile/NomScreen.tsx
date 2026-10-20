@@ -13,18 +13,19 @@ import { useState } from "react";
 import { ChoixOccupation, type Occupation } from "@/features/auth/ChoixOccupation";
 import { useModifierProfil } from "./queries";
 
-const schema = z.object({ full_name: z.string().trim().min(2, "Au moins 2 caractères.").max(80, "80 caractères au plus.") });
+const champNom = (libelle: string) => z.string().trim().min(1, `Indique ton ${libelle}.`).max(60, "60 caractères au plus.");
+const schema = z.object({ first_name: champNom("prénom"), last_name: champNom("nom") });
 type Valeurs = z.infer<typeof schema>;
 
-/** Modifier le nom complet affiché sur le profil (EF-CPT-03) et « Tu es » (décision V2). */
+/** Modifier prénom et nom affichés sur le profil (EF-CPT-03, ADR 0009) et « Tu es » (décision V2). */
 export function NomScreen() {
   const { etat } = useSession();
   const modifier = useModifierProfil();
-  const nom = etat.statut === "connecte" ? etat.user.full_name : "";
+  const user = etat.statut === "connecte" ? etat.user : null;
   const [occupation, setOccupation] = useState<Occupation | null>(etat.statut === "connecte" ? (etat.user.occupation ?? null) : null);
   const { control, handleSubmit, formState: { errors, isSubmitSuccessful } } = useForm<Valeurs>({
     resolver: zodResolver(schema),
-    defaultValues: { full_name: nom },
+    defaultValues: { first_name: user?.first_name ?? "", last_name: user?.last_name ?? "" },
   });
   const erreur = modifier.error;
 
@@ -34,16 +35,16 @@ export function NomScreen() {
       <Text muted>Saisis ton prénom et ton nom tels qu’ils apparaîtront dans l’application.</Text>
       <Controller
         control={control}
-        name="full_name"
+        name="first_name"
         render={({ field }) => (
-          <TextField
-            label="Nom complet"
-            value={field.value}
-            onChangeText={field.onChange}
-            autoCapitalize="words"
-            autoComplete="name"
-            erreur={errors.full_name?.message}
-          />
+          <TextField label="Prénom" value={field.value} onChangeText={field.onChange} autoCapitalize="words" autoComplete="given-name" erreur={errors.first_name?.message} />
+        )}
+      />
+      <Controller
+        control={control}
+        name="last_name"
+        render={({ field }) => (
+          <TextField label="Nom" value={field.value} onChangeText={field.onChange} autoCapitalize="words" autoComplete="family-name" erreur={errors.last_name?.message} />
         )}
       />
       <ChoixOccupation valeur={occupation} onChange={setOccupation} />
@@ -58,7 +59,7 @@ export function NomScreen() {
       <Button
         titre={t.commun.enregistrer}
         chargement={modifier.isPending}
-        onPress={handleSubmit((v) => void modifier.mutate({ full_name: v.full_name, occupation }))}
+        onPress={handleSubmit((v) => void modifier.mutate({ first_name: v.first_name, last_name: v.last_name, occupation }))}
       />
     </Screen>
   );
