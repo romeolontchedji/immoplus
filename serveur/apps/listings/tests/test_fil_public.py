@@ -220,8 +220,8 @@ class TestFiche:
         medias_prets(a)
         fiche = selectors.fiche_publique(a.slug)
         assert (
-            fiche["latitude"] == 9.341
-            and fiche["longitude"] == 2.634
+            fiche["latitude"] == 9.34  # centre du quartier (DistrictFactory), jamais la chambre
+            and fiche["longitude"] == 2.63
             and fiche["distance_m"] == 550
         )
         assert fiche["gerant"]["verified"] is True

@@ -319,7 +319,7 @@ class TestMessagesWeb:
                 "client_msg_id": str(uuid.uuid4()),
             },
         )
-        assert "garde les échanges dans Logeo" in html(r)
+        assert "garde les échanges dans Immo+" in html(r)
         assert "97 12 34 56" not in html(
             connecte(p.user).get(f"/compte/messages/{conversation.pk}")
         )
@@ -478,11 +478,11 @@ class TestCartesEtFiche:
         a = ListingFactory(landmark_text="")
         page = html(Client().get(f"/annonces/{a.slug}"))
         assert "pharmacie du carrefour" not in page and "openstreetmap.org/?mlat=" in page
-        assert "Position approximative" in page
+        assert "Seul le quartier est indiqué" in page
 
 
 def test_delai_de_reponse_lisible():
-    from web.templatetags.logeo import delai_reponse
+    from web.templatetags.immoplus import delai_reponse
 
     assert delai_reponse(14) == "14 min"
     assert delai_reponse(889) == "15 h"
