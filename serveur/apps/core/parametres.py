@@ -59,7 +59,7 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "SUBSCRIPTION_GRACE_DAYS": (7, "Jours de grâce d'un abonnement impayé avant expiration."),
     "PAID_ALERTS_ENABLED": (
         False,
-        "Alerte prioritaire payante des locataires (SMS en plus du push) : désactivée en V1.",
+        "Alerte prioritaire payante des locataires (prévue, pas encore construite) : désactivée.",
     ),
     "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
     "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),

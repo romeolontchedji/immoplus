@@ -43,10 +43,14 @@ contraste, en une seule fois.
 |---|---|---|---|---|---|---|---|
 | Se connecter | `/connexion` | GET/POST | `views_auth.connexion` | `accounts.services.authentification` | public | 302 `next` sûr | `ErreurMetier` liée au champ |
 | Se déconnecter | `/deconnexion` | POST | `deconnexion` | `django.contrib.auth.logout` | connecté | 302 `/` | — |
-| S'inscrire (téléphone) | `/inscription` | GET/POST | `inscription_telephone` | `accounts.services.otp.demander` | public | 302 code | `ErreurMetier` |
-| Saisir le code | `/inscription/code` | GET/POST | `inscription_code` | `otp.verifier` | public | 302 profil | code invalide/expiré |
-| Finaliser le profil | `/inscription/profil` | GET/POST | `inscription_profil` | `inscription.inscrire_client` | public | session ouverte | `otp_token_invalid` |
-| Mot de passe oublié | `/mot-de-passe-oublie[/code\|/nouveau]` | GET/POST | `oubli_*` | `otp`, `inscription.reinitialiser_mot_de_passe` | public | 302 | `ErreurMetier` |
+| S'inscrire (une seule page, Turnstile) | `/inscription` | GET/POST | `inscription_page` | `inscription.inscrire_client` | public | session ouverte, 302 clé | `ErreurMetier` liée au champ |
+| Voir et confirmer sa clé de secours | `/compte/cle-de-secours` | GET/POST | `cle_de_secours` | — (clé gardée en session le temps de l'afficher) | connecté | 302 accueil | case non cochée |
+| Mot de passe oublié : lien par e-mail (Turnstile) | `/mot-de-passe-oublie` | GET/POST | `oubli` | `inscription.demander_lien_par_email` | public | même message dans tous les cas | — |
+| Mot de passe oublié : clé de secours | `/mot-de-passe-oublie/cle` | GET/POST | `oubli_cle` | `inscription.reinitialiser_par_cle` | public | nouvelle clé affichée | clé fausse, verrouillage |
+| Nouveau mot de passe par lien | `/mot-de-passe/nouveau/<jeton>` | GET/POST | `nouveau_mot_de_passe` | `inscription.reinitialiser_par_lien` | public | 302 connexion | lien expiré ou déjà utilisé |
+| Activer un compte gérant | `/activer/<jeton>` | GET/POST | `activer_gerant` | `administration.activer_gerant` | public | session ouverte | lien expiré, nom pris |
+| Confirmer un e-mail | `/compte/email/confirmer/<jeton>` | GET | `confirmer_email` | `compte.confirmer_email` | public | message | lien expiré |
+| Profil (nom, e-mail, clé, mot de passe) | `/compte/profil` | GET/POST | `mon_profil` | `compte.{modifier_profil,demander_ajout_email,regenerer_cle_de_secours,changer_mot_de_passe}` | connecté | message | `ErreurMetier` liée au champ |
 | Espace compte | `/compte` | GET/POST | `espace_compte` | `compte.{modifier_profil,changer_mot_de_passe,supprimer}` | connecté | message | `ErreurMetier` liée au champ |
 
 ## Espace gérant

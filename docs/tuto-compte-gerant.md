@@ -1,118 +1,121 @@
 # Tuto — Créer un compte gérant
 
 Ce document décrit, étape par étape, le parcours réel d'un gérant chez Immo+ :
-de la commande manuelle dans l'administration jusqu'à l'ouverture de son espace
-professionnel. Il est écrit en suivant le code, pas une intention : à chaque
-étape, on indique ce qui est **fait**, ce qui est **à faire**, et le fichier
-concerné.
+de la création dans l'administration jusqu'à l'ouverture de son espace
+professionnel. Il est écrit en suivant le code : à chaque étape, on indique ce
+qui est **fait**, ce qui reste **manuel**, et le fichier concerné.
 
-Règle directrice : **pas d'inscription publique de gérant et pas de parcours
-d'activation**. Les comptes sont créés par l'équipe après vérification ; le
-gérant reçoit ses identifiants, se connecte, puis peut changer son mot de passe
-quand il veut.
+Règle directrice : **pas d'inscription publique de gérant**. Les comptes sont
+créés par l'équipe après vérification, **sans mot de passe ni numéro de
+téléphone** (ADR 0009). Le gérant reçoit un **lien d'activation** et choisit
+lui-même son nom d'utilisateur et son mot de passe.
 
 ## Vue d'ensemble
 
 | # | Étape | Qui | État |
 | - | ----- | --- | ---- |
 | 1 | Contact + vérification (pièces, entretien) | gérant → équipe | manuel, hors plateforme |
-| 2 | Création du compte dans l'administration | administrateur | **fait** (ADM) |
-| 3 | Remise des identifiants au gérant (hors plateforme) | équipe | manuel, hors plateforme |
-| 4 | Première connexion et modification du mot de passe | gérant | **fait** (mobile + web) |
-| 5 | Vérification du badge + première annonce | administrateur / modérateur | fait (modération) |
+| 2 | Création du compte dans l'administration | administrateur | **fait** |
+| 3 | Création et envoi du lien d'activation (WhatsApp, e-mail) | administrateur | **fait** (envoi manuel) |
+| 4 | Activation : nom d'utilisateur, mot de passe, clé de secours | gérant | **fait** (site) |
+| 5 | Badge Vérifié + première annonce | administrateur / modérateur | **fait** (modération) |
 
 ## Étape 1 — Contact et vérification (hors plateforme)
 
-Le gérant n'a aucun moyen de s'inscrire seul. Il prend contact avec l'équipe (par appel/WhatsApp depuis la page « Je suis gérant »). L'équipe procède à la vérification manuelle des pièces et à un court entretien.
+Le gérant n'a aucun moyen de s'inscrire seul. Il prend contact avec l'équipe
+(appel ou WhatsApp depuis la page « Je suis gérant »). L'équipe vérifie ses
+pièces et mène un court entretien.
 
-> Cette étape est entièrement hors plateforme. Aucune trace côté serveur (pas d'audit, pas de fiche de candidature).
+> Cette étape est entièrement hors plateforme : aucune trace côté serveur.
 
 ## Étape 2 — Création du compte dans l'administration
 
-Depuis l'administration (`http://pilotage.localhost:8080`), un administrateur :
+Depuis l'administration (`https://pilotage.<domaine>`, ou
+`http://pilotage.localhost:8080` en local), un administrateur :
 
-1. ouvre **Gérants → Créer un gérant** (ou le bouton équivalent dans la liste des utilisateurs) ;
-2. remplit le formulaire :
+1. ouvre **Comptes → Nouveau gérant** ;
+2. remplit le formulaire (`NouveauGerantForm`, `serveur/adminsite/admin.py`) :
 
    | Champ | Obligatoire | Remarque |
    | ----- | ----------- | -------- |
-   | Numéro de téléphone | oui | normalisé E.164, pays imposés par `OTP_ALLOWED_COUNTRIES` |
-   | Prénom et nom | oui | 2 à 120 caractères |
-   | Nom affiché | non | sinon le nom complet est utilisé |
+   | Prénom | oui | |
+   | Nom | oui | |
+   | Nom affiché | non | nom public de l'agence ; sinon prénom et nom |
    | Zone d'activité | oui | |
-   | Mot de passe (à attribuer par défaut) | oui | à communiquer au gérant par le canal choisi (hors plateforme) |
 
-   Formulaire : `serveur/adminsite/admin.py:41` (`NouveauGerantForm`).
+Ce qui se passe côté serveur (`creer_gerant`,
+`serveur/apps/accounts/services/administration.py`) :
 
-Ce qui se passe côté serveur (`serveur/apps/accounts/services/administration.py`) :
-
-- le numéro est normalisé ; **409** si un compte existe déjà avec ce numéro ;
-- création d'un `User` avec `role = gerant`, mot de passe haché (utilisable) et `phone_verified_at` positionné ;
-- création d'un `GerantProfile` avec la zone, le nom affiché, `created_by = administrateur`, statut de vérification par défaut (`pending`) ;
-- écriture d'un événement d'audit **`gerant.cree`** ;
-- planification d'un **SMS informatif** « compte prêt » (voir étape 3).
-
-Message affiché à l'administrateur après création :
-« Compte gérant créé pour {nom}. Mot de passe attribué ; à communiquer par le canal choisi (hors plateforme). »
+- création d'un `User` avec `role = gerant`, **sans mot de passe utilisable** et
+  sans nom d'utilisateur (il le choisira) ;
+- création d'un `GerantProfile` (zone, nom affiché, `created_by`, statut de
+  vérification `pending`) ;
+- événement d'audit **`gerant.cree`**.
 
 > Piège : la vérification (badge Vérifié) est une action **séparée**
-> (`GerantProfile → verification_status`, service `administration.definir_verification`,
+> (`GerantProfile → verification_status`, service `definir_verification`,
 > audit `gerant.verification`). Créer le compte ne donne pas le badge.
 
-## Étape 3 — Remise des identifiants au gérant (hors plateforme)
+## Étape 3 — Lien d'activation
 
-L'administrateur communique au gérant, **hors plateforme** (WhatsApp, appel, SMS ou tout autre canal), son numéro de téléphone et le mot de passe attribué par défaut. Il lui indique de se connecter sur la plateforme et de modifier son mot de passe dès sa première connexion.
+Sur la fiche du compte, le bloc **Accès au compte** propose **Lien
+d'activation** (vue `accounts_user_lien`). La page affiche :
 
-En complément, un **SMS automatique purement informatif** part vers le numéro
-enregistré à la création du compte (ADR 0004) :
+- le lien `https://www.<domaine>/activer/<jeton>`, **valable 72 h** et
+  **utilisable une seule fois** ;
+- un bouton **Envoyer par WhatsApp** (le message est pré-rempli, l'équipe
+  choisit le destinataire dans WhatsApp) ; le lien peut aussi être copié pour un
+  e-mail.
 
-> Immo+ : ton compte gérant est créé. Connecte-toi dans l'application avec le
-> mot de passe que l'équipe t'a transmis. Ne le communique jamais.
+Chaque lien créé est audité (**`gerant.lien_activation`**). Si le lien expire,
+il suffit d'en créer un nouveau. Une fois le compte activé, le bouton disparaît
+(erreur `already_active` si on insiste).
 
-Fonctionnement (`serveur/apps/accounts/services/administration.py`) :
+> Le lien est signé avec la clé du site : impossible à fabriquer. Il ne contient
+> aucun mot de passe. Ne le transmettre qu'au gérant concerné.
 
-- l'envoi est planifié **après le commit** (`transaction.on_commit`) puis exécuté
-  **en asynchrone** par la tâche `notifier_gerant_cree`
-  (`serveur/apps/accounts/tasks.py`) ;
-- **un échec du SMS n'annule jamais la création** : l'erreur est journalisée et
-  un événement d'audit **`gerant.notification_echec`** est écrit ;
-- le SMS **ne contient pas** le mot de passe : l'équipe le transmet elle-même ;
-- **pas de renvoi** lors des modifications du compte (vérification, nom,
-  statut) : la notification n'a lieu qu'à la création.
+## Étape 4 — Activation par le gérant
 
-## Étape 4 — Première connexion et modification du mot de passe
+Le gérant ouvre le lien (`/activer/<jeton>`, vue `activer_gerant`,
+`serveur/web/views_auth.py`) et :
 
-**Depuis l'application ou le site web** :
+1. choisit son **nom d'utilisateur** (3 à 30 caractères : lettres, chiffres,
+   point, tiret bas ; unique) ;
+2. choisit son **mot de passe** (10 caractères au moins, différent de son nom) ;
+3. reçoit sa **clé de secours** (16 caractères, affichée une seule fois), à
+   noter ou à capturer avant de continuer.
 
-1. Le gérant se connecte avec son numéro de téléphone et le mot de passe attribué par défaut.
-2. À sa première connexion (ou dès qu'il le souhaite), il modifie son mot de passe depuis son espace (profil / paramètres). Tous les appareils et sessions sont révoqués lors du changement de mot de passe (comportement existant : `reinitialiser_mot_de_passe` invalide jetons et appareils).
+La session s'ouvre, l'événement **`gerant.active`** est audité. Il se connecte
+ensuite, sur le site comme dans l'application, avec son nom d'utilisateur et son
+mot de passe. Dans son profil, il peut ajouter un e-mail (recommandé : c'est le
+moyen le plus simple de retrouver son compte).
 
-> Il n'y a **aucune activation par OTP** pour le gérant : rien à valider côté
-> plateforme. Les vérifications se font manuellement, hors plateforme.
+**Mot de passe oublié plus tard** : lien par e-mail, sinon clé de secours,
+sinon l'équipe crée un **lien de réinitialisation** depuis la même fiche (24 h,
+usage unique) après avoir vérifié son identité. Voir `docs/administration.md`.
 
-## Étape 5 — Après la première connexion
+## Étape 5 — Après l'activation
 
-- le compte a un mot de passe utilisable : le gérant peut se connecter
-  (`POST /v1/auth/login`) et retrouver son espace gérant ;
-- publier une annonce exige le badge **Vérifié**
-  (`serveur/apps/listings/services/annonces.py:259`) → l'administrateur doit
-  passer `verification_status` à `verified` ;
+- publier une annonce exige le badge **Vérifié** : l'administrateur passe
+  `verification_status` à `verified` ;
 - la **première annonce** passe par la modération avant publication (CDC §9.23).
 
-## À faire / à confirmer
+## État
 
-- [x] Créer le gérant directement avec un mot de passe attribué par l'administration.
-- [x] Supprimer tout parcours d'activation (web et mobile).
-- [x] Envoyer un SMS informatif « compte prêt » à la création.
-- [ ] Remplacer l'agrégateur SMS `[À FOURNIR]` et vérifier l'encodage réel.
+- [x] Créer le gérant sans mot de passe ni numéro.
+- [x] Lien d'activation signé, 72 h, usage unique, envoi WhatsApp en un geste.
+- [x] Clé de secours donnée à l'activation.
+- [x] Lien de réinitialisation créé par l'équipe.
+- [ ] Courriel d'activation automatique (aujourd'hui l'équipe transmet le lien).
 
 ## Références
 
-- CDC : `docs/cahier-des-charges.md` — EF-ADM-01 (création d'un gérant), §5.3 (OTP), §7 (administration).
-- Décision : `docs/adr/0004-sms-creation-gerant.md` (SMS informatif à la création).
-- Création : `serveur/apps/accounts/services/administration.py` (`creer_gerant`),
-  `serveur/adminsite/admin.py:41`.
-- Web : `serveur/web/views_auth.py`, `serveur/web/urls.py`, `serveur/web/forms.py`,
-  tests `serveur/web/tests/test_comptes_web.py`.
-- Mobile : `mobile/src/features/auth/`, `mobile/src/features/pro/CompteGerantScreen.tsx`,
+- Décision : `docs/adr/0009-identification-par-nom-d-utilisateur.md` (remplace
+  l'ADR 0004).
+- Création et liens : `serveur/apps/accounts/services/administration.py`
+  (`creer_gerant`, `lien_activation`, `activer_gerant`, `lien_reinitialisation`),
+  `serveur/adminsite/admin.py`, gabarit `admin/lien-compte.html`.
+- Signature des liens : `serveur/apps/accounts/services/identifiants.py`.
+- Web : `serveur/web/views_auth.py`, `serveur/web/forms.py` (`Activation`).
+- Mobile : `mobile/src/features/pro/CompteGerantScreen.tsx`,
   `mobile/src/app/(auth)/compte-gerant.tsx`.

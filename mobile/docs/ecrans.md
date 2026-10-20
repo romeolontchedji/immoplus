@@ -1,6 +1,6 @@
 # Carte des écrans
 
-Générée à partir des fichiers de `src/app` (une ligne par route). **43 routes** : 15 réelles, 28 squelettes.
+Générée à partir des fichiers de `src/app` (une ligne par route). **40 routes** listées : 13 réelles, 27 squelettes (colonne « État » à revoir : plusieurs squelettes sont devenus réels).
 « Réel » = l'écran fonctionne avec les crochets de données ; « squelette » = fichier en place, route branchée, en-tête de commentaire
 qui décrit la route, l'API, les états à gérer et les références du cahier des charges (à remplacer par l'écran final).
 
@@ -9,12 +9,9 @@ Les groupes de routes entre parenthèses (`(auth)`, `(locataire)`, `(partage)`, 
 | Route | Écran | État | API | Fichier |
 |---|---|---|---|---|
 | `/connexion` | ConnexionScreen | réel | POST /v1/auth/login | `src/features/auth/ConnexionScreen.tsx` |
-| `/inscription/code` | CodeStep | réel | POST /v1/auth/otp/verify | `src/features/auth/CodeStep.tsx` |
-| `/inscription/profil` | InscriptionProfilScreen | réel | POST /v1/auth/register | `src/features/auth/FinalSteps.tsx` |
-| `/inscription/telephone` | TelephoneStep | réel | POST /v1/auth/otp/request | `src/features/auth/TelephoneStep.tsx` |
-| `/mot-de-passe/code` | CodeStep | réel | POST /v1/auth/otp/verify | `src/features/auth/CodeStep.tsx` |
-| `/mot-de-passe/nouveau` | MotDePasseNouveauScreen | réel | POST /v1/auth/password/reset | `src/features/auth/FinalSteps.tsx` |
-| `/mot-de-passe/telephone` | TelephoneStep | réel | POST /v1/auth/otp/request | `src/features/auth/TelephoneStep.tsx` |
+| `/inscription` | InscriptionScreen | réel | GET /v1/auth/username-available ; POST /v1/auth/register | `src/features/auth/InscriptionScreen.tsx` |
+| `/mot-de-passe` | OubliScreen | réel | POST /v1/auth/password/email-link | `src/features/auth/OubliScreens.tsx` |
+| `/mot-de-passe/cle` | CleOubliScreen | réel | POST /v1/auth/password/recovery-key | `src/features/auth/OubliScreens.tsx` |
 | `/alertes` | AlertesScreen | squelette | GET /v1/me/alerts ; PATCH\|DELETE /v1/me/alerts/{id} | `src/features/alerts/AlertesScreen.tsx` |
 | `/` | AccueilScreen | réel | GET /v1/listings | `src/features/listings/AccueilScreen.tsx` |
 | `/messages` | ConversationsScreen | réel | GET /v1/conversations | `src/features/messaging/ConversationsScreen.tsx` |
@@ -34,8 +31,8 @@ Les groupes de routes entre parenthèses (`(auth)`, `(locataire)`, `(partage)`, 
 | `/parametres/mot-de-passe` | MotDePasseScreen | squelette | POST /v1/auth/password/change | `src/features/profile/MotDePasseScreen.tsx` |
 | `/parametres/nom` | NomScreen | squelette | PATCH /v1/me | `src/features/profile/NomScreen.tsx` |
 | `/parametres/preferences` | PreferencesNotificationsScreen | squelette | GET\|PUT /v1/me/preferences ; PUT /v1/devices/current/push-token (via `activerPush`) | `src/features/profile/PreferencesNotificationsScreen.tsx` |
+| `/parametres/securite` | SecuriteScreen | réel | POST /v1/me/email ; POST /v1/me/recovery-key | `src/features/profile/SecuriteScreen.tsx` |
 | `/parametres/supprimer` | SupprimerCompteScreen | squelette | DELETE /v1/me | `src/features/profile/SupprimerCompteScreen.tsx` |
-| `/parametres/telephone` | TelephoneScreen | squelette | POST /v1/auth/otp/request (change_phone) ; POST /v1/auth/otp/verify ; POST /v1/me/phone/change | `src/features/profile/TelephoneScreen.tsx` |
 | `/signaler` | SignalerScreen | squelette | POST /v1/reports ; POST /v1/listings/{id}/report-rented | `src/features/listings/SignalerScreen.tsx` |
 | `/+not-found` | NotFound | réel | — | `src/app/+not-found.tsx` |
 | `/pro/annonces` | MesAnnoncesScreen | squelette | GET /v1/pro/listings | `src/features/pro/MesAnnoncesScreen.tsx` |

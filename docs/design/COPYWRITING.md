@@ -157,27 +157,36 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 ---
 
-## 5. Connexion, inscription, code SMS
+## 5. Connexion, inscription, mot de passe oublié
+
+> Depuis l'ADR 0009 : plus de code SMS ni de numéro de téléphone. Connexion par **nom d'utilisateur et mot de passe**.
 
 ### Connexion
-- **Titre** : `Content de te revoir.` (web) / `Entre ton numéro` (mobile)
-- **Sous-titre** : `Pas de mot de passe. On t'envoie un code par SMS.` **[À CONFIRMER : voir ECARTS.md, les gérants peuvent avoir un mot de passe]**
-- Champs : `NUMÉRO DE TÉLÉPHONE` (`+229`), bouton `Recevoir le code`
-- Code : `CODE REÇU PAR SMS` ; minuteur `Renvoyer le code dans 00:42` ; lien `Renvoyer le code`
+- **Titre** : `Content de te revoir.`
+- Champs : `NOM D'UTILISATEUR`, `MOT DE PASSE` ; lien `Mot de passe oublié ?` ; bouton `Se connecter`
 - **Bas de page** : `Pas de compte ? Inscris-toi` + `Inscription réservée aux locataires. Les comptes gérant sont créés par l'équipe Immo+.`
 - **Panneau latéral web (titre)** : `Retrouve tes alertes, tes favoris et tes messages.` — texte `Ta chambre à Parakou t'attend.`
 
 ### Inscription (locataire)
-- **Titre** : `Crée ton compte en 1 minute.` — **Sous-titre** : `Gratuit, sans mot de passe. Pour suivre tes alertes et parler aux gérants.`
-- Champs : `PRÉNOM`, `NOM`, `NUMÉRO DE TÉLÉPHONE`, `TU ES` : `Étudiant(e)` · `Je travaille` · `Autre` (ne pas bloquer : le choix sert à personnaliser, pas à filtrer)
+- **Titre** : `Crée ton compte` — **Sous-titre** : `Sans code par SMS : ton nom d'utilisateur et ton mot de passe suffisent.`
+- Champs : `PRÉNOM`, `NOM`, `NOM D'UTILISATEUR` (disponibilité vérifiée pendant la frappe, suggestions `Libres :`), `TU ES` : `Étudiant(e)` · `Je travaille` · `Autre`, `MOT DE PASSE` (`10 caractères au moins, différent de ton nom.`)
 - Case : `J'accepte les conditions d'utilisation et la politique de confidentialité.`
-- Boutons : `Recevoir le code` → `Créer mon compte` ; pied : `Déjà un compte ? Se connecter`
+- Bouton : `Créer mon compte` ; pied : `Déjà un compte ? Se connecter`
 - **Panneau latéral web** : titre `Ne rate plus aucune chambre à Parakou.` ; avantages `Alertes dès qu'une chambre se libère` · `Messages directs avec les gérants vérifiés` · `Favoris et recherches enregistrés`
-- **Après le code (encart)** : `Ensuite, ta première alerte` / `Dis-nous ton quartier et ton budget : on te prévient dès qu'une chambre correspond.`
+
+### Clé de secours (juste après l'inscription ou l'activation)
+- **Titre** : `Ta clé de secours` — texte `Elle te permet de choisir un nouveau mot de passe si tu l'oublies. Elle ne sera plus jamais affichée.`
+- Conseils : `Fais une capture d'écran maintenant, ou écris-la sur papier.` · `Ne la donne à personne, même pas à l'équipe Immo+.` · `Ajoute aussi un e-mail dans ton profil.`
+- Case `J'ai gardé ma clé de secours`, puis `Continuer`
+
+### Mot de passe oublié (dans cet ordre)
+1. `Par e-mail` : `Reçois un lien valable 30 minutes.` ; confirmation identique dans tous les cas : `Si ce compte a un e-mail confirmé, un lien vient d'y être envoyé.`
+2. `Avec ta clé de secours` : nom d'utilisateur, clé, nouveau mot de passe ; `Une nouvelle clé te sera donnée juste après.`
+3. `Ni e-mail ni clé ?` : `Écris à l'équipe Immo+ : elle vérifiera que le compte est bien le tien, puis t'enverra un lien.`
 
 ### Erreurs de connexion
-- Numéro invalide : `Ce numéro ne semble pas correct. Vérifie-le (8 à 10 chiffres).` **[adapter au format béninois réel]**
-- Code faux : `Ce code n'est pas bon. Réessaie.` ; expiré : `Ce code a expiré. Demande-en un nouveau.`
+- Identifiants faux : `Nom d'utilisateur ou mot de passe incorrect.` (même message si le compte n'existe pas)
+- Nom pris : `Ce nom d'utilisateur est déjà pris.` ; lien expiré : `Ce lien n'est plus valable. Demande-en un nouveau.`
 - Trop de tentatives : `Trop d'essais. Patiente quelques minutes avant de réessayer.`
 
 ---
@@ -225,13 +234,12 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 ### Écran « Compte gérant » (mobile) / section Gérant
 - **Titre** : `Un compte gérant se mérite, et ça rassure tes futurs locataires.`
 - **Texte** : `Pas d'inscription automatique : c'est ce qui protège les locataires et donne de la valeur à ton badge Vérifié.`
-- **Étapes** : 1. `Contacte-nous` — `Par WhatsApp ou appel.` 2. `Fournis tes pièces` — `Pièce d'identité et justificatif d'activité.` 3. `Court entretien` — `Pour valider que tu es un vrai gérant.` 4. `L'équipe crée ton compte` — `Tu reçois tes identifiants, puis tu te connectes.`
+- **Étapes** : 1. `Contacte-nous` — `Par WhatsApp ou appel.` 2. `Fournis tes pièces` — `Pièce d'identité et justificatif d'activité.` 3. `Court entretien` — `Pour valider que tu es un vrai gérant.` 4. `L'équipe crée ton compte` — `Tu reçois un lien pour choisir ton nom d'utilisateur et ton mot de passe.`
 - Boutons : `Écrire sur WhatsApp` · `Appeler +229 01 56 20 14 00` · `J'ai déjà un compte, me connecter`
 
-### Création du compte (par l'équipe, sans activation)
-- Pas de parcours d'activation : l'équipe crée le compte, puis transmet ses identifiants au gérant (WhatsApp/appel).
-- Le gérant se connecte avec son numéro et son mot de passe, et peut changer son mot de passe quand il veut.
-- Le SMS « compte prêt » envoyé à la création est purement informatif (texte dans `apps/accounts/services/administration.py`).
+### Création du compte (par l'équipe, lien d'activation)
+- L'équipe crée le compte (prénom, nom, zone), puis envoie au gérant un **lien d'activation** (72 h, usage unique) par WhatsApp ou e-mail.
+- Par ce lien, le gérant choisit son nom d'utilisateur et son mot de passe, et reçoit sa clé de secours.
 
 ### Abonnement
 - Bandeau : `Gratuit pendant le lancement : tu ne paies rien pour l'instant.`
@@ -307,7 +315,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 - Panneau : `Vue d'ensemble` · `Gérants` · `Modération` · `Journal` · `Administration Django`
 - Gérants : titre `Gérants` ; blocs `À vérifier ({n})` / `Gérants vérifiés ({n})` ; boutons `Valider et créer le compte` · `Refuser` · `Créer un compte gérant`
-- Confirmation création : `Compte gérant créé. Un SMS « compte prêt » a été envoyé au {numéro}.` ; échec SMS : `Compte créé, mais le SMS n'est pas parti. Renvoie-le ou appelle le gérant.`
+- Confirmation création : `Compte gérant créé. Envoie-lui maintenant son lien d'activation.` ; page du lien : `Envoyer par WhatsApp`
 - Modération : `Signalé : arnaque` · `Signalé : coordonnées hors application` ; actions `Supprimer le message` · `Avertir le gérant` · `Suspendre le compte` · `Ignorer`
 - Avertissement envoyé au gérant : `Un message que tu as envoyé ne respecte pas les règles de Immo+ (échange en dehors de l'application / demande de paiement avant visite). Merci de rester dans l'application. Un nouvel écart peut entraîner la suspension de ton compte.`
 - Journal : titres d'événements courts et datés (`Compte gérant créé : {nom}`).

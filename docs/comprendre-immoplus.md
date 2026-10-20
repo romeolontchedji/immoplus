@@ -4,7 +4,8 @@
 > elle existe, comment elle fonctionne, quand elle intervient, comment les morceaux se parlent, comment ils sont
 > protégés, et ce qu'il faut surveiller. Il est écrit pour être relu et expliqué à d'autres.
 >
-> État décrit : octobre 2026, branche `feat/refonte-design-web`. Quand le code change, ce document doit suivre.
+> État décrit : 20 octobre 2026, branche `feat/refonte-design-web` : identification par nom d'utilisateur sans SMS
+> (ADR 0009), hébergement sur le VPS partagé rmeolab. Quand le code change, ce document doit suivre.
 
 ---
 
@@ -44,8 +45,8 @@ des visites inutiles. On lui demande parfois de payer avant d'avoir vu la chambr
 
 **La réponse de Immo+.** Une plateforme où :
 
-- les **gérants** (propriétaires ou gestionnaires) publient leurs chambres **avec une vidéo**, après avoir été
-  **vérifiés** par l'équipe ;
+- les **gérants** (propriétaires ou gestionnaires) publient leurs chambres **avec au moins 5 photos et, s'ils le
+  peuvent, une vidéo**, après avoir été **vérifiés** par l'équipe ;
 - les **locataires** (surtout des étudiants) cherchent par quartier, budget et type, regardent la vidéo, écrivent au
   gérant et créent des **alertes** pour être prévenus quand une chambre correspond ;
 - l'**équipe Immo+** modère, vérifie les gérants et règle la plateforme depuis une **administration**.
@@ -82,7 +83,8 @@ rien n'est payant et aucun écran de paiement n'est visible.
 | **File d'attente** | La liste des tâches de fond à faire ; des « ouvriers » (workers) les prennent une par une. |
 | **WebSocket** | Une ligne ouverte en permanence entre l'application et le serveur, pour recevoir les messages instantanément. |
 | **Jeton (token)** | Un badge numérique qui prouve qui tu es, sans renvoyer ton mot de passe à chaque fois. |
-| **OTP** | « One-Time Password » : le code à 6 chiffres reçu par SMS pour prouver qu'un numéro t'appartient. |
+| **Nom d'utilisateur** | L'identifiant unique d'un compte (ex. `awa.bio`). Immo+ ne demande ni ne garde de numéro de téléphone. |
+| **Clé de secours** | 16 caractères donnés une seule fois à l'inscription, pour choisir un nouveau mot de passe en cas d'oubli. |
 | **Hachage** | Transformer une donnée en empreinte impossible à inverser. On stocke l'empreinte d'un mot de passe, jamais le mot de passe. |
 | **Migration** | Un script qui fait évoluer la structure de la base (ajouter une colonne, une table…), joué une seule fois. |
 | **Push** | Une notification qui arrive sur le téléphone même quand l'application est fermée. |
@@ -143,7 +145,7 @@ flowchart LR
   WM --> RQ
   WM --> V
   BT --> RQ
-  WK -- "SMS, push" --> Ext[Fournisseurs externes]
+  WK -- "push, courriels" --> Ext[Fournisseurs externes]
 ```
 
 **L'idée clé : un « monolithe modulaire ».** Un seul code serveur (Django), une seule base de données, mais découpé en
@@ -159,7 +161,7 @@ automatiquement, voir §18).
 
 1. L'application envoie `GET https://api.immoplus.bj/v1/listings/chambre-salon-…`.
 2. **Caddy** reçoit la demande en HTTPS, vérifie qu'elle commence par `/v1/` et la passe à **web-api**.
-3. **web-api** cherche la chambre dans **PostgreSQL** (sans jamais lire l'adresse privée ni le numéro du gérant).
+3. **web-api** cherche la chambre dans **PostgreSQL** (sans jamais lire l'adresse privée du gérant).
 4. Il répond en JSON : titre, loyer, quartier, liste des photos et de la vidéo (des **adresses** de fichiers).
 5. L'application affiche la fiche, puis télécharge les photos : `https://api…/media/listings/…/w960.webp`. Ces
    fichiers sont servis **directement par Caddy** depuis le disque, sans déranger Django.
@@ -194,7 +196,7 @@ automatiquement, voir §18).
    tailles WebP (480, 960, 1600 px).
 5. Les fichiers sont publiés par le **fournisseur de stockage** (aujourd'hui : le disque du serveur). L'original est
    effacé 24 h plus tard.
-6. Le média passe à « prêt » ; la chambre peut être publiée (il faut une vidéo et au moins 3 photos).
+6. Le média passe à « prêt » ; la chambre peut être publiée (il faut au moins 5 photos ; la vidéo est facultative).
 
 ---
 
@@ -240,7 +242,7 @@ rien n'est monté (le code est dans l'image), Caddy écoute sur 80 et 443 avec H
 | Réseau | Qui y est | Accès à Internet ? | Pourquoi |
 |---|---|---|---|
 | `interne` | Tout le monde | **Non** (`internal: true`) | Les données (base, Redis) ne sont joignables que de l'intérieur ; aucun port publié |
-| `sortie` | `web-api`, `worker`, `backup` | Oui, en sortie | Envoyer SMS, push, vérifier l'anti-robot, copier les sauvegardes |
+| `sortie` | `web-api`, `worker`, `backup` | Oui, en sortie | Envoyer courriels et push, vérifier l'anti-robot, copier les sauvegardes |
 | `exposition` | `caddy` seulement | Oui, en entrée | Seule porte ouverte sur le monde |
 
 Conséquence : **worker-media**, qui manipule des fichiers venant d'inconnus, **ne peut pas parler à Internet**. Même
@@ -297,7 +299,7 @@ Même si le code Python avait un bug, la base refuserait (migrations `accounts/0
 
 | Thème | Tables | Contenu |
 |---|---|---|
-| Comptes | `users`, `gerant_profiles`, `devices`, `otp_codes` | Comptes, profils gérants (vérification, taux de réponse), appareils connectés, codes SMS (hachés) |
+| Comptes | `users`, `gerant_profiles`, `devices` | Comptes (nom d'utilisateur, prénom, nom, e-mail confirmé, empreinte de la clé de secours ; aucun numéro), profils gérants (vérification, taux de réponse), appareils connectés |
 | Annonces | `districts`, `room_types`, `listings`, `listing_media`, `favorites`, `alerts` | Quartiers, types de logement, chambres, photos et vidéos, favoris, alertes |
 | Messagerie | `conversations`, `messages` | Une conversation par locataire et par chambre ; messages numérotés |
 | Notifications | `notifications` | Centre de notifications, suivi de livraison |
@@ -348,7 +350,7 @@ Une tâche est **acquittée à la fin** : si un ouvrier meurt au milieu, la tâc
 | Toutes les 30 min | Rappel aux gérants | Message non lu depuis 2 h |
 | Toutes les heures | Nettoyage des envois abandonnés, purge des médias, fin des suspensions | Ménage |
 | Toutes les 6 h | Fraîcheur des annonces | Relance à J+7 et J+10, masquage à J+14 sans confirmation |
-| Chaque nuit | Lecture seule des conversations (location + 30 j), archivage (location + 90 j), indicateurs des gérants, purge des codes SMS, rétention du journal, échéances d'abonnement | Cycle de vie |
+| Chaque nuit | Lecture seule des conversations (location + 30 j), archivage (location + 90 j), indicateurs des gérants, rétention du journal, échéances d'abonnement | Cycle de vie |
 
 **Un seul réveil à la fois.** `beat` ne démarre que s'il obtient un **verrou dans Redis**
 (`serveur/config/beat_unique.py`) : même si deux `beat` tournaient par erreur, les tâches ne partiraient pas en double.
@@ -359,6 +361,14 @@ Une tâche est **acquittée à la fin** : si un ouvrier meurt au milieu, la tâc
 
 Fichiers : `infra/caddy/Caddyfile` (production) et `Caddyfile.local` (développement).
 
+**Deux façons de le placer.** Sur un serveur dédié, notre Caddy est en façade et gère lui-même le HTTPS. Sur le
+**VPS partagé rmeolab** (cas actuel), un **Caddy central** possède les ports 80 et 443 pour toutes les applications du
+serveur : il termine le HTTPS et transmet le trafic Immo+ à notre Caddy (alias `immoplus-web` sur le réseau Docker
+`web_proxy`), qui garde toutes les règles ci-dessous. La surcharge `infra/compose/docker-compose.vps-partage.yml` règle
+ce mode (`SCHEMA_SITES=http`, `PROXYS_DE_CONFIANCE=private_ranges`), et `infra/caddy/central-immoplus.caddy` contient
+le bloc à ajouter au Caddy central. Dans les deux cas, seule l'**adresse réelle du visiteur** est transmise à Django,
+et la liste blanche de l'administration la vérifie (`client_ip`).
+
 | Adresse | Ce qui est accepté | Vers |
 |---|---|---|
 | `<domaine>` | Tout | Redirection permanente vers `www` |
@@ -366,7 +376,8 @@ Fichiers : `infra/caddy/Caddyfile` (production) et `Caddyfile.local` (développe
 | `api.<domaine>` | `/v1/` (1 Mo), `/uploads/` (2 Mo), `/ws/`, `/healthz`, `/readyz` ; **tout le reste : 404** | `web-api`, `realtime` |
 | `pilotage.<domaine>` | **Seulement depuis les adresses autorisées** (`ADMIN_ALLOWED_IPS`), sinon 404 | `admin` |
 
-Caddy obtient et renouvelle **seul** les certificats HTTPS, active HTTP/3, compresse les réponses, ajoute les en-têtes
+En façade, Caddy obtient et renouvelle **seul** les certificats HTTPS et active HTTP/3. Dans tous les cas il compresse
+les réponses, ajoute les en-têtes
 de sécurité (HSTS, anti-sniffing…), et sert `/static/` et `/media/` avec un cache d'un an (les noms de fichiers
 changent à chaque version, donc pas de risque de vieux fichiers).
 
@@ -389,7 +400,7 @@ serveur/
 | Fichier | Pour | Particularités |
 |---|---|---|
 | `base.py` | Tous | Applications, base, Redis, Celery, Argon2, fuseau, fournisseurs |
-| `local.py` | Développement du site | Débogage, code OTP fixe possible |
+| `local.py` | Développement du site | Débogage, boîte de développement des courriels et push |
 | `public.py` | Production site + API (+ `realtime`) | Refuse de démarrer sans secrets, domaine, avec débogage ; cookies `__Host-` |
 | `admin_base.py`, `admin.py`, `admin_local.py` | Administration | Autres cookies, sessions à part, axes, liste d'adresses |
 | `taches.py` | Production `beat` et `worker-media` | Sans les clés des jetons (moindre privilège) |
@@ -420,7 +431,7 @@ Chaque application suit le même découpage :
 | Application | En une phrase | Fichiers clés |
 |---|---|---|
 | `core` | Le socle commun : erreurs, sécurité HTTP, paramètres, statistiques, fournisseurs, santé | `parametres.py`, `middleware.py`, `errors.py`, `providers/` |
-| `accounts` | Comptes, connexion, codes SMS, appareils, jetons, gérants | `services/jetons.py`, `services/otp.py`, `services/verrouillage.py` |
+| `accounts` | Comptes, connexion, clé de secours et liens signés, appareils, jetons, gérants | `services/identifiants.py`, `services/jetons.py`, `services/verrouillage.py` |
 | `listings` | Chambres, quartiers, types, fil, recherche, favoris, alertes, vues | `services/annonces.py`, `selectors.py`, `services/alertes.py` |
 | `media` | Stockage et traitement des photos et vidéos | `traitement.py`, `stockage.py` |
 | `chat` | Messagerie : conversations, messages, WebSocket | `services.py`, `consumers.py`, `ws.py` |
@@ -437,30 +448,47 @@ Pour chaque fonctionnalité : **à quoi ça sert**, **comment**, **quand**, et *
 
 ### 12.1 Inscription d'un locataire
 
-- **But** : créer un compte en prouvant que le numéro est bien à soi.
-- **Comment** : (1) numéro → (2) code SMS à 6 chiffres → (3) nom, « tu es » (étudiant, travailleur…), mot de passe,
-  acceptation des conditions. Le compte n'existe **qu'à la dernière étape**.
-- **Règles** : numéros du Bénin uniquement (`OTP_ALLOWED_COUNTRIES`) ; 3 codes par heure et par numéro, 10 par jour et
-  par appareil, 60 par jour et par plage d'adresses ; un renvoi après 60 s ; 5 essais par code ; code valable 5 min ;
-  **budget quotidien de SMS** (au-delà, plus d'envoi et alerte).
-- **Où** : `apps/accounts/services/otp.py`, `inscription.py` ; écrans `mobile/src/features/auth/` ; site
-  `web/views_auth.py`.
+- **But** : créer un compte en une seule page, **sans code SMS et sans numéro de téléphone** (ADR 0009).
+- **Comment** : prénom, nom, **nom d'utilisateur** (vérifié pendant la frappe, avec des suggestions s'il est pris),
+  « tu es » (facultatif), mot de passe, acceptation des conditions. Le compte est créé tout de suite, puis la **clé de
+  secours** s'affiche **une seule fois** : à recopier ou capturer (site : bouton « Copier » ; application : partage
+  vers ses notes).
+- **Règles** : nom d'utilisateur de 3 à 30 caractères (lettres minuscules, chiffres, point, tiret bas), unique sans
+  tenir compte des majuscules, noms réservés refusés (`admin`, `immoplus`, `support`…) ; mot de passe de 10 caractères
+  au moins, refusé s'il est trop courant ou trop proche du nom ; **Turnstile** (Cloudflare) sur le site.
+- **Où** : `apps/accounts/services/inscription.py`, `identifiants.py` ; site `web/views_auth.py` ; application
+  `mobile/src/features/auth/InscriptionScreen.tsx`, `cleSecours.tsx`.
 
 ### 12.2 Connexion et déconnexion
 
-- **But** : entrer avec son numéro et son mot de passe.
+- **But** : entrer avec son **nom d'utilisateur** et son mot de passe.
 - **Comment** : le serveur vérifie le mot de passe (Argon2) et renvoie une **paire de jetons** (voir §16). La réponse en
-  cas d'échec est **identique** que le numéro existe ou non : impossible de deviner qui est inscrit.
+  cas d'échec est **identique** que le compte existe ou non : impossible de deviner qui est inscrit.
 - **Verrouillage progressif** : 5 échecs → 15 min ; puis 30 min, 1 h… jusqu'à 24 h en cas de récidive ; plafond horaire
-  par numéro. Sur le site, case « Se souvenir de moi » ; sur mobile, **déverrouillage par empreinte** facultatif.
+  par nom d'utilisateur. Sur le site, case « Se souvenir de moi » ; sur mobile, **déverrouillage par empreinte**
+  facultatif. Les échecs sont visibles dans l'administration (« Connexions échouées »).
 - **Où** : `services/authentification.py`, `verrouillage.py`, `jetons.py` ; `mobile/src/features/auth/verrou.tsx`.
 
-### 12.3 Mot de passe oublié, changement de mot de passe et de numéro
+### 12.3 Mot de passe oublié, e-mail et clé de secours
 
-- **Oublié** : code SMS puis nouveau mot de passe ; **tous** les appareils et sessions sont déconnectés.
-- **Changement** : ancien mot de passe obligatoire, nouveau saisi deux fois ; les **autres** appareils sont déconnectés.
-- **Changement de numéro** : code SMS envoyé au nouveau numéro, plus le mot de passe actuel.
-- **Où** : `services/compte.py`, `mobile/src/features/profile/`.
+Trois portes, proposées dans cet ordre :
+
+1. **Lien par e-mail** (si l'utilisateur a ajouté et **confirmé** une adresse) : valable 30 minutes, une seule fois.
+   La réponse est la même que le compte existe ou non.
+2. **Clé de secours** : nom d'utilisateur + clé + nouveau mot de passe. Une **nouvelle clé** remplace aussitôt
+   l'ancienne. Tentatives verrouillées comme la connexion.
+3. **L'équipe**, en dernier recours : après vérification de l'identité, l'administration génère un lien valable
+   24 heures, inscrit au journal.
+
+Après toute réinitialisation, **tous** les appareils et sessions sont déconnectés. Les liens ne demandent aucune
+table : ils sont **signés** et contiennent l'empreinte du mot de passe (ou de l'e-mail) qu'ils modifient, donc ils
+deviennent invalides dès qu'ils ont servi.
+
+- **Changement de mot de passe** : ancien mot de passe obligatoire ; les **autres** appareils sont déconnectés.
+- **E-mail** : ajouté depuis le profil (« Retrouver mon compte »), enregistré seulement quand le lien de
+  confirmation (24 h) est ouvert. **Clé de secours** régénérée depuis le profil (mot de passe actuel demandé).
+- **Où** : `services/inscription.py`, `compte.py`, `identifiants.py` ; profil du site et
+  `mobile/src/features/profile/SecuriteScreen.tsx`.
 
 ### 12.4 Appareils connectés
 
@@ -472,8 +500,10 @@ Pour chaque fonctionnalité : **à quoi ça sert**, **comment**, **quand**, et *
 ### 12.5 Comptes gérants
 
 - **But** : seuls des gérants **vérifiés** publient. Il n'y a **pas d'inscription libre** de gérant.
-- **Comment** : l'équipe crée le compte dans l'administration (« Créer un gérant ») après vérification des pièces et
-  entretien ; le gérant reçoit ses identifiants et change son mot de passe. Un signal attribue alors le plan Gratuit.
+- **Comment** : l'équipe crée le compte dans l'administration (« Créer un gérant » : prénom, nom, zone, **sans mot de
+  passe**) après vérification et entretien. L'administration affiche un **lien d'activation** (72 h, une seule fois),
+  envoyé par WhatsApp ou e-mail : le gérant y choisit son nom d'utilisateur et son mot de passe, puis reçoit sa clé de
+  secours. Aucun mot de passe ne circule. Un signal attribue le plan Gratuit.
 - **Indicateurs** : taux de réponse et délai médian de réponse sur 30 jours, recalculés chaque nuit, affichés sur ses
   annonces.
 - **Où** : `apps/accounts/services/administration.py`, `adminsite/admin.py`, `docs/tuto-compte-gerant.md`.
@@ -495,15 +525,20 @@ stateDiagram-v2
   Publiée --> Retirée: modération
 ```
 
-- **Publier exige** : titre, type, quartier, loyer, **une vidéo et au moins 3 photos** prêtes, pas de coordonnées dans
-  le texte. Le serveur dit précisément **ce qui manque** (« readiness »).
-- **Fraîcheur** : sans confirmation, relance à J+7 et J+10, masquage à J+14. Un bouton « Toujours disponible »
-  remet le compteur à zéro.
+- **Publier exige** : titre, type, quartier, loyer, eau (une ou plusieurs sources), électricité, **au moins 5 photos**
+  prêtes (la vidéo est **facultative**), pas de coordonnées dans le texte. Le serveur dit précisément **ce qui manque** (« readiness »).
+- **Fraîcheur** : le masquage automatique est coupé (`STALE_HIDE_DAYS` = 0) : le gérant marque lui-même une chambre
+  « louée » ou la masque.
+- **Conditions** : loyer (et « à débattre »), caution du loyer en mois, **caution eau** et **caution électricité** en
+  francs, avance, frais de démarcheur.
 - **Louée** : les locataires en conversation sont prévenus ; la vidéo est supprimée à J+7 ; les conversations passent
   en lecture seule à J+30 ; l'annonce est archivée à J+90.
-- **Types de logement** : une liste vivante (de la chambre simple à la villa) ; un gérant peut **proposer** un nouveau
-  type, que la modération valide ou rattache à un type existant.
-- **Description** : texte enrichi limité (gras, italique, titres, listes), **nettoyé** côté serveur.
+- **Types de logement** : une liste vivante, de la chambre simple à la villa, avec les variantes courantes à Parakou
+  (chambre sanitaire et semi-sanitaire, entrée-couché simple ou sanitaire, chambre-salon simple ou sanitaire, meublé
+  salon sanitaire) ; un gérant peut **proposer** un nouveau type, que la modération valide ou rattache.
+- **Équipements** : eau à **plusieurs sources** (compteur personnel, décompteur, eau courante, forage, puits),
+  électricité, cuisine, douche interne, cour clôturée.
+- **Autres détails** : texte simple, sans mise en forme.
 - **Où** : `apps/listings/services/annonces.py`, `types.py`, `contenu.py`, `entretien.py`.
 
 ### 12.7 Photos et vidéos
@@ -521,16 +556,23 @@ stateDiagram-v2
 
 - **Fil** : chambres publiées, filtres (quartier, budget, type, douche interne, gérants vérifiés…), tris (récentes,
   prix, proximité de l'université), pagination par curseur, page en cache 60 s.
-- **Recherche** : texte libre tolérant aux fautes et aux accents (trigrammes PostgreSQL).
-- **Fiche** : tout sauf l'adresse précise et le numéro du gérant ; position publique **arrondie à environ 110 m** ;
-  distance à l'université calculée (formule de haversine).
+- **Recherche** : au fil de la frappe, sans rechargement de page : chaque mot compte comme un **début de mot**
+  (« B », « Ba », « Bani »…) sur le titre, le quartier, le repère, le type et les équipements ; tolérance aux fautes à
+  partir de 4 lettres (trigrammes PostgreSQL), accents ignorés.
+- **Fiche** : tout sauf l'adresse précise ; seule la **position du quartier** est publique ; distance à l'université
+  calculée (formule de haversine).
+- **Partage** : bouton « Partager » (WhatsApp, Facebook, applications du téléphone dont TikTok, lien à copier). Un seul
+  lien suffit : balises Open Graph, image d'aperçu JPEG 1200 × 630 tirée de la couverture, données structurées
+  schema.org pour Google. Le lien ouvre l'application si elle est installée.
 - **Chambres similaires** : score (même quartier ou voisin, même type, loyer à ±25 %, distance proche).
 - **Où** : `apps/listings/selectors.py`, `services/fil.py`, `services/filtres.py`, `services/geo.py`.
 
 ### 12.9 Favoris, alertes, dernières consultations
 
 - **Favoris** : un cœur ; si la chambre est louée ou masquée, une notification (une seule).
-- **Alertes** : jusqu'à 5 par locataire (quartier, type, budget, douche). À chaque publication, le serveur trouve en SQL
+- **Alertes** : jusqu'à 5 par locataire ; chaque critère est une liste à choix multiples (quartiers, types, budget,
+  distance de l'UP, eau, électricité, cuisine, douche interne, cour clôturée) ; une alerte sans aucune option est
+  refusée. Seules les alertes actives sont listées (celles en pause sont repliées). À chaque publication, le serveur trouve en SQL
   les alertes qui correspondent et notifie **une seule fois** par couple alerte/chambre ; au-delà de 3 par jour, un
   **récapitulatif** remplace les notifications.
 - **Dernières chambres consultées** : sur le téléphone seulement (mobile) ou dans la session (site), rien en base.
@@ -589,8 +631,9 @@ stateDiagram-v2
 
 Une soixantaine de réglages dans la table `app_settings`, modifiables dans **Administration › Paramètres** (rangés par
 thème, champ adapté à chaque type) : maintenance, version minimale de l'application, contact de l'équipe, identité
-légale, limites d'envoi, codes SMS, verrouillages, fraîcheur des annonces, modération, abonnement… Chaque modification
-est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`).
+légale, limites d'envoi, verrouillages, fraîcheur des annonces, modération, abonnement… Chaque modification
+est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`). Le détail de chaque paramètre, avec
+sa valeur par défaut, est dans `docs/administration.md`.
 
 ### 12.16 Maintenance et mise à jour obligatoire
 
@@ -631,13 +674,17 @@ est journalisée ; la valeur est relue en cache 30 s (`apps/core/parametres.py`)
 ## 14. L'administration
 
 - **Processus séparé** (`admin`), adresse séparée (`pilotage.`), réservée à des **adresses IP autorisées** (Caddy +
-  intergiciel), connexion par **e-mail** (jamais par numéro).
+  intergiciel), connexion par **e-mail et mot de passe**, puis **code à 6 chiffres reçu par courriel** à chaque
+  connexion (10 min, 5 essais).
 - **Protections** : 5 échecs → verrouillage (django-axes, avec historique des échecs) ; session de 30 min d'inactivité
   et 8 h au maximum ; sessions dans une table à part ; cookie à part ; tout est journalisé.
+- **Accès des utilisateurs** : création des gérants sans mot de passe avec **lien d'activation**, et **lien de
+  réinitialisation** pour un utilisateur qui a perdu e-mail et clé de secours (après vérification de son identité).
 - **Rôles** : `admin` (tout) et `moderator` (modération, sans comptes ni journal ni bannissement).
 - **Pages** : tableau de bord (à traiter, activité, audience), signalements (personne visée, accès rapides), décisions,
-  gérants (création), comptes, annonces (relecture), types de logement (valider, rattacher), quartiers, sécurité des
-  connexions, journal, paramètres, abonnements (lecture seule).
+  gérants (création), comptes, annonces (relecture), avis, types de logement (valider, rattacher), quartiers, sécurité
+  des connexions, connexions échouées du site et de l'application, erreurs, journal, paramètres, abonnements (lecture
+  seule). Guide complet : **`docs/administration.md`**.
 - **Code** : `serveur/adminsite/` — `site.py` (tableau de bord, menu), `admin.py`, `admin_moderation.py`,
   `parametres_page.py`, `middleware.py`, `templates/admin/`, `static/admin/css/immoplus-adm.css`.
 - **Commandes** : `seed` (paramètres et quartiers, `--demo` pour des données d'essai) et `creer_personnel` (premier
@@ -717,21 +764,23 @@ tester d'autres personnes, il faut un **serveur en ligne**.
 | Jeton d'accès (15 min) | **JWT signé HS256** avec une clé propre à l'application ; contient le compte, le rôle (`aud`), l'appareil, la version de sécurité | Vérifiable sans requête en base ; courte durée = faible risque s'il fuit |
 | Jeton de rafraîchissement (30 j) | Valeur aléatoire ; la base n'en garde que l'**empreinte SHA-256** | Une fuite de la base ne donne pas de jetons utilisables |
 | Rotation du rafraîchissement | Chaque usage donne un **nouveau** jeton ; réutiliser un ancien **révoque l'appareil** (vol détecté) ; tolérance de 60 s pour une réponse perdue en 3G, avec le nouveau jeton gardé **chiffré (Fernet)** dans Redis | Détecter le vol sans déconnecter les réseaux instables |
-| Codes SMS | Générés par `secrets.randbelow` (vrai hasard) ; stockés sous forme **HMAC-SHA256** (numéro + usage + code, avec une clé secrète) ; comparaison en **temps constant** | Ni lisibles en base, ni devinables par chronométrage |
-| Jeton « numéro vérifié » | Signé, 10 min, **usage unique**, lié au numéro et à l'usage | Impossible de réutiliser une vérification pour autre chose |
+| Clé de secours | 16 caractères tirés par `secrets.choice` dans un alphabet sans caractères ambigus ; la base n'en garde que l'empreinte **Argon2** ; remplacée après chaque usage | Une fuite de la base ne donne aucune clé utilisable |
+| Liens envoyés (activation, réinitialisation, confirmation d'e-mail) | **Signés** (`django.core.signing`, clé du site), durée limitée (30 min à 72 h), contiennent l'empreinte du mot de passe ou de l'e-mail courant | Impossibles à fabriquer, et invalides dès qu'ils ont servi, sans table à tenir |
 | Ticket WebSocket | Aléatoire, 30 s, **détruit à la lecture** | Pas de jeton longue durée dans une adresse |
 | Webhooks de paiement | Signature **HMAC** vérifiée, événement traité une seule fois | Un faux « paiement réussi » est rejeté |
 
 ### Les barrières, couche par couche
 
 1. **Réseau** : seul Caddy est exposé ; base et Redis sur un réseau sans Internet ; worker-media sans Internet ;
-   pare-feu du VPS (SSH, 80, 443), fail2ban, SSH par clé (`infra/vps/bootstrap.sh`).
+   pare-feu du VPS (SSH, 80, 443), fail2ban, SSH par clé. Sur le VPS partagé, notre Caddy ne publie même aucun port :
+   seul le Caddy central le joint, par le réseau Docker `web_proxy`.
 2. **HTTPS partout** + **HSTS** (le navigateur refuse ensuite le HTTP).
 3. **Administration** : adresse cachée, liste d'adresses IP, verrouillage, sessions courtes, cookie et processus à part.
-4. **Limites de débit** (dans `redis-queue`) : connexion, inscription et codes (30/min par adresse), écritures
-   (60/min), lectures (240/min), plafonds de codes SMS, messages, conversations, médias.
+4. **Limites de débit** (dans `redis-queue`) : connexion, inscription et clé de secours (30/min par adresse),
+   écritures (60/min), lectures (240/min), messages, conversations, médias.
 5. **Refus par défaut** : une route d'API sans règle d'accès explicite **refuse** (`RefusParDefaut`).
-6. **Pas de fuite d'information** : réponse identique pour « numéro inconnu » et « mauvais mot de passe » ; 404 pour
+6. **Pas de fuite d'information** : réponse identique pour « compte inconnu » et « mauvais mot de passe », et pour
+   le lien de mot de passe oublié ; 404 pour
    une conversation qui n'est pas la tienne (on ne révèle même pas qu'elle existe).
 7. **Version de sécurité du compte** : changer de mot de passe ou être suspendu invalide immédiatement tous les jetons
    et sessions concernés.
@@ -741,10 +790,11 @@ tester d'autres personnes, il faut un **serveur en ligne**.
    CSRF, cookies `__Host-` en `Secure`, `HttpOnly`, `SameSite`.
 10. **Contenus** : Markdown assaini ; photos sans EXIF ; vidéos contrôlées et converties ; `ffmpeg` limité aux
     fichiers locaux, avec délai maximal ; tailles maximales par requête (Caddy) et par fichier.
-11. **Vie privée** : adresse précise et numéro du gérant jamais publics ; position arrondie ; **journaux masqués**
-    (numéros et codes remplacés, `apps/core/logging.py`) ; adresse IP et navigateur du journal effacés après 90 jours.
-12. **Anti-robot** : Turnstile prévu sur les formulaires du site et attestation d'appareil pour l'application ; les
-    deux sont aujourd'hui **factices** (à brancher avant l'ouverture, voir §24).
+11. **Vie privée** : **aucun numéro de téléphone conservé** ; adresse précise jamais publique, seule la position du
+    quartier l'est ; **journaux masqués** (codes et numéros éventuels remplacés, `apps/core/logging.py`) ; adresse IP
+    et navigateur du journal effacés après 90 jours.
+12. **Anti-robot** : **Turnstile** (Cloudflare) sur l'inscription et le mot de passe oublié du site ; l'application
+    s'appuie sur les limites de débit et le verrouillage. Plus aucun SMS n'est envoyé : aucun budget à vider.
 13. **Démarrage sûr** : en production, le serveur **refuse de démarrer** si un secret manque, s'il est de
     développement, si deux clés sont identiques, si le domaine manque ou si le débogage est actif (testé).
 
@@ -759,12 +809,10 @@ ne touche pas au code métier.
 
 | Besoin | Interface | Aujourd'hui | Demain |
 |---|---|---|---|
-| SMS (codes) | `SmsProvider` | `console` (développement) | Agrégateur choisi (`generic_http`) |
 | Push | `PushProvider` | `console` | `expo` (FCM prévu) |
 | Stockage des médias | `StorageProvider` | `local` (disque) | `s3` (Cloudflare R2…) |
 | Paiement | `PaymentProvider` | `fake` (signé) | KKiaPay |
-| Anti-robot site | `CaptchaProvider` | `fake` | Turnstile |
-| Attestation appareil | `DeviceAttestationProvider` | `fake` | Play Integrity / App Attest |
+| Anti-robot site | `CaptchaProvider` | `turnstile` (clés de test en développement) | Turnstile avec les vraies clés |
 
 ---
 
@@ -828,11 +876,11 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 
 | Sujet | Pourquoi c'est important | Où |
 |---|---|---|
-| **Agrégateur SMS** | Sans lui, personne ne peut s'inscrire en production | `SMS_PROVIDER`, `.env` |
-| **Sauvegardes hors du serveur** | Aujourd'hui elles restent sur la même machine | `infra/backup/`, guide de déploiement |
-| **Double authentification de l'administration** | Prévue au CDC, pas encore développée ; la liste d'adresses IP est la protection principale | `adminsite/` |
+| **Serveur SMTP (Brevo)** | Sans lui, ni mot de passe oublié par e-mail ni connexion à l'administration (code par courriel) | `EMAIL_*`, `.env` |
+| **Vraies clés Turnstile** | Les clés de test laissent passer les robots | `TURNSTILE_*`, `.env` |
+| **Sauvegardes hors du serveur** | Prêtes (restic, ADR 0008) : renseigner le compartiment R2 et tester une restauration | `.env`, guide de déploiement |
 | **Adresses de l'API dans `eas.json`** | Encore des valeurs d'exemple | `mobile/eas.json` |
-| **Lien Android (`assetlinks.json`)** | Contient des valeurs « À FOURNIR » | `infra/caddy/wellknown/` |
+| **Lien Android (`assetlinks.json`)** | Paquet `bj.immoplus.app` renseigné ; empreinte de signature « À FOURNIR » après `eas credentials` | `infra/caddy/wellknown/` |
 | **Identité légale** | Marquée « provisoire » | Administration › Paramètres |
 | **Crédits des photos** | À compléter pour une photo | `docs/design/credits-photos.md` |
 
@@ -842,7 +890,6 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 |---|---|
 | `/readyz` en échec | Base, cache, file ou disque en difficulté (surveillance externe recommandée) |
 | Disque des médias > 85 % | Les envois sont refusés : nettoyer ou passer au stockage objet |
-| Budget SMS atteint | Plus de codes envoyés pour la journée (alerte critique au journal) |
 | Signalements hors délai de 24 h | Visible en rouge sur le tableau de bord de l'administration |
 | Médias « en traitement » qui ne finissent pas | `worker-media` arrêté ou saturé |
 | Notifications en retard | `worker` ou `beat` arrêté |
@@ -874,16 +921,20 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 | `docs/cahier-des-charges.md` | La référence fonctionnelle complète |
 | `docs/plan-actions-v2.md` | Le plan en cours et les décisions du porteur |
 | `docs/avancement.md` | Ce qui a été fait, session par session |
-| `docs/deploiement-vps-pas-a-pas.md` | Mettre en ligne |
+| `docs/deploiement-vps-pas-a-pas.md` | Mettre en ligne, du local à la production (VPS partagé rmeolab, Cloudflare, Brevo, R2) |
+| `docs/administration.md` | L'administration : accès, rôles, pages, gestes courants et chaque paramètre |
+| `docs/documentation-vps-rmeolab.md` | Le VPS partagé : sécurisation, Caddy central, règles d'or (fourni par le propriétaire du VPS, gardé hors du dépôt) |
 | `docs/api/openapi.json` | Le contrat exact de l'API (70 points d'entrée) |
 | `infra/compose/docker-compose.yml` | Les conteneurs, réseaux et volumes |
 | `infra/caddy/Caddyfile` | Les adresses publiques et leurs règles |
+| `infra/compose/docker-compose.vps-partage.yml` | Le mode « derrière le Caddy central » du VPS partagé |
+| `infra/vps/deployer.sh` | Mettre à jour la production en une commande |
 | `infra/postgres/init/01-roles.sh` | Les rôles de la base |
 | `serveur/config/settings/base.py` | Le réglage central du serveur |
 | `serveur/config/celery.py` | Le planning des tâches |
 | `serveur/apps/core/parametres.py` | Tous les paramètres réglables et leurs valeurs par défaut |
 | `serveur/apps/accounts/services/jetons.py` | Les jetons de connexion |
-| `serveur/apps/accounts/services/otp.py` | Les codes SMS et leurs plafonds |
+| `serveur/apps/accounts/services/identifiants.py` | Nom d'utilisateur, clé de secours, liens signés |
 | `serveur/apps/listings/services/annonces.py` | Le cycle de vie des annonces |
 | `serveur/apps/listings/selectors.py` | Le fil, la fiche, les similaires |
 | `serveur/apps/chat/services.py` | La messagerie |
@@ -939,11 +990,11 @@ et le 3.
 
 | # | Recommandation | Pourquoi | Effort |
 |---|---|---|---|
-| 1 | **Sauvegardes chiffrées hors du serveur** (restic vers un autre fournisseur) **et un test de restauration** réel | Aujourd'hui, si le VPS disparaît, tout disparaît avec lui | 1 jour |
-| 2 | **Surveillance externe** de `/readyz` avec alerte SMS ou e-mail (UptimeRobot, Better Stack) | Être prévenu avant les utilisateurs | 1 h |
-| 3 | **Suivi des erreurs** (Sentry ou son équivalent libre GlitchTip, avec un ADR) côté serveur et application | Aujourd'hui une erreur n'est visible que dans les journaux, que personne ne lit en continu | 1 jour |
-| 4 | **Double authentification de l'administration** (code TOTP sur téléphone) | Un mot de passe d'administrateur volé ouvre tout ; prévu au CDC | 1 à 2 jours |
-| 5 | **Brancher les vraies protections anti-robot** : Turnstile sur le site, Play Integrity / App Attest sur l'application | Elles sont factices : un robot peut vider le budget SMS en inscriptions | 1 à 2 jours |
+| 1 | **Activer** les sauvegardes chiffrées hors du serveur (prêtes : restic vers Cloudflare R2) **et faire un test de restauration** réel | Si le VPS disparaît, tout disparaît avec lui | 1 h |
+| 2 | **Surveillance externe** de `/readyz` avec alerte par e-mail (UptimeRobot, Better Stack) | Être prévenu avant les utilisateurs | 1 h |
+| 3 | **Suivi des erreurs de l'application mobile** (le serveur a déjà le sien : page « Erreurs » et courriel) | Une erreur sur un téléphone reste aujourd'hui invisible | 1 jour |
+| 4 | **Courriels délivrés** : domaine authentifié chez Brevo (SPF, DKIM, DMARC) | Sans cela, liens de mot de passe et codes de l'administration finissent en indésirables | 1 h |
+| 5 | **Vraies clés Turnstile** et surveillance des inscriptions en rafale (connexions échouées, nouveaux comptes) | Sans numéro vérifié, un robot peut créer des comptes : Turnstile et les plafonds compensent | 1 h |
 | 6 | **Un serveur de préproduction** (petit VPS, même guide) où l'on teste chaque version avant la production | Ne jamais découvrir un problème directement chez les utilisateurs | 1/2 jour |
 | 7 | **Lancer la vérification automatique sur chaque envoi de branche**, pas seulement sur `main` et les demandes de fusion | Un défaut est vu le jour même, pas au moment de fusionner | 15 min |
 | 8 | **Corriger le test `/readyz`** qui échoue en local | Un rouge permanent finit par cacher les vrais rouges | 1 h |
@@ -952,12 +1003,12 @@ et le 3.
 
 | # | Recommandation | Pourquoi |
 |---|---|---|
-| 9 | **Redémarrage automatique des conteneurs « malades »** (Docker ne redémarre que ceux qui s'arrêtent, pas ceux qui ne répondent plus) : petit service d'auto-guérison ou systemd | Autonomie : un processus figé repart seul |
+| 9 | **Installer l'autoguérison sur le VPS partagé** (`infra/vps/installer-autoguerison.sh`, déjà écrit) | Autonomie : un processus figé repart seul |
 | 10 | **Archivage continu de la base** (WAL) en plus de la sauvegarde nocturne | Revenir à n'importe quelle minute, pas seulement à la nuit précédente |
 | 11 | **Mises à jour des dépendances suivies** (Dependabot, natif GitHub) + `npm audit` dans la vérification + analyse de l'image Docker (Trivy) | Les failles connues arrivent par les bibliothèques |
 | 12 | **Tests de bout en bout de l'application mobile** (Maestro, avec un ADR) sur 5 parcours clés : inscription, recherche, fiche, message, publication | Aujourd'hui l'application n'est vérifiée qu'en tests unitaires ; aucun écran n'est testé automatiquement |
 | 13 | **Test de charge** (prévu au CDC §14) : 500 utilisateurs simultanés, 1 000 connexions temps réel | Connaître la limite du VPS avant qu'elle arrive |
-| 14 | **Tableau de suivi technique** : SMS envoyés et coût, push échoués, médias en erreur, disque, file Celery | Voir venir les problèmes (budget, disque) |
+| 14 | **Tableau de suivi technique** : push échoués, courriels refusés, médias en erreur, disque, file Celery | Voir venir les problèmes (disque, délivrabilité) |
 | 15 | **Mises à jour de l'application sans magasin** (EAS Update) pour les corrections urgentes | Corriger en heures plutôt qu'en jours de validation des magasins |
 
 ### Priorité 3 : quand la croissance arrive
@@ -973,7 +1024,9 @@ et le 3.
 
 - **Excellent** : rôles de base de données, déclencheurs anti-escalade, journal inviolable, jetons à rotation avec
   détection de vol, réponses qui ne révèlent rien, administration isolée, CSP stricte, démarrage refusé sans secrets.
-- **À combler** : double authentification de l'administration (n°4), anti-robot réel (n°5), sauvegardes hors site (n°1).
+- **Fait depuis** : double authentification de l'administration par courriel, Turnstile branché, sauvegardes chiffrées
+  prêtes, suivi des erreurs du serveur, aucun numéro de téléphone conservé.
+- **À combler** : activer la copie des sauvegardes (n°1), vraies clés Turnstile (n°5), courriels authentifiés (n°4).
 - **À prévoir** : une procédure de **rotation des clés** (que faire si `.env` fuit : quelles clés changer, dans quel
   ordre, avec quelles conséquences pour les utilisateurs connectés) et une **charte d'accès** de l'équipe (qui a
   l'accès SSH, qui est administrateur, révocation au départ d'un membre).
@@ -1003,9 +1056,9 @@ et le 3.
 | Déjà autonome | Manque encore |
 |---|---|
 | Certificats HTTPS renouvelés seuls | Alerte quand quelque chose tombe (n°2, n°3) |
-| Conteneurs redémarrés s'ils s'arrêtent | Redémarrage des conteneurs figés (n°9) |
+| Conteneurs redémarrés s'ils s'arrêtent ; conteneurs figés redémarrés (minuterie à installer, n°9) | |
 | Tâches reprises si un ouvrier meurt ; notifications rattrapées chaque minute | Sauvegardes copiées ailleurs et restauration testée (n°1, n°10) |
-| Annonces périmées masquées, conversations et annonces archivées, suspensions levées, codes et journaux purgés | Mises à jour de dépendances proposées automatiquement (n°11) |
+| Conversations et annonces archivées, suspensions levées, journaux purgés | Mises à jour de dépendances proposées automatiquement (n°11) |
 | Mises à jour de sécurité du système automatiques | Corrections de l'application sans passer par les magasins (n°15) |
 | Mode maintenance et version minimale pilotés à distance | |
 | Verrouillages et plafonds anti-abus qui se lèvent seuls | |

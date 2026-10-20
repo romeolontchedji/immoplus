@@ -56,12 +56,12 @@ Couches d'une application : `models / selectors / services / events / providers`
 ## 5. Sécurité (à ne jamais enfreindre)
 
 - Administration séparée : autre hôte, autre clé, autre cookie, autre rôle PostgreSQL, liste blanche d'adresses.
-- Le numéro de téléphone du gérant n'est jamais exposé.
+- Aucun numéro de téléphone n'est conservé (ADR 0009) ; l'adresse précise d'un logement n'est jamais exposée.
 - Aucun script ni style en ligne (CSP stricte) : pas d'attribut `style=`, pas de `onclick=`.
 - Aucun secret dans le dépôt ; `.env` et `infra/compose/env/*.env` sont ignorés.
 - 404 plutôt que 403 pour ne pas révéler l'existence d'une ressource.
 - Toute autorisation est vérifiée côté serveur. Les actions sensibles sont journalisées (`audit`).
-- `DEBUG`, `OTP_DEBUG_CODE` et les secrets `dev-…` font échouer le démarrage des réglages `public` et `admin`.
+- `DEBUG` et les secrets `dev-…` font échouer le démarrage des réglages `public` et `admin`.
 
 ## 6. Format Git
 

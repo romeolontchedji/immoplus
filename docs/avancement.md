@@ -2,6 +2,14 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 (fin de nuit) : VPS partagé et documentation.**
+- Mode « derrière le Caddy central » du VPS partagé rmeolab : notre Caddy sans port publié, alias `immoplus-web`
+  sur le réseau `web_proxy`, seule l'adresse réelle du visiteur transmise à Django, liste blanche par `client_ip`
+  (`docker-compose.vps-partage.yml`, `central-immoplus.caddy`, `infra/vps/deployer.sh`, autoguérison).
+- Documentation : guide de déploiement réécrit (du local à la production, Cloudflare, Brevo, R2, Expo),
+  nouveau guide de l'administration avec chaque paramètre (`docs/administration.md`), `comprendre-immoplus`,
+  tuto gérant, parcours web, écrans mobiles et guides de design alignés sur l'ADR 0009 ; ADR 0004 remplacé.
+
 **2026-10-20 (nuit) : identification par nom d'utilisateur, plus aucun SMS ni numéro (ADR 0009).**
 - Connexion par nom d'utilisateur et mot de passe ; inscription sur une page (prénom, nom, nom d'utilisateur
   vérifié pendant la frappe, mot de passe de 10 caractères) ; clé de secours affichée une seule fois.

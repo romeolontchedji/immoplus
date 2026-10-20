@@ -51,7 +51,7 @@ def _personne_visee(rapport: Report) -> User | None:
 
 
 def _compte(utilisateur: User | None):
-    """Nom (lien vers la fiche du compte) et numéro, sur deux lignes."""
+    """Nom (lien vers la fiche du compte) et nom d'utilisateur, sur deux lignes."""
     if utilisateur is None:
         return "—"
     return format_html(

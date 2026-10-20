@@ -101,8 +101,8 @@ NOTES = {
     "SUBSCRIPTION_GRACE_DAYS": "Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son "
     "abonnement.",
     "PLANS": "Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé.",
-    "PAID_ALERTS_ENABLED": "Coché : les locataires peuvent payer une alerte prioritaire (SMS en plus de la notification). "
-    "Désactivé en V1.",
+    "PAID_ALERTS_ENABLED": "Réservé à une alerte prioritaire payante pour les locataires, pas encore construite : à laisser "
+    "décoché (aucun SMS n'est envoyé par Immo+).",
 }
 
 LONGS = {"MAINTENANCE_MESSAGE", "APP_NOTICE", "LEGAL_ADDRESS"}

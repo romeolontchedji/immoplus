@@ -1,6 +1,6 @@
 # ADR 0004 — SMS de notification à la création d'un gérant
 
-- Statut : **accepté**, amendé le 2026-10-14 (le parcours d'activation OTP est supprimé ; le SMS à la création reste, purement informatif)
+- Statut : **remplacé** par l'ADR 0009 (2026-10-20) : plus aucun SMS ni numéro de téléphone ; le gérant reçoit un lien d'activation. Amendé le 2026-10-14 (parcours d'activation OTP supprimé).
 - Date : 2026-10-13
 
 ## Contexte

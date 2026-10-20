@@ -112,7 +112,7 @@ Les logos d'opérateurs (MTN, Moov, Celtiis) sont des **images officielles**, ja
 ## 5. Composants
 
 **Boutons** (hauteur 56 mobile, 46–52 web, rayon 14–16, texte 15–16/800) : *primaire* (fond `--blue`, texte blanc), *accent* (fond `--sun`, texte `--night`), *secondaire* (fond `--blue-soft`, texte `--blue`), *contour* (bordure `--border`), *danger* (fond `--danger-bg`, texte `--danger`). Pleine largeur sur mobile quand c'est l'action de l'écran. Barre d'action fixe en bas sur mobile (fond blanc, séparateur haut).
-**Champs** : hauteur 52–54, bordure 1.5 `--border`, rayon 14, label MAJUSCULES au-dessus. Numéro de téléphone = préfixe `+229` + champ. Aucun mot de passe : connexion et inscription par **code SMS à 4 chiffres** (cases 58–60 × 64–68, case active bordée `--blue`).
+**Champs** : hauteur 52–54, bordure 1.5 `--border`, rayon 14, label MAJUSCULES au-dessus. Connexion par nom d'utilisateur et mot de passe (ADR 0009), aucun champ téléphone.
 **Chips / pastilles** (filtres, types) : pilule, 13–14/700. Inactive : blanc + bordure `--border`. Active : fond `--blue`, texte blanc. Filtre actif retirable : texte + icône `x`.
 **Badge « Vérifié »** : pilule `--success` (texte blanc, 11–13/700) avec icône `badge-check`. Toujours visible sur carte, détail, conversation et profil du gérant.
 **Carte chambre** : vignette vidéo (ratio ~2:1) avec bouton `play` blanc rond centré, badge Vérifié en haut à gauche, durée en bas à droite ; dessous titre (type · quartier), distance de l'UP, prix en `--blue` 800.
@@ -139,7 +139,7 @@ Les logos d'opérateurs (MTN, Moov, Celtiis) sont des **images officielles**, ja
 | Chambres + filtres (web) | `Web-Chambres` | Filtres : quartier, budget, type, distance UP, équipements, caution, disponibilité, gérants vérifiés, avec vidéo ; liste/carte, tri, filtres actifs |
 | Détail chambre (web) | `Web-Detail-Chambre` | Vidéo, miniatures, infos, carte gérant fixe |
 | Navbar web | `Web-Navbar-Connecte` | Visiteur, connecté, menu, cloche |
-| Connexion / Inscription | `Web-Connexion`, `Web-Inscription`, `Mobile-Connexion`, `Mobile-Inscription-1/2` | Code SMS, inscription locataire uniquement |
+| Connexion / Inscription | `Web-Connexion`, `Web-Inscription`, `Mobile-Connexion`, `Mobile-Inscription-1/2` | Nom d'utilisateur et mot de passe, inscription locataire uniquement |
 | Dashboard gérant | `Web-Dashboard-Gerant`, `Mobile-Dashboard-Gerant` | Stats, encart d'incitation vidéo, tableau des chambres |
 | Publier une chambre | `Web-Publier` (1 page), `Mobile-Publier-1..4` | Mobile : Infos → Vidéo → Description → Récapitulatif |
 | Admin | `Admin-Overview`, `Admin-Gerants`, `Admin-Moderation`, `Admin-Journal` | L'admin valide les pièces et crée les comptes gérant |
@@ -185,7 +185,7 @@ export const radius = { field:14, button:16, card:20, sheet:28, pill:99 };
 export const space = [0,4,8,12,16,20,24,32,40,56];
 export const font = { medium:'PlusJakartaSans_500Medium', bold:'PlusJakartaSans_700Bold', black:'PlusJakartaSans_800ExtraBold' };
 ```
-- Composants à créer d'abord : `Logo`, `Button`, `Chip`, `Badge`, `Field`, `OtpInput`, `RoomCard`, `Toggle`, `Header`, `TabBar`, `NotificationItem`, `FilterSheet`, `RichTextToolbar`, `StepProgress`.
+- Composants à créer d'abord : `Logo`, `Button`, `Chip`, `Badge`, `Field`, `RoomCard`, `Toggle`, `Header`, `TabBar`, `NotificationItem`, `FilterSheet`, `RichTextToolbar`, `StepProgress`.
 - Mobile = priorité au design : grandes cartes vidéo, feuilles de filtres plein écran, barre d'action fixe en bas, `SafeAreaView` partout, retour haptique léger sur les actions principales, états de chargement en squelettes (pas de spinner plein écran).
 - Zones sûres : l'en-tête de 52 px s'ajoute à l'inset haut du téléphone.
 
