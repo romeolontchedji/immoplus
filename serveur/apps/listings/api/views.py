@@ -97,11 +97,9 @@ class AnnoncesPro(_Pro):
     )
     def get(self, request):
         statut = request.query_params.get("status")
-        return Response(
-            s.AnnonceProOut(
-                selectors.annonces_du_gerant(self.profil(request), statut), many=True
-            ).data
-        )
+        liste = list(selectors.annonces_du_gerant(self.profil(request), statut))
+        stats = selectors.stats_par_annonce([a.pk for a in liste])
+        return Response(s.AnnonceProOut(liste, many=True, context={"stats": stats}).data)
 
     @extend_schema(
         tags=TAG_PRO,

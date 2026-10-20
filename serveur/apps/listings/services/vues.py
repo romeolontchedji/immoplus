@@ -75,3 +75,20 @@ def vider_compteurs() -> int:
                 total += int(valeur)
         r.delete(en_cours)
     return total
+
+
+def en_attente(annonce_ids) -> dict:
+    """Vues déjà comptées dans Redis mais pas encore reportées en base (report toutes les 5 minutes) : ajoutées aux
+    chiffres du gérant pour qu'ils suivent la réalité à la vue près."""
+    voulues = {str(i) for i in annonce_ids}
+    if not voulues:
+        return {}
+    r = redis_file.client()
+    totaux: dict[str, int] = {}
+    for cle in list(r.scan_iter(match=f"{PREFIXE_JOUR}*", count=100)) + list(
+        r.scan_iter(match=f"{PREFIXE_VIDAGE}*", count=100)
+    ):
+        for annonce_id, valeur in r.hgetall(cle).items():
+            if annonce_id in voulues:
+                totaux[annonce_id] = totaux.get(annonce_id, 0) + int(valeur)
+    return totaux

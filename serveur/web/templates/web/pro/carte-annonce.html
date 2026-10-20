@@ -1,0 +1,60 @@
+{% load logeo %}
+{# Une annonce du gérant (liste « Mes annonces »). Paramètre : `ligne`. #}
+{% with a=ligne.annonce %}
+  <article class="annonce-pro{% if a.status == 'draft' %} annonce-pro--brouillon{% endif %}">
+    <div class="annonce-pro__tete">
+      {% if a.status == "draft" %}
+        <span class="annonce-pro__brouillon">
+          {% include "web/composants/icone.html" with nom="file-pen" taille=14 %}
+          Brouillon
+        </span>
+      {% else %}
+        <span class="{{ ligne.statut.1 }}">{{ ligne.statut.0 }}</span>
+      {% endif %}
+      <strong class="annonce-pro__prix">
+        {{ a.rent_amount|fcfa }} F
+        {% if a.rent_negotiable %}<span class="annonce-pro__debattre">à débattre</span>{% endif %}
+      </strong>
+    </div>
+    <h3 class="annonce-pro__titre">
+      <a href="{{ ligne.url }}">{{ a.title }}</a>
+    </h3>
+    <p class="annonce-pro__meta">{{ ligne.type_label }} · {{ a.district.name }}</p>
+    {% if a.status == "draft" %}<p class="annonce-pro__invisible">Invisible pour les locataires tant qu'elle n'est pas publiée.</p>{% endif %}
+    {% if a.status != "draft" %}
+      <p class="annonce-pro__stats">
+        <span>
+          {% include "web/composants/icone.html" with nom="eye" taille=16 %}
+          {{ ligne.stats.views_total|default:0 }} vue{{ ligne.stats.views_total|default:0|pluralize }}
+        </span>
+        <span>
+          {% include "web/composants/icone.html" with nom="message-circle" taille=16 %}
+          {{ ligne.stats.contacts|default:0 }} contact{{ ligne.stats.contacts|default:0|pluralize }} (30 j)
+        </span>
+      </p>
+    {% endif %}
+    <div class="annonce-pro__actions">
+      <a class="bouton bouton--petit{% if a.status == 'draft' %} bouton--primaire{% else %} bouton--secondaire{% endif %}"
+         href="{{ ligne.url }}">
+        {% if a.status == "draft" %}
+          Continuer
+        {% else %}
+          Modifier
+        {% endif %}
+      </a>
+      {% for c in ligne.commandes %}
+        {% if c.danger %}
+          {% include "web/composants/confirmation.html" with action=c.action question="Supprimer définitivement cette annonce ? Elle disparaîtra pour tout le monde." libelle="Supprimer" form_action=ligne.url %}
+        {% elif c.action != "publier" or a.status != "draft" %}
+          <form method="post" action="{{ ligne.url }}">
+            {% csrf_token %}
+            <button class="bouton bouton--petit{% if c.primaire %} bouton--primaire{% endif %}"
+                    name="action"
+                    value="{{ c.action }}"
+                    type="submit">{{ c.libelle }}</button>
+          </form>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </article>
+{% endwith %}

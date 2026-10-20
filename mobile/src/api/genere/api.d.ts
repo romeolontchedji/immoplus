@@ -1194,6 +1194,8 @@ export interface components {
             electricity_meter: string;
             kitchen: string;
             rent_negotiable: boolean;
+            /** @description Vues de l'annonce depuis sa publication (vues du jour comprises). */
+            readonly views_total: number;
             description_md: string;
             status: components["schemas"]["AnnonceProOutStatusEnum"];
             hidden_reason: string | null;
@@ -1884,6 +1886,8 @@ export interface components {
                 [key: string]: number;
             };
             views_30d: number;
+            /** @description Vues de toutes tes annonces depuis leur publication. */
+            views_total: number;
             favorites_30d: number;
             conversations_30d: number;
             to_confirm: number;

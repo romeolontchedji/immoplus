@@ -16,6 +16,9 @@ from .. import selectors
 class TableauOut(serializers.Serializer):
     listings_by_status = serializers.DictField(child=serializers.IntegerField())
     views_30d = serializers.IntegerField()
+    views_total = serializers.IntegerField(
+        help_text="Vues de toutes tes annonces depuis leur publication."
+    )
     favorites_30d = serializers.IntegerField()
     conversations_30d = serializers.IntegerField()
     to_confirm = serializers.IntegerField()

@@ -2,207 +2,58 @@
 {% load logeo %}
 {% block titre %}Mes annonces — Espace Gérant — Logeo{% endblock %}
 {% block espace %}
-  <div class="pro-principal">
+  <div class="pro-principal pile pile--large">
     <div class="pro-entete">
       <div>
         <h1 class="pro-entete__titre">Mes annonces</h1>
-        <p class="texte-doux mb-0">Consulte, modifie ou change le statut de tes chambres à Parakou</p>
+        <p class="texte-doux mb-0">Modifie, mets en pause, marque louée ou supprime tes chambres.</p>
       </div>
-      <div class="pro-entete__actions">
-        {% if profil.verification_status == "verified" %}
-          <a class="bouton bouton--accent" href="/pro/annonces/nouvelle">
-            <svg width="18"
-                 height="18"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Publier une chambre
-          </a>
-        {% endif %}
-      </div>
+      {% if profil.verification_status == "verified" %}
+        <a class="bouton bouton--accent" href="/pro/annonces/nouvelle">
+          {% include "web/composants/icone.html" with nom="plus" taille=18 %}
+          Publier une chambre
+        </a>
+      {% endif %}
     </div>
+    {% if message %}
+      <div class="alerte alerte--succes" role="status">
+        <p>{{ message }}</p>
+      </div>
+    {% endif %}
     {% if profil.verification_status != "verified" %}
       <div class="alerte alerte--avertissement" role="status">
         <p>Ton profil n'est pas encore vérifié : tu pourras publier après l'entretien de validation avec l'équipe Logeo.</p>
       </div>
     {% endif %}
-    {% if lignes %}
-      <div class="pro-section-carte">
-        <div class="tableau-defilable bureau-seul">
-          <table class="tableau-pro">
-            <thead>
-              <tr>
-                <th>Chambre</th>
-                <th>Type</th>
-                <th>Loyer</th>
-                <th>Statut</th>
-                <th>Vues</th>
-                <th>Contacts</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for ligne in lignes %}
-                <tr>
-                  <td>
-                    <div class="cellule-chambre">
-                      <span class="cellule-chambre__initiale">
-                        {% if ligne.annonce.has_video %}
-                          <svg width="14"
-                               height="14"
-                               viewBox="0 0 24 24"
-                               fill="currentColor"
-                               stroke="none"
-                               aria-hidden="true">
-                            <polygon points="5 3 19 12 5 21 5 3" />
-                          </svg>
-                        {% else %}
-                          <svg width="14"
-                               height="14"
-                               viewBox="0 0 24 24"
-                               fill="none"
-                               stroke="currentColor"
-                               stroke-width="2"
-                               stroke-linecap="round"
-                               stroke-linejoin="round"
-                               aria-hidden="true">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-                          </svg>
-                        {% endif %}
-                      </span>
-                      <div>
-                        <a class="cellule-chambre__titre" href="{{ ligne.url }}">{{ ligne.annonce.district.name }}</a>
-                        <span class="cellule-chambre__type">{{ ligne.annonce.title }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="texte-doux">{{ ligne.annonce.room_type|type_chambre }}</span>
-                  </td>
-                  <td><strong>{{ ligne.annonce.rent_amount|fcfa }} F</strong></td>
-                  <td>
-                    {% if ligne.annonce.status == "published" %}
-                      {% if ligne.annonce.has_video %}
-                        <span class="statut-active">Active</span>
-                      {% else %}
-                        <span class="statut-sans-video">Sans vidéo</span>
-                      {% endif %}
-                    {% elif ligne.annonce.status == "rented" %}
-                      <span class="statut-louee">Louée</span>
-                    {% elif ligne.annonce.status == "draft" %}
-                      <span class="statut-attente">Brouillon</span>
-                    {% elif ligne.annonce.status == "suspended" %}
-                      <span class="statut-suspendu">Suspendu</span>
-                    {% else %}
-                      <span class="statut-attente">{{ ligne.annonce.get_status_display }}</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if ligne.annonce.status == "published" %}
-                      <span class="fw-700">{{ ligne.stats.views|default:0 }}</span>
-                    {% else %}
-                      <span class="texte-doux">—</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if ligne.annonce.status == "published" %}
-                      <span class="fw-700 color-blue">{{ ligne.stats.contacts|default:0 }}</span>
-                    {% else %}
-                      <span class="texte-doux">—</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <div class="rangee">
-                      {% for c in ligne.commandes %}
-                        {% if c.danger %}
-                          {% include "web/composants/confirmation.html" with action=c.action question="Supprimer définitivement ce brouillon ?" libelle=c.libelle form_action=ligne.url %}
-                        {% else %}
-                          <form method="post" action="{{ ligne.url }}">
-                            {% csrf_token %}
-                            <button class="bouton bouton--petit{% if c.primaire %} bouton--primaire{% endif %}"
-                                    name="action"
-                                    value="{{ c.action }}"
-                                    type="submit">{{ c.libelle }}</button>
-                          </form>
-                        {% endif %}
-                      {% endfor %}
-                      <a class="bouton bouton--petit bouton--secondaire"
-                         href="{{ ligne.url }}">Modifier</a>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {# Version Mobile #}
-        <ul class="pro-contacts-liste mobile-seul">
-          {% for ligne in lignes %}
-            <li class="p-4 border-bottom">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <h2 class="fs-16 fw-700 mb-1"><a href="{{ ligne.url }}"
-   class="color-text">{{ ligne.annonce.title }}</a></h2>
-                  <p class="texte-doux texte-petit mb-0">{{ ligne.annonce.district.name }} · {{ ligne.annonce.room_type|type_chambre }}</p>
-                </div>
-                <strong class="color-blue fs-16">{{ ligne.annonce.rent_amount|fcfa }} F</strong>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-3">
-                {% if ligne.annonce.status == "published" %}
-                  <span class="statut-active">Active</span>
-                {% elif ligne.annonce.status == "rented" %}
-                  <span class="statut-louee">Louée</span>
-                {% elif ligne.annonce.status == "draft" %}
-                  <span class="statut-attente">Brouillon</span>
-                {% else %}
-                  <span class="statut-attente">{{ ligne.annonce.get_status_display }}</span>
-                {% endif %}
-                <span class="texte-doux texte-tres-petit">{{ ligne.stats.views|default:0 }} vues · {{ ligne.stats.contacts|default:0 }} contacts</span>
-              </div>
-              <div class="rangee">
-                {% for c in ligne.commandes %}
-                  {% if c.danger %}
-                    {% include "web/composants/confirmation.html" with action=c.action question="Supprimer ce brouillon ?" libelle=c.libelle form_action=ligne.url %}
-                  {% else %}
-                    <form method="post" action="{{ ligne.url }}">
-                      {% csrf_token %}
-                      <button class="bouton bouton--petit{% if c.primaire %} bouton--primaire{% endif %}"
-                              name="action"
-                              value="{{ c.action }}"
-                              type="submit">{{ c.libelle }}</button>
-                    </form>
-                  {% endif %}
-                {% endfor %}
-                <a class="bouton bouton--petit bouton--secondaire"
-                   href="{{ ligne.url }}">Modifier</a>
-              </div>
-            </li>
+    {% if brouillons %}
+      {# Brouillons à part (plan v3, C5) : jamais confondus avec une annonce en ligne #}
+      <section class="pile" aria-labelledby="titre-brouillons">
+        <h2 class="pro-section-titre" id="titre-brouillons">
+          {% include "web/composants/icone.html" with nom="file-pen" taille=20 %}
+          Brouillons ({{ brouillons|length }})
+        </h2>
+        <p class="texte-doux mb-0">Pas encore visibles par les locataires. Termine-les et publie-les quand tu es prêt.</p>
+        <div class="annonces-pro">
+          {% for ligne in brouillons %}
+            {% include "web/pro/carte-annonce.html" %}
           {% endfor %}
-        </ul>
-      </div>
-    {% else %}
-      <div class="pro-section-carte p-8 text-center">
+        </div>
+      </section>
+    {% endif %}
+    {% if lignes %}
+      <section class="pile" aria-labelledby="titre-annonces">
+        <h2 class="pro-section-titre" id="titre-annonces">Annonces ({{ lignes|length }})</h2>
+        <div class="annonces-pro">
+          {% for ligne in lignes %}
+            {% include "web/pro/carte-annonce.html" %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+    {% if not lignes and not brouillons %}
+      <div class="pro-section-carte p-8">
         <div class="etat-vide">
-          <div class="etat-vide__symbole">
-            <svg width="28"
-                 height="28"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="1.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </div>
+          <div class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="house" taille=28 %}</div>
           <h2 class="etat-vide__titre">Tu n'as pas encore publié de chambre.</h2>
           <p class="etat-vide__texte">Publie la première : une vidéo, quelques photos, et c'est en ligne.</p>
           <div class="etat-vide__actions">

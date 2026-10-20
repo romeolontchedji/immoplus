@@ -76,6 +76,9 @@ class AnnonceProOut(serializers.Serializer):
     electricity_meter = serializers.CharField()
     kitchen = serializers.CharField()
     rent_negotiable = serializers.BooleanField()
+    views_total = serializers.SerializerMethodField(
+        help_text="Vues de l'annonce depuis sa publication (vues du jour comprises)."
+    )
     description_md = serializers.CharField()
     status = serializers.ChoiceField(choices=[s.value for s in StatutAnnonce])
     hidden_reason = serializers.CharField(allow_null=True)
@@ -83,6 +86,15 @@ class AnnonceProOut(serializers.Serializer):
     last_confirmed_at = serializers.DateTimeField(allow_null=True)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_views_total(self, annonce) -> int:
+        from .. import selectors
+
+        stats = self.context.get("stats")
+        if stats is None:
+            stats = selectors.stats_par_annonce([annonce.pk])
+        return stats.get(annonce.pk, {}).get("views_total", 0)
 
     @extend_schema_field(OpenApiTypes.STR)
     def get_room_type_label(self, annonce) -> str:

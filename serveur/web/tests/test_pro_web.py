@@ -27,7 +27,7 @@ def formulaire(quartier, **extra):
         "landmark_text": "Derrière la pharmacie", "address_private": "",
         "rent_amount": "25000", "deposit_months": "2", "advance_months": "1", "agent_fee_amount": "0",
         "available_from": "2026-11-01", "has_private_bathroom": "on", "is_fenced": "on", "water_source": "running",
-        "electricity_meter": "individual", "description_md": "Chambre **calme**", **extra,
+        "electricity_meter": "individual", "kitchen": "private", "description_md": "Chambre **calme**", **extra,
     }  # fmt: skip
 
 
@@ -37,7 +37,9 @@ def test_creation_puis_edition(session_gerant):
     r = c.post("/pro/annonces/nouvelle", formulaire(q))
     assert r.status_code == 302
     a = Listing.objects.get()
-    assert a.gerant == g and r["Location"] == f"/pro/annonces/{a.pk}"
+    assert (
+        a.gerant == g and r["Location"] == f"/pro/annonces/{a.pk}?etape=6"
+    )  # direction les photos
     r = c.post(f"/pro/annonces/{a.pk}", formulaire(q, rent_amount="30000"))
     assert r.status_code == 200 and "enregistrée" in r.content.decode()
     a.refresh_from_db()
@@ -93,8 +95,11 @@ def test_mes_annonces_montre_les_commandes_du_statut(session_gerant):
     publiee = ListingFactory(gerant=g, status="published")
     html = c.get("/pro/annonces").content.decode()
     assert f"/pro/annonces/{brouillon.pk}" in html
-    assert "Supprimer" in html and "Confirmer la disponibilité" in html
-    assert publiee.title in html
+    assert "Supprimer" in html and "Marquer louée" in html
+    assert "Confirmer la disponibilité" not in html  # retiré (plan v3, D1)
+    assert html.index("Brouillons (1)") < html.index(
+        publiee.title
+    )  # brouillons à part, en tête (C5)
 
 
 def test_le_dashboard_d_un_autre_gerant_ne_fuit_pas(session_gerant):
@@ -145,7 +150,11 @@ def test_l_editeur_affiche_l_apercu_de_la_carte(session_gerant):
     a = ListingFactory(gerant=g, status="draft", title="Chambre apercu")
     medias_prets(a, photos=1, video=False)
     page = c.get(f"/pro/annonces/{a.pk}").content.decode()
-    assert "Aperçu" in page and "Chambre apercu" in page and "carte carte--interactive" in page
+    assert (
+        "verront ta chambre" in page
+        and "Chambre apercu" in page
+        and "carte carte--interactive" in page
+    )
 
 
 def test_la_suppression_d_un_brouillon_passe_par_une_confirmation(session_gerant):
@@ -238,14 +247,13 @@ def _jeton(client, url="/connexion"):
 
 
 # --------------------------------------------------------------- mise en forme de la description (V6)
-def test_l_editeur_propose_la_barre_de_mise_en_forme(session_gerant):
+def test_l_editeur_en_etapes_sans_mise_en_forme(session_gerant):
     c, _ = session_gerant
     page = c.get("/pro/annonces/nouvelle").content.decode()
-    assert (
-        "data-mise-en-forme" in page
-        and 'data-format="gras"' in page
-        and "js/mise-en-forme.js" in page
-    )
+    assert "data-mise-en-forme" not in page and "Autres détails" in page  # texte simple (C1)
+    assert page.count('data-etape="') == 5 and "js/etapes-annonce.js" in page  # étapes (C4)
+    assert 'name="kitchen"' in page and 'name="rent_negotiable"' in page  # C2, C3
+    assert "Brouillon" in page
     assert "Latitude" not in page and "Longitude" not in page  # décision V7
 
 
@@ -304,3 +312,13 @@ def test_interrupteur_refuse_l_annonce_d_un_autre(session_gerant):
     assert r.status_code == 200 and "introuvable" in r.content.decode().lower()
     autre.refresh_from_db()
     assert autre.status == "published"
+
+
+def test_une_annonce_en_ligne_se_supprime_depuis_le_site(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="published")
+    r = c.post(f"/pro/annonces/{a.pk}", {"action": "supprimer"})
+    assert r["Location"] == "/pro/annonces?ok=supprimee"
+    a.refresh_from_db()
+    assert a.deleted_at is not None and a.status == "archived"
+    assert "Annonce supprimée." in c.get(r["Location"]).content.decode()

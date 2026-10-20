@@ -50,24 +50,32 @@ STATUT_LIGNE = {
 }
 
 
+SUPPRIMER = {"action": "supprimer", "libelle": "Supprimer l'annonce", "danger": True}
+
+
 def commandes_autorisees(annonce) -> list[dict]:
-    """Actions réellement permises par le statut (les services revérifient côté serveur)."""
+    """Actions réellement permises par le statut (les services revérifient côté serveur).
+
+    « Confirmer la disponibilité » a disparu (plan v3, D1) : une chambre louée se marque louée, une chambre
+    momentanément indisponible se masque ; toute annonce peut être supprimée (C6)."""
     statut = annonce.status
     if statut == StatutAnnonce.DRAFT:
-        return [
-            {"action": "publier", "libelle": "Publier", "primaire": True},
-            {"action": "supprimer", "libelle": "Supprimer", "danger": True},
-        ]
+        return [{"action": "publier", "libelle": "Publier", "primaire": True}, SUPPRIMER]
     if statut == StatutAnnonce.PUBLISHED:
         return [
-            {"action": "confirmer", "libelle": "Confirmer la disponibilité", "primaire": True},
+            {"action": "louee", "libelle": "Marquer louée", "primaire": True},
             {"action": "masquer", "libelle": "Masquer"},
-            {"action": "louee", "libelle": "Marquer louée"},
+            SUPPRIMER,
         ]
     if statut == StatutAnnonce.HIDDEN:
-        return [{"action": "publier", "libelle": "Republier", "primaire": True}]
+        return [{"action": "publier", "libelle": "Remettre en ligne", "primaire": True}, SUPPRIMER]
     if statut == StatutAnnonce.RENTED:
-        return [{"action": "annuler-louee", "libelle": "Remettre en ligne", "primaire": True}]
+        return [
+            {"action": "annuler-louee", "libelle": "Remettre en ligne", "primaire": True},
+            SUPPRIMER,
+        ]
+    if statut in (StatutAnnonce.PROCESSING, StatutAnnonce.ARCHIVED):
+        return [SUPPRIMER]
     return []
 
 
@@ -127,14 +135,18 @@ def tableau_de_bord(request, profil):
 
 @gerant_obligatoire
 def liste(request, profil):
+    """Mes annonces : les brouillons à part, en tête, pour ne jamais les confondre avec une annonce en ligne (C5)."""
     toutes = list(selectors.annonces_du_gerant(profil))
     stats_annonces = selectors.stats_par_annonce([a.pk for a in toutes])
+    message = {"supprimee": "Annonce supprimée."}.get(request.GET.get("ok", ""))
     lignes = [
         {
             "annonce": a,
+            "type_label": types.libelle(a.room_type),
+            "statut": STATUT_LIGNE.get(a.status, (a.status, "statut-attente")),
             "commandes": commandes_autorisees(a),
             "url": f"/pro/annonces/{a.pk}",
-            "stats": stats_annonces.get(a.pk, {"views": 0, "contacts": 0}),
+            "stats": stats_annonces.get(a.pk, {"views": 0, "views_total": 0, "contacts": 0}),
         }
         for a in toutes
     ]
@@ -142,10 +154,11 @@ def liste(request, profil):
         request,
         "web/pro/liste.html",
         {
-            "lignes": lignes,
-            "statuts": TITRES_STATUTS,
+            "brouillons": [x for x in lignes if x["annonce"].status == StatutAnnonce.DRAFT],
+            "lignes": [x for x in lignes if x["annonce"].status != StatutAnnonce.DRAFT],
             "profil": profil,
             "titre": "Mes annonces",
+            "message": message,
         },
     )
 
@@ -224,8 +237,31 @@ def _initial(annonce) -> dict:
         "agent_fee_amount": annonce.agent_fee_amount, "available_from": annonce.available_from,
         "has_private_bathroom": annonce.has_private_bathroom, "is_fenced": annonce.is_fenced,
         "water_source": annonce.water_source, "electricity_meter": annonce.electricity_meter,
+        "kitchen": annonce.kitchen, "rent_negotiable": annonce.rent_negotiable,
         "description_md": annonce.description_md,
     }  # fmt: skip
+
+
+ETAPES = ["La chambre", "Localisation", "Loyer", "Équipements", "Autres détails", "Vidéo et photos",
+          "Publication"]  # fmt: skip
+
+
+def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, photos_pretes) -> int:
+    """Étape ouverte à l'affichage : celle de l'action qu'on vient de faire, sinon la prochaine chose à faire."""
+    demandee = request.GET.get("etape", "")
+    if demandee.isdigit() and 1 <= int(demandee) <= len(ETAPES) and annonce is not None:
+        return int(demandee)
+    if annonce is None:
+        return 1
+    if request.method == "POST":
+        if action in ACTIONS_MEDIAS:
+            return 6
+        if action in ACTIONS or manques:
+            return 7
+        return 6 if annonce.status == StatutAnnonce.DRAFT else 1
+    if annonce.status == StatutAnnonce.DRAFT:
+        return 7 if (video_prete and photos_pretes >= 3 and not en_cours) else 6
+    return 6 if en_cours else 1
 
 
 @gerant_obligatoire
@@ -251,12 +287,12 @@ def editeur(request, profil, annonce_id=None):
                     ).slug
                 if annonce is None:
                     annonce = annonces.creer_brouillon(profil, donnees)
-                    return redirect(f"/pro/annonces/{annonce.pk}")
+                    return redirect(f"/pro/annonces/{annonce.pk}?etape=6")
                 annonce = annonces.modifier(profil, annonce.pk, donnees)
                 message = "Annonce enregistrée."
             elif action == "supprimer" and annonce:
                 annonces.supprimer(profil, annonce.pk)
-                return redirect("/pro/annonces")
+                return redirect("/pro/annonces?ok=supprimee")
             elif action in ACTIONS and annonce:
                 annonce = ACTIONS[action](profil, annonce.pk)
                 message = "Statut mis à jour."
@@ -274,7 +310,12 @@ def editeur(request, profil, annonce_id=None):
     liste_medias = _medias_vue(medias.lister(profil, annonce.pk)) if annonce else []
     en_cours = any(m["en_cours"] for m in liste_medias)
     apercu = selectors.carte_apercu(annonce) if annonce else None
+    photos_pretes = sum(1 for m in liste_medias if m["est_photo"] and m["pret"])
+    video_prete = any(not m["est_photo"] and m["pret"] for m in liste_medias)
+    etape = _etape_initiale(request, annonce, action, manques, en_cours, video_prete, photos_pretes)
     contexte = {"form": form, "annonce": annonce, "message": message, "manques": manques,
+                "etapes": ETAPES, "etape_initiale": etape,
+                "statut": STATUT_LIGNE.get(annonce.status, (annonce.status, "")) if annonce else None,
                 "erreur_media": erreur_media, "apercu": apercu, "titre": "Modifier l'annonce" if annonce else "Nouvelle annonce", "medias": liste_medias, "medias_en_cours": en_cours,
                 "photos_pretes": sum(1 for m in liste_medias if m["est_photo"] and m["pret"]),
                 "video_prete": any(not m["est_photo"] and m["pret"] for m in liste_medias), "commandes": commandes_autorisees(annonce) if annonce else []}  # fmt: skip

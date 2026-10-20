@@ -43,8 +43,12 @@
         <p class="pro-metrique-label">Chambres actives</p>
       </div>
       <div class="pro-metrique-carte">
-        <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:"—" }}</p>
-        <p class="pro-metrique-label">Vues ce mois</p>
+        <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_30d|default:"0" }}</p>
+        <p class="pro-metrique-label">Vues sur 30 jours</p>
+      </div>
+      <div class="pro-metrique-carte">
+        <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.views_total|default:"0" }}</p>
+        <p class="pro-metrique-label">Vues au total</p>
       </div>
       <div class="pro-metrique-carte">
         <p class="pro-metrique-valeur pro-metrique-valeur--bleu">{{ donnees.conversations_30d|default:"—" }}</p>
@@ -79,7 +83,7 @@
                   <th>Chambre</th>
                   <th>Loyer</th>
                   <th>Statut</th>
-                  <th>Vues</th>
+                  <th>Vues (total)</th>
                   <th>Contacts</th>
                   <th>Disponible</th>
                 </tr>
@@ -102,8 +106,9 @@
                     <td data-libelle="Statut">
                       <span class="{{ r.statut.1 }}">{{ r.statut.0 }}</span>
                     </td>
-                    <td data-libelle="Vues">
-                      <span class="fw-700">{{ r.stats.views|default:0 }}</span>
+                    <td data-libelle="Vues (total)">
+                      <span class="fw-700"
+                            title="{{ r.stats.views|default:0 }} sur les 30 derniers jours">{{ r.stats.views_total|default:0 }}</span>
                     </td>
                     <td data-libelle="Contacts">
                       <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>

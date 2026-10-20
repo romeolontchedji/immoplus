@@ -3344,6 +3344,11 @@
                     "rent_negotiable": {
                         "type": "boolean"
                     },
+                    "views_total": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Vues de l'annonce depuis sa publication (vues du jour comprises)."
+                    },
                     "description_md": {
                         "type": "string"
                     },
@@ -3403,6 +3408,7 @@
                     "status",
                     "title",
                     "updated_at",
+                    "views_total",
                     "water_source"
                 ]
             },
@@ -5577,6 +5583,10 @@
                     "views_30d": {
                         "type": "integer"
                     },
+                    "views_total": {
+                        "type": "integer",
+                        "description": "Vues de toutes tes annonces depuis leur publication."
+                    },
                     "favorites_30d": {
                         "type": "integer"
                     },
@@ -5607,7 +5617,8 @@
                     "response_rate_30d",
                     "to_confirm",
                     "unread_messages",
-                    "views_30d"
+                    "views_30d",
+                    "views_total"
                 ]
             },
             "TargetTypeEnum": {

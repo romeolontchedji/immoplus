@@ -1,6 +1,7 @@
 """Lectures des annonces et quartiers : espace gérant, fil public, fiche, favoris, alertes."""
 
 import base64
+import datetime
 import hashlib
 import json
 import posixpath
@@ -80,20 +81,27 @@ def statuts_publics() -> tuple[str, ...]:
     return (StatutAnnonce.PUBLISHED,)
 
 
-def stats_par_annonce(annonce_ids: list, *, jours: int = 30) -> dict:
-    """Retourne un dictionnaire {annonce_id: {'views': int, 'contacts': int}} sur les X derniers jours."""
-    import datetime
+DEBUT_DES_STATS = datetime.date(2020, 1, 1)
 
+
+def stats_par_annonce(annonce_ids: list, *, jours: int = 30) -> dict:
+    """{annonce_id: {'views', 'views_total', 'contacts'}} : vues sur `jours` jours et depuis toujours, vues du jour
+    encore en attente comprises ; contacts sur `jours` jours."""
     from django.utils import timezone
 
     from apps.core import stats
 
+    from .services import vues
+
     depuis = timezone.localdate() - datetime.timedelta(days=jours)
+    attente = vues.en_attente(annonce_ids)
     resultats = {}
     for aid in annonce_ids:
         sid = str(aid)
         resultats[aid] = {
-            "views": stats.somme("views", [sid], depuis=depuis),
+            "views": stats.somme("views", [sid], depuis=depuis) + attente.get(sid, 0),
+            "views_total": stats.somme("views", [sid], depuis=DEBUT_DES_STATS)
+            + attente.get(sid, 0),
             "contacts": stats.somme("conversations_started", [sid], depuis=depuis),
         }
     return resultats
@@ -673,9 +681,19 @@ def tableau_de_bord_gerant(gerant) -> dict:
     a_confirmer = Listing.objects.filter(
         gerant=gerant, status=StatutAnnonce.PUBLISHED, last_confirmed_at__lt=delai
     ).count()
+    from .services import vues
+
+    toutes = [
+        str(i)
+        for i in Listing.objects.filter(gerant=gerant, deleted_at__isnull=True).values_list(
+            "id", flat=True
+        )
+    ]
+    attente = vues.en_attente(toutes)
     return {
         "listings_by_status": par_statut,
-        "views_30d": stats.somme("views", ids, depuis=depuis),
+        "views_30d": stats.somme("views", ids, depuis=depuis) + sum(attente.get(i, 0) for i in ids),
+        "views_total": stats.somme("views", toutes, depuis=DEBUT_DES_STATS) + sum(attente.values()),
         "favorites_30d": stats.somme("favorites_added", ids, depuis=depuis),
         "conversations_30d": stats.somme("conversations_started", ids, depuis=depuis),
         "to_confirm": a_confirmer,

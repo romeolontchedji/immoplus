@@ -1,7 +1,7 @@
 from django import forms
 
 from apps.listings import selectors
-from apps.listings.enums import Compteur, Eau
+from apps.listings.enums import Compteur, Cuisine, Eau
 from apps.listings.services import types
 
 from .forms import _Base
@@ -27,6 +27,10 @@ class AnnonceForm(_Base):
         required=False,
     )
     rent_amount = forms.IntegerField(label="Loyer mensuel (FCFA)", min_value=1)
+    rent_negotiable = forms.BooleanField(
+        label="Prix à débattre", required=False,
+        help_text="Coche si tu acceptes de discuter du loyer : la fiche affichera « à débattre ».",
+    )  # fmt: skip
     deposit_months = forms.IntegerField(label="Caution (mois)", min_value=0, max_value=12)
     advance_months = forms.IntegerField(label="Avance (mois)", min_value=0, max_value=12)
     agent_fee_amount = forms.IntegerField(
@@ -38,17 +42,19 @@ class AnnonceForm(_Base):
     )
     has_private_bathroom = forms.BooleanField(label="Douche et WC internes", required=False)
     is_fenced = forms.BooleanField(label="Clôture ou portail", required=False)
-    water_source = forms.ChoiceField(label="Eau", choices=Eau.choices)
-    electricity_meter = forms.ChoiceField(label="Compteur d'électricité", choices=Compteur.choices)
+    electricity_meter = forms.ChoiceField(
+        label="Électricité", choices=[("", "Choisis"), *Compteur.choices]
+    )
+    water_source = forms.ChoiceField(label="Eau", choices=[("", "Choisis"), *Eau.choices])
+    kitchen = forms.ChoiceField(label="Cuisine", choices=[("", "Choisis"), *Cuisine.choices])
+    # « Autres détails » : texte simple, sans mise en forme (plan v3, C1).
     description_md = forms.CharField(
-        label="Description",
+        label="Autres détails",
         required=False,
-        max_length=6000,
+        max_length=4000,
+        help_text="Ce que les champs ci-dessus ne disent pas : règles de la maison, voisinage, marché proche…",
         widget=forms.Textarea(
-            attrs={
-                "rows": 8,
-                "placeholder": "Ce qui rend ta chambre agréable : calme, lumière, voisinage…",
-            }
+            attrs={"rows": 6, "placeholder": "Ex. Chambre au calme, à 5 minutes du marché Arzèkè."}
         ),
     )
 
@@ -65,7 +71,7 @@ class AnnonceForm(_Base):
         self.fields["district"].choices = [
             (str(q.pk), q.name) for q in selectors.quartiers_actifs()
         ]
-        for nom in ("has_private_bathroom", "is_fenced"):
+        for nom in ("has_private_bathroom", "is_fenced", "rent_negotiable"):
             self.fields[nom].widget.attrs.pop("class", None)
 
     def clean(self):

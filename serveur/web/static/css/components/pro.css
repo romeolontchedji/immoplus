@@ -248,3 +248,76 @@
 @media (min-width: 100rem) {
   .pro-dashboard-grille { grid-template-columns: minmax(0, 1fr) 22rem; }
 }
+
+/* ---- Mes annonces en cartes (plan v3, C5 et C6) ---- */
+.pro-section-titre { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.annonces-pro { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.annonce-pro {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  padding: var(--sp-5); border-radius: var(--r-card); background: var(--surface);
+  border: 1px solid var(--divider); box-shadow: var(--shadow-card);
+}
+.annonce-pro--brouillon { border: 2px dashed var(--warning-border); background: var(--accent-soft); box-shadow: none; }
+.annonce-pro__tete { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.annonce-pro__brouillon {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
+  background: var(--warning-bg); color: var(--warning); font-size: var(--fs-12); font-weight: 800;
+}
+.annonce-pro__prix { color: var(--blue); font-size: var(--fs-16); text-align: right; }
+.annonce-pro__debattre { display: block; font-size: var(--fs-12); color: var(--text-muted); font-weight: 700; }
+.annonce-pro__titre { margin: var(--sp-1) 0 0; font-size: var(--fs-17); font-weight: 800; }
+.annonce-pro__titre a { color: var(--night); text-decoration: none; }
+.annonce-pro__titre a:hover { color: var(--blue); }
+.annonce-pro__meta { margin: 0; color: var(--text-muted); font-size: var(--fs-14); }
+.annonce-pro__stats { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin: 0; font-size: var(--fs-14); font-weight: 700; color: var(--night); }
+.annonce-pro__stats span { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.annonce-pro__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-2); margin-top: auto; padding-top: var(--sp-3); }
+.annonce-pro__actions form { margin: 0; }
+
+/* ---- Éditeur d'annonce en étapes (plan v3, C4 et C5) ---- */
+.editeur { display: flex; flex-direction: column; gap: var(--sp-5); max-width: 60rem; }
+.editeur__formulaire { display: flex; flex-direction: column; gap: var(--sp-5); }
+.editeur__statut { margin: 0; color: var(--text-muted); }
+.bandeau-brouillon {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-4); border-radius: var(--r-card);
+  background: var(--accent-soft); border: 2px dashed var(--warning-border); color: var(--night);
+}
+.bandeau-brouillon .icone { flex-shrink: 0; color: var(--warning); }
+.etape { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-6); }
+.etape[hidden] { display: none; }
+.etape__navigation {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3);
+  padding-top: var(--sp-4); border-top: 1px solid var(--divider);
+}
+.etape__navigation .bouton { display: inline-flex; align-items: center; gap: var(--sp-2); }
+/* Sans script : les boutons de navigation n'ont pas de sens, toutes les étapes sont visibles. */
+.editeur:not(.editeur--etapes) .etape__navigation [data-aller] { display: none; }
+.etapes-annonce {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2);
+}
+.etapes-annonce[hidden] { display: none; }
+.etapes-annonce__etape {
+  width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1); border: 0; border-radius: var(--r-field); background: transparent;
+  font: inherit; font-size: var(--fs-12); font-weight: 700; color: var(--text-muted); cursor: pointer;
+}
+.etapes-annonce__etape:disabled { opacity: 0.5; cursor: not-allowed; }
+.etapes-annonce__numero {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; border-radius: var(--r-pill);
+  border: 2px solid var(--border); background: var(--surface); color: var(--text-muted); font-weight: 800;
+}
+.etapes-annonce__etape--faite .etapes-annonce__numero { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+.etapes-annonce__etape--courante { color: var(--night); }
+.etapes-annonce__etape--courante .etapes-annonce__numero { background: var(--blue); border-color: var(--blue); color: var(--white); }
+.etapes-annonce__libelle { text-align: center; line-height: 1.2; }
+@media (max-width: 640px) {
+  .etapes-annonce__libelle { display: none; }
+  .etapes-annonce__etape--courante .etapes-annonce__libelle { display: none; }
+  .etape { padding: var(--sp-4); }
+}
+.annonce-pro__prix { white-space: nowrap; }
+.annonce-pro__invisible { margin: 0; font-size: var(--fs-13); font-weight: 700; color: var(--warning); }
