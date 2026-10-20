@@ -2,6 +2,16 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-20 (nuit) : identification par nom d'utilisateur, plus aucun SMS ni numéro (ADR 0009).**
+- Connexion par nom d'utilisateur et mot de passe ; inscription sur une page (prénom, nom, nom d'utilisateur
+  vérifié pendant la frappe, mot de passe de 10 caractères) ; clé de secours affichée une seule fois.
+- Mot de passe oublié : lien par e-mail confirmé, clé de secours, puis lien généré par l'équipe (24 h, journalisé).
+  E-mail ajouté et confirmé depuis le profil.
+- Gérants créés sans mot de passe ; lien d'activation (72 h) où ils choisissent leurs identifiants.
+- Numéro de téléphone, codes SMS, fournisseur SMS, SMS de repli et attestation d'appareil supprimés (migrations
+  accounts 0009 à 0011, core 0010). Vidéo facultative pour publier.
+- Site, API, administration et application mobile mis à jour ; textes légaux alignés.
+
 **2026-10-20 (soir) : retours sur les alertes, la recherche et la publication.**
 - Alertes (site et application) : seules les alertes actives sont listées (celles en pause repliées en bas), un
   bouton « Créer une nouvelle alerte » ouvre le formulaire ; tous les critères en listes déroulantes à choix

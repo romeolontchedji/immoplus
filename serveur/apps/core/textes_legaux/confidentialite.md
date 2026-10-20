@@ -11,7 +11,7 @@ Contact : [[email]]
 
 ## 2. Données collectées
 
-- **Compte :** numéro de téléphone, nom, mot de passe (stocké chiffré de façon irréversible), date d'acceptation des conditions.
+- **Compte :** prénom, nom, nom d'utilisateur, mot de passe et clé de secours (stockés chiffrés de façon irréversible), adresse e-mail si tu en ajoutes une, date d'acceptation des conditions. Immo+ ne conserve pas ton numéro de téléphone.
 - **Appareils :** identifiant d'installation de l'application, plateforme, version, et jeton de notification si tu les autorises.
 - **Activité :** favoris, alertes (quartiers, budget, type), conversations et messages, signalements.
 - **Gérants :** annonces, vidéos et photos, adresse précise de la chambre (jamais montrée aux locataires avant un échange), pièces d'identité transmises à l'équipe pour la vérification.
@@ -31,12 +31,11 @@ Nous ne collectons pas ta position GPS en tant que locataire, et nous ne vendons
 - Le gérant voit ton nom et tes messages lorsque tu lui écris ; il ne voit ton numéro que si tu le lui donnes.
 - Les locataires voient le nom du gérant, son badge et ses annonces ; son numéro n'est jamais affiché par Immo+.
 - L'équipe de modération ne lit une conversation qu'en cas de signalement ou de suspicion de fraude, avec un motif enregistré dans un journal non modifiable.
-- Nos prestataires techniques (hébergement, envoi des SMS et des notifications) n'accèdent qu'aux données nécessaires à leur mission.
+- Nos prestataires techniques (hébergement, envoi des courriels et des notifications) n'accèdent qu'aux données nécessaires à leur mission.
 
 ## 5. Durées de conservation
 
 - **Conversations :** 12 mois après le dernier message, puis supprimées.
-- **Codes de vérification SMS :** 90 jours.
 - **Pièces d'identité des gérants :** chiffrées et accessibles à l'administration seulement, supprimées automatiquement à échéance.
 - **Adresses IP des journaux :** effacées après 90 jours.
 - **Sauvegardes :** chiffrées et renouvelées en continu (quelques semaines).
@@ -50,7 +49,7 @@ Nous ne collectons pas ta position GPS en tant que locataire, et nous ne vendons
 
 Tu peux à tout moment :
 
-- consulter et corriger ton nom et ton numéro depuis ton profil ;
+- consulter et corriger ton nom et ton adresse e-mail depuis ton profil ;
 - choisir tes notifications et les couper par catégorie ;
 - supprimer ton compte depuis ton profil (site ou application) ;
 - demander une copie de tes données ou poser une question à [[email]].

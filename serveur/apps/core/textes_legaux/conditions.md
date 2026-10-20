@@ -12,7 +12,7 @@ Pendant le lancement, le service est entièrement gratuit, pour les locataires c
 
 ## 2. Ton compte
 
-- Le compte locataire se crée avec ton numéro de téléphone béninois, vérifié par un code reçu par SMS, ton nom et un mot de passe.
+- Le compte locataire se crée avec ton prénom, ton nom, un nom d'utilisateur et un mot de passe. Immo+ ne demande pas ton numéro de téléphone. Une clé de secours t'est donnée à l'inscription : garde-la, elle permet de choisir un nouveau mot de passe si tu l'oublies.
 - Le compte gérant n'est jamais créé en libre-service : notre équipe vérifie ton identité et ton activité lors d'un court entretien, puis crée ton compte. C'est ce qui donne sa valeur au badge « Vérifié ».
 - Tu es responsable de ton mot de passe. Si tu penses qu'il a été découvert, change-le et déconnecte tes autres appareils depuis ton profil.
 - Tu peux supprimer ton compte à tout moment depuis ton profil, sur le site ou dans l'application.

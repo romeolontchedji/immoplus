@@ -92,8 +92,8 @@
 }
 .cle-secours__valeur {
   margin: 0; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: var(--fs-24); font-weight: 800; letter-spacing: 0.08em; color: var(--night);
-  user-select: all; word-break: break-all; text-align: center;
+  font-size: clamp(var(--fs-17), 5.6vw, var(--fs-24)); font-weight: 800; letter-spacing: 0.04em; color: var(--night);
+  user-select: all; white-space: nowrap; text-align: center; /* une seule ligne : plus facile à recopier */
 }
 .cle-secours__statut { margin: 0; min-height: 1.2em; font-size: var(--fs-13); font-weight: 700; color: var(--success); }
 .cle-secours__conseils { margin: 0; padding-left: var(--sp-5); font-size: var(--fs-14); color: var(--text-muted); }
