@@ -643,6 +643,22 @@ def alertes_correspondantes(annonce_id) -> list[tuple[uuid.UUID, uuid.UUID]]:
     return list(requete.values_list("pk", "user_id"))
 
 
+def nombre_pour_alerte(alerte: Alert) -> int:
+    """Chambres en ligne qui correspondent aujourd'hui à une alerte (mêmes règles que `alertes_correspondantes`)."""
+    requete = Listing.objects.filter(status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True)
+    if alerte.district_ids:
+        requete = requete.filter(district_id__in=alerte.district_ids)
+    if alerte.room_types:
+        requete = requete.filter(room_type__in=alerte.room_types)
+    if alerte.max_rent:
+        requete = requete.filter(rent_amount__lte=alerte.max_rent)
+    if alerte.max_distance_m:
+        requete = requete.filter(distance_to_campus_m__lte=alerte.max_distance_m)
+    if alerte.private_bathroom_required:
+        requete = requete.filter(has_private_bathroom=True)
+    return requete.count()
+
+
 def locataires_favoris(annonce_id) -> list:
     return list(Favorite.objects.filter(listing_id=annonce_id).values_list("user_id", flat=True))
 

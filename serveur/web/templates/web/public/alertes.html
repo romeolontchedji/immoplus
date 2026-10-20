@@ -87,6 +87,13 @@
                             <span class="badge badge--neutre">Douche interne</span>
                           {% endif %}
                         </div>
+                        <p class="alerte-carte__trouve">
+                          {% if ligne.nombre %}
+                            {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }} en ligne correspond{{ ligne.nombre|pluralize:"ent" }} déjà à cette alerte.
+                          {% else %}
+                            Aucune chambre en ligne pour l'instant : tu seras prévenu dès qu'une chambre correspond.
+                          {% endif %}
+                        </p>
                       </div>
                       <div class="rangee">
                         <form method="post">
@@ -102,8 +109,8 @@
                           {% endif %}
                         </form>
                         <a class="bouton bouton--petit bouton--secondaire"
-                           href="/annonces?{% if ligne.objet.district_ids %}district={{ ligne.objet.district_ids.0 }}{% endif %}{% if ligne.objet.max_rent %}&rent_max={{ ligne.objet.max_rent }}{% endif %}">
-                          Voir les chambres
+                           href="{{ ligne.lien }}">
+                          Voir {% if ligne.nombre %}les {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }}{% else %}les chambres{% endif %}
                         </a>
                         <a class="bouton bouton--petit bouton--fantome"
                            href="/compte/alertes?modifier={{ ligne.objet.id }}">Modifier</a>

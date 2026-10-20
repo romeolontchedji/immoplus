@@ -27,3 +27,4 @@
   .alertes-grille__formulaire .grille--2 { grid-template-columns: minmax(0, 1fr); }
   .alertes-grille__formulaire { position: sticky; top: calc(var(--hauteur-entete) + var(--sp-6)); }
 }
+.alerte-carte__trouve { margin: var(--sp-2) 0 0; font-size: var(--fs-14); font-weight: 700; color: var(--success); }

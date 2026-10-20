@@ -320,6 +320,21 @@ def _donnees_alerte(post) -> dict:
     return d
 
 
+def _lien_alerte(alerte, slugs_quartiers: dict) -> str:
+    """Page Chambres filtrée comme l'alerte (le filtre « quartier » attend le slug, pas l'identifiant)."""
+    params = {}
+    if alerte.district_ids:
+        params["district"] = slugs_quartiers.get(str(alerte.district_ids[0]), "")
+    if alerte.room_types:
+        params["type"] = alerte.room_types[0]
+    if alerte.max_rent:
+        params["rent_max"] = alerte.max_rent
+    if alerte.private_bathroom_required:
+        params["bathroom"] = "true"
+    params = {k: v for k, v in params.items() if v}
+    return "/annonces" + (f"?{urlencode(params)}" if params else "")
+
+
 @connecte_obligatoire
 def mes_alertes(request):
     if request.user.role != "client":
@@ -366,6 +381,7 @@ def mes_alertes(request):
             }
     quartiers = _quartiers()
     noms_quartiers = {str(q.id): q.name for q in quartiers}
+    slugs_quartiers = {str(q.id): q.slug for q in quartiers}
     libelles_types = types_chambre.libelles()
     alertes_vue = [
         {
@@ -374,6 +390,10 @@ def mes_alertes(request):
                 noms_quartiers.get(str(identifiant), "") for identifiant in a.district_ids or []
             ],
             "types": [libelles_types.get(t, t) for t in a.room_types or []],
+            "nombre": selectors.nombre_pour_alerte(
+                a
+            ),  # ce que l'alerte trouve aujourd'hui (plan v3, H1)
+            "lien": _lien_alerte(a, slugs_quartiers),
         }
         for a in liste_alertes
     ]

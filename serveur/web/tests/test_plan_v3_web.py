@@ -98,3 +98,19 @@ class TestBarreLaterale:
             assert 'class="espace-barre"' in html(c.get(chemin)), chemin
         assert 'class="espace-barre"' not in html(c.get("/"))
         assert 'class="espace-barre"' not in html(Client().get("/annonces"))  # visiteur
+
+
+class TestAlertesQuiTrouventVraiment:
+    def test_lien_par_slug_et_nombre_de_chambres(self):
+        from apps.listings.services import alertes
+        from apps.listings.tests.fabriques import DistrictFactory
+
+        q = DistrictFactory(slug="zongo")
+        ListingFactory.create_batch(2, district=q, rent_amount=20000)
+        loc = ClientFactory()
+        alertes.creer(loc, {"district_ids": [q.pk], "max_rent": 25000})
+        page = html(connecte(loc).get("/compte/alertes"))
+        assert (
+            'href="/annonces?district=zongo&amp;rent_max=25000"' in page
+        )  # plus d'identifiant interne
+        assert "2 chambres en ligne correspondent déjà" in page
