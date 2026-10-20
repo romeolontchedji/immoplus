@@ -28,3 +28,41 @@
 @media (min-width: 768px) {
   .galerie-fiche { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
 }
+
+/* ---- Galerie de la fiche (plan v3, B1) : une diapositive à la fois, même format pour toutes ---- */
+.galerie {
+  display: block; position: relative; border-radius: var(--r-card-l); overflow: hidden;
+  background: var(--night); box-shadow: var(--shadow-card);
+}
+.galerie__piste {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.galerie__piste::-webkit-scrollbar { display: none; }
+.galerie__piste:focus-visible { outline: 3px solid var(--sun); outline-offset: -3px; }
+.galerie__diapo { flex: 0 0 100%; margin: 0; scroll-snap-align: center; aspect-ratio: 16 / 10; }
+.galerie__media { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--night); }
+video.galerie__media { object-fit: contain; }
+.galerie__fleche {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; border: 0; border-radius: var(--r-pill);
+  background: var(--surface); color: var(--night); box-shadow: var(--shadow-pop); cursor: pointer;
+  transition: opacity var(--duree-1), transform var(--duree-1);
+}
+.galerie__fleche:hover { transform: translateY(-50%) scale(1.06); }
+.galerie__fleche:disabled { opacity: 0; pointer-events: none; }
+.galerie__fleche:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+.galerie__fleche--prec { left: var(--sp-3); }
+.galerie__fleche--suiv { right: var(--sp-3); }
+.galerie__compteur {
+  position: absolute; right: var(--sp-3); top: var(--sp-3); z-index: 2;
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
+  background: var(--media-overlay-bg); color: var(--media-overlay-fg); font-size: var(--fs-13); font-weight: 800;
+}
+.galerie__badge {
+  position: absolute; left: var(--sp-3); top: var(--sp-3); z-index: 2;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
+  background: var(--success); color: var(--white); font-size: var(--fs-12); font-weight: 800;
+}

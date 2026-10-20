@@ -270,6 +270,37 @@ def ouvrir(
     return conversation, message, cree, info
 
 
+def demarrer(utilisateur, annonce_id) -> Conversation:
+    """« Contacter le gérant » : ouvre (ou retrouve) la conversation sans message imposé (plan v3, B6).
+
+    Le locataire écrit lui-même son premier message dans la discussion ; tant qu'elle est vide, elle n'apparaît
+    pas dans les listes et le gérant n'est pas dérangé."""
+    if getattr(utilisateur, "role", None) != "client":
+        raise ErreurMetier(
+            "wrong_audience", "Seuls les locataires ouvrent une conversation.", statut=403
+        )
+    _exiger_actif(utilisateur)
+    annonce = annonces.annonce_pour_messagerie(annonce_id) if _uuid_ok(annonce_id) else None
+    if annonce is None or annonce["status"] != StatutAnnonce.PUBLISHED:
+        existante = _conversation_existante(utilisateur, annonce)
+        if existante is None:
+            raise ErreurMetier(
+                "listing_unavailable",
+                "Cette annonce n'est plus disponible.",
+                statut=404 if annonce is None else 409,
+            )
+        return existante
+    if annonce["gerant_user_id"] == utilisateur.pk:
+        raise ErreurMetier(
+            "forbidden", "Tu ne peux pas écrire à propos de ta propre annonce.", statut=403
+        )
+    conversation, cree = _obtenir_ou_creer(utilisateur, annonce)
+    if cree:
+        stats.incrementer("conversations_started")
+        stats.incrementer("conversations_started", sujet=str(annonce["id"]))
+    return conversation
+
+
 def _uuid_ok(valeur) -> bool:
     from uuid import UUID
 

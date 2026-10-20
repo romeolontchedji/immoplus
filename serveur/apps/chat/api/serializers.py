@@ -7,6 +7,10 @@ class ConversationOuvertureIn(serializers.Serializer):
     client_msg_id = serializers.UUIDField()
 
 
+class DemarrageIn(serializers.Serializer):
+    listing_id = serializers.UUIDField()
+
+
 class MessageIn(serializers.Serializer):
     body = serializers.CharField(max_length=2000, trim_whitespace=False)
     client_msg_id = serializers.UUIDField()

@@ -100,6 +100,20 @@ class Conversations(_Participant):
         )
 
 
+class Demarrage(_Participant):
+    @extend_schema(
+        tags=TAG,
+        summary="« Contacter le gérant » : ouvrir ou retrouver la conversation sans message imposé",
+        request=s.DemarrageIn,
+        responses={200: s.ConversationOut},
+    )
+    def post(self, request):
+        d = s.DemarrageIn(data=request.data)
+        d.is_valid(raise_exception=True)
+        conversation = services.demarrer(request.user, d.validated_data["listing_id"])
+        return Response(_conversation_out(conversation, request.user.pk))
+
+
 class ConversationDetail(_Participant):
     @extend_schema(
         tags=TAG, summary="Détail d'une conversation", responses={200: s.ConversationDetailOut}

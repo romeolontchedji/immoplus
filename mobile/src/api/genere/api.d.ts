@@ -326,6 +326,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/conversations/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** « Contacter le gérant » : ouvrir ou retrouver la conversation sans message imposé */
+        post: operations["v1_conversations_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/devices": {
         parameters: {
             query?: never;
@@ -1356,6 +1373,10 @@ export interface components {
             body: string;
             /** Format: uuid */
             client_msg_id: string;
+        };
+        DemarrageIn: {
+            /** Format: uuid */
+            listing_id: string;
         };
         DistrictOut: {
             /** Format: uuid */
@@ -2431,6 +2452,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationOut"];
+                };
+            };
+        };
+    };
+    v1_conversations_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemarrageIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["DemarrageIn"];
+                "multipart/form-data": components["schemas"]["DemarrageIn"];
+            };
+        };
         responses: {
             200: {
                 headers: {

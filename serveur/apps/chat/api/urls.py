@@ -4,6 +4,7 @@ from . import views as v
 
 urlpatterns = [
     path("conversations", v.Conversations.as_view(), name="conversations"),
+    path("conversations/start", v.Demarrage.as_view(), name="conversation-start"),
     path(
         "conversations/<str:conversation_id>", v.ConversationDetail.as_view(), name="conversation"
     ),

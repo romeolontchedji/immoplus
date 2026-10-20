@@ -17,7 +17,7 @@ from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
 from apps.listings.enums import Compteur, Cuisine, Eau
-from apps.listings.services import alertes, favoris, fil, vues
+from apps.listings.services import alertes, avis, favoris, fil, vues
 from apps.listings.services import types as types_chambre
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
@@ -168,23 +168,23 @@ def _rendre_fiche(request, f, **extra):
         {**c, "type_label": _libelle_type(c["room_type"])}
         for c in selectors.similaires(f["id"], limite=3)
     ]  # plan v2, S3 : même source que l'API
-
+    photos = [m for m in f["media"] if m["kind"] == "photo"]
+    video = next((m for m in f["media"] if m["kind"] == "video"), None)
     contexte = {
-        "f": {
-            **f,
-            "is_favorite": favori,
-            "type_label": _libelle_type(f["room_type"]),
-            "eau_label": dict(Eau.choices).get(f["water_source"] or "", ""),
-            "compteur_label": dict(Compteur.choices).get(f["electricity_meter"] or "", ""),
-        },
+        "f": {**f, "is_favorite": favori, "type_label": _libelle_type(f["room_type"])},
         "similaires": similaires,
         "peut_contacter": est_client,
         "est_proprietaire": request.user.is_authenticated
         and request.user.pk == f["gerant_user_id"],
         "alerte_url": f"/compte/alertes?{urlencode(criteres_alerte)}",
-        "message_propose": f"Bonjour, la chambre « {f['title']} » est-elle toujours disponible ?",
-        "photos": [m for m in f["media"] if m["kind"] == "photo"],
-        "video": next((m for m in f["media"] if m["kind"] == "video"), None),
+        "photos": photos,
+        "video": video,
+        # Galerie (plan v3, B1) : vidéo d'abord, puis les photos, toutes au même format.
+        "diapos": ([video] if video else []) + photos,
+        "avis": selectors.avis(annonce_id=f["id"]),
+        "peut_donner_avis": avis.peut_donner(request.user if est_client else None, f["id"]),
+        "mon_avis": selectors.avis_de(request.user.pk, f["id"]) if est_client else None,
+        "notes": (5, 4, 3, 2, 1),
         **extra,
     }
     return render(request, "web/public/fiche.html", contexte)
@@ -222,19 +222,12 @@ def _noter_consultation(request, annonce_id) -> None:
 @require_POST
 @connecte_obligatoire
 def contacter(request, slug):
+    """Un seul bouton : ouvre (ou retrouve) la discussion, où le locataire écrit ce qu'il veut (plan v3, B6)."""
     f = _fiche_ou_404(slug)
     try:
-        conversation, _, _, info = chat.ouvrir(
-            request.user, f["id"], request.POST.get("body", ""), uuid.uuid4()
-        )
+        conversation = chat.demarrer(request.user, f["id"])
     except ErreurMetier as e:
-        return _rendre_fiche(
-            request,
-            f,
-            message=_message(e),
-            niveau="danger",
-            message_propose=request.POST.get("body", ""),
-        )
+        return _rendre_fiche(request, f, message=_message(e), niveau="danger")
     return redirect(f"/compte/messages/{conversation.pk}")
 
 
@@ -251,6 +244,7 @@ def basculer_favori(request, slug):
             texte = "Ajoutée à tes favoris."
     except ErreurMetier as e:
         return _rendre_fiche(request, f, message=_message(e), niveau="danger")
+    f = _fiche_ou_404(slug)  # relue : note, favori et avis à jour
     return _rendre_fiche(request, f, message=texte)
 
 
@@ -266,7 +260,44 @@ def signaler(request, slug):
             moderation.signaler(request.user, "listing", f["id"], motif)
     except ErreurMetier as e:
         return _rendre_fiche(request, f, message=_message(e), niveau="danger")
-    return _rendre_fiche(request, f, message="Merci, ton signalement a été transmis à l'équipe.")
+    f = _fiche_ou_404(slug)  # relue : note, favori et avis à jour
+    return _rendre_fiche(
+        request,
+        f,
+        message="Ton signalement a été pris en compte et sera traité par l'équipe Logeo.",
+    )
+
+
+@require_POST
+@connecte_obligatoire
+def donner_avis(request, slug):
+    """Avis du locataire sur la chambre (après un échange réel avec le gérant)."""
+    f = _fiche_ou_404(slug)
+    try:
+        if request.POST.get("action") == "retirer":
+            avis.retirer(request.user, f["id"])
+            texte = "Ton avis a été retiré."
+        else:
+            try:
+                note = int(request.POST.get("rating", ""))
+            except ValueError:
+                note = 0
+            avis.donner(request.user, f["id"], note, request.POST.get("comment", ""))
+            texte = "Merci, ton avis est publié."
+    except ErreurMetier as e:
+        return _rendre_fiche(request, f, message=_message(e), niveau="danger")
+    f = _fiche_ou_404(slug)  # relue : note, favori et avis à jour
+    return _rendre_fiche(request, f, message=texte)
+
+
+def profil_gerant(request, gerant_id):
+    """Profil public d'un gérant : identité publique, chambres en ligne, avis ; jamais de numéro (plan v3, F1)."""
+    profil = selectors.profil_gerant_public(gerant_id)
+    if profil is None:
+        raise Http404
+    for carte in profil["listings"]:
+        carte["type_label"] = _libelle_type(carte["room_type"])
+    return render(request, "web/public/gerant.html", {"g": profil})
 
 
 # --------------------------------------------------------------- favoris et alertes
@@ -430,7 +461,7 @@ def _agir(request, c) -> tuple[str | None, str | None]:
         )
     if action == "signaler":
         moderation.signaler(request.user, "conversation", c.pk, request.POST.get("motif", ""))
-        return "Merci, ton signalement a été transmis à l'équipe.", "succes"
+        return "Ton signalement a été pris en compte et sera traité par l'équipe Logeo.", "succes"
     return None, None
 
 

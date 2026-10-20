@@ -67,8 +67,6 @@
 .carte__corps { padding: var(--sp-4); }
 
 /* ── Galerie / lecteur ────────────────────────────────────────────────────── */
-.galerie { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
-.galerie img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--rayon-2); }
 .lecteur { width: 100%; max-height: 70vh; background: var(--night); border-radius: var(--r-card); }
 
 /* ── Fiche chambre ────────────────────────────────────────────────────────── */

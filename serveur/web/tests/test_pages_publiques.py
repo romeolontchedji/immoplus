@@ -104,8 +104,9 @@ class TestFilEtFiche:
         )  # fmt: skip
         medias_prets(a, photos=2)
         page = html(Client().get(f"/annonces/{a.slug}"))
-        assert 'class="visionneuse"' in page and 'id="photo-' in page
-        assert "galerie-fiche__vignette" in page
+        assert (
+            "data-galerie" in page and page.count('class="galerie__diapo"') == 3
+        )  # vidéo + 2 photos
         assert "/compte/alertes?district=banikanni" in page
         assert "type=studio" in page and "rent_max=20000" in page and "bathroom=true" in page
 
@@ -155,20 +156,22 @@ class TestEspaceLocataire:
         a, u = ListingFactory(), ClientFactory()
         c = connecte(u)
         page = html(c.get(f"/annonces/{a.slug}"))
-        assert "Envoyer le message" in page and "Ajouter aux favoris" in page
+        assert "Contacter le gérant" in page and "Ajouter aux favoris" in page
         assert "Ajoutée" in html(c.post(f"/annonces/{a.slug}/favori"))
         assert Favorite.objects.filter(user=u, listing=a).exists()
         assert "Retirée" in html(c.post(f"/annonces/{a.slug}/favori"))
         assert not Favorite.objects.filter(user=u).exists()
-        assert "transmis" in html(c.post(f"/annonces/{a.slug}/signaler", {"reason_code": "scam"}))
+        assert "pris en compte" in html(
+            c.post(f"/annonces/{a.slug}/signaler", {"reason_code": "scam"})
+        )
         assert Report.objects.filter(reporter=u, reason_code="scam").exists()
         r = c.post(f"/annonces/{a.slug}/contacter", {"body": "Bonjour, elle est libre ?"})
         assert r.status_code == 302 and r["Location"].startswith("/compte/messages/")
 
-    def test_le_message_vide_est_refuse_avec_une_explication(self):
+    def test_on_ne_contacte_pas_pour_sa_propre_annonce(self):
         a = ListingFactory()
-        r = connecte(ClientFactory()).post(f"/annonces/{a.slug}/contacter", {"body": "   "})
-        assert r.status_code == 200 and "vide" in html(r)
+        r = connecte(a.gerant.user).post(f"/annonces/{a.slug}/contacter")
+        assert r.status_code == 200 and "Seuls les locataires" in html(r)
 
     def test_favoris_page(self):
         a, u = ListingFactory(title="Ma favorite"), ClientFactory()
@@ -350,7 +353,7 @@ class TestMessagesWeb:
         r = connecte(locataire).post(
             f"/compte/messages/{conversation.pk}", {"action": "signaler", "motif": "harassment"}
         )
-        assert "signalement a été transmis" in html(r)
+        assert "signalement a été pris en compte" in html(r)
         assert Report.objects.filter(target_type="conversation", target_id=conversation.pk).exists()
 
     def test_un_tiers_obtient_404(self):

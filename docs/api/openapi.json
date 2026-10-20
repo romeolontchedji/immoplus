@@ -878,6 +878,52 @@
                 }
             }
         },
+        "/v1/conversations/start": {
+            "post": {
+                "operationId": "v1_conversations_start_create",
+                "summary": "« Contacter le gérant » : ouvrir ou retrouver la conversation sans message imposé",
+                "tags": [
+                    "Messagerie"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DemarrageIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DemarrageIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DemarrageIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/v1/devices": {
             "get": {
                 "operationId": "v1_devices_list",
@@ -3928,6 +3974,18 @@
                 "required": [
                     "body",
                     "client_msg_id",
+                    "listing_id"
+                ]
+            },
+            "DemarrageIn": {
+                "type": "object",
+                "properties": {
+                    "listing_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
                     "listing_id"
                 ]
             },

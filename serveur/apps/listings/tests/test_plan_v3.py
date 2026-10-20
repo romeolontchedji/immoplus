@@ -191,3 +191,16 @@ class TestFiltresTempsReel:
         for nom in ("district", "type", "rent_max", "water", "meter", "kitchen", "sort"):
             assert f'<select class="champ__saisie" name="{nom}"' in page, nom
         assert 'type="radio" name="type"' not in page  # plus de longue liste de boutons radio
+
+
+class TestContactDirect:
+    def test_demarrer_sans_message_puis_retrouver(self):
+        a = ListingFactory()
+        loc = ClientFactory()
+        c = api_de(loc)
+        r = c.post("/v1/conversations/start", {"listing_id": str(a.pk)}, format="json")
+        assert r.status_code == 200 and r.json()["other"]["id"] == str(a.gerant_id)
+        again = c.post("/v1/conversations/start", {"listing_id": str(a.pk)}, format="json")
+        assert again.json()["id"] == r.json()["id"]
+        # vide : invisible dans les listes tant que le locataire n'a rien écrit
+        assert c.get("/v1/conversations").json()["items"] == []

@@ -82,11 +82,22 @@
              aria-label="Retour aux conversations">
             {% include "web/composants/icone.html" with nom="arrow-left" taille=20 %}
           </a>
-          <span class="msg-avatar msg-avatar--petit"
-                aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
+          {% if request.user.role == "client" %}
+            <a class="msg-avatar msg-avatar--petit msg-avatar--lien"
+               href="/gerants/{{ c.other.id }}"
+               aria-label="Voir le profil de {{ c.other.name }}">{{ c.other.name|default:"U"|slice:":2"|upper }}</a>
+          {% else %}
+            <span class="msg-avatar msg-avatar--petit"
+                  aria-hidden="true">{{ c.other.name|default:"U"|slice:":2"|upper }}</span>
+          {% endif %}
           <div class="msg-entete__texte">
             <h2 class="msg-entete__nom">
-              {{ c.other.name }}
+              {% if request.user.role == "client" %}
+                {# Locataire : le nom du gérant ouvre son profil public et ses chambres (plan v3, F2) #}
+                <a class="msg-entete__profil" href="/gerants/{{ c.other.id }}">{{ c.other.name }}</a>
+              {% else %}
+                {{ c.other.name }}
+              {% endif %}
               {% if c.other.verified %}<span class="badge-verifie-pill badge-verifie-pill--petit">Vérifié</span>{% endif %}
             </h2>
             {% if c.listing.title %}

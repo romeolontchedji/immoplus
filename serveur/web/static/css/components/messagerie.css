@@ -131,3 +131,8 @@
   .msg-entete__retour { display: inline-flex; }
   .msg-bulle { max-width: 85%; }
 }
+
+/* Nom et avatar du gérant : lien vers son profil public (plan v3, F2) */
+.msg-entete__profil { color: inherit; text-decoration: none; }
+.msg-entete__profil:hover { color: var(--blue); text-decoration: underline; }
+.msg-avatar--lien { text-decoration: none; }
