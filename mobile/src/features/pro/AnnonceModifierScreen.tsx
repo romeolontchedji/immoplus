@@ -31,7 +31,7 @@ const entier = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(/\
 type Valeurs = {
   title: string; room_type: string; district: string; landmark_text: string; address_private: string;
   rent_amount: string; deposit_months: string; advance_months: string; agent_fee_amount: string; available_from: string;
-  has_private_bathroom: boolean; is_fenced: boolean; water_source: string; electricity_meter: string; kitchen: string;
+  has_private_bathroom: boolean; is_fenced: boolean; water_sources: string[]; electricity_meter: string; kitchen: string;
   rent_negotiable: boolean; description_md: string;
 };
 
@@ -39,7 +39,7 @@ const depuis = (a: AnnoncePro): Valeurs => ({
   title: a.title, room_type: a.room_type, district: a.district, landmark_text: a.landmark_text, address_private: a.address_private,
   rent_amount: String(a.rent_amount), deposit_months: String(a.deposit_months), advance_months: String(a.advance_months),
   agent_fee_amount: String(a.agent_fee_amount), available_from: a.available_from, has_private_bathroom: a.has_private_bathroom,
-  is_fenced: a.is_fenced, water_source: a.water_source, electricity_meter: a.electricity_meter, kitchen: a.kitchen,
+  is_fenced: a.is_fenced, water_sources: a.water_sources, electricity_meter: a.electricity_meter, kitchen: a.kitchen,
   rent_negotiable: a.rent_negotiable, description_md: a.description_md,
 });
 
@@ -94,7 +94,7 @@ function Formulaire({ annonce }: { annonce: AnnoncePro }) {
         <SwitchRow titre="Douche interne" valeur={v.has_private_bathroom} onChange={(x) => maj({ has_private_bathroom: x })} />
         <SwitchRow titre="Cour clôturée" valeur={v.is_fenced} onChange={(x) => maj({ is_fenced: x })} />
         <ListeDeroulante label="Électricité" options={options(LIBELLES_COMPTEUR)} valeurs={[v.electricity_meter]} onChange={(x) => x[0] && maj({ electricity_meter: x[0] })} />
-        <ListeDeroulante label="Eau" options={options(LIBELLES_EAU)} valeurs={[v.water_source]} onChange={(x) => x[0] && maj({ water_source: x[0] })} />
+        <ListeDeroulante label="Eau (plusieurs choix possibles)" multiple options={options(LIBELLES_EAU)} valeurs={v.water_sources} onChange={(x) => x.length > 0 && maj({ water_sources: x })} />
         <ListeDeroulante label="Cuisine" placeholder="Choisis" options={options(LIBELLES_CUISINE)} valeurs={v.kitchen ? [v.kitchen] : []} onChange={(x) => maj({ kitchen: x[0] ?? "" })} />
       </Section>
 

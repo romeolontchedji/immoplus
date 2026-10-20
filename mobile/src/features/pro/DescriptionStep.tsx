@@ -17,7 +17,7 @@ import { EntetePublication } from "./EntetePublication";
 /** Étape de l'assistant où se saisit chaque champ obligatoire. */
 const ETAPE_DU_CHAMP: Partial<Record<(typeof CHAMPS_CREATION)[number], string>> = {
   district: "localisation", landmark_text: "localisation", address_private: "localisation",
-  water_source: "equipements", electricity_meter: "equipements", kitchen: "equipements", has_private_bathroom: "equipements",
+  water_sources: "equipements", electricity_meter: "equipements", kitchen: "equipements", has_private_bathroom: "equipements",
   is_fenced: "equipements",
 };
 
@@ -54,7 +54,7 @@ export function DescriptionStep() {
       modifier.mutate(
         {
           description_md: details, has_private_bathroom: !!brouillonMaj.has_private_bathroom, is_fenced: !!brouillonMaj.is_fenced,
-          water_source: brouillonMaj.water_source, electricity_meter: brouillonMaj.electricity_meter,
+          water_sources: brouillonMaj.water_sources, electricity_meter: brouillonMaj.electricity_meter,
           kitchen: brouillonMaj.kitchen ?? "", rent_negotiable: !!brouillonMaj.rent_negotiable,
         },
         { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) },

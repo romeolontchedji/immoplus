@@ -20,7 +20,7 @@ const options = (libelles: Record<string, string>) => Object.entries(libelles).m
 export function EquipementsStep() {
   const router = useRouter();
   const { brouillon, maj } = useBrouillon();
-  const complet = !!brouillon.water_source && !!brouillon.electricity_meter && !!brouillon.kitchen;
+  const complet = !!brouillon.water_sources?.length && !!brouillon.electricity_meter && !!brouillon.kitchen;
 
   return (
     <Screen
@@ -42,7 +42,7 @@ export function EquipementsStep() {
 
       <View style={{ gap: sp[5] }}>
         <ListeDeroulante label="Électricité" placeholder="Choisis" options={options(LIBELLES_COMPTEUR)} valeurs={brouillon.electricity_meter ? [brouillon.electricity_meter] : []} onChange={(v) => maj({ electricity_meter: v[0] })} />
-        <ListeDeroulante label="Eau" placeholder="Choisis" options={options(LIBELLES_EAU)} valeurs={brouillon.water_source ? [brouillon.water_source] : []} onChange={(v) => maj({ water_source: v[0] })} />
+        <ListeDeroulante label="Eau (plusieurs choix possibles)" placeholder="Choisis" multiple options={options(LIBELLES_EAU)} valeurs={brouillon.water_sources ?? []} onChange={(v) => maj({ water_sources: v })} />
         <ListeDeroulante label="Cuisine" placeholder="Choisis" options={options(LIBELLES_CUISINE)} valeurs={brouillon.kitchen ? [brouillon.kitchen] : []} onChange={(v) => maj({ kitchen: v[0] })} />
         <View style={{ gap: sp[2] }}>
           <Text variante="label" muted>Confort</Text>

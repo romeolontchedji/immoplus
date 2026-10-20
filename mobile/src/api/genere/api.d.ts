@@ -1152,7 +1152,8 @@ export interface components {
             available_from: string;
             has_private_bathroom: boolean;
             is_fenced: boolean;
-            water_source: components["schemas"]["WaterSourceEnum"];
+            /** @description Une ou plusieurs sources : individual, sub_meter, running, borehole, well. */
+            water_sources: components["schemas"]["WaterSourcesEnum"][];
             electricity_meter: components["schemas"]["ElectricityMeterEnum"];
             /** @description private (interne), shared (commune), none (aucune) ; vide = non précisé.
              *
@@ -1190,7 +1191,7 @@ export interface components {
             available_from: string;
             has_private_bathroom: boolean;
             is_fenced: boolean;
-            water_source: string;
+            water_sources: string[];
             electricity_meter: string;
             kitchen: string;
             rent_negotiable: boolean;
@@ -1444,7 +1445,9 @@ export interface components {
             available_from: string;
             has_private_bathroom: boolean;
             is_fenced: boolean;
-            water_source: string;
+            water_sources: string[];
+            water_labels: string[];
+            /** @description Sources d'eau en une phrase (« Forage, Puits »). */
             water_label: string;
             electricity_meter: string;
             electricity_label: string;
@@ -1724,7 +1727,8 @@ export interface components {
             available_from?: string;
             has_private_bathroom?: boolean;
             is_fenced?: boolean;
-            water_source?: components["schemas"]["WaterSourceEnum"];
+            /** @description Une ou plusieurs sources : individual, sub_meter, running, borehole, well. */
+            water_sources?: components["schemas"]["WaterSourcesEnum"][];
             electricity_meter?: components["schemas"]["ElectricityMeterEnum"];
             /** @description private (interne), shared (commune), none (aucune) ; vide = non précisé.
              *
@@ -1971,7 +1975,7 @@ export interface components {
          *     * `well` - well
          * @enum {string}
          */
-        WaterSourceEnum: "individual" | "sub_meter" | "running" | "borehole" | "well";
+        WaterSourcesEnum: "individual" | "sub_meter" | "running" | "borehole" | "well";
     };
     responses: never;
     parameters: never;

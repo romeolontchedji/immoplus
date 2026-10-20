@@ -32,7 +32,10 @@ const fr = {
   statutAnnonce: { draft: "Brouillon", processing: "En traitement", published: "En ligne", hidden: "Masquée", rented: "Louée", archived: "Archivée", removed: "Retirée" } as Record<string, string>,
   // Repli hors ligne : types officiels (la liste vivante vient de GET /v1/room-types, décision V1).
   typeChambre: {
-    single: "Chambre simple", entree_coucher: "Entrée-coucher", chambre_salon: "Chambre-salon", studio: "Studio",
+    single: "Chambre simple", chambre_semi_sanitaire: "Chambre semi-sanitaire", chambre_sanitaire: "Chambre sanitaire",
+    entree_coucher: "Entrée-couché simple", entree_coucher_sanitaire: "Entrée-couché sanitaire",
+    chambre_salon: "Chambre-salon simple", chambre_salon_sanitaire: "Chambre-salon sanitaire",
+    meuble_salon_sanitaire: "Meublé salon sanitaire", studio: "Studio",
     studio_meuble: "Studio meublé", colocation: "Chambre en colocation", residence_etudiante: "Chambre en résidence étudiante",
     appartement_2_chambres: "Appartement 2 chambres salon", appartement_3_chambres: "Appartement 3 chambres salon et plus",
     appartement_meuble: "Appartement meublé", maison: "Maison individuelle", duplex: "Duplex", villa: "Villa",

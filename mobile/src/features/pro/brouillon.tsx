@@ -23,7 +23,7 @@ export type Brouillon = {
   longitude?: string;
   has_private_bathroom?: boolean;
   is_fenced?: boolean;
-  water_source?: string;
+  water_sources?: string[]; // plusieurs sources possibles : forage, puits, compteur…
   electricity_meter?: string;
   kitchen?: string; // private, shared, none (plan v3, C2)
   rent_negotiable?: boolean; // loyer à débattre (plan v3, C3)
@@ -33,11 +33,11 @@ export type Brouillon = {
 /** Champs obligatoires pour créer l'annonce côté serveur. */
 export const CHAMPS_CREATION = [
   "title", "room_type", "rent_amount", "deposit_months", "advance_months", "available_from", "district", "landmark_text",
-  "address_private", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter", "kitchen",
+  "address_private", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter", "kitchen",
 ] as const satisfies readonly (keyof Brouillon)[];
 
 export function champsManquants(b: Brouillon): (typeof CHAMPS_CREATION)[number][] {
-  return CHAMPS_CREATION.filter((c) => b[c] === undefined || b[c] === "");
+  return CHAMPS_CREATION.filter((c) => b[c] === undefined || b[c] === "" || (Array.isArray(b[c]) && b[c].length === 0));
 }
 
 type Valeur = { brouillon: Brouillon; maj: (m: Partial<Brouillon>) => void; effacer: () => void; charge: boolean };
@@ -48,8 +48,12 @@ export function BrouillonProvider({ children }: { children: ReactNode }) {
   const [charge, setCharge] = useState(false);
 
   useEffect(() => {
-    void kv.get<Brouillon>(CLES_KV.brouillon).then((b) => {
-      if (b) setBrouillon(b);
+    void kv.get<Brouillon & { water_source?: string }>(CLES_KV.brouillon).then((b) => {
+      if (b) {
+        // Brouillon d'avant le choix multiple de l'eau : la source unique devient une liste.
+        const { water_source, ...reste } = b;
+        setBrouillon(water_source && !reste.water_sources ? { ...reste, water_sources: [water_source] } : reste);
+      }
       setCharge(true);
     });
   }, []);
