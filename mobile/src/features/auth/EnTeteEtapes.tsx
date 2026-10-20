@@ -8,7 +8,7 @@ export function EnTeteEtapes({ etape, total }: { etape?: number; total?: number 
   return (
     <View style={{ gap: sp[4] }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Logotype taille={38} />
+        <Logotype taille={30} />
         {etape && total ? <Text variante="legende" muted style={{ fontWeight: "700" }}>Étape {etape}/{total}</Text> : null}
       </View>
       {etape && total ? (

@@ -1,5 +1,5 @@
 import { FILTRES_VIDES, filtresActifs, nombreDeFiltres, versParametres } from "@/features/listings/filtres";
-import { criteresDepuisFiltres, resumeCriteres } from "@/features/alerts/EditeurCriteres";
+import { criteresDepuisFiltres, resumeCriteres, CRITERES_VIDES } from "@/features/alerts/EditeurCriteres";
 import { francs } from "@/lib/format";
 import { urlMedia } from "@/lib/media";
 import { API_URL } from "@/config/env";
@@ -33,12 +33,15 @@ describe("recherche", () => {
 
   it("transforme la recherche en critères d'alerte (slug → identifiant)", () => {
     const c = criteresDepuisFiltres(f, [{ id: "uuid-b", slug: "banikanni" }, { id: "uuid-t", slug: "titirou" }]);
-    expect(c).toEqual({ district_ids: ["uuid-b"], room_types: ["studio"], max_rent: 15000, private_bathroom_required: true, max_distance_m: null });
+    expect(c).toEqual({
+      ...CRITERES_VIDES, district_ids: ["uuid-b"], room_types: ["studio"], max_rent: 15000, private_bathroom_required: true,
+      water_sources: ["borehole"], // l'eau de la recherche suit dans l'alerte (2026-10-20)
+    });
     expect(resumeCriteres(c, { "uuid-b": "Banikanni" }).titre).toBe("Banikanni · Studio");
   });
 
   it("affiche le libellé d'un type venu du serveur (décision V1)", () => {
-    const c = { district_ids: [], room_types: ["villa", "inconnu"], max_rent: null, private_bathroom_required: false, max_distance_m: null };
+    const c = { ...CRITERES_VIDES, room_types: ["villa", "inconnu"] };
     expect(resumeCriteres(c, {}, [{ slug: "villa", label: "Villa" }]).titre).toContain("Villa, inconnu");
   });
 });

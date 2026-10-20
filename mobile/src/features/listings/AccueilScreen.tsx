@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Bell, BellPlus } from "lucide-react-native";
 import { colors, ombre, sp } from "@/ui/theme/tokens";
@@ -28,6 +28,7 @@ const raccourciType = (slug: string, titre: string): Raccourci => ({ titre, acti
  * tape directement (résultats en direct), raccourcis cumulables, filtres actifs retirables, puis le fil.
  */
 export function AccueilScreen() {
+  const etroit = useWindowDimensions().width < 360; // petit téléphone : bouton « Alerte » réduit à son icône
   const router = useRouter();
   const { filtres, definir } = useFiltres();
   const requete = useFil(filtres);
@@ -49,21 +50,21 @@ export function AccueilScreen() {
         enTete={
           <View style={{ gap: sp[4], paddingBottom: sp[2], paddingTop: sp[2] }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Logotype taille={38} />
+              <Logotype taille={28} />
               <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2] }}>
               {/* Action mise en avant (plan v3, I1) : créer une alerte, la raison d'être de l'application */}
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Créer une alerte"
+                accessibilityLabel="Créer une alerte (être prévenu des nouvelles chambres)"
                 onPress={() => router.push("/nouvelle-alerte")}
                 style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: sp[3], borderRadius: 14, backgroundColor: pressed ? colors.sunHover : colors.sun })}
               >
                 <BellPlus size={18} color={colors.night} />
-                <Text variante="corpsGras">Alerte</Text>
+                {etroit ? null : <Text variante="corpsGras">Alerte</Text>}
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Notifications"
+                accessibilityLabel="Mes notifications (messages, alertes reçues)"
                 onPress={() => router.push("/notifications")}
                 style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", ...ombre.card }}
               >

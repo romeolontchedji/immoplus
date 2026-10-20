@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FlatList, RefreshControl, View } from "react-native";
 import { MapPin } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -20,6 +21,8 @@ export function ListeAnnonces({ requete, vide, enTete }: {
   enTete?: React.ReactElement;
 }) {
   const router = useRouter();
+  // Indicateur réservé au geste « tirer pour rafraîchir » : la recherche au fil de la frappe ne l'affiche jamais.
+  const [tire, setTire] = useState(false);
   if (requete.data === undefined) return requete.isError ? <ErrorState erreur={requete.error} onRetry={() => void requete.refetch()} /> : <View style={{ padding: sp[4], gap: sp[4] }}><SkeletonListe /></View>;
   const cartes = requete.data.pages.flatMap((p) => p.items);
   const voisins = requete.data.pages[0]?.voisins;
@@ -53,7 +56,7 @@ export function ListeAnnonces({ requete, vide, enTete }: {
       }
       onEndReachedThreshold={0.6}
       onEndReached={() => requete.hasNextPage && !requete.isFetchingNextPage && void requete.fetchNextPage()}
-      refreshControl={<RefreshControl refreshing={requete.isRefetching && !requete.isFetchingNextPage} onRefresh={() => void requete.refetch()} />}
+      refreshControl={<RefreshControl refreshing={tire} onRefresh={() => { setTire(true); void requete.refetch().finally(() => setTire(false)); }} />}
     />
   );
 }

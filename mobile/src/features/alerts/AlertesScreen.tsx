@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Alert, Switch, View } from "react-native";
+import { Alert, Pressable, Switch, View } from "react-native";
 import { useRouter } from "expo-router";
-import { BellRing } from "lucide-react-native";
+import { BellPlus, BellRing, ChevronDown, ChevronUp } from "lucide-react-native";
 import { isApiError } from "@/api/errors";
 import { AuthRequired } from "@/features/auth/AuthRequired";
 import { useDistricts, useTypesChambre } from "@/features/listings/queries";
@@ -14,13 +14,13 @@ import { EnTetePage } from "@/ui/components/EnTetePage";
 import { QueryState } from "@/ui/components/States";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
-import { CRITERES_VIDES, criteresDe, EditeurCriteres, resumeCriteres, versCorps, type Criteres } from "./EditeurCriteres";
+import { aUnCritere, CRITERES_VIDES, criteresDe, EditeurCriteres, resumeCriteres, versCorps, type Criteres } from "./EditeurCriteres";
 import type { Alerte } from "./queries";
 import { useAlertes, useCreerAlerte, useModifierAlerte, useSupprimerAlerte } from "./queries";
 
 /**
- * Écran Alertes (EF-ALR-01 à EF-ALR-04, maquette Mobile · Alertes) : formulaire « Nouvelle alerte » dans une carte,
- * puis les alertes avec interrupteur actif / en pause, modification et suppression confirmée.
+ * Écran Alertes (EF-ALR-01 à EF-ALR-04) : les alertes actives seulement, un bouton « Créer une nouvelle alerte » en
+ * haut qui seul fait apparaître les critères (demande du 2026-10-20), et les alertes en pause repliées en bas.
  */
 export function AlertesScreen() {
   const { etat } = useSession();
@@ -30,6 +30,9 @@ export function AlertesScreen() {
   const creer = useCreerAlerte();
   const supprimer = useSupprimerAlerte();
   const [criteres, setCriteres] = useState<Criteres>(CRITERES_VIDES);
+  const [ouvert, setOuvert] = useState(false);
+  const [vide, setVide] = useState(false);
+  const [voirPause, setVoirPause] = useState(false);
   const noms = useMemo(() => Object.fromEntries((districts.data ?? []).map((d) => [d.id, d.name])), [districts.data]);
 
   if (etat.statut !== "connecte") {
@@ -51,33 +54,86 @@ export function AlertesScreen() {
     <Screen scroll>
       <EnTetePage titre="Mes alertes" sousTitre="Sois prévenu dès qu’une chambre correspond, avant qu’elle parte." />
 
-      <View style={{ backgroundColor: colors.surface, borderRadius: rayon.cardL, padding: sp[4], gap: sp[4], ...ombre.card }}>
-        <Text variante="sousTitre">Nouvelle alerte</Text>
-        <EditeurCriteres valeur={criteres} onChange={setCriteres} />
-        {creer.error ? (
-          <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
-            {isApiError(creer.error) ? messageErreur(creer.error.code, creer.error.message) : t.erreurs.network}
-          </Text>
-        ) : null}
-        <Button titre="Créer l'alerte" chargement={creer.isPending} onPress={() => creer.mutate(versCorps(criteres), { onSuccess: () => { setCriteres(CRITERES_VIDES); void proposerNotifications("alerte"); } })} />
-      </View>
+      {ouvert ? (
+        <View style={{ backgroundColor: colors.surface, borderRadius: rayon.cardL, padding: sp[4], gap: sp[4], ...ombre.card }}>
+          <Text variante="sousTitre">Nouvelle alerte</Text>
+          <EditeurCriteres
+            valeur={criteres}
+            onChange={(c) => {
+              setCriteres(c);
+              setVide(false);
+            }}
+          />
+          {vide ? (
+            <Text variante="corpsGras" couleur={colors.danger} accessibilityLiveRegion="polite">{t.erreurs.alert_empty}</Text>
+          ) : null}
+          {creer.error ? (
+            <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
+              {isApiError(creer.error) ? messageErreur(creer.error.code, creer.error.message) : t.erreurs.network}
+            </Text>
+          ) : null}
+          <Button
+            titre="Créer l'alerte"
+            chargement={creer.isPending}
+            onPress={() => {
+              if (!aUnCritere(criteres)) return setVide(true);
+              creer.mutate(versCorps(criteres), {
+                onSuccess: () => {
+                  setCriteres(CRITERES_VIDES);
+                  setOuvert(false);
+                  void proposerNotifications("alerte");
+                },
+              });
+            }}
+          />
+          <Button titre={t.commun.annuler} variante="fantome" onPress={() => { setOuvert(false); setVide(false); setCriteres(CRITERES_VIDES); }} />
+        </View>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setOuvert(true)}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp[2], minHeight: 52, borderRadius: rayon.pilule, backgroundColor: pressed ? colors.blueHover : colors.primary })}
+        >
+          <BellPlus size={20} color={colors.white} />
+          <Text variante="corpsGras" couleur={colors.white}>Créer une nouvelle alerte</Text>
+        </Pressable>
+      )}
 
-      <QueryState query={requete} vide={{ quand: (data) => data.length === 0, titre: "Aucune alerte pour l'instant", texte: "Crée ta première alerte ci-dessus." }}>
-        {(alertes) => (
-          <View style={{ gap: sp[3] }}>
-            <Text variante="label" muted>Mes alertes ({alertes.length})</Text>
-            {alertes.map((alerte) => (
-              <AlerteCarte
-                key={alerte.id}
-                alerte={alerte}
-                noms={noms}
-                onModifier={() => router.push(`/modifier-alerte/${alerte.id}` as never)}
-                onSupprimer={() => confirmerSuppression(alerte.id)}
-                suppression={supprimer.isPending && supprimer.variables === alerte.id}
-              />
-            ))}
-          </View>
-        )}
+      <QueryState query={requete} vide={{ quand: (data) => data.length === 0, titre: "Aucune alerte pour l'instant", texte: "Appuie sur « Créer une nouvelle alerte » pour commencer." }}>
+        {(alertes) => {
+          const actives = alertes.filter((a) => a.is_active);
+          const enPause = alertes.filter((a) => !a.is_active);
+          const carte = (alerte: Alerte) => (
+            <AlerteCarte
+              key={alerte.id}
+              alerte={alerte}
+              noms={noms}
+              onModifier={() => router.push(`/modifier-alerte/${alerte.id}` as never)}
+              onSupprimer={() => confirmerSuppression(alerte.id)}
+              suppression={supprimer.isPending && supprimer.variables === alerte.id}
+            />
+          );
+          return (
+            <View style={{ gap: sp[3] }}>
+              <Text variante="label" muted>Alertes actives ({actives.length})</Text>
+              {actives.length ? actives.map(carte) : <Text muted>Aucune alerte active.</Text>}
+              {enPause.length ? (
+                <>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: voirPause }}
+                    onPress={() => setVoirPause((v) => !v)}
+                    style={{ flexDirection: "row", alignItems: "center", gap: sp[2], minHeight: 44, marginTop: sp[2] }}
+                  >
+                    <Text variante="label" muted>Alertes en pause ({enPause.length})</Text>
+                    {voirPause ? <ChevronUp size={18} color={colors.textMuted} /> : <ChevronDown size={18} color={colors.textMuted} />}
+                  </Pressable>
+                  {voirPause ? enPause.map(carte) : null}
+                </>
+              ) : null}
+            </View>
+          );
+        }}
       </QueryState>
     </Screen>
   );

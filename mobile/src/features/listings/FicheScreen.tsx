@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import {
-  ArrowLeft, BadgeCheck, Bell, CalendarDays, ChevronLeft, ChevronRight, Droplet, Fence, Flag, Heart, MapPin, Play, Share2,
+  ArrowLeft, Bell, CalendarDays, ChevronLeft, ChevronRight, Droplet, Fence, Flag, Heart, MapPin, Play, Share2,
   ShowerHead, Star, Utensils, Zap, type LucideIcon,
 } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,23 +26,6 @@ import {
 } from "./queries";
 
 type Media = Fiche["media"][number];
-
-/** Délai de réponse médian du gérant, en clair. */
-function delaiReponse(min: number | null | undefined): string | null {
-  if (min == null) return null;
-  if (min < 60) return `Répond en ${Math.max(1, Math.round(min))} min environ`;
-  const h = Math.round(min / 60);
-  return h < 24 ? `Répond en ${h} h environ` : `Répond en ${Math.round(h / 24)} j environ`;
-}
-
-function initiales(nom: string | null | undefined): string {
-  return (nom ?? "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((m) => m[0]?.toUpperCase() ?? "")
-    .join("") || "G";
-}
 
 /** Image d'un média : vignette de la vidéo, sinon la photo. */
 const imageDe = (m: Media | undefined) => urlMedia(m ? (m.kind === "video" ? m.poster_url : (m.url ?? m.thumb_url)) : null);
@@ -340,7 +323,6 @@ export function FicheScreen() {
     demarrer.mutate(fiche.id, { onSuccess: (c) => router.push({ pathname: "/conversation/[id]", params: { id: c.id } }) });
   };
 
-  const delai = delaiReponse(fiche.gerant?.median_response_min);
   const details = fiche.description_md?.trim();
   const note = fiche.reviews;
 
@@ -423,35 +405,12 @@ export function FicheScreen() {
             </View>
           </View>
 
-          {/* Gérant : son profil et ses chambres d'un appui (plan v3, F) */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Voir le profil de ${fiche.gerant?.name ?? "ce gérant"}`}
-            onPress={() => router.push({ pathname: "/gerant/[id]", params: { id: String(fiche.gerant.id) } })}
-            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: sp[3], padding: sp[4], backgroundColor: pressed ? colors.divider : colors.surface, borderRadius: rayon.card, borderWidth: 1, borderColor: colors.border })}
-          >
-            <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.blueSoft, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontWeight: "800", color: colors.primary }}>{initiales(fiche.gerant?.name)}</Text>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: sp[2], flexWrap: "wrap" }}>
-                <Text variante="corpsGras">{fiche.gerant?.name ?? "Gérant"}</Text>
-                {fiche.gerant?.verified ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: colors.successBg, borderRadius: rayon.pilule, paddingHorizontal: sp[2], paddingVertical: 2 }}>
-                    <BadgeCheck size={13} color={colors.successText} />
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: colors.successText }}>Vérifié</Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text variante="legende" muted>{delai ? `${delai} · voir son profil` : "Voir son profil et ses chambres"}</Text>
-            </View>
-            <ChevronRight size={20} color={colors.textMuted} />
-          </Pressable>
-
           <View>
             <Text variante="label" muted style={{ marginBottom: sp[1] }}>Conditions</Text>
             <Ligne libelle="Loyer" valeur={`${francs(fiche.rent_amount)} / mois${fiche.rent_negotiable ? " (à débattre)" : ""}`} />
-            {fiche.deposit_months ? <Ligne libelle="Caution" valeur={`${fiche.deposit_months} mois`} /> : null}
+            {fiche.deposit_months ? <Ligne libelle="Caution du loyer" valeur={`${fiche.deposit_months} mois`} /> : null}
+            <Ligne libelle="Caution eau" valeur={fiche.water_deposit_amount ? francs(fiche.water_deposit_amount) : "Aucune"} />
+            <Ligne libelle="Caution électricité" valeur={fiche.electricity_deposit_amount ? francs(fiche.electricity_deposit_amount) : "Aucune"} />
             {fiche.advance_months ? <Ligne libelle="Avance" valeur={`${fiche.advance_months} mois`} /> : null}
             <Ligne libelle="Frais de démarcheur" valeur={fiche.agent_fee_amount ? francs(fiche.agent_fee_amount) : "Aucun"} />
           </View>

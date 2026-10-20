@@ -10,13 +10,13 @@ import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Button } from "@/ui/components/Button";
 import { Screen } from "@/ui/components/Screen";
 import { Text } from "@/ui/components/Text";
-import { useBrouillon } from "./brouillon";
+import { PHOTOS_MIN, useBrouillon } from "./brouillon";
 import { useActionAnnonce, useAnnoncePro, useMediasPro } from "./queries";
 import { EntetePublication } from "./EntetePublication";
 
 type LigneApercuProps = { label: string; valeur: string; onModifier: () => void };
 
-/** Ligne du tableau d'aperçu "Infos / Vidéo + 3 photos / Description" avec lien "Modifier" */
+/** Ligne du tableau d'aperçu "Infos / Vidéo + photos / Description" avec lien "Modifier" */
 function LigneApercu({ label, valeur, onModifier }: LigneApercuProps) {
   const { c } = useTheme();
   return (
@@ -70,7 +70,7 @@ export function PublicationStep() {
     });
   };
 
-  const prete = !!(id && hasVideo && nbPhotos >= 3);
+  const prete = !!(id && hasVideo && nbPhotos >= PHOTOS_MIN);
 
   return (
     <Screen
@@ -151,7 +151,7 @@ export function PublicationStep() {
       ) : (
         <Text variante="legende" couleur={c.danger}>
           {!hasVideo ? "Ajoute une vidéo. " : ""}
-          {nbPhotos < 3 ? `Ajoute au moins ${3 - nbPhotos} photo${3 - nbPhotos > 1 ? "s" : ""} de plus.` : ""}
+          {nbPhotos < PHOTOS_MIN ? `Ajoute au moins ${PHOTOS_MIN - nbPhotos} photo${PHOTOS_MIN - nbPhotos > 1 ? "s" : ""} de plus.` : ""}
         </Text>
       )}
 

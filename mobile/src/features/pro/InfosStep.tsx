@@ -27,6 +27,9 @@ const schema = z.object({
   room_type: z.string({ error: "Choisis un type." }).min(1, "Choisis un type."),
   rent_amount: z.coerce.number({ error: "Obligatoire." }).min(1000, "1 000 F minimum.").max(999_999, "Trop élevé."),
   deposit_months: z.coerce.number().min(1).max(6),
+  // Cautions des compteurs, à part de la caution du loyer (demande du 2026-10-20) : 0 = aucune.
+  water_deposit_amount: z.coerce.number().min(0, "Montant positif.").max(10_000_000, "Trop élevé."),
+  electricity_deposit_amount: z.coerce.number().min(0, "Montant positif.").max(10_000_000, "Trop élevé."),
   is_available: z.boolean(),
   rent_negotiable: z.boolean(),
 });
@@ -52,6 +55,8 @@ export function InfosStep() {
       room_type: brouillon.room_type ?? "",
       rent_amount: brouillon.rent_amount ?? (undefined as unknown as number),
       deposit_months: brouillon.deposit_months ?? 2,
+      water_deposit_amount: brouillon.water_deposit_amount ?? 0,
+      electricity_deposit_amount: brouillon.electricity_deposit_amount ?? 0,
       is_available: !brouillon.available_from || brouillon.available_from <= new Date().toISOString().slice(0, 10),
       rent_negotiable: brouillon.rent_negotiable ?? false,
     },
@@ -80,6 +85,8 @@ export function InfosStep() {
       room_type: v.room_type,
       rent_amount: v.rent_amount,
       deposit_months: v.deposit_months,
+      water_deposit_amount: v.water_deposit_amount,
+      electricity_deposit_amount: v.electricity_deposit_amount,
       advance_months: 1,
       rent_negotiable: v.rent_negotiable,
       available_from: v.is_available ? new Date().toISOString().slice(0, 10) : undefined,
@@ -165,12 +172,32 @@ export function InfosStep() {
 
       {/* Caution, puis disponibilité sur sa propre ligne (évite le chevauchement sur petit écran) */}
       <View style={{ gap: sp[2] }}>
-        <Text variante="label">Caution</Text>
+        <Text variante="label">Caution du loyer</Text>
         <View style={{ flexDirection: "row", gap: sp[2], flexWrap: "wrap" }}>
           {CAUTIONS.map((nb) => (
             <Chip key={nb} titre={`${nb} mois`} actif={caution === Number(nb)} onPress={() => setValue("deposit_months", Number(nb))} />
           ))}
         </View>
+      </View>
+      <View style={{ flexDirection: "row", gap: sp[3] }}>
+        {(["water_deposit_amount", "electricity_deposit_amount"] as const).map((nom) => (
+          <View key={nom} style={{ flex: 1 }}>
+            <Controller
+              control={control}
+              name={nom}
+              render={({ field }) => (
+                <TextField
+                  label={nom === "water_deposit_amount" ? "Caution eau (F)" : "Caution électricité (F)"}
+                  value={field.value ? String(field.value) : ""}
+                  onChangeText={(v) => field.onChange(v.replace(/\D/g, "") === "" ? 0 : Number(v.replace(/\D/g, "")))}
+                  keyboardType="number-pad"
+                  placeholder="0 = aucune"
+                  erreur={errors[nom]?.message}
+                />
+              )}
+            />
+          </View>
+        ))}
       </View>
       <Controller
         control={control}

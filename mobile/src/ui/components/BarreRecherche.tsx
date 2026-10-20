@@ -16,7 +16,7 @@ type Props = {
   placeholder?: string;
 };
 
-const PAUSE_MS = 450;
+const PAUSE_MS = 200;
 
 /**
  * Barre de recherche mobile (maquette Accueil) : loupe, saisie directe, bouton d'effacement, bouton « Filtres » cobalt

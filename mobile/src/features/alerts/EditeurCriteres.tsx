@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { TextInput, View } from "react-native";
 import { francs } from "@/lib/format";
-import { t } from "@/i18n/fr";
-import { Chip } from "@/ui/components/Chip";
 import { ListeDeroulante } from "@/ui/components/ListeDeroulante";
 import { Text } from "@/ui/components/Text";
 import { colors, rayon, sp } from "@/ui/theme/tokens";
-import type { Filtres } from "@/features/listings/filtres";
+import { LIBELLES_COMPTEUR, LIBELLES_CUISINE, LIBELLES_EAU, type Filtres } from "@/features/listings/filtres";
 import { libelleType, TYPES_OFFICIELS, useDistricts, useTypesChambre, type TypeChambre } from "@/features/listings/queries";
 import { type Alerte, type AlerteEntree, useOptionsAlerte } from "./queries";
 
 const BUDGETS_REPLI = [10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000];
 const AUTRE = "autre";
-const DISTANCES = [500, 1000, 2000] as const;
+const DISTANCES = [500, 1000, 2000, 5000] as const;
+const INDISPENSABLES = { douche: "Douche et WC internes", cloture: "Cour clôturée" };
+const CUISINES = { private: LIBELLES_CUISINE.private ?? "Cuisine interne", shared: LIBELLES_CUISINE.shared ?? "Cuisine commune" };
+const versOptions = (libelles: Record<string, string>) => Object.entries(libelles).map(([valeur, libelle]) => ({ valeur, libelle }));
 
 /** Critères d'une alerte, au format de l'API (`AlerteIn`). */
 export type Criteres = {
@@ -21,9 +22,22 @@ export type Criteres = {
   max_rent: number | null;
   private_bathroom_required: boolean;
   max_distance_m: number | null;
+  water_sources: string[];
+  electricity_meters: string[];
+  kitchens: string[];
+  fenced_required: boolean;
 };
 
-export const CRITERES_VIDES: Criteres = { district_ids: [], room_types: [], max_rent: null, private_bathroom_required: false, max_distance_m: null };
+export const CRITERES_VIDES: Criteres = {
+  district_ids: [], room_types: [], max_rent: null, private_bathroom_required: false, max_distance_m: null,
+  water_sources: [], electricity_meters: [], kitchens: [], fenced_required: false,
+};
+
+/** Il faut au moins une option pour créer une alerte (demande du 2026-10-20). */
+export const aUnCritere = (c: Criteres): boolean =>
+  c.district_ids.length > 0 || c.room_types.length > 0 || c.max_rent !== null || c.max_distance_m !== null ||
+  c.private_bathroom_required || c.fenced_required || c.water_sources.length > 0 || c.electricity_meters.length > 0 ||
+  c.kitchens.length > 0;
 
 export const criteresDe = (a: Alerte): Criteres => ({
   district_ids: a.district_ids ?? [],
@@ -31,6 +45,10 @@ export const criteresDe = (a: Alerte): Criteres => ({
   max_rent: a.max_rent ?? null,
   private_bathroom_required: !!a.private_bathroom_required,
   max_distance_m: a.max_distance_m ?? null,
+  water_sources: a.water_sources ?? [],
+  electricity_meters: a.electricity_meters ?? [],
+  kitchens: a.kitchens ?? [],
+  fenced_required: !!a.fenced_required,
 });
 
 export const versCorps = (c: Criteres, label = ""): AlerteEntree => ({ ...c, label });
@@ -43,6 +61,10 @@ export function criteresDepuisFiltres(f: Filtres, quartiers: { id: string; slug:
     max_rent: f.rent_max ?? null,
     private_bathroom_required: !!f.bathroom,
     max_distance_m: f.max_distance_m ?? null,
+    water_sources: f.water ?? [],
+    electricity_meters: f.meter ?? [],
+    kitchens: (f.kitchen ?? []).filter((k) => k !== "none"),
+    fenced_required: !!f.fenced,
   };
 }
 
@@ -53,25 +75,19 @@ export function resumeCriteres(c: Criteres, noms: Record<string, string>, typesC
   const details = [
     c.max_rent ? `≤ ${francs(c.max_rent)}` : null,
     c.max_distance_m ? `≤ ${c.max_distance_m} m de l'UP` : null,
+    ...c.water_sources.map((e) => LIBELLES_EAU[e] ?? e),
+    ...c.electricity_meters.map((e) => LIBELLES_COMPTEUR[e] ?? e),
+    ...c.kitchens.map((e) => LIBELLES_CUISINE[e] ?? e),
     c.private_bathroom_required ? "Douche interne" : null,
+    c.fenced_required ? "Cour clôturée" : null,
   ].filter(Boolean).join(" · ");
   return { titre: [lieux, types].filter(Boolean).join(" · ") || "Toutes les chambres", details };
 }
 
-const basculer = (liste: string[], v: string) => (liste.includes(v) ? liste.filter((x) => x !== v) : [...liste, v]);
-
-function Bloc({ titre, children }: { titre: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: sp[2] }}>
-      <Text variante="label" muted>{titre}</Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>{children}</View>
-    </View>
-  );
-}
-
 /**
- * Éditeur des critères d'alerte (plan v2, M5) : quartiers en liste déroulante multiple, les plus demandés d'abord ;
- * budget en liste déroulante de montants fréquents, avec « Autre montant » qui fait apparaître un champ.
+ * Éditeur des critères d'alerte : chaque critère est une liste déroulante, à choix multiples sauf le budget et la
+ * distance (plan v2, M5, et demande du 2026-10-20). Quartiers les plus demandés d'abord ; « Autre montant » ouvre
+ * un champ pour un budget libre. Équipements : eau, électricité, cuisine, douche interne, cour clôturée.
  */
 export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChange: (c: Criteres) => void }) {
   const options = useOptionsAlerte();
@@ -101,11 +117,14 @@ export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChan
         onChange={(ids) => maj({ district_ids: ids })}
       />
 
-      <Bloc titre="Type">
-        {types.map(({ slug, label }) => (
-          <Chip key={slug} titre={label} actif={valeur.room_types.includes(slug)} onPress={() => maj({ room_types: basculer(valeur.room_types, slug) })} />
-        ))}
-      </Bloc>
+      <ListeDeroulante
+        label="Types de chambre"
+        placeholder="Tous les types"
+        multiple
+        options={types.map(({ slug, label }) => ({ valeur: slug, libelle: label }))}
+        valeurs={valeur.room_types}
+        onChange={(v) => maj({ room_types: v })}
+      />
 
       <View style={{ gap: sp[2] }}>
         <ListeDeroulante
@@ -142,15 +161,24 @@ export function EditeurCriteres({ valeur, onChange }: { valeur: Criteres; onChan
         ) : null}
       </View>
 
-      <Bloc titre="Distance de l'UP">
-        {DISTANCES.map((d) => (
-          <Chip key={d} titre={d >= 1000 ? `≤ ${d / 1000} km` : `≤ ${d} m`} actif={valeur.max_distance_m === d} onPress={() => maj({ max_distance_m: valeur.max_distance_m === d ? null : d })} />
-        ))}
-      </Bloc>
-
-      <Bloc titre="Équipements">
-        <Chip titre="Douche interne" actif={valeur.private_bathroom_required} onPress={() => maj({ private_bathroom_required: !valeur.private_bathroom_required })} />
-      </Bloc>
+      <ListeDeroulante
+        label="Distance de l'UP"
+        placeholder="Peu importe"
+        options={DISTANCES.map((d) => ({ valeur: String(d), libelle: d >= 1000 ? `À ${d / 1000} km au plus` : `À ${d} m au plus` }))}
+        valeurs={valeur.max_distance_m !== null ? [String(valeur.max_distance_m)] : []}
+        onChange={([v]) => maj({ max_distance_m: v ? Number(v) : null })}
+      />
+      <ListeDeroulante label="Eau" placeholder="Peu importe" multiple options={versOptions(LIBELLES_EAU)} valeurs={valeur.water_sources} onChange={(v) => maj({ water_sources: v })} />
+      <ListeDeroulante label="Électricité" placeholder="Peu importe" multiple options={versOptions(LIBELLES_COMPTEUR)} valeurs={valeur.electricity_meters} onChange={(v) => maj({ electricity_meters: v })} />
+      <ListeDeroulante label="Cuisine" placeholder="Peu importe" multiple options={versOptions(CUISINES)} valeurs={valeur.kitchens} onChange={(v) => maj({ kitchens: v })} />
+      <ListeDeroulante
+        label="Indispensables"
+        placeholder="Rien d'obligatoire"
+        multiple
+        options={versOptions(INDISPENSABLES)}
+        valeurs={[valeur.private_bathroom_required ? "douche" : "", valeur.fenced_required ? "cloture" : ""].filter(Boolean)}
+        onChange={(v) => maj({ private_bathroom_required: v.includes("douche"), fenced_required: v.includes("cloture") })}
+      />
     </View>
   );
 }

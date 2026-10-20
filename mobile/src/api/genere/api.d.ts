@@ -1114,6 +1114,14 @@ export interface components {
             max_rent?: number | null;
             private_bathroom_required?: boolean;
             max_distance_m?: number | null;
+            /** @description Eau souhaitée (au moins une) : individual, sub_meter, running, borehole, well. Vide = peu importe. */
+            water_sources?: string[];
+            /** @description Électricité souhaitée : individual, sub_meter, shared. Vide = peu importe. */
+            electricity_meters?: string[];
+            /** @description Cuisine souhaitée : private, shared. Vide = peu importe. */
+            kitchens?: string[];
+            /** @description Cour clôturée exigée. */
+            fenced_required?: boolean;
             is_active?: boolean;
         };
         AlerteOut: {
@@ -1125,6 +1133,10 @@ export interface components {
             max_rent: number | null;
             private_bathroom_required: boolean;
             max_distance_m: number | null;
+            water_sources: string[];
+            electricity_meters: string[];
+            kitchens: string[];
+            fenced_required: boolean;
             is_active: boolean;
             /** Format: date-time */
             created_at: string;
@@ -1148,6 +1160,10 @@ export interface components {
             deposit_months: number;
             advance_months: number;
             agent_fee_amount?: number;
+            /** @description Caution eau en F (0 = aucune). */
+            water_deposit_amount?: number;
+            /** @description Caution électricité en F (0 = aucune). */
+            electricity_deposit_amount?: number;
             /** Format: date */
             available_from: string;
             has_private_bathroom: boolean;
@@ -1187,6 +1203,8 @@ export interface components {
             deposit_months: number;
             advance_months: number;
             agent_fee_amount: number;
+            water_deposit_amount: number;
+            electricity_deposit_amount: number;
             /** Format: date */
             available_from: string;
             has_private_bathroom: boolean;
@@ -1441,6 +1459,10 @@ export interface components {
             deposit_months: number;
             advance_months: number;
             agent_fee_amount: number;
+            /** @description Caution eau en F (0 = aucune). */
+            water_deposit_amount: number;
+            /** @description Caution électricité en F (0 = aucune). */
+            electricity_deposit_amount: number;
             /** Format: date */
             available_from: string;
             has_private_bathroom: boolean;
@@ -1702,6 +1724,14 @@ export interface components {
             max_rent?: number | null;
             private_bathroom_required?: boolean;
             max_distance_m?: number | null;
+            /** @description Eau souhaitée (au moins une) : individual, sub_meter, running, borehole, well. Vide = peu importe. */
+            water_sources?: string[];
+            /** @description Électricité souhaitée : individual, sub_meter, shared. Vide = peu importe. */
+            electricity_meters?: string[];
+            /** @description Cuisine souhaitée : private, shared. Vide = peu importe. */
+            kitchens?: string[];
+            /** @description Cour clôturée exigée. */
+            fenced_required?: boolean;
             is_active?: boolean;
         };
         PatchedAnnonceIn: {
@@ -1723,6 +1753,10 @@ export interface components {
             deposit_months?: number;
             advance_months?: number;
             agent_fee_amount?: number;
+            /** @description Caution eau en F (0 = aucune). */
+            water_deposit_amount?: number;
+            /** @description Caution électricité en F (0 = aucune). */
+            electricity_deposit_amount?: number;
             /** Format: date */
             available_from?: string;
             has_private_bathroom?: boolean;

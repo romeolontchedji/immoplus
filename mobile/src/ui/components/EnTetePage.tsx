@@ -53,7 +53,7 @@ export function EnTetePage({ titre, sousTitre, retour, droite, children }: Props
             <ArrowLeft size={20} color={colors.night} />
           </BoutonRond>
         ) : (
-          <Logotype taille={32} />
+          <Logotype taille={26} />
         )}
         {action ?? null}
       </View>

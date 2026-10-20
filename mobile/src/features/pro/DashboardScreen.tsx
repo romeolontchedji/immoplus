@@ -73,7 +73,7 @@ export function DashboardScreen() {
 
   return (
     <Screen scroll>
-      <Logotype taille={34} />
+      <Logotype taille={28} />
       {/* ── En-tête salutation + avatar ── */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: sp[4] }}>
         <View>

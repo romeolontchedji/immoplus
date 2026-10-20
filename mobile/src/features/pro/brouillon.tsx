@@ -15,6 +15,8 @@ export type Brouillon = {
   deposit_months?: number;
   advance_months?: number;
   agent_fee_amount?: number;
+  water_deposit_amount?: number; // caution eau en F (0 = aucune)
+  electricity_deposit_amount?: number; // caution électricité en F (0 = aucune)
   available_from?: string; // AAAA-MM-JJ
   district?: string; // identifiant du quartier
   landmark_text?: string;
@@ -29,6 +31,9 @@ export type Brouillon = {
   rent_negotiable?: boolean; // loyer à débattre (plan v3, C3)
   description_md?: string; // « Autres détails », texte simple
 };
+
+/** Photos prêtes exigées pour publier (comme le serveur, `PHOTOS_MIN`) : 5 depuis le 2026-10-20. */
+export const PHOTOS_MIN = 5;
 
 /** Champs obligatoires pour créer l'annonce côté serveur. */
 export const CHAMPS_CREATION = [

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { qk } from "@/api/keys";
 import { t } from "@/i18n/fr";
@@ -39,6 +39,9 @@ export function useFil(filtres: Filtres) {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => unwrap(api.GET("/v1/listings", { params: { query: versParametres(filtres, pageParam) } })),
     getNextPageParam: (derniere) => derniere.next_cursor ?? undefined,
+    // Recherche au fil de la frappe : on garde la liste affichée pendant le chargement de la suivante, sans
+    // squelette ni clignotement ; les chambres changent simplement sur place (demande du 2026-10-20).
+    placeholderData: keepPreviousData,
   });
 }
 

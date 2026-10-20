@@ -56,6 +56,8 @@ export function DescriptionStep() {
           description_md: details, has_private_bathroom: !!brouillonMaj.has_private_bathroom, is_fenced: !!brouillonMaj.is_fenced,
           water_sources: brouillonMaj.water_sources, electricity_meter: brouillonMaj.electricity_meter,
           kitchen: brouillonMaj.kitchen ?? "", rent_negotiable: !!brouillonMaj.rent_negotiable,
+          water_deposit_amount: brouillonMaj.water_deposit_amount ?? 0,
+          electricity_deposit_amount: brouillonMaj.electricity_deposit_amount ?? 0,
         },
         { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) },
       );
@@ -66,7 +68,11 @@ export function DescriptionStep() {
       router.push(`/pro/nouvelle-annonce/${ETAPE_DU_CHAMP[manques[0]!] ?? "infos"}` as never);
       return;
     }
-    const corps: Record<string, unknown> = { rent_negotiable: !!brouillonMaj.rent_negotiable };
+    const corps: Record<string, unknown> = {
+      rent_negotiable: !!brouillonMaj.rent_negotiable,
+      water_deposit_amount: brouillonMaj.water_deposit_amount ?? 0,
+      electricity_deposit_amount: brouillonMaj.electricity_deposit_amount ?? 0,
+    };
     for (const cle of CHAMPS_CREATION) corps[cle] = brouillonMaj[cle];
     if (brouillonMaj.latitude && brouillonMaj.longitude) Object.assign(corps, { latitude: brouillonMaj.latitude, longitude: brouillonMaj.longitude });
     if (details.trim()) corps.description_md = details;

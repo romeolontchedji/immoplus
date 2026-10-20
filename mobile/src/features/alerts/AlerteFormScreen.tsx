@@ -10,7 +10,7 @@ import { Text } from "@/ui/components/Text";
 import { useFiltres } from "@/features/listings/filtres";
 import { proposerNotifications } from "@/features/notifications/DemandeNotifications";
 import { useDistricts } from "@/features/listings/queries";
-import { criteresDe, criteresDepuisFiltres, EditeurCriteres, versCorps, type Criteres } from "./EditeurCriteres";
+import { aUnCritere, criteresDe, criteresDepuisFiltres, EditeurCriteres, versCorps, type Criteres } from "./EditeurCriteres";
 import { useAlertes, useCreerAlerte, useModifierAlerte } from "./queries";
 import { AuthRequired } from "@/features/auth/AuthRequired";
 import { useSession } from "@/state/session";
@@ -63,6 +63,11 @@ function Formulaire({ id, initiales }: { id?: string; initiales: Criteres }) {
   const modifier = useModifierAlerte(id ?? "");
   const mutation = id ? modifier : creer;
   const [criteres, setCriteres] = useState<Criteres>(initiales);
+  const [vide, setVide] = useState(false);
+  const changer = (c: Criteres) => {
+    setCriteres(c);
+    setVide(false);
+  };
 
   return (
     <Screen
@@ -71,20 +76,27 @@ function Formulaire({ id, initiales }: { id?: string; initiales: Criteres }) {
         <Button
           titre={id ? t.commun.enregistrer : "Créer l’alerte"}
           chargement={mutation.isPending}
-          onPress={() =>
+          onPress={() => {
+            // Aucune option choisie : pas d'alerte (demande du 2026-10-20).
+            if (!aUnCritere(criteres)) return setVide(true);
             mutation.mutate(versCorps(criteres), {
               onSuccess: () => {
                 router.back();
                 if (!id) void proposerNotifications("alerte");
               },
-            })
-          }
+            });
+          }}
         />
       }
     >
       <Text variante="titre">{id ? "Modifier l’alerte" : "Nouvelle alerte"}</Text>
-      <Text muted>Choisis tes critères : tu reçois une notification dès qu’une chambre correspond. Sans critère, tu es prévenu de toutes les nouvelles chambres.</Text>
-      <EditeurCriteres valeur={criteres} onChange={setCriteres} />
+      <Text muted>Choisis au moins une option : tu reçois une notification dès qu’une chambre correspond.</Text>
+      <EditeurCriteres valeur={criteres} onChange={changer} />
+      {vide ? (
+        <Text variante="corpsGras" couleur={colors.danger} accessibilityLiveRegion="polite">
+          {t.erreurs.alert_empty}
+        </Text>
+      ) : null}
       {mutation.error ? (
         <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
           {isApiError(mutation.error) ? messageErreur(mutation.error.code, mutation.error.message) : t.erreurs.network}

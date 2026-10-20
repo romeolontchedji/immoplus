@@ -52,7 +52,7 @@ export function BienvenueScreen() {
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 27, 61, 0.45)" }} />
 
         {/* Logo Immo+ */}
-        <Logotype taille={44} surFondSombre />
+        <Logotype taille={36} surFondSombre />
       </View>
 
       {/* Feuille blanche inférieure */}

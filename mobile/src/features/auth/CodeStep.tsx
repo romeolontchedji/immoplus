@@ -102,7 +102,7 @@ export function CodeStep({
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
         {/* En-tête : Logo + Étape 2/2 */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Logotype taille={38} />
+          <Logotype taille={32} />
 
           {estInscription ? (
             <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textMuted }}>

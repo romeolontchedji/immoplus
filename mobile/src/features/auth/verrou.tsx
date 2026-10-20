@@ -103,7 +103,7 @@ export function VerrouHote() {
   if (!affiche) return null;
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", padding: sp[8], gap: sp[5] }]} accessibilityViewIsModal>
-      <Logotype taille={44} />
+      <Logotype taille={36} />
       <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: colors.blueSoft, alignItems: "center", justifyContent: "center" }}>
         <Fingerprint size={36} color={colors.primary} />
       </View>

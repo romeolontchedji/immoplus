@@ -39,7 +39,7 @@ export function PresentationScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: sp[4], paddingVertical: sp[2] }}>
-        <Logotype taille={32} />
+        <Logotype taille={28} />
         {derniere ? <View /> : (
           <Pressable accessibilityRole="button" onPress={terminer} hitSlop={12}>
             <Text variante="corpsGras" muted>Passer</Text>

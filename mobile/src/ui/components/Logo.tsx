@@ -40,11 +40,11 @@ interface LogotypeProps {
 }
 
 /** Logo horizontal Immo+ (icône + mot), unique source du logo mobile. */
-export function Logotype({ taille = 38, surFondSombre = false }: LogotypeProps) {
-  // Dans le fichier officiel, l'icône occupe 200 unités sur 288 de haut.
-  const hauteur = (taille * 288) / 200;
+export function Logotype({ taille = 32, surFondSombre = false }: LogotypeProps) {
+  // Cadrage serré sur le dessin (sans la marge du fichier officiel) : `taille` = hauteur de l'icône en points.
+  const hauteur = (taille * 208) / 200;
   return (
-    <Svg width={(hauteur * 1153) / 288} height={hauteur} viewBox="0 0 1153 288" accessible accessibilityRole="image" accessibilityLabel="Immo+">
+    <Svg width={(hauteur * 1096) / 208} height={hauteur} viewBox="40 40 1096 208" accessible accessibilityRole="image" accessibilityLabel="Immo+">
       <G transform="translate(44,44) scale(0.390625)">
         <Icone />
       </G>

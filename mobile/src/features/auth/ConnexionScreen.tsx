@@ -45,7 +45,7 @@ export function ConnexionScreen() {
       <View style={{ gap: sp[4], paddingTop: sp[2], paddingBottom: sp[6] }}>
         {/* Logo Immo+ */}
         <View style={{ marginBottom: sp[2] }}>
-          <Logotype taille={38} />
+          <Logotype taille={32} />
         </View>
 
         {/* Titre et consigne */}
