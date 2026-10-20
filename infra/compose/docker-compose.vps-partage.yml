@@ -1,0 +1,23 @@
+# Troisième surcharge, pour un VPS partagé dont un Caddy central occupe déjà les ports 80 et 443
+# (docs/deploiement-vps-pas-a-pas.md). À ajouter après docker-compose.prod.yml :
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.vps-partage.yml --profile prod up -d
+#
+# Notre Caddy ne publie plus aucun port : il rejoint le réseau partagé `web_proxy` sous l'alias `immoplus-web`, écoute
+# en HTTP sur 80 et garde tout le reste (fichiers statiques et médias, limites de taille, liste blanche de
+# l'administration, en-têtes de sécurité). Le Caddy central termine le HTTPS et lui transmet tout le trafic Immo+.
+services:
+  caddy:
+    ports: !reset []
+    environment:
+      SCHEMA_SITES: http
+      # Seul le Caddy central nous joint, par le réseau Docker : on croit ses en-têtes X-Forwarded-*.
+      PROXYS_DE_CONFIANCE: private_ranges
+    networks:
+      interne:
+      exposition:
+      web_proxy:
+        aliases: [immoplus-web]
+
+networks:
+  web_proxy:
+    external: true
