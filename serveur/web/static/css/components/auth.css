@@ -6,7 +6,7 @@
   display: none; /* masqué sur mobile */
   position: relative; overflow: hidden;
   flex: 0 0 42%; max-width: 640px;
-  background: var(--voile-auth), url("../../design/illustration-accueil.svg") center / cover,
+  background: var(--voile-auth), url("../../design/photos/accueil-2-960.webp") 70% center / cover no-repeat,
     var(--night);
   color: var(--white); flex-direction: column; padding: var(--sp-10);
 }
@@ -74,4 +74,13 @@
   .auth-formulaire__inner {
     padding: var(--sp-6); border-radius: var(--r-card); box-shadow: none; background: transparent;
   }
+}
+
+/* Plan v3, E4 : textes centrés, vraie photo dans le panneau */
+.auth-formulaire__titre, .auth-formulaire__sous-titre { text-align: center; }
+.auth-formulaire__sous-titre { margin-inline: auto; max-width: 28rem; }
+.auth-etapes { display: flex; justify-content: center; }
+.auth-lateral__contenu { margin-top: auto; }
+@media (min-width: 1280px) {
+  .auth-lateral { background-image: var(--voile-auth), url("../../design/photos/accueil-2-1600.webp"); }
 }

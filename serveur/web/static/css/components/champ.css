@@ -112,3 +112,4 @@ select.champ__saisie { padding-right: var(--sp-8); appearance: none; background-
   40%, 80% { transform: translateX(6px); }
 }
 @media (prefers-reduced-motion: reduce) { .code-otp--secousse .code-otp__cases { animation: none; } }
+.champ:has(.code-otp) .champ__etiquette, .champ:has(.code-otp) .champ__erreur { text-align: center; }
