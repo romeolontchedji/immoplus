@@ -364,10 +364,10 @@
                    href="https://www.openstreetmap.org/?mlat={{ f.latitude|stringformat:'.3f' }}&amp;mlon={{ f.longitude|stringformat:'.3f' }}#map=16/{{ f.latitude|stringformat:'.3f' }}/{{ f.longitude|stringformat:'.3f' }}"
                    target="_blank"
                    rel="noopener noreferrer">
-                  Voir sur la carte
+                  Voir le quartier sur la carte
                   {% include "web/composants/icone.html" with nom="external-link" taille=14 %}
                 </a>
-                <p class="fiche-localisation__note">Position approximative ; l'adresse exacte est donnée par le gérant.</p>
+                <p class="fiche-localisation__note">Seul le quartier est indiqué ; l'adresse exacte est donnée par le gérant dans la discussion.</p>
               {% endif %}
             </section>
             <div class="fiche-securite-encart" role="note">

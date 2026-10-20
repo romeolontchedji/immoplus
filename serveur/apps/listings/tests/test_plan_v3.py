@@ -204,3 +204,10 @@ class TestContactDirect:
         assert again.json()["id"] == r.json()["id"]
         # vide : invisible dans les listes tant que le locataire n'a rien écrit
         assert c.get("/v1/conversations").json()["items"] == []
+
+
+def test_la_fiche_publique_ne_donne_que_le_centre_du_quartier():
+    q = DistrictFactory(latitude=9.3400, longitude=2.6300)
+    a = ListingFactory(district=q, latitude=9.35678, longitude=2.61234)  # GPS précis du gérant
+    f = APIClient().get(f"/v1/listings/{a.slug}").json()
+    assert (f["latitude"], f["longitude"]) == (9.34, 2.63)

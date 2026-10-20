@@ -475,8 +475,9 @@ def fiche_publique(ident) -> dict | None:
         "room_type_label": types.libelle(annonce.room_type),
         "district": {"name": annonce.district.name, "slug": annonce.district.slug},
         "landmark_text": annonce.landmark_text,
-        "latitude": geo.arrondir_position(annonce.latitude),
-        "longitude": geo.arrondir_position(annonce.longitude),
+        # Position publique = centre du quartier, jamais la chambre (la position exacte ne sert qu'à la distance à l'UP).
+        "latitude": geo.arrondir_position(annonce.district.latitude),
+        "longitude": geo.arrondir_position(annonce.district.longitude),
         "distance_m": geo.arrondir_50(annonce.distance_to_campus_m),
         "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months,
