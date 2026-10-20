@@ -19,7 +19,7 @@ Pendant le lancement, le service est entièrement gratuit, pour les locataires c
 
 ## 3. Règles de la messagerie
 
-- Les échanges restent dans Immo+ : les numéros de téléphone, adresses e-mail et liens sont masqués automatiquement et signalés à l'équipe.
+- Tu peux échanger ton numéro avec ton interlocuteur dans la messagerie si tu le souhaites. Les annonces, elles, ne contiennent ni numéro, ni adresse e-mail, ni lien : le premier contact passe toujours par Immo+.
 - Les messages insultants, discriminatoires, harcelants ou frauduleux sont interdits.
 - Ne paie jamais avant d'avoir visité la chambre. Immo+ ne demande jamais de paiement par message.
 - Tu peux bloquer un interlocuteur et signaler un message ou une annonce à tout moment.
@@ -28,7 +28,6 @@ Pendant le lancement, le service est entièrement gratuit, pour les locataires c
 
 - Tes annonces décrivent des chambres réelles, disponibles, au loyer réellement demandé. La vidéo et les photos montrent la chambre proposée.
 - Tu garantis détenir les droits sur les vidéos et photos publiées et l'accord des personnes qui y apparaissent.
-- Tu confirmes régulièrement la disponibilité de tes chambres ; sans confirmation, une annonce est masquée automatiquement.
 - Tu marques une chambre « louée » dès qu'elle n'est plus disponible.
 
 ## 5. Modération et sanctions

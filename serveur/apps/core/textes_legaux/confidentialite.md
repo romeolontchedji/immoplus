@@ -23,13 +23,13 @@ Nous ne collectons pas ta position GPS en tant que locataire, et nous ne vendons
 
 - Faire fonctionner ton compte, la recherche, les alertes et la messagerie.
 - Te prévenir d'un message, d'une nouvelle chambre ou d'un changement sur un favori, selon tes préférences.
-- Protéger les utilisateurs : vérification des gérants, masquage des coordonnées dans les messages, lutte contre la fraude et modération.
+- Protéger les utilisateurs : vérification des gérants, annonces sans coordonnées, lutte contre la fraude et modération.
 - Mesurer l'audience des annonces de façon agrégée (nombre de vues, de favoris et de contacts).
 
 ## 4. Qui peut voir tes données
 
-- Le gérant voit ton nom et tes messages lorsque tu lui écris ; il ne voit jamais ton numéro.
-- Les locataires voient le nom du gérant, son badge et ses annonces, jamais son numéro.
+- Le gérant voit ton nom et tes messages lorsque tu lui écris ; il ne voit ton numéro que si tu le lui donnes.
+- Les locataires voient le nom du gérant, son badge et ses annonces ; son numéro n'est jamais affiché par Immo+.
 - L'équipe de modération ne lit une conversation qu'en cas de signalement ou de suspicion de fraude, avec un motif enregistré dans un journal non modifiable.
 - Nos prestataires techniques (hébergement, envoi des SMS et des notifications) n'accèdent qu'aux données nécessaires à leur mission.
 
