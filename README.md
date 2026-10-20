@@ -29,7 +29,7 @@ Le dépôt contient les deux parties du projet :
 Prérequis : Git, Make, Python 3.12 et Docker avec Compose.
 
 ```bash
-git clone https://github.com/Magloireaffokpe/immoplus.git immoplus && cd immoplus
+git clone https://github.com/romeolontchedji/immoplus.git immoplus && cd immoplus
 make up        # installe les hooks, crée .env, construit et démarre la pile
 make fumee     # vérifie que tout répond
 ```

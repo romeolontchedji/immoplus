@@ -31,14 +31,20 @@ Ce mode est activé par la troisième surcharge `infra/compose/docker-compose.vp
 
 ### Qui fait quoi
 
-| Action | Toi | Propriétaire du VPS (compte `romaeus`) |
+Le dépôt de référence de la production est **`romeolontchedji/immoplus`** : c'est sa branche `main` que le VPS
+déploie. Le développeur pousse ses branches vers ce dépôt (et vers sa copie `Magloireaffokpe/immoplus`) et y fusionne
+ses demandes de fusion ; l'hébergeur fait tout le reste. Dans la suite, « tu » désigne la personne qui exécute
+l'étape.
+
+| Action | Développeur | Hébergeur (Romeo, propriétaire du VPS, compte `romaeus`) |
 |---|---|---|
-| Comptes Cloudflare, Brevo, Expo, stockage des sauvegardes | ✔ | |
-| DNS du domaine `immoplus.bj` | ✔ | |
-| Créer ton accès au VPS (étape 4) | | ✔ |
-| Ajouter le bloc Immo+ au Caddy central (étape 9) | | ✔ |
-| Installer la minuterie d'autoguérison (étape 12, `sudo`) | | ✔ |
-| Configurer et déployer Immo+ | ✔ | |
+| Code, contrôles, demandes de fusion vers `main` du dépôt de référence (étape 2) | ✔ | |
+| Comptes Cloudflare, Brevo, Expo, Cloudinary, stockage des sauvegardes (étapes 3 et 4) | | ✔ |
+| DNS du domaine `immoplus.bj` | | ✔ |
+| Accès au VPS, clé de déploiement, `.env`, déploiement (étapes 5 à 12) | | ✔ |
+| Bloc Immo+ du Caddy central, minuterie d'autoguérison | | ✔ |
+| Compilation et publication de l'application (étape 13) | l'un ou l'autre, avec le compte Expo de l'hébergeur | ✔ |
+| Mises à jour en production (étape 15) : `deployer.sh` après chaque fusion | | ✔ |
 
 ## 1. Ce qu'il te faut
 
@@ -63,16 +69,28 @@ make verifier              # tous les contrôles (ceux de la CI) : tout doit êt
 git status                 # rien en attente
 ```
 
-Fusionne ta branche de travail dans `main` par une demande de fusion sur GitHub (le hook refuse un envoi direct sur
-`main`), puis :
+Pousse ta branche (`git push` l'envoie aux deux dépôts), puis fusionne-la dans `main` **du dépôt de référence**
+par une demande de fusion (le hook refuse un envoi direct sur `main`) :
 
 ```bash
-git checkout main && git pull
-git tag -a v1.0.0 -m "Première mise en production"     # optionnel : un repère pour revenir en arrière
-git push && git push --tags
+gh pr create --repo romeolontchedji/immoplus --base main --head feat/ma-branche --fill
+gh pr merge --repo romeolontchedji/immoplus --merge          # une fois la CI verte
 ```
 
-Si `origin` pousse vers deux dépôts (ton dépôt et celui de romeolontchedji), les deux reçoivent la version.
+Ou sur GitHub : `romeolontchedji/immoplus` › **Pull requests › New pull request**. `gh` s'installe une fois
+(cli.github.com) et se connecte avec `gh auth login` : la connexion vaut pour tous les dépôts où tu as les droits.
+
+Pour que `git pull` sur `main` suive le dépôt de référence (une seule fois ; les deux adresses d'envoi restent) :
+
+```bash
+git remote set-url origin git@github.com:romeolontchedji/immoplus.git
+git checkout main && git pull
+git tag -a v1.0.0 -m "Première mise en production"     # optionnel : un repère pour revenir en arrière
+git push --tags
+```
+
+Ta copie `Magloireaffokpe/immoplus` reçoit toutes les branches à chaque `git push` ; son `main` n'est pas utilisé par
+la production.
 
 **Résultat attendu :** la CI GitHub est verte sur `main`.
 
@@ -187,10 +205,11 @@ les vidéos partent alors de son réseau mondial (ADR 0010). Tu peux l'ajouter p
 4. Après le déploiement : Administration › Paramètres › **Photos et vidéos** › « Cloudinary » (détail et retour en
    arrière : `docs/administration.md` §5.8).
 
-## 5. Ton accès au VPS
+## 5. L'utilisateur Immo+ sur le VPS
 
-Le serveur appartient au compte `romaeus`. Pour isoler Immo+, demande-lui de créer un utilisateur dédié membre du
-groupe `docker`, avec **ta** clé publique (étape 1) :
+Le serveur appartient au compte `romaeus` (l'hébergeur). Pour isoler Immo+ des autres applications, il crée un
+utilisateur dédié membre du groupe `docker`, avec la clé publique de la personne qui déploiera (la sienne, ou celle
+d'un membre de l'équipe) :
 
 ```bash
 # à lancer par le propriétaire du VPS
@@ -226,8 +245,8 @@ ssh-keygen -t ed25519 -C "vps-rmeolab-immoplus" -f ~/.ssh/github_immoplus -N ""
 cat ~/.ssh/github_immoplus.pub
 ```
 
-Sur GitHub : dépôt `Magloireaffokpe/immoplus` › **Settings › Deploy keys › Add deploy key**, titre `VPS rmeolab`,
-**sans** cocher « Allow write access ».
+Sur GitHub : dépôt `romeolontchedji/immoplus` › **Settings › Deploy keys › Add deploy key** (réservé au propriétaire
+du dépôt), titre `VPS rmeolab`, **sans** cocher « Allow write access ».
 
 ```bash
 cat >> ~/.ssh/config <<'CONF'
@@ -237,8 +256,8 @@ Host github.com
     IdentityFile ~/.ssh/github_immoplus
     IdentitiesOnly yes
 CONF
-ssh -T git@github.com                       # « Hi Magloireaffokpe/immoplus! … »
-mkdir -p ~/apps && git clone git@github.com:Magloireaffokpe/immoplus.git ~/apps/immoplus
+ssh -T git@github.com                       # « Hi romeolontchedji/immoplus! … »
+mkdir -p ~/apps && git clone git@github.com:romeolontchedji/immoplus.git ~/apps/immoplus
 cd ~/apps/immoplus && git checkout main
 ```
 
