@@ -1,0 +1,18 @@
+{# Mot de passe oublié : les trois portes, dans l'ordre (ADR 0009). #}
+{% if envoye %}
+  <div class="alerte alerte--succes" role="status">
+    <p>Si ce compte a un e-mail confirmé, un lien vient d'y être envoyé. Il est valable 30 minutes.</p>
+  </div>
+{% endif %}
+<ol class="oubli-portes">
+  <li><strong>Par e-mail</strong> : si tu as ajouté et confirmé une adresse, reçois un lien ci-dessous.</li>
+  <li>
+    <strong>Avec ta clé de secours</strong> : celle donnée à la création du compte.
+    <a href="/mot-de-passe-oublie/cle">Utiliser ma clé</a>
+  </li>
+  <li>
+    <strong>Ni e-mail ni clé ?</strong> Écris à l'équipe :
+    <a href="{{ contact_equipe.whatsapp_url }}" rel="noopener">WhatsApp</a>. Elle vérifiera ton identité puis
+    t'enverra un lien pour choisir un nouveau mot de passe.
+  </li>
+</ol>

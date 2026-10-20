@@ -7,7 +7,7 @@ import pytest
 from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.utils import timezone
 
-from apps.accounts.models import Device, GerantProfile, OtpCode, User
+from apps.accounts.models import Device, GerantProfile, User
 from apps.accounts.tests.fabriques import (
     AdminFactory,
     ClientFactory,
@@ -72,10 +72,27 @@ class TestUsers:
         with pytest.raises(IntegrityError), transaction.atomic():
             User.objects.create(full_name="X", role=role)
 
-    def test_numero_unique(self):
+    def test_numero_partage_permis(self):
         ClientFactory(phone_e164="+2290197111111")
+        ClientFactory(phone_e164="+2290197111111")  # ADR 0009 : le numéro n'est plus unique
+
+    def test_nom_d_utilisateur_unique(self):
+        # Le format n'admet que des minuscules : l'unicité vaut donc sans tenir compte des majuscules.
+        ClientFactory(username="awa.bio")
         with pytest.raises(IntegrityError), transaction.atomic():
-            ClientFactory(phone_e164="+2290197111111")
+            ClientFactory(username="awa.bio")
+
+    @pytest.mark.parametrize("nom", ["ab", "Awa.Bio", ".awa", "awa.", "a b c"])
+    def test_nom_d_utilisateur_mal_forme_refuse(self, nom):
+        with pytest.raises(IntegrityError), transaction.atomic():
+            ClientFactory(username=nom)
+
+    def test_un_locataire_a_un_nom_d_utilisateur(self):
+        with pytest.raises(IntegrityError), transaction.atomic():
+            ClientFactory(username=None)
+
+    def test_un_gerant_peut_attendre_son_activation_sans_nom(self):
+        assert GerantFactory(username=None).pk
 
     def test_email_unique_mais_plusieurs_absents(self):
         ClientFactory()
@@ -87,8 +104,8 @@ class TestUsers:
     def test_valeurs_par_defaut_posees_par_la_base(self):
         with connection.cursor() as c:
             c.execute(
-                "INSERT INTO users (id, phone_e164, password_hash, full_name, role) "
-                "VALUES (gen_random_uuid(), '+2290197222222', 'x', 'Y', 'client') "
+                "INSERT INTO users (id, username, phone_e164, password_hash, full_name, role) "
+                "VALUES (gen_random_uuid(), 'par.defaut', '+2290197222222', 'x', 'Y', 'client') "
                 "RETURNING status, token_version, notif_prefs, created_at IS NOT NULL"
             )
             statut, version, prefs, cree = c.fetchone()
@@ -120,26 +137,6 @@ class TestUsers:
         assert not m.has_perm("core.change_appsetting")
         assert AdminFactory().has_perm("core.change_appsetting")
         assert not ClientFactory().has_perm("moderation.change_report")
-
-
-# --- otp_codes ---
-class TestOtp:
-    def creer(self, **kw):
-        base = {"phone_e164": "+2290197333333", "purpose": "signup", "code_hmac": "a" * 64,
-                "expires_at": timezone.now()}  # fmt: skip
-        return OtpCode.objects.create(**{**base, **kw})
-
-    def test_usage_inconnu_refuse(self):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            self.creer(purpose="piratage")
-
-    @pytest.mark.parametrize("essais", [-1, 6])
-    def test_essais_bornes(self, essais):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            self.creer(attempts=essais)
-
-    def test_cinq_essais_permis(self):
-        assert self.creer(attempts=5).attempts == 5
 
 
 # --- devices ---
@@ -296,8 +293,8 @@ class TestDroitsDuRoleApp:
     def test_peut_creer_un_locataire(self):
         assert (
             execute(
-                "INSERT INTO users (id, phone_e164, password_hash, full_name, role) "
-                "VALUES (gen_random_uuid(), '+2290197444444', 'x', 'Y', 'client')"
+                "INSERT INTO users (id, username, phone_e164, password_hash, full_name, role) "
+                "VALUES (gen_random_uuid(), 'role.app', '+2290197444444', 'x', 'Y', 'client')"
             )
             == 1
         )
@@ -318,9 +315,10 @@ class TestDroitsDuRoleApp:
         u = GerantFactory()
         refuse("UPDATE users SET role = 'admin' WHERE id = %s", [u.pk])
 
-    def test_ne_peut_pas_modifier_le_courriel(self):
-        u = ClientFactory()
-        refuse("UPDATE users SET email = 'x@y.z' WHERE id = %s", [u.pk])
+    def test_modifie_le_courriel_d_un_locataire_jamais_celui_du_personnel(self):
+        # ADR 0009 : un locataire ajoute son e-mail depuis son profil ; le personnel reste intouchable.
+        assert execute("UPDATE users SET email = 'x@y.z' WHERE id = %s", [ClientFactory().pk]) == 1
+        refuse("UPDATE users SET email = 'x@y.z' WHERE id = %s", [AdminFactory().pk])
 
     def test_ne_peut_pas_modifier_le_personnel(self):
         a = AdminFactory()

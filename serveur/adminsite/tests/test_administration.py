@@ -238,39 +238,37 @@ class TestActions:
             assert Client().get("/").status_code == 200  # accueil du site
             assert Client().get("/login/").status_code == 404
 
-    def test_creation_d_un_gerant(self):
+    def test_creation_d_un_gerant_puis_lien_d_activation(self):
         c, admin_ = self.connecte()
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {
-                "phone": "97343434",
-                "full_name": "Koffi Gérant",
-                "display_name": "Koffi",
-                "zone": "Banikanni",
-                "password": "Un-Mot-De-Passe-42",
-            },
-        )
-        assert r.status_code == 302
-        g = User.objects.get(phone_e164="+2290197343434")
-        assert g.role == "gerant" and g.has_usable_password()
-        assert g.check_password("Un-Mot-De-Passe-42")
+            {"phone": "97343434", "first_name": "Koffi", "last_name": "Gérant", "display_name": "Koffi",
+             "zone": "Banikanni"},
+        )  # fmt: skip
+        page = r.content.decode()
+        assert r.status_code == 200 and "/activer/" in page and "wa.me/2290197343434" in page
+        g = User.objects.get(role="gerant")
+        assert g.full_name == "Koffi Gérant" and not g.has_usable_password() and g.username is None
         assert GerantProfile.complets.get(user=g).created_by == admin_
         assert AuditLog.objects.filter(action="gerant.cree", actor=admin_).exists()
+        assert AuditLog.objects.filter(action="gerant.lien_activation", actor=admin_).exists()
 
-    def test_creation_d_un_gerant_avec_un_numero_existant(self):
-        ClientFactory(phone_e164="+2290197343434")
-        c, _ = self.connecte()
-        r = c.post(
-            reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "full_name": "X Y", "zone": "Z"},
-        )
-        assert r.status_code == 200 and User.objects.filter(role="gerant").count() == 0
+    def test_lien_de_reinitialisation_depuis_la_fiche_du_compte(self):
+        c, admin_ = self.connecte()
+        locataire = ClientFactory()
+        fiche = c.get(reverse("admin:accounts_user_change", args=[locataire.pk])).content.decode()
+        assert "Générer un lien de réinitialisation" in fiche
+        r = c.get(reverse("admin:accounts_user_lien", args=[locataire.pk, "reinitialisation"]))
+        assert r.status_code == 200 and "/mot-de-passe/nouveau/" in r.content.decode()
+        assert AuditLog.objects.filter(
+            action="auth.lien_reinitialisation_equipe", actor=admin_
+        ).exists()
 
     def test_un_moderateur_ne_cree_pas_de_gerant(self):
         c, _ = self.connecte(PersonnelFactory)
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "full_name": "X Y", "zone": "Z"},
+            {"phone": "97343434", "first_name": "X", "last_name": "Y", "zone": "Z"},
         )
         assert r.status_code in (302, 403) and not User.objects.filter(role="gerant").exists()
 
@@ -339,13 +337,13 @@ class TestActions:
         from apps.core import parametres
 
         c, _ = self.connecte()
-        parametres.definir("OTP_PHONE_PER_HOUR", 3)
+        parametres.definir("LOGIN_LOCK_THRESHOLD", 3)
         from apps.core.models import AppSetting
 
-        ligne = AppSetting.objects.get(key="OTP_PHONE_PER_HOUR")
+        ligne = AppSetting.objects.get(key="LOGIN_LOCK_THRESHOLD")
         r = c.post(reverse("admin:core_appsetting_change", args=[ligne.pk]), {"value": "5"})
         assert r.status_code == 302
-        assert parametres.lire("OTP_PHONE_PER_HOUR") == 5
+        assert parametres.lire("LOGIN_LOCK_THRESHOLD") == 5
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
 
 
@@ -553,17 +551,14 @@ class TestPlanV3Administration:
         from apps.accounts.services import authentification
         from apps.core.errors import ErreurMetier
 
-        ClientFactory(phone_e164="+2290197343434")
+        ClientFactory(username="kofi.zongo")
         with pytest.raises(ErreurMetier):
-            authentification.authentifier("97343434", "faux", "192.168.1.10")
+            authentification.authentifier("kofi.zongo", "faux", "192.168.1.10")
         ligne = AuditLog.objects.get(action="auth.connexion_echouee")
-        assert (
-            ligne.metadata["numero"] == "+229 01 ** ** 34 34"
-            and ligne.metadata["surface"] == "site"
-        )
+        assert ligne.metadata["identifiant"] == "kofi.zongo" and ligne.metadata["surface"] == "site"
         c, _ = se_connecter(personnel())
         page = c.get("/connexions-echouees/").content.decode()
-        assert "+229 01 ** ** 34 34" in page and "192.168.1.10" in page
+        assert "kofi.zongo" in page and "192.168.1.10" in page
 
     def test_les_pages_de_securite_expliquent_ce_qu_elles_montrent(self):
         c, _ = se_connecter(personnel())

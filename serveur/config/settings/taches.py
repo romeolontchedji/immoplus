@@ -14,10 +14,8 @@ DEBUG = False
 
 if env.texte("SECRET_KEY") == "" or env.texte("SECRET_KEY").startswith("dev-"):
     raise ImproperlyConfigured("SECRET_KEY de production absente ou de développement.")
-if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
-    raise ImproperlyConfigured(
-        "DEBUG et OTP_DEBUG_CODE sont interdits avec les réglages « taches »."
-    )
+if env.booleen("DEBUG"):
+    raise ImproperlyConfigured("DEBUG est interdit avec les réglages « taches ».")
 
 SECRET_KEY = env.texte("SECRET_KEY")
 PRODUCTION = True

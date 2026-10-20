@@ -2,66 +2,39 @@
 
 import logging
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import GerantProfile, Role, Statut, StatutVerification, User
-from apps.accounts.phone import NumeroInvalide, normaliser
 from apps.audit import services as audit
-from apps.core import parametres
 from apps.core.errors import ErreurMetier
-from apps.core.providers import sms
 
 from .. import signals
-from . import appareils, jetons
+from . import appareils, identifiants, jetons
 
 journal = logging.getLogger(__name__)
-
-# Texte sans « ê » (GSM-7) pour rester sur un seul segment SMS.
-MESSAGE_COMPTE_PRET = (
-    "Immo+ : ton compte gérant est créé. Connecte-toi dans l'application avec le mot de passe "
-    "que l'équipe t'a transmis. Ne le communique jamais."
-)
 
 
 def creer_gerant(
     *,
     acteur: User,
     telephone: str,
+    prenom: str,
     nom: str,
     zone: str,
     nom_affiche: str | None = None,
-    mot_de_passe: str | None = None,
 ) -> User:
-    """Crée un compte gérant avec mot de passe utilisable (création manuelle par l'administration)."""
-    try:
-        e164 = normaliser(telephone, tuple(parametres.lire("OTP_ALLOWED_COUNTRIES")))
-    except NumeroInvalide as erreur:
-        raise ErreurMetier(
-            "validation_error", "Numéro invalide.", champs={"phone": [str(erreur)]}
-        ) from erreur
-    if User.objects.filter(phone_e164=e164).exists():
-        raise ErreurMetier("phone_already_registered", "Ce numéro a déjà un compte.", statut=409)
+    """Crée un gérant sans mot de passe (ADR 0009) : il choisit nom d'utilisateur et mot de passe par le lien
+    d'activation (`lien_activation`) que l'équipe lui transmet."""
+    from . import inscription
 
-    from ..tasks import notifier_gerant_cree
-    from . import mots_de_passe
-
-    if not mot_de_passe:
-        raise ErreurMetier(
-            "validation_error",
-            "Un mot de passe doit être attribué.",
-            champs={"password": ["Obligatoire"]},
-        )
-    mots_de_passe.valider(mot_de_passe)
-
+    e164 = inscription.telephone_valide(telephone)
+    prenom, nom = inscription.noms_valides(prenom, nom)
     with transaction.atomic():
-        gerant = User(
-            phone_e164=e164,
-            full_name=" ".join(nom.split()),
-            role=Role.GERANT,
-            password=mots_de_passe.hacher(mot_de_passe),
-            phone_verified_at=timezone.now(),
-        )
+        gerant = User(phone_e164=e164, role=Role.GERANT)
+        gerant.definir_noms(prenom, nom)
+        gerant.set_unusable_password()
         gerant.save()
         GerantProfile.complets.create(
             user=gerant,
@@ -70,20 +43,51 @@ def creer_gerant(
             created_by=acteur,
         )
         audit.enregistrer("gerant.cree", acteur=acteur, cible=gerant)
-        transaction.on_commit(lambda: notifier_gerant_cree.delay(str(gerant.pk)))
     return gerant
 
 
-def notifier_creation_gerant(gerant_id) -> None:
-    """SMS informatif « compte prêt » au gérant créé ; un échec est journalisé, jamais propagé."""
-    gerant = User.objects.filter(pk=gerant_id, role=Role.GERANT).first()
-    if gerant is None:
-        return
-    try:
-        sms.fournisseur().envoyer(gerant.phone_e164, MESSAGE_COMPTE_PRET)
-    except sms.ErreurFournisseurSms:
-        journal.warning("SMS « compte prêt » non envoyé au gérant %s.", gerant_id)
-        audit.enregistrer("gerant.notification_echec", cible=gerant, metadata={"canal": "sms"})
+def lien_activation(*, acteur: User, gerant: User) -> str:
+    """Lien d'activation d'un gérant (72 h, usage unique), à transmettre par WhatsApp ou e-mail."""
+    if gerant.role != Role.GERANT or gerant.has_usable_password():
+        raise ErreurMetier("already_active", "Ce compte gérant est déjà activé.", statut=409)
+    audit.enregistrer("gerant.lien_activation", acteur=acteur, cible=gerant)
+    return f"{settings.SITE_URL}/activer/{identifiants.creer_jeton(gerant, 'activation')}"
+
+
+def activer_gerant(
+    jeton: str, *, nom_utilisateur: str, mot_de_passe: str, ip: str | None = None
+) -> tuple[User, str]:
+    """Le gérant choisit son nom d'utilisateur et son mot de passe ; retourne (compte, clé de secours)."""
+    gerant, _ = identifiants.lire_jeton(jeton, "activation")
+    if gerant.role != Role.GERANT or gerant.has_usable_password():
+        raise ErreurMetier("link_invalid", "Ce lien n'est plus valable.", statut=400)
+    gerant.username = identifiants.valider_nom_utilisateur(nom_utilisateur)
+    from . import mots_de_passe
+
+    mots_de_passe.valider(mot_de_passe, utilisateur=gerant)
+    gerant.password = mots_de_passe.hacher(mot_de_passe)
+    cle = identifiants.nouvelle_cle_de_secours(gerant)
+    gerant.save(
+        update_fields=[
+            "username",
+            "password",
+            "recovery_key_hash",
+            "recovery_key_created_at",
+            "updated_at",
+        ]
+    )
+    audit.enregistrer("gerant.active", acteur=gerant, cible=gerant, ip=ip)
+    return gerant, cle
+
+
+def lien_reinitialisation(*, acteur: User, cible: User) -> str:
+    """Dernier recours du mot de passe oublié (ADR 0009) : lien de 24 h, après vérification de l'identité."""
+    if cible.role not in (Role.CLIENT, Role.GERANT) or not cible.has_usable_password():
+        raise ErreurMetier(
+            "forbidden", "Seul un locataire ou un gérant activé peut recevoir ce lien.", statut=403
+        )
+    audit.enregistrer("auth.lien_reinitialisation_equipe", acteur=acteur, cible=cible)
+    return f"{settings.SITE_URL}/mot-de-passe/nouveau/{identifiants.creer_jeton(cible, 'reinitialisation_equipe')}"
 
 
 def definir_verification(*, acteur: User, profil: GerantProfile, statut: str) -> None:
@@ -186,11 +190,3 @@ def maj_indicateurs_gerants(indicateurs: dict) -> int:
             response_rate_30d=taux, median_response_min=delai
         )
     return total
-
-
-def purger_otp(jours: int = 7) -> int:
-    """Supprime les codes à usage unique expirés depuis plus de `jours` jours."""
-    from apps.accounts.models import OtpCode
-
-    limite = timezone.now() - timezone.timedelta(days=jours)
-    return OtpCode.objects.filter(expires_at__lt=limite).delete()[0]

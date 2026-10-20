@@ -47,7 +47,6 @@ app.conf.beat_schedule = {
         "task": "apps.accounts.indicateurs_gerants",
         "schedule": crontab(minute=0, hour=3),
     },
-    "purge-otp": {"task": "apps.accounts.purger_otp", "schedule": crontab(minute=15, hour=3)},
     "retention-audit": {"task": "apps.audit.purger", "schedule": crontab(minute=30, hour=3)},
     "echeances-abonnements": {
         "task": "apps.billing.echeances",

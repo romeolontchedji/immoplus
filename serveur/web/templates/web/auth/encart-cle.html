@@ -1,0 +1,20 @@
+{# Clé de secours affichée une seule fois (ADR 0009) : copier ou faire une capture d'écran. #}
+<div class="cle-secours" data-cle-secours>
+  <p class="cle-secours__valeur" data-cle>{{ cle }}</p>
+  <button type="button"
+          class="bouton bouton--secondaire bouton--petit"
+          data-copier-cle
+          hidden>
+    {% include "web/composants/icone.html" with nom="copy" taille=16 %}
+    Copier la clé
+  </button>
+  <p class="cle-secours__statut"
+     role="status"
+     aria-live="polite"
+     data-statut-cle></p>
+  <ul class="cle-secours__conseils">
+    <li>Écris-la sur papier ou fais une capture d'écran maintenant.</li>
+    <li>Ne la donne à personne, même pas à l'équipe Immo+.</li>
+    <li>Ajoute aussi un e-mail dans ton profil : c'est le moyen le plus simple de retrouver ton compte.</li>
+  </ul>
+</div>

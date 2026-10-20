@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 def session_gerant():
     g = gerant_verifie()
     c = Client()
-    c.post("/connexion", {"phone": g.user.phone_e164[4:], "password": MOT_DE_PASSE})
+    c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
     return c, g
 
 
@@ -73,9 +73,9 @@ def test_publication_signale_ce_qui_manque(session_gerant):
 
 
 def test_un_locataire_n_a_pas_d_espace_gerant():
-    ClientFactory(phone_e164="+2290197343434")
+    ClientFactory(username="locataire.pro")
     c = Client()
-    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    c.post("/connexion", {"username": "locataire.pro", "password": MOT_DE_PASSE})
     assert c.get("/pro/annonces").status_code == 404
     assert c.get("/pro/dashboard").status_code == 404
 
@@ -200,7 +200,7 @@ def test_envoi_depuis_le_site_avec_session_et_csrf(
     c.post(
         "/connexion",
         {
-            "phone": g.user.phone_e164[4:],
+            "username": g.user.username,
             "password": MOT_DE_PASSE,
             "csrfmiddlewaretoken": _jeton(c),
         },
@@ -260,7 +260,7 @@ def test_l_editeur_en_etapes_sans_mise_en_forme(session_gerant):
 def test_apercu_depuis_le_site_avec_session_et_csrf():
     g = gerant_verifie()
     connexion = Client()
-    connexion.post("/connexion", {"phone": g.user.phone_e164[4:], "password": MOT_DE_PASSE})
+    connexion.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
     c = Client(enforce_csrf_checks=True)
     c.cookies = connexion.cookies
     jeton = c.get("/pro/annonces/nouvelle").context["csrf_token"]
@@ -278,9 +278,9 @@ def test_apercu_depuis_le_site_avec_session_et_csrf():
 
 
 def test_apercu_refuse_a_un_locataire_connecte_sur_le_site():
-    ClientFactory(phone_e164="+2290197616161")
+    ClientFactory(username="locataire.apercu")
     c = Client()
-    c.post("/connexion", {"phone": "97616161", "password": MOT_DE_PASSE})
+    c.post("/connexion", {"username": "locataire.apercu", "password": MOT_DE_PASSE})
     r = c.post("/v1/pro/markdown/preview", {"markdown": "x"}, content_type="application/json")
     assert r.status_code == 403
 

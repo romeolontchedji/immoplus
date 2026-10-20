@@ -94,6 +94,14 @@
         {% if sous_titre %}
           <p class="auth-formulaire__sous-titre">{{ sous_titre }}</p>
         {% endif %}
+        {% if message_succes %}
+          <div class="alerte alerte--succes" role="status">
+            <p>{{ message_succes }}</p>
+          </div>
+        {% endif %}
+        {% if encart %}
+          {% include encart %}
+        {% endif %}
         {% if messages %}
           {% for m in messages %}
             <div class="alerte alerte--{% if m.tags == 'error' %}danger{% elif m.tags == 'success' %}succes{% else %}information{% endif %}"
@@ -141,4 +149,7 @@
       </div>
     </main>
   </div>
+  {% if cle %}
+    <script src="{% static 'js/cle-secours.js' %}" defer></script>
+  {% endif %}
 {% endblock %}

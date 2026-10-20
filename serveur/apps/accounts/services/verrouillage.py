@@ -1,7 +1,7 @@
 """Verrouillage progressif de la connexion (CDC §5.2, EF-AUT-05).
 
 Les compteurs vivent dans `redis-queue` (jamais le cache à éviction). Le verrou porte sur le couple
-(numéro saisi, appareil ou adresse IP), y compris pour un numéro inconnu : il ne révèle donc rien et personne
+(identifiant saisi, appareil ou adresse IP), y compris pour un identifiant inconnu : il ne révèle donc rien et personne
 ne peut bloquer le compte d'autrui à distance. Un plafond horaire par numéro, tous appareils confondus,
 ralentit les attaques réparties.
 """
@@ -35,7 +35,7 @@ def refus_uniforme(attente_s: int) -> ErreurMetier:
     """La réponse 401 est identique pour un mauvais mot de passe, un numéro inconnu et un verrouillage."""
     return ErreurMetier(
         "invalid_credentials",
-        "Numéro ou mot de passe incorrect.",
+        "Nom d'utilisateur ou mot de passe incorrect.",
         statut=401,
         entetes={"Retry-After": str(max(1, math.ceil(attente_s)))},
     )

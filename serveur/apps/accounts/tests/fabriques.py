@@ -22,9 +22,11 @@ class ClientFactory(factory.django.DjangoModelFactory):
         model = User
 
     phone_e164 = factory.LazyFunction(lambda: _numero(next(_compteur)))
+    username = factory.Sequence(lambda n: f"locataire{n}")
+    first_name = "Locataire"
+    last_name = factory.Sequence(lambda n: f"N{n}")
     full_name = factory.Sequence(lambda n: f"Locataire {n}")
     role = Role.CLIENT
-    phone_verified_at = factory.LazyFunction(timezone.now)
     terms_version = "1"
     terms_accepted_at = factory.LazyFunction(timezone.now)
     password = factory.LazyFunction(lambda: make_password(MOT_DE_PASSE))
@@ -32,6 +34,8 @@ class ClientFactory(factory.django.DjangoModelFactory):
 
 class GerantFactory(ClientFactory):
     role = Role.GERANT
+    username = factory.Sequence(lambda n: f"gerant{n}")
+    first_name = "Gérant"
     full_name = factory.Sequence(lambda n: f"Gérant {n}")
 
 

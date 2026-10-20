@@ -1,78 +1,69 @@
-"""Création d'un gérant par l'administration et SMS informatif (EF-ADM-01)."""
+"""Création d'un gérant par l'administration, sans mot de passe ni SMS : lien d'activation (ADR 0009, EF-ADM-01)."""
 
 import pytest
-from django.core.cache import cache
 
 from apps.accounts.models import GerantProfile, User
 from apps.accounts.services import administration
 from apps.accounts.tests.fabriques import AdminFactory, ClientFactory
 from apps.audit.models import AuditLog
 from apps.core.errors import ErreurMetier
-from apps.core.providers import sms
-from apps.core.providers.sms import CLE_BOITE_DEV
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 
 TEL = "+2290197121212"
 TEL_LOCAL = "97121212"
-MOT_DE_PASSE = "Un-Mot-De-Passe-42"
-
-
-class FournisseurEnPanne:
-    """Fournisseur factice qui échoue à tous les coups."""
-
-    def envoyer(self, numero_e164: str, message: str) -> None:
-        raise sms.ErreurFournisseurSms("panne simulée")
 
 
 def creer(**kw):
-    base = {
-        "telephone": TEL,
-        "nom": "Idris Adam",
-        "zone": "Banikanni",
-        "mot_de_passe": MOT_DE_PASSE,
-    }
+    base = {"telephone": TEL, "prenom": "Idris", "nom": "Adam", "zone": "Banikanni"}
     return administration.creer_gerant(acteur=AdminFactory(), **{**base, **kw})
 
 
-def boite():
-    return cache.get(CLE_BOITE_DEV) or []
-
-
 class TestCreationGerant:
-    def test_envoie_le_sms_apres_commit(self, django_capture_on_commit_callbacks):
-        with django_capture_on_commit_callbacks(execute=True):
-            creer()
-        assert [m["a"] for m in boite()] == [TEL]
-        assert boite()[0]["message"] == administration.MESSAGE_COMPTE_PRET
-
-    def test_aucun_sms_si_la_creation_est_refusee(self, django_capture_on_commit_callbacks):
-        ClientFactory(phone_e164=TEL)
-        with django_capture_on_commit_callbacks(execute=True), pytest.raises(ErreurMetier) as e:
-            creer()
-        assert e.value.code == "phone_already_registered"
-        assert not boite()
-
-    def test_le_compte_est_cree_meme_si_le_fournisseur_echoue(
-        self, django_capture_on_commit_callbacks, monkeypatch
-    ):
-        monkeypatch.setattr(sms, "fournisseur", lambda: FournisseurEnPanne())
-        with django_capture_on_commit_callbacks(execute=True):
-            gerant = creer()
-        assert User.objects.filter(pk=gerant.pk).exists()
-        assert AuditLog.objects.get(action="gerant.notification_echec").target_id == gerant.pk
+    def test_sans_mot_de_passe_ni_nom_d_utilisateur(self):
+        gerant = creer()
+        assert (
+            gerant.role == "gerant" and gerant.username is None and not gerant.has_usable_password()
+        )
+        assert (gerant.first_name, gerant.last_name, gerant.full_name) == (
+            "Idris",
+            "Adam",
+            "Idris Adam",
+        )
+        assert GerantProfile.complets.get(user=gerant).zone == "Banikanni"
+        assert AuditLog.objects.filter(action="gerant.cree", target_id=gerant.pk).exists()
 
     def test_numero_normalise_en_e164(self):
-        gerant = creer(telephone=TEL_LOCAL)
-        assert gerant.phone_e164 == TEL
+        assert creer(telephone=TEL_LOCAL).phone_e164 == TEL
 
-    def test_aucun_renvoi_lors_d_une_modification(self, django_capture_on_commit_callbacks):
-        with django_capture_on_commit_callbacks(execute=True):
-            gerant = creer()
-        assert boite()
-        cache.delete(CLE_BOITE_DEV)
-        profil = GerantProfile.complets.get(user=gerant)
-        administration.definir_verification(acteur=AdminFactory(), profil=profil, statut="verified")
-        gerant.full_name = "Idris A."
-        gerant.save()
-        assert not boite()
+    def test_numero_deja_utilise_par_un_locataire_accepte(self):
+        ClientFactory(phone_e164=TEL)  # le numéro n'est plus unique (ADR 0009)
+        assert creer().pk
+
+    def test_numero_invalide(self):
+        with pytest.raises(ErreurMetier) as e:
+            creer(telephone="12")
+        assert e.value.code == "validation_error"
+
+
+class TestLiens:
+    def test_lien_d_activation_sur_le_site_et_journalise(self, settings):
+        settings.SITE_URL = "https://www.immoplus.bj"
+        gerant = creer()
+        url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
+        assert url.startswith("https://www.immoplus.bj/activer/")
+        assert AuditLog.objects.filter(
+            action="gerant.lien_activation", target_id=gerant.pk
+        ).exists()
+
+    def test_pas_de_lien_d_activation_pour_un_compte_deja_actif(self):
+        gerant = creer()
+        url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
+        administration.activer_gerant(
+            url.rsplit("/", 1)[1], nom_utilisateur="idris.adam", mot_de_passe="Un-Mot-De-Passe-42"
+        )
+        with pytest.raises(ErreurMetier) as e:
+            administration.lien_activation(
+                acteur=AdminFactory(), gerant=User.objects.get(pk=gerant.pk)
+            )
+        assert e.value.code == "already_active"

@@ -22,9 +22,8 @@ SECTIONS = [
     ("messagerie", "Messagerie, alertes et notifications", "Limites d'envoi et protection des coordonnées.",
      ["CONTACT_LEAK_MODE", "MESSAGE_PER_MINUTE", "NEW_CONVERSATIONS_PER_DAY", "ALERTS_MAX_PER_USER",
       "UNANSWERED_REMINDER_H", "SMS_FALLBACK_ENABLED"]),
-    ("securite", "Sécurité et codes SMS", "Budget des SMS, verrouillages et défi anti-robot.",
-     ["OTP_DAILY_BUDGET", "OTP_PHONE_PER_HOUR", "OTP_INSTALLATION_PER_DAY", "OTP_IP24_PER_DAY", "OTP_RESEND_DELAY_S",
-      "OTP_ALLOWED_COUNTRIES", "LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE",
+    ("securite", "Sécurité", "Verrouillages, défi anti-robot et numéros acceptés.",
+     ["OTP_ALLOWED_COUNTRIES", "LOGIN_LOCK_THRESHOLD", "LOGIN_LOCK_MINUTES", "LOGIN_FAILS_PER_HOUR_PER_PHONE",
       "TURNSTILE_ENABLED", "ADMIN_LOCK_THRESHOLD", "ADMIN_SESSION_IDLE_MIN", "ADMIN_SESSION_MAX_H"]),
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
@@ -85,14 +84,7 @@ NOTES = {
     "UNANSWERED_REMINDER_H": "Un gérant qui n'a pas lu un message reçoit un rappel après ce nombre d'heures.",
     "SMS_FALLBACK_ENABLED": "Coché : un gérant sans notification push reçoit un SMS pour un nouveau message (payant, "
     "chaque SMS est facturé par l'agrégateur).",
-    "OTP_DAILY_BUDGET": "Nombre maximum de SMS de code envoyés par jour, par usage (inscription, mot de passe oublié, "
-    "changement de numéro). Protège la facture SMS contre les abus.",
-    "OTP_PHONE_PER_HOUR": "Nombre de codes qu'un même numéro peut demander par heure.",
-    "OTP_INSTALLATION_PER_DAY": "Nombre de codes qu'un même téléphone (installation de l'application) peut demander par "
-    "jour.",
-    "OTP_IP24_PER_DAY": "Nombre de codes demandés par jour depuis un même réseau (adresses IP voisines).",
-    "OTP_RESEND_DELAY_S": "Attente obligatoire, en secondes, avant de pouvoir redemander un code.",
-    "OTP_ALLOWED_COUNTRIES": 'Pays dont les numéros peuvent recevoir un code, en codes à deux lettres. Ex. ["BJ"] '
+    "OTP_ALLOWED_COUNTRIES": 'Pays dont les numéros de téléphone sont acceptés, en codes à deux lettres. Ex. ["BJ"] '
     "pour le Bénin seulement.",
     "LOGIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe d'affilée avant de bloquer temporairement la connexion "
     "(site et application).",

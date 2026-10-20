@@ -192,7 +192,7 @@ class TestRoleApp:
 def test_site_proposer_un_type_depuis_l_editeur():
     g = gerant_verifie()
     c = Client()
-    c.post("/connexion", {"phone": g.user.phone_e164[4:], "password": MOT_DE_PASSE})
+    c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
     q = DistrictFactory()
     page = c.get("/pro/annonces/nouvelle").content.decode()
     assert "Ou un autre type" in page and 'value="studio"' in page

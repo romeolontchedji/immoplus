@@ -170,102 +170,6 @@
                 }
             }
         },
-        "/v1/auth/otp/request": {
-            "post": {
-                "operationId": "v1_auth_otp_request_create",
-                "description": "Réponse identique que le numéro ait un compte ou non. Plafonds et coupe-circuit : CDC §5.3.",
-                "summary": "Demander un code à usage unique",
-                "tags": [
-                    "Authentification"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpDemandeIn"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpDemandeIn"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpDemandeIn"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "security": [
-                    {
-                        "BearerJwt": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "202": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OtpDemandeOut"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/v1/auth/otp/verify": {
-            "post": {
-                "operationId": "v1_auth_otp_verify_create",
-                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
-                "summary": "Vérifier un code",
-                "tags": [
-                    "Authentification"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpVerificationIn"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpVerificationIn"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OtpVerificationIn"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "security": [
-                    {
-                        "BearerJwt": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OtpJetonOut"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
         "/v1/auth/password/change": {
             "post": {
                 "operationId": "v1_auth_password_change_create",
@@ -306,11 +210,11 @@
                 }
             }
         },
-        "/v1/auth/password/reset": {
+        "/v1/auth/password/email-link": {
             "post": {
-                "operationId": "v1_auth_password_reset_create",
-                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
-                "summary": "Réinitialiser le mot de passe",
+                "operationId": "v1_auth_password_email_link_create",
+                "description": "Réponse identique que le compte existe ou non. Le lien (30 min) s'ouvre sur le site.",
+                "summary": "Mot de passe oublié : recevoir un lien par e-mail",
                 "tags": [
                     "Authentification"
                 ],
@@ -318,17 +222,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                                "$ref": "#/components/schemas/LienParEmailIn"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                                "$ref": "#/components/schemas/LienParEmailIn"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/MotDePasseOublieIn"
+                                "$ref": "#/components/schemas/LienParEmailIn"
                             }
                         }
                     },
@@ -341,8 +245,56 @@
                     {}
                 ],
                 "responses": {
-                    "204": {
+                    "202": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/v1/auth/password/recovery-key": {
+            "post": {
+                "operationId": "v1_auth_password_recovery_key_create",
+                "description": "Nouveau mot de passe ; retourne la nouvelle clé (l'ancienne ne sert qu'une fois).",
+                "summary": "Mot de passe oublié : clé de secours",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CleDeSecoursIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CleDeSecoursIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CleDeSecoursIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CleDeSecoursOut"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -398,7 +350,7 @@
         "/v1/auth/register": {
             "post": {
                 "operationId": "v1_auth_register_create",
-                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "description": "Aucun code : le compte est créé tout de suite. La clé de secours n'est donnée qu'ici.",
                 "summary": "Créer un compte locataire",
                 "tags": [
                     "Authentification"
@@ -434,7 +386,59 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/SessionOut"
+                                    "$ref": "#/components/schemas/InscriptionOut"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/auth/username-available": {
+            "get": {
+                "operationId": "v1_auth_username_available_retrieve",
+                "description": "Vérifié pendant la frappe à l'inscription ; propose des noms libres tirés du prénom et du nom.",
+                "summary": "Le nom d'utilisateur est-il libre ?",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "first_name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "last_name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "username",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Authentification"
+                ],
+                "security": [
+                    {
+                        "BearerJwt": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DisponibiliteOut"
                                 }
                             }
                         },
@@ -1790,6 +1794,46 @@
                 }
             }
         },
+        "/v1/me/email": {
+            "post": {
+                "operationId": "v1_me_email_create",
+                "description": "Envoie un lien de confirmation (24 h) ; l'e-mail ne compte qu'une fois confirmé sur le site.",
+                "summary": "Ajouter ou changer mon e-mail",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/v1/me/favorites": {
             "get": {
                 "operationId": "v1_me_favorites_list",
@@ -1880,7 +1924,7 @@
         "/v1/me/phone/change": {
             "post": {
                 "operationId": "v1_me_phone_change_create",
-                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "description": "Sans code (ADR 0009) : le mot de passe actuel suffit.",
                 "summary": "Changer de numéro",
                 "tags": [
                     "Compte"
@@ -1987,6 +2031,53 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/PreferencesSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/v1/me/recovery-key": {
+            "post": {
+                "operationId": "v1_me_recovery_key_create",
+                "description": "Les réponses d'authentification et de compte ne sont jamais mises en cache (jetons, données personnelles).",
+                "summary": "Régénérer ma clé de secours",
+                "tags": [
+                    "Compte"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseIn"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseIn"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MotDePasseIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "BearerJwt": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CleDeSecoursOut"
                                 }
                             }
                         },
@@ -3874,14 +3965,49 @@
                         "type": "string",
                         "maxLength": 128
                     },
-                    "otp_token": {
+                    "phone": {
                         "type": "string",
-                        "maxLength": 2048
+                        "maxLength": 40
                     }
                 },
                 "required": [
-                    "otp_token",
-                    "password"
+                    "password",
+                    "phone"
+                ]
+            },
+            "CleDeSecoursIn": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "recovery_key": {
+                        "type": "string",
+                        "description": "Ex. K7QM-2XPA-9RTD-H4WN.",
+                        "maxLength": 40
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "new_password",
+                    "recovery_key",
+                    "username"
+                ]
+            },
+            "CleDeSecoursOut": {
+                "type": "object",
+                "properties": {
+                    "recovery_key": {
+                        "type": "string",
+                        "description": "Nouvelle clé : à montrer une seule fois."
+                    }
+                },
+                "required": [
+                    "recovery_key"
                 ]
             },
             "CompteurOut": {
@@ -3905,8 +4031,9 @@
                         "type": "string",
                         "maxLength": 120
                     },
-                    "phone": {
+                    "username": {
                         "type": "string",
+                        "description": "Nom d'utilisateur (ou, jusqu'au 20/11/2026, numéro d'un ancien compte).",
                         "maxLength": 40
                     },
                     "password": {
@@ -3916,8 +4043,8 @@
                 },
                 "required": [
                     "password",
-                    "phone",
-                    "platform"
+                    "platform",
+                    "username"
                 ]
             },
             "ContactOut": {
@@ -4079,6 +4206,28 @@
                     "listing_id"
                 ]
             },
+            "DisponibiliteOut": {
+                "type": "object",
+                "properties": {
+                    "available": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "suggestions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "available",
+                    "message",
+                    "suggestions"
+                ]
+            },
             "DistrictOut": {
                 "type": "object",
                 "properties": {
@@ -4192,6 +4341,18 @@
                 ],
                 "type": "string",
                 "description": "* `individual` - individual\n* `sub_meter` - sub_meter\n* `shared` - shared"
+            },
+            "EmailIn": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "maxLength": 254
+                    }
+                },
+                "required": [
+                    "email"
+                ]
             },
             "EnvoiOut": {
                 "type": "object",
@@ -4529,13 +4690,23 @@
                         "type": "string",
                         "maxLength": 120
                     },
-                    "otp_token": {
+                    "username": {
                         "type": "string",
-                        "maxLength": 2048
+                        "description": "3 à 30 caractères : lettres, chiffres, point, tiret bas (ADR 0009).",
+                        "maxLength": 40
                     },
-                    "full_name": {
+                    "first_name": {
                         "type": "string",
-                        "maxLength": 200
+                        "maxLength": 60
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 60
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "Conservé, ni vérifié ni unique.",
+                        "maxLength": 40
                     },
                     "password": {
                         "type": "string",
@@ -4558,11 +4729,38 @@
                     }
                 },
                 "required": [
-                    "full_name",
-                    "otp_token",
+                    "first_name",
+                    "last_name",
                     "password",
+                    "phone",
                     "platform",
-                    "terms_accepted"
+                    "terms_accepted",
+                    "username"
+                ]
+            },
+            "InscriptionOut": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UtilisateurOut"
+                    },
+                    "tokens": {
+                        "$ref": "#/components/schemas/JetonsOut"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "recovery_key": {
+                        "type": "string",
+                        "description": "Clé de secours : à montrer une seule fois (ADR 0009)."
+                    }
+                },
+                "required": [
+                    "device_id",
+                    "recovery_key",
+                    "tokens",
+                    "user"
                 ]
             },
             "InterlocuteurOut": {
@@ -4645,6 +4843,19 @@
                 },
                 "required": [
                     "up_to_seq"
+                ]
+            },
+            "LienParEmailIn": {
+                "type": "object",
+                "properties": {
+                    "identifier": {
+                        "type": "string",
+                        "description": "Nom d'utilisateur ou e-mail confirmé.",
+                        "maxLength": 254
+                    }
+                },
+                "required": [
+                    "identifier"
                 ]
             },
             "LimitesOut": {
@@ -4978,21 +5189,16 @@
                     "seq"
                 ]
             },
-            "MotDePasseOublieIn": {
+            "MotDePasseIn": {
                 "type": "object",
                 "properties": {
-                    "otp_token": {
-                        "type": "string",
-                        "maxLength": 2048
-                    },
-                    "new_password": {
+                    "password": {
                         "type": "string",
                         "maxLength": 128
                     }
                 },
                 "required": [
-                    "new_password",
-                    "otp_token"
+                    "password"
                 ]
             },
             "NotificationOut": {
@@ -5072,73 +5278,6 @@
                 "required": [
                     "budgets",
                     "districts"
-                ]
-            },
-            "OtpDemandeIn": {
-                "type": "object",
-                "properties": {
-                    "phone": {
-                        "type": "string",
-                        "maxLength": 40
-                    },
-                    "purpose": {
-                        "$ref": "#/components/schemas/PurposeEnum"
-                    },
-                    "attestation_token": {
-                        "type": "string",
-                        "maxLength": 4096
-                    }
-                },
-                "required": [
-                    "phone",
-                    "purpose"
-                ]
-            },
-            "OtpDemandeOut": {
-                "type": "object",
-                "properties": {
-                    "resend_after_s": {
-                        "type": "integer"
-                    }
-                },
-                "required": [
-                    "resend_after_s"
-                ]
-            },
-            "OtpJetonOut": {
-                "type": "object",
-                "properties": {
-                    "otp_token": {
-                        "type": "string"
-                    },
-                    "expires_in": {
-                        "type": "integer"
-                    }
-                },
-                "required": [
-                    "expires_in",
-                    "otp_token"
-                ]
-            },
-            "OtpVerificationIn": {
-                "type": "object",
-                "properties": {
-                    "phone": {
-                        "type": "string",
-                        "maxLength": 40
-                    },
-                    "purpose": {
-                        "$ref": "#/components/schemas/PurposeEnum"
-                    },
-                    "code": {
-                        "type": "string",
-                        "maxLength": 12
-                    }
-                },
-                "required": [
-                    "code",
-                    "phone",
-                    "purpose"
                 ]
             },
             "OuvertureOut": {
@@ -5365,9 +5504,13 @@
             "PatchedProfilIn": {
                 "type": "object",
                 "properties": {
-                    "full_name": {
+                    "first_name": {
                         "type": "string",
-                        "maxLength": 200
+                        "maxLength": 60
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 60
                     },
                     "occupation": {
                         "nullable": true,
@@ -5455,15 +5598,6 @@
                 "required": [
                     "label"
                 ]
-            },
-            "PurposeEnum": {
-                "enum": [
-                    "signup",
-                    "reset_password",
-                    "change_phone"
-                ],
-                "type": "string",
-                "description": "* `signup` - signup\n* `reset_password` - reset_password\n* `change_phone` - change_phone"
             },
             "QuartierFrequenceOut": {
                 "type": "object",
@@ -5904,8 +6038,28 @@
                         "type": "string",
                         "format": "uuid"
                     },
+                    "username": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
                     "full_name": {
                         "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Seulement s'il est confirmé."
+                    },
+                    "recovery_key_created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     },
                     "occupation": {
                         "nullable": true,
@@ -5936,12 +6090,17 @@
                 },
                 "required": [
                     "created_at",
+                    "email",
+                    "first_name",
                     "full_name",
                     "id",
+                    "last_name",
                     "occupation",
                     "phone",
+                    "recovery_key_created_at",
                     "role",
-                    "terms_version"
+                    "terms_version",
+                    "username"
                 ]
             },
             "VoisinsOut": {

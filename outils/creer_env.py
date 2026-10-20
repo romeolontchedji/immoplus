@@ -24,7 +24,7 @@ MARQUEUR = re.compile(r"\{\{(\w+)\}\}")
 # Secrets générés quand la valeur est vide. `PRIVATE_FILES_KEY` est une clé Fernet (32 octets en base64 URL).
 SECRETS_TEXTE = [
     "POSTGRES_PASSWORD", "APP_DB_PASSWORD", "ADMIN_DB_PASSWORD", "MIGRATE_DB_PASSWORD",
-    "SITE_SECRET_KEY", "ADMIN_SECRET_KEY", "JWT_SIGNING_KEY", "OTP_HMAC_KEY", "RESTIC_PASSWORD",
+    "SITE_SECRET_KEY", "ADMIN_SECRET_KEY", "JWT_SIGNING_KEY", "RESTIC_PASSWORD",
 ]  # fmt: skip
 SECRETS_FERNET = ["PRIVATE_FILES_KEY"]
 

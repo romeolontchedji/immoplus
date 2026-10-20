@@ -1,17 +1,16 @@
-"""Modèles des comptes : utilisateurs, codes à usage unique, appareils, profils de gérants (CDC §9.3 à §9.6)."""
+"""Modèles des comptes : utilisateurs, appareils, profils de gérants (CDC §9.3 à §9.6, ADR 0009)."""
 
 import uuid
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
-from django.db.models.functions import Now
+from django.db.models.functions import Lower, Now
 from django.utils import timezone
 
 from .enums import (  # noqa: F401  (réexportées : l'import historique depuis `models` continue de fonctionner)
     ROLES_CLIENTELE,
     ROLES_PERSONNEL,
     FournisseurPush,
-    Objet,
     Occupation,
     Plateforme,
     Role,
@@ -44,17 +43,34 @@ class User(AbstractBaseUser):
     """Locataires, gérants et personnel dans une seule table ; le personnel n'ouvre que l'administration."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone_e164 = models.CharField(
-        max_length=16, unique=True, null=True, blank=True, verbose_name="téléphone"
+    # Clé du compte (ADR 0009) : unique sans tenir compte des majuscules ; absent pour le personnel et pour un
+    # gérant qui n'a pas encore activé son compte.
+    username = models.CharField(
+        max_length=30, null=True, blank=True, verbose_name="nom d'utilisateur"
     )
+    # Conservé mais ni vérifié ni unique depuis l'abandon des codes SMS (ADR 0009).
+    phone_e164 = models.CharField(max_length=16, null=True, blank=True, verbose_name="téléphone")
     email = models.EmailField(
         max_length=254, unique=True, null=True, blank=True, verbose_name="e-mail"
     )
     phone_verified_at = models.DateTimeField(
         null=True, blank=True, verbose_name="numéro vérifié le"
     )
+    email_verified_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="e-mail confirmé le"
+    )
     password = models.CharField("password", max_length=255, db_column="password_hash")
+    first_name = models.CharField(max_length=60, default="", db_default="", verbose_name="prénom")
+    last_name = models.CharField(max_length=60, default="", db_default="", verbose_name="nom")
+    # « Prénom Nom », tenu à jour par `definir_noms` : reste la forme affichée partout.
     full_name = models.CharField(max_length=120, verbose_name="nom complet")
+    # Clé de secours du mot de passe oublié (ADR 0009) : seule son empreinte Argon2 est gardée.
+    recovery_key_hash = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="empreinte de la clé de secours"
+    )
+    recovery_key_created_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="clé de secours créée le"
+    )
     occupation = models.CharField(
         max_length=16, choices=Occupation.choices, null=True, blank=True, verbose_name="tu es"
     )
@@ -114,11 +130,30 @@ class User(AbstractBaseUser):
                 | models.Q(email__isnull=False),
                 name="users_personnel_a_un_email",
             ),
+            models.CheckConstraint(
+                condition=~models.Q(role="client") | models.Q(username__isnull=False),
+                name="users_locataire_a_un_nom_utilisateur",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(username__isnull=True)
+                | models.Q(username__regex=r"^[a-z0-9][a-z0-9._]{1,28}[a-z0-9]$"),
+                name="users_nom_utilisateur_valide",
+            ),
+            models.UniqueConstraint(Lower("username"), name="users_nom_utilisateur_unique"),
         ]
-        indexes = [models.Index(fields=["role", "status"], name="users_role_status_idx")]
+        indexes = [
+            models.Index(fields=["role", "status"], name="users_role_status_idx"),
+            models.Index(fields=["phone_e164"], name="users_telephone_idx"),
+        ]
 
     def __str__(self) -> str:
-        return self.full_name or str(self.id)
+        return self.full_name or self.username or str(self.id)
+
+    def definir_noms(self, prenom: str, nom: str) -> None:
+        """Prénom et nom séparés (ADR 0009) ; `full_name` garde la forme affichée « Prénom Nom »."""
+        self.first_name = " ".join((prenom or "").split())[:60]
+        self.last_name = " ".join((nom or "").split())[:60]
+        self.full_name = f"{self.first_name} {self.last_name}".strip()[:120]
 
     def get_full_name(self) -> str:
         return self.full_name or self.email or ""
@@ -147,6 +182,8 @@ class User(AbstractBaseUser):
 
     @property
     def prenom(self) -> str:
+        if self.first_name:
+            return self.first_name
         if self.full_name:
             return self.full_name.strip().split()[0]
         return ""
@@ -178,43 +215,6 @@ class User(AbstractBaseUser):
         from apps.accounts.permissions_personnel import autorise_module
 
         return autorise_module(self, app_label)
-
-
-class OtpCode(models.Model):
-    """Un enregistrement par code envoyé : sert aussi à compter les envois et leur coût (budget, plafonds)."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone_e164 = models.CharField(max_length=16)
-    purpose = models.CharField(max_length=20, choices=Objet.choices)
-    code_hmac = models.CharField(max_length=64)
-    expires_at = models.DateTimeField()
-    attempts = models.SmallIntegerField(default=0, db_default=0)
-    consumed_at = models.DateTimeField(null=True, blank=True)
-    installation_id = models.CharField(max_length=64, null=True, blank=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
-    provider_ref = models.CharField(max_length=80, null=True, blank=True)
-    unit_cost_xof = models.SmallIntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-
-    class Meta:
-        db_table = "otp_codes"
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(purpose__in=[o.value for o in Objet]),
-                name="otp_codes_objet_valide",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(attempts__gte=0, attempts__lte=5), name="otp_codes_essais_bornes"
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["phone_e164", "purpose", "-created_at"], name="otp_phone_purpose_idx"
-            ),
-            models.Index(fields=["installation_id", "created_at"], name="otp_installation_idx"),
-            models.Index(fields=["ip", "created_at"], name="otp_ip_idx"),
-            models.Index(fields=["purpose", "created_at"], name="otp_purpose_date_idx"),
-        ]
 
 
 class Device(models.Model):

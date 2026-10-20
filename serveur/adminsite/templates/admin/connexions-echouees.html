@@ -12,7 +12,7 @@
           <tr>
             <th>Date</th>
             <th>Événement</th>
-            <th>Numéro saisi</th>
+            <th>Identifiant saisi</th>
             <th>Compte existant</th>
             <th>Provenance</th>
             <th>Adresse IP</th>
@@ -29,7 +29,13 @@
                   Mot de passe refusé
                 {% endif %}
               </td>
-              <td>{{ l.metadata.numero }}</td>
+              <td>
+                {% if l.metadata.identifiant %}
+                  {{ l.metadata.identifiant }}
+                {% else %}
+                  {{ l.metadata.numero }}
+                {% endif %}
+              </td>
               <td>
                 {% if l.metadata.compte_connu %}
                   Oui

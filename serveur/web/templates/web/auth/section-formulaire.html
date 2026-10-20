@@ -1,0 +1,17 @@
+{# Formulaire d'une section du profil. Paramètres : `action`, `f` (formulaire), `bouton`, `variante`. #}
+<form method="post" class="pile" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="{{ action }}">
+  {% for e in f.non_field_errors %}
+    <div class="alerte alerte--danger" role="alert">
+      <p>{{ e }}</p>
+    </div>
+  {% endfor %}
+  {% for champ in f.visible_fields %}
+    {% include "web/composants/champ.html" %}
+  {% endfor %}
+  <div>
+    <button class="bouton bouton--{{ variante|default:'secondaire' }}"
+            type="submit">{{ bouton }}</button>
+  </div>
+</form>

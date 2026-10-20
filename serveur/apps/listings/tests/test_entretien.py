@@ -6,7 +6,7 @@ import uuid
 import pytest
 from django.utils import timezone
 
-from apps.accounts.models import OtpCode, User
+from apps.accounts.models import User
 from apps.accounts.services import administration
 from apps.accounts.tests.fabriques import AdminFactory, ClientFactory
 from apps.audit import services as audit
@@ -239,25 +239,6 @@ class TestIndicateursEtPurges:
         assert administration.maj_indicateurs_gerants(resultat) == 1
         p.refresh_from_db()
         assert float(p.response_rate_30d) == 50.0 and p.median_response_min == delai
-
-    def test_purge_des_codes_otp(self):
-        ancien = OtpCode.objects.create(
-            phone_e164="+22901000000",
-            purpose="signup",
-            code_hmac="a" * 64,
-            expires_at=timezone.now() - datetime.timedelta(days=8),
-        )
-        recent = OtpCode.objects.create(
-            phone_e164="+22901000001",
-            purpose="signup",
-            code_hmac="b" * 64,
-            expires_at=timezone.now() - datetime.timedelta(days=1),
-        )
-        assert administration.purger_otp() == 1
-        assert (
-            not OtpCode.objects.filter(pk=ancien.pk).exists()
-            and OtpCode.objects.filter(pk=recent.pk).exists()
-        )
 
     def test_retention_de_l_audit_sans_role_ne_fait_rien_de_dangereux(self):
         audit.enregistrer("test.action", cible_type="test")

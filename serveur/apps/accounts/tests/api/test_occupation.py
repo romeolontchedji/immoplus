@@ -10,27 +10,16 @@ from apps.accounts.models import User
 from apps.accounts.services import compte
 from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
 
-from .test_api_comptes import FORT, api, avec_jeton, obtenir_jeton_otp
+from .test_api_comptes import FORT, api, avec_jeton, corps_inscription
 
 pytestmark = [pytest.mark.api, pytest.mark.pg, pytest.mark.django_db]
 
 
-@pytest.fixture(autouse=True)
-def code_otp_fixe(settings):
-    settings.OTP_DEBUG_CODE = "424242"
-
-
-def _inscrire(client, capture, **extra):
-    jeton = obtenir_jeton_otp(client, "signup", "97575757", capture)
-    corps = {
-        "otp_token": jeton,
-        "full_name": "Koffi Adjovi",
-        "password": FORT,
-        "terms_accepted": True,
-        "platform": "android",
-        **extra,
-    }
-    return client.post("/v1/auth/register", corps, format="json")
+def _inscrire(client, capture=None, **extra):
+    corps = corps_inscription(
+        username="koffi.adjovi", first_name="Koffi", last_name="Adjovi", phone="97575757"
+    )
+    return client.post("/v1/auth/register", {**corps, **extra}, format="json")
 
 
 class TestInscription:
@@ -69,7 +58,7 @@ class TestProfil:
 
     def test_changer_le_nom_ne_touche_pas_a_l_occupation(self, django_capture_on_commit_callbacks):
         c = self._session(django_capture_on_commit_callbacks)
-        r = c.patch("/v1/me", {"full_name": "Koffi A."}, format="json")
+        r = c.patch("/v1/me", {"last_name": "A."}, format="json")
         assert r.json()["occupation"] == "student_up" and r.json()["full_name"] == "Koffi A."
 
 
@@ -95,30 +84,28 @@ def test_le_role_app_peut_modifier_l_occupation():
 @pytest.mark.integration
 def test_site_inscription_et_compte(django_capture_on_commit_callbacks):
     c = Client()
-    with django_capture_on_commit_callbacks(execute=True):
-        c.post("/inscription", {"phone": "97585858", "captcha": "captcha-ok"})
-    c.post("/inscription/code", {"code": "424242"})
-    page = c.get("/inscription/profil").content.decode()
+    page = c.get("/inscription").content.decode()
     assert "Tu es" in page and "Je préfère ne pas répondre" in page
     r = c.post(
-        "/inscription/profil",
+        "/inscription",
         {
-            "full_name": "Awa Bio",
-            "occupation": "student_other",
-            "password": FORT,
-            "terms_accepted": "on",
+            "first_name": "Awa", "last_name": "Bio", "username": "awa.bio", "phone": "97585858",
+            "occupation": "student_other", "password": FORT, "terms_accepted": "on", "captcha": "captcha-ok",
         },
-    )
-    assert r["Location"] == "/compte"
-    u = User.objects.get(phone_e164="+2290197585858")
+    )  # fmt: skip
+    assert r["Location"] == "/compte/cle-de-secours"
+    u = User.objects.get(username="awa.bio")
     assert u.occupation == "student_other"
-    c.post("/compte/profil", {"action": "nom", "full_name": "Awa Bio", "occupation": ""})
+    c.post(
+        "/compte/profil",
+        {"action": "nom", "first_name": "Awa", "last_name": "Bio", "occupation": ""},
+    )
     u.refresh_from_db()
     assert u.occupation is None
 
 
 def test_site_compte_existant_sans_occupation():
-    ClientFactory(phone_e164="+2290197595959")
+    ClientFactory(username="sans.occupation")
     c = Client()
-    c.post("/connexion", {"phone": "97595959", "password": MOT_DE_PASSE})
+    c.post("/connexion", {"username": "sans.occupation", "password": MOT_DE_PASSE})
     assert c.get("/compte").status_code == 200

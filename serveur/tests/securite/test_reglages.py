@@ -1,4 +1,4 @@
-"""Le démarrage échoue en production si DEBUG, OTP_DEBUG_CODE ou un secret de développement est présent."""
+"""Le démarrage échoue en production si DEBUG ou un secret de développement est présent."""
 
 import os
 import subprocess
@@ -19,9 +19,7 @@ def importer(module: str, **env) -> subprocess.CompletedProcess:
         not in {
             "SECRET_KEY",
             "DEBUG",
-            "OTP_DEBUG_CODE",
             "JWT_SIGNING_KEY",
-            "OTP_HMAC_KEY",
             "DOMAIN",
         }
     }
@@ -51,34 +49,16 @@ class TestRefusEnProduction:
         r = importer(module, SECRET_KEY="x" * 60, DEBUG="1")
         assert r.returncode != 0 and "DEBUG" in r.stderr
 
-    def test_code_otp_de_debogage(self, module):
-        r = importer(module, SECRET_KEY="x" * 60, OTP_DEBUG_CODE="123456")
-        assert r.returncode != 0 and "OTP_DEBUG_CODE" in r.stderr
-
     def test_configuration_saine(self, module):
-        r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60)
+        r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
         assert r.returncode == 0, r.stderr
 
 
 @pytest.mark.parametrize("module", ["config.settings.public", "config.settings.admin"])
 @pytest.mark.parametrize("domaine", ["", "localhost"])
 def test_domaine_de_production_obligatoire(module, domaine):
-    r = importer(
-        module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60, DOMAIN=domaine
-    )
+    r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, DOMAIN=domaine)
     assert r.returncode != 0 and "DOMAIN" in r.stderr
-
-
-def test_le_temps_reel_demarre_sans_la_cle_des_codes():
-    r = importer(
-        "config.settings.public",
-        SECRET_KEY="x" * 60,
-        JWT_SIGNING_KEY="y" * 60,
-        IMMOPLUS_PROCESSUS="realtime",
-    )
-    assert r.returncode == 0, r.stderr
-    r = importer("config.settings.public", SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60)
-    assert r.returncode != 0 and "OTP_HMAC_KEY" in r.stderr
 
 
 def test_cookies_distincts_site_et_administration():
@@ -86,7 +66,6 @@ def test_cookies_distincts_site_et_administration():
         "config.settings.public",
         SECRET_KEY="a" * 60,
         JWT_SIGNING_KEY="b" * 60,
-        OTP_HMAC_KEY="c" * 60,
     )
     assert site.returncode == 0
     sortie = subprocess.run(
@@ -103,7 +82,6 @@ def test_cookies_distincts_site_et_administration():
             "CAPTCHA_PROVIDER": "turnstile",
             "SECRET_KEY": "a" * 60,
             "JWT_SIGNING_KEY": "b" * 60,
-            "OTP_HMAC_KEY": "c" * 60,
         },
         capture_output=True,
         text=True,
@@ -116,10 +94,10 @@ def test_cookies_distincts_site_et_administration():
     )  # table `admin_sessions`, jamais celle du site
 
 
-CLES = {"SECRET_KEY": "a" * 60, "JWT_SIGNING_KEY": "b" * 60, "OTP_HMAC_KEY": "c" * 60}
+CLES = {"SECRET_KEY": "a" * 60, "JWT_SIGNING_KEY": "b" * 60}
 
 
-@pytest.mark.parametrize("cle", ["JWT_SIGNING_KEY", "OTP_HMAC_KEY"])
+@pytest.mark.parametrize("cle", ["JWT_SIGNING_KEY"])
 class TestClesDeSecurite:
     def test_absente(self, cle):
         r = importer("config.settings.public", **{k: v for k, v in CLES.items() if k != cle})
@@ -131,12 +109,12 @@ class TestClesDeSecurite:
 
     def test_identique_a_une_autre_cle(self, cle):
         r = importer("config.settings.public", **{**CLES, cle: CLES["SECRET_KEY"]})
-        assert r.returncode != 0 and "trois clés différentes" in r.stderr
+        assert r.returncode != 0 and "deux clés différentes" in r.stderr
 
 
 def test_l_anti_robot_factice_est_refuse_en_production():
     r = importer(
         "config.settings.public",
-        SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, OTP_HMAC_KEY="z" * 60, CAPTCHA_PROVIDER="fake",
+        SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, CAPTCHA_PROVIDER="fake",
     )  # fmt: skip
     assert r.returncode != 0 and "CAPTCHA_PROVIDER" in r.stderr

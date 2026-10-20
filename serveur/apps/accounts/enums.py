@@ -27,12 +27,6 @@ class Occupation(models.TextChoices):
     OTHER = "other", "Autre"
 
 
-class Objet(models.TextChoices):
-    SIGNUP = "signup", "Inscription"
-    RESET_PASSWORD = "reset_password", "Mot de passe oublié"
-    CHANGE_PHONE = "change_phone", "Changement de numéro"
-
-
 class Plateforme(models.TextChoices):
     ANDROID = "android", "Android"
     IOS = "ios", "iOS"

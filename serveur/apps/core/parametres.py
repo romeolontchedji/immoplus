@@ -9,15 +9,8 @@ from django.core.cache import cache
 from .models import AppSetting
 
 DEFAUTS: dict[str, tuple[object, str]] = {
-    "OTP_ALLOWED_COUNTRIES": (["BJ"], "Pays autorisés pour les OTP (codes ISO)."),
-    "OTP_DAILY_BUDGET": (
-        {"signup": 150, "reset_password": 80, "change_phone": 40},  # nosec B105
-        "Budget quotidien d'envois d'OTP par usage (300 au total).",
-    ),
-    "OTP_PHONE_PER_HOUR": (3, "Demandes d'OTP par heure et par numéro."),
-    "OTP_INSTALLATION_PER_DAY": (10, "Demandes d'OTP par jour et par appareil."),
-    "OTP_IP24_PER_DAY": (60, "Demandes d'OTP par jour et par plage d'adresses /24."),
-    "OTP_RESEND_DELAY_S": (60, "Délai avant renvoi d'un OTP, en secondes."),
+    # Nom historique : sert aujourd'hui à valider les numéros de téléphone (plus aucun code SMS, ADR 0009).
+    "OTP_ALLOWED_COUNTRIES": (["BJ"], "Pays autorisés pour les numéros de téléphone (codes ISO)."),
     "LOGIN_LOCK_THRESHOLD": (5, "Échecs de connexion avant verrouillage."),
     "LOGIN_LOCK_MINUTES": (15, "Durée du premier verrouillage (doublée à chaque récidive)."),
     "LOGIN_FAILS_PER_HOUR_PER_PHONE": (

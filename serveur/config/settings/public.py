@@ -12,10 +12,8 @@ DEBUG = False
 
 if env.texte("SECRET_KEY") == "" or env.texte("SECRET_KEY").startswith("dev-"):
     raise ImproperlyConfigured("SECRET_KEY de production absente ou de développement.")
-if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
-    raise ImproperlyConfigured(
-        "DEBUG et OTP_DEBUG_CODE sont interdits avec les réglages « public »."
-    )
+if env.booleen("DEBUG"):
+    raise ImproperlyConfigured("DEBUG est interdit avec les réglages « public ».")
 
 SECRET_KEY = env.texte("SECRET_KEY")
 PRODUCTION = True
@@ -31,20 +29,10 @@ if not _DOMAINE or _DOMAINE == "localhost":
     raise ImproperlyConfigured("DOMAIN de production absent (ex. immoplus.bj).")
 ALLOWED_HOSTS = [f"www.{_DOMAINE}", f"api.{_DOMAINE}", "127.0.0.1", "localhost"]
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
-OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY")
-# `realtime` (WebSocket) vérifie les jetons mais n'émet aucun code OTP : il ne reçoit pas cette clé (moindre privilège).
-_TEMPS_REEL = env.texte("IMMOPLUS_PROCESSUS") == "realtime"
-_EXIGEES = [("JWT_SIGNING_KEY", JWT_SIGNING_KEY)] + (
-    [] if _TEMPS_REEL else [("OTP_HMAC_KEY", OTP_HMAC_KEY)]
-)
-for _nom, _valeur in _EXIGEES:
-    if not _valeur or _valeur.startswith("dev-"):
-        raise ImproperlyConfigured(f"{_nom} de production absente ou de développement.")
-_CLES = [c for c in (SECRET_KEY, JWT_SIGNING_KEY, OTP_HMAC_KEY) if c]
-if len(set(_CLES)) != len(_CLES):
-    raise ImproperlyConfigured(
-        "SECRET_KEY, JWT_SIGNING_KEY et OTP_HMAC_KEY doivent être trois clés différentes."
-    )
+if not JWT_SIGNING_KEY or JWT_SIGNING_KEY.startswith("dev-"):
+    raise ImproperlyConfigured("JWT_SIGNING_KEY de production absente ou de développement.")
+if SECRET_KEY == JWT_SIGNING_KEY:
+    raise ImproperlyConfigured("SECRET_KEY et JWT_SIGNING_KEY doivent être deux clés différentes.")
 
 # Site : cookie `__Host-lgsid`, sessions en `cached_db`.
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"

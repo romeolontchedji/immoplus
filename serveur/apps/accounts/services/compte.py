@@ -1,17 +1,18 @@
-"""Gestion du compte connecté : mot de passe, numéro, profil, suppression (CDC EF-AUT-12, 13, EF-PRO)."""
+"""Gestion du compte connecté : mot de passe, numéro, e-mail, clé de secours, profil, suppression (ADR 0009)."""
 
 import uuid
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts import signals, tasks
-from apps.accounts.models import OtpCode, Role, Statut, User
+from apps.accounts import signals
+from apps.accounts.models import Role, Statut, User
 from apps.accounts.phone import masquer
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 
-from . import appareils, inscription, jetons, mots_de_passe, otp
+from . import appareils, identifiants, inscription, jetons, mots_de_passe
 
 CATEGORIES_NOTIFICATION = ("messages", "alertes", "rappels")
 
@@ -31,7 +32,7 @@ def changer_mot_de_passe(
 ) -> None:
     """Change le mot de passe (l'ancien est requis) et déconnecte les autres appareils."""
     _exiger_mot_de_passe(utilisateur, ancien)
-    mots_de_passe.valider(nouveau, champ="new_password")
+    mots_de_passe.valider(nouveau, champ="new_password", utilisateur=utilisateur)
     utilisateur.password = mots_de_passe.hacher(nouveau)
     utilisateur.save(update_fields=["password", "updated_at"])
     appareils.revoquer_autres(utilisateur, appareil_courant_id, raison="mot_de_passe_change")
@@ -58,57 +59,89 @@ def deconnecter_partout(utilisateur: User) -> int:
     return nombre
 
 
-def changer_numero(
-    utilisateur: User, mot_de_passe: str, jeton_otp: str, appareil_courant_id=None
-) -> User:
-    """Mot de passe actuel + OTP du nouveau numéro ; autres appareils révoqués, ancien numéro prévenu (EF-AUT-12)."""
+def changer_numero(utilisateur: User, mot_de_passe: str, telephone: str) -> User:
+    """Nouveau numéro, sans code (ADR 0009) : le mot de passe actuel suffit ; le changement est journalisé."""
     _exiger_mot_de_passe(utilisateur, mot_de_passe)
-    nouveau = otp.consommer_jeton(jeton_otp, "change_phone")
+    nouveau = inscription.telephone_valide(telephone)
     ancien = utilisateur.phone_e164
-    try:
-        with transaction.atomic():
-            utilisateur.phone_e164 = nouveau
-            utilisateur.phone_verified_at = timezone.now()
-            utilisateur.save(update_fields=["phone_e164", "phone_verified_at", "updated_at"])
-    except IntegrityError as erreur:
-        utilisateur.phone_e164 = ancien
-        raise ErreurMetier(
-            "phone_already_registered",
-            "Ce numéro est déjà utilisé par un autre compte.",
-            statut=409,
-        ) from erreur
-    appareils.revoquer_autres(utilisateur, appareil_courant_id, raison="numero_change")
+    utilisateur.phone_e164 = nouveau
+    utilisateur.save(update_fields=["phone_e164", "updated_at"])
     audit.enregistrer(
-        "auth.numero_change",
-        acteur=utilisateur,
-        cible=utilisateur,
+        "auth.numero_change", acteur=utilisateur, cible=utilisateur,
         metadata={"ancien": masquer(ancien), "nouveau": masquer(nouveau)},
-    )
-    transaction.on_commit(
-        lambda: tasks.envoyer_sms.delay(
-            ancien,
-            "Immo+ : le numéro de ton compte vient d'être modifié. Si ce n'est pas toi, contacte le support.",
-        )
-    )
+    )  # fmt: skip
     return utilisateur
+
+
+def demander_ajout_email(utilisateur: User, email: str) -> None:
+    """Envoie un lien de confirmation : l'e-mail n'est enregistré qu'une fois le lien ouvert (24 h)."""
+    from django.core.exceptions import ValidationError
+    from django.core.validators import validate_email
+
+    from apps.core.tasks import envoyer_courriel
+
+    adresse = (email or "").strip().lower()
+    try:
+        validate_email(adresse)
+    except ValidationError as erreur:
+        raise ErreurMetier(
+            "validation_error", "Adresse e-mail invalide.", champs={"email": ["Invalide"]}
+        ) from erreur
+    if User.objects.filter(email__iexact=adresse).exclude(pk=utilisateur.pk).exists():
+        raise ErreurMetier(
+            "email_taken", "Cette adresse est déjà liée à un autre compte.", statut=409,
+            champs={"email": ["Déjà utilisée"]},
+        )  # fmt: skip
+    jeton = identifiants.creer_jeton(utilisateur, "email", a=adresse)
+    envoyer_courriel.delay(
+        [adresse],
+        "Immo+ · confirme ton adresse e-mail",
+        f"Bonjour {utilisateur.first_name or utilisateur.username},\n\n"
+        f"Pour lier cette adresse au compte « {utilisateur.username} », ouvre ce lien :\n"
+        f"{settings.SITE_URL}/compte/email/confirmer/{jeton}\n\n"
+        "Il est valable 24 heures. Avec un e-mail confirmé, tu peux retrouver l'accès à ton compte si tu "
+        "oublies ton mot de passe.\n",
+    )
+    audit.enregistrer("compte.email_demande", acteur=utilisateur, cible=utilisateur)
+
+
+def confirmer_email(jeton: str) -> User:
+    utilisateur, donnees = identifiants.lire_jeton(jeton, "email")
+    utilisateur.email, utilisateur.email_verified_at = donnees["a"], timezone.now()
+    try:
+        utilisateur.save(update_fields=["email", "email_verified_at", "updated_at"])
+    except IntegrityError as erreur:
+        raise ErreurMetier(
+            "email_taken", "Cette adresse est déjà liée à un autre compte.", statut=409
+        ) from erreur
+    audit.enregistrer("compte.email_confirme", acteur=utilisateur, cible=utilisateur)
+    return utilisateur
+
+
+def regenerer_cle_de_secours(utilisateur: User, mot_de_passe: str) -> str:
+    """Nouvelle clé de secours (l'ancienne cesse de valoir) ; affichée une seule fois."""
+    _exiger_mot_de_passe(utilisateur, mot_de_passe)
+    cle = identifiants.nouvelle_cle_de_secours(utilisateur)
+    utilisateur.save(update_fields=["recovery_key_hash", "recovery_key_created_at", "updated_at"])
+    audit.enregistrer("compte.cle_de_secours_regeneree", acteur=utilisateur, cible=utilisateur)
+    return cle
 
 
 _NON_FOURNI = object()
 
 
-def modifier_profil(utilisateur: User, *, nom: str | None = None, occupation=_NON_FOURNI) -> User:
-    """`occupation` absent : inchangé ; `None` ou vide : effacé (la réponse reste facultative)."""
+def modifier_profil(
+    utilisateur: User, *, prenom: str | None = None, nom: str | None = None, occupation=_NON_FOURNI
+) -> User:
+    """Prénom et nom ensemble ou séparément ; `occupation` absent : inchangé, vide : effacé (facultative)."""
     champs = ["updated_at"]
-    if nom is not None:
-        nom = " ".join(nom.split())
-        if not 2 <= len(nom) <= 120:
-            raise ErreurMetier(
-                "validation_error",
-                "Nom invalide (2 à 120 caractères).",
-                champs={"full_name": ["Nom invalide"]},
-            )
-        utilisateur.full_name = nom
-        champs.append("full_name")
+    if prenom is not None or nom is not None:
+        prenom, nom = inscription.noms_valides(
+            utilisateur.first_name if prenom is None else prenom,
+            utilisateur.last_name if nom is None else nom,
+        )
+        utilisateur.definir_noms(prenom, nom)
+        champs += ["first_name", "last_name", "full_name"]
     if occupation is not _NON_FOURNI:
         utilisateur.occupation = inscription.occupation_valide(occupation)
         champs.append("occupation")
@@ -170,24 +203,28 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
     if utilisateur.role not in (Role.CLIENT, Role.GERANT):
         raise ErreurMetier("forbidden", "Ce compte ne peut pas être supprimé ici.", statut=403)
     _exiger_mot_de_passe(utilisateur, mot_de_passe)
-    ancien_numero, role, uid = utilisateur.phone_e164, utilisateur.role, utilisateur.pk
+    role, uid = utilisateur.role, utilisateur.pk
     with transaction.atomic():
         utilisateur.phone_e164 = f"del:{uuid.uuid4().hex[:12]}"
-        utilisateur.full_name = "Compte supprimé"
+        # Le nom d'utilisateur est libéré pour un autre (format valide, unique, sans rien d'identifiant).
+        utilisateur.username = f"supprime.{uuid.uuid4().hex[:12]}"
+        utilisateur.definir_noms("Compte", "supprimé")
+        utilisateur.email, utilisateur.email_verified_at = None, None
+        utilisateur.recovery_key_hash, utilisateur.recovery_key_created_at = None, None
         utilisateur.avatar_path = None
         utilisateur.status = Statut.DELETED
         utilisateur.deleted_at = timezone.now()
         utilisateur.notif_prefs = {}
         utilisateur.token_version += 1
         utilisateur.set_unusable_password()
-        # Colonnes nommées : le rôle `app` ne peut pas modifier `email` ni `role` (seul le personnel a un e-mail).
+        # Colonnes nommées : le rôle `app` ne peut modifier que certaines colonnes (jamais `role`).
         utilisateur.save(
             update_fields=[
-                "phone_e164", "full_name", "avatar_path", "status", "deleted_at", "notif_prefs",
-                "token_version", "password", "updated_at",
+                "phone_e164", "username", "first_name", "last_name", "full_name", "email", "email_verified_at",
+                "recovery_key_hash", "recovery_key_created_at", "avatar_path", "status", "deleted_at",
+                "notif_prefs", "token_version", "password", "updated_at",
             ]
         )  # fmt: skip
-        OtpCode.objects.filter(phone_e164=ancien_numero).update(phone_e164="")
         appareils_a_revoquer = list(utilisateur.devices.all())
         for appareil in appareils_a_revoquer:
             jetons.marquer_appareil_revoque(appareil.pk)

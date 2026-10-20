@@ -201,8 +201,15 @@ class Command(BaseCommand):
         # 2. Gérant vérifié de démo
         gerant, _ = User.objects.get_or_create(
             phone_e164="+22901970000001",
-            defaults={"full_name": "Issa B.", "role": Role.GERANT},
+            defaults={
+                "full_name": "Issa B.",
+                "first_name": "Issa",
+                "last_name": "B.",
+                "role": Role.GERANT,
+                "username": "issa.gerant",
+            },
         )
+        gerant.username = gerant.username or "issa.gerant"
         gerant.set_password(MOT_DE_PASSE_DEMO)
         gerant.save()
 
@@ -219,8 +226,15 @@ class Command(BaseCommand):
         # 3. Gérant en attente de validation (pour tester l'admin de modération)
         gerant_attente, _ = User.objects.get_or_create(
             phone_e164="+22901970000003",
-            defaults={"full_name": "Koffi EnAttente", "role": Role.GERANT},
+            defaults={
+                "full_name": "Koffi EnAttente",
+                "first_name": "Koffi",
+                "last_name": "EnAttente",
+                "role": Role.GERANT,
+                "username": "koffi.attente",
+            },
         )
+        gerant_attente.username = gerant_attente.username or "koffi.attente"
         gerant_attente.set_password(MOT_DE_PASSE_DEMO)
         gerant_attente.save()
         if not GerantProfile.complets.filter(pk=gerant_attente.pk).exists():
@@ -229,8 +243,15 @@ class Command(BaseCommand):
         # 4. Locataire étudiant de démo
         locataire, _ = User.objects.get_or_create(
             phone_e164="+22901970000002",
-            defaults={"full_name": "Awa Étudiante", "role": Role.CLIENT},
+            defaults={
+                "full_name": "Awa Étudiante",
+                "first_name": "Awa",
+                "last_name": "Étudiante",
+                "role": Role.CLIENT,
+                "username": "awa.etudiante",
+            },
         )
+        locataire.username = locataire.username or "awa.etudiante"
         locataire.set_password(MOT_DE_PASSE_DEMO)
         locataire.save()
 

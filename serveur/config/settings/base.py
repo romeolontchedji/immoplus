@@ -10,7 +10,8 @@ DEBUG = False
 SECRET_KEY = env.texte("SECRET_KEY", "dev-secret-ne-jamais-utiliser-en-production")
 ALLOWED_HOSTS = env.liste("ALLOWED_HOSTS", "localhost,127.0.0.1")
 DOMAIN = env.texte("DOMAIN", "localhost")
-OTP_DEBUG_CODE = env.texte("OTP_DEBUG_CODE", "")
+# Adresse publique du site, pour les liens envoyés par courriel (réinitialisation, confirmation d'e-mail).
+SITE_URL = env.texte("SITE_URL") or f"https://www.{DOMAIN}"
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -128,10 +129,15 @@ AUTH_USER_MODEL = "accounts.User"
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.Argon2PasswordHasher"]
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # 10 caractères depuis l'abandon des codes SMS (ADR 0009) : le mot de passe est le seul rempart.
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
+        "OPTIONS": {"min_length": 10},
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("username", "first_name", "last_name", "email")},
+    },
 ]
 
 # --- Régionalisation : français, fuseau du Bénin, montants en FCFA entiers ---
@@ -179,7 +185,6 @@ PAYMENT_WEBHOOK_SECRET = env.texte(
 )  # signature des webhooks (factice et réels)
 KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
 # Attestation que l'application est authentique (Play Integrity, App Attest) : `fake` tant qu'elle n'est pas développée.
-DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
 # Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).
 CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER") or "fake"
 TURNSTILE_SECRET = env.texte(
@@ -197,7 +202,6 @@ SMS_HTTP_SECRET = env.texte("SMS_HTTP_SECRET")
 
 # --- Clés de sécurité : distinctes entre elles et de SECRET_KEY ; refusées en production si elles viennent d'ici ---
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY", "dev-jwt-ne-jamais-utiliser-en-production")
-OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY", "dev-otp-ne-jamais-utiliser-en-production")
 REDIS_QUEUE_FAKE = False
 
 # --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---

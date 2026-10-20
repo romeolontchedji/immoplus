@@ -11,10 +11,11 @@ from apps.core.errors import ErreurMetier
 _HACHAGE_FACTICE: str | None = None
 
 
-def valider(mot_de_passe: str, champ: str = "password") -> None:
-    """Lève `ErreurMetier(validation_error)` si le mot de passe est trop court ou trop courant."""
+def valider(mot_de_passe: str, champ: str = "password", utilisateur=None) -> None:
+    """Lève `ErreurMetier(validation_error)` si le mot de passe est trop court, trop courant ou trop proche du nom
+    d'utilisateur, du prénom ou du nom (`utilisateur`, même pas encore enregistré)."""
     try:
-        validate_password(mot_de_passe)
+        validate_password(mot_de_passe, user=utilisateur)
     except ValidationError as erreur:
         raise ErreurMetier(
             "validation_error",

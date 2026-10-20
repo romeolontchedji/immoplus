@@ -6,8 +6,8 @@ from .base import *  # noqa: F403
 from .base import INSTALLED_APPS, MIDDLEWARE_SITE
 
 DEBUG = True
+SITE_URL = env.texte("SITE_URL") or "http://www.localhost:8080"
 ALLOWED_HOSTS = ["*"]
-OTP_DEBUG_CODE = env.texte("OTP_DEBUG_CODE", "")
 # Développement : les courriels (codes de l'administration…) sont rangés dans la boîte de développement,
 # lisible sur http://www.localhost:8080/dev/boite (avec les SMS et les push).
 EMAIL_BACKEND = env.texte("EMAIL_BACKEND") or "apps.core.courriel_dev.BoiteDevCourriels"

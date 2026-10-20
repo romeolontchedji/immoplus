@@ -8,7 +8,7 @@ import pytest
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 
-from apps.core.providers import attestation, captcha, sms
+from apps.core.providers import captcha, sms
 
 pytestmark = pytest.mark.unitaire
 
@@ -144,31 +144,6 @@ class TestSmsHttp:
         )
         resultat = sms.GenericHttpSmsProvider().envoyer("+2290197123456", "x")
         assert (resultat.reference, resultat.cout_xof) == ("z9", 8)
-
-
-class TestAttestation:
-    def test_factice(self):
-        p = attestation.FakeAttestationProvider()
-        assert p.verifier("attestation-valide", "i") is True
-        assert p.verifier("autre", "i") is False
-        assert p.verifier(None, "i") is False
-
-    def test_play_integrity_exige_sa_configuration(self, settings):
-        settings.PLAY_INTEGRITY_PACKAGE = ""
-        with pytest.raises(ImproperlyConfigured):
-            attestation.PlayIntegrityAttestationProvider()
-
-    def test_play_integrity_sans_jeton_est_refuse_sans_erreur(self, settings):
-        settings.PLAY_INTEGRITY_PACKAGE = "bj.immoplus"
-        settings.PLAY_INTEGRITY_CREDENTIALS = "x"
-        assert attestation.PlayIntegrityAttestationProvider().verifier(None, "i") is False
-
-    def test_choix(self, settings):
-        settings.DEVICE_ATTESTATION_PROVIDER = "fake"
-        assert isinstance(attestation.fournisseur(), attestation.FakeAttestationProvider)
-        settings.DEVICE_ATTESTATION_PROVIDER = "autre"
-        with pytest.raises(ImproperlyConfigured):
-            attestation.fournisseur()
 
 
 class TestCaptcha:

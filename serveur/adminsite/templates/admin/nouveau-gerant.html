@@ -8,7 +8,10 @@
         <form method="post" novalidate>
           {% csrf_token %}
           {{ form.as_p }}
-          <p class="help">Un mot de passe est attribué par défaut. Le gérant doit le modifier à sa première connexion depuis la plateforme.</p>
+          <p class="help">
+            Aucun mot de passe à attribuer : après la création, un lien d'activation s'affiche. Envoie-le au gérant par
+            WhatsApp ou e-mail ; il y choisira son nom d'utilisateur et son mot de passe.
+          </p>
           <div class="lg-section__actions">
             <input type="submit" value="Créer le compte gérant" class="default">
             <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Annuler</a>
