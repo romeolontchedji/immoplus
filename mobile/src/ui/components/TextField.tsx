@@ -44,7 +44,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
             fontSize: fs[16],
             fontFamily: familleDe("500"),
             color: colors.night,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
             borderColor: erreur ? colors.danger : "rgba(15, 27, 61, 0.12)",
           },
           style,
@@ -123,7 +123,7 @@ export const PhoneField = forwardRef<
             alignItems: "center",
             paddingHorizontal: 16,
             borderRadius: 14,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
             borderWidth: 1.5,
             borderColor: "rgba(15, 27, 61, 0.12)",
           }}
@@ -151,7 +151,7 @@ export const PhoneField = forwardRef<
             fontSize: fs[16],
             fontFamily: familleDe("600"),
             color: colors.night,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
             borderColor: erreur ? colors.danger : "rgba(15, 27, 61, 0.12)",
           }}
         />

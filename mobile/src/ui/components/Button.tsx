@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, type PressableProps } from "react-native";
-import { CIBLE_MIN, rayon, sp } from "@/ui/theme/tokens";
+import { CIBLE_MIN, rayon, sp, colors } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Text } from "./Text";
 
@@ -41,7 +41,7 @@ export function Button({
     accent: c.onAccent,
     secondaire: c.text,
     fantome: c.primary,
-    danger: "#FFFFFF",
+    danger: colors.white,
   }[variante];
 
   const hauteurMin = taille === "compacte" ? 40 : CIBLE_MIN;

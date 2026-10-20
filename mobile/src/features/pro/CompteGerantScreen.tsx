@@ -54,7 +54,7 @@ export function CompteGerantScreen() {
           paddingHorizontal: sp[4],
           paddingTop: 54,
           paddingBottom: sp[3],
-          backgroundColor: "#FFFFFF",
+          backgroundColor: colors.white,
           borderBottomWidth: 1,
           borderBottomColor: "rgba(15, 27, 61, 0.06)",
         }}
@@ -73,7 +73,7 @@ export function CompteGerantScreen() {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: "#F1F5F9",
+            backgroundColor: colors.bg,
             justifyContent: "center",
             alignItems: "center",
           }}
@@ -101,12 +101,12 @@ export function CompteGerantScreen() {
             width: 52,
             height: 52,
             borderRadius: 16,
-            backgroundColor: "#DCFCE7",
+            backgroundColor: colors.successBg,
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <Check size={26} color="#15803D" strokeWidth={3} />
+          <Check size={26} color={colors.success} strokeWidth={3} />
         </View>
 
         {/* Titre et sous-titre */}
@@ -132,7 +132,7 @@ export function CompteGerantScreen() {
         {/* Carte blanche avec les 4 étapes */}
         <View
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.white,
             borderRadius: 24,
             padding: sp[4],
             gap: sp[4],
@@ -152,7 +152,7 @@ export function CompteGerantScreen() {
                   width: 36,
                   height: 36,
                   borderRadius: 18,
-                  backgroundColor: "#EFF4FF",
+                  backgroundColor: colors.blueSoft,
                   justifyContent: "center",
                   alignItems: "center",
                   marginTop: 2,
@@ -195,12 +195,12 @@ export function CompteGerantScreen() {
             style={{
               minHeight: 52,
               borderRadius: 16,
-              backgroundColor: "#0D7A57",
+              backgroundColor: colors.success,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.white }}>
               Écrire sur WhatsApp
             </Text>
           </Pressable>
@@ -212,7 +212,7 @@ export function CompteGerantScreen() {
             style={{
               minHeight: 52,
               borderRadius: 16,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: colors.white,
               borderWidth: 1.5,
               borderColor: colors.primary,
               justifyContent: "center",

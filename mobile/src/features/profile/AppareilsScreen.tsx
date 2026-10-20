@@ -1,7 +1,7 @@
 import { Alert, View } from "react-native";
 import { isApiError } from "@/api/errors";
 import { messageErreur, t } from "@/i18n/fr";
-import { sp } from "@/ui/theme/tokens";
+import { sp, colors } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Button } from "@/ui/components/Button";
 import { QueryState } from "@/ui/components/States";
@@ -35,7 +35,7 @@ export function AppareilsScreen() {
       <Text variante="titre">Appareils connectés</Text>
       <Text muted>Retrouve ici tous les appareils qui ont accès à ton compte. Tu peux déconnecter ceux que tu ne reconnais pas.</Text>
       {revoquer.error ? (
-        <Text variante="legende" couleur="#D13B3B" accessibilityLiveRegion="polite">
+        <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
           {isApiError(revoquer.error) ? messageErreur(revoquer.error.code, revoquer.error.message) : t.commun.erreurGenerique}
         </Text>
       ) : null}

@@ -1,3 +1,4 @@
+import { colors } from "@/ui/theme/tokens";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -74,12 +75,12 @@ export function MotDePasseScreen() {
         )}
       />
       {erreur ? (
-        <Text variante="legende" couleur="#D13B3B" accessibilityLiveRegion="polite">
+        <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
           {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.commun.erreurGenerique}
         </Text>
       ) : null}
       {succes ? (
-        <Text variante="legende" couleur="#12805C" accessibilityLiveRegion="polite">
+        <Text variante="legende" couleur={colors.success} accessibilityLiveRegion="polite">
           Mot de passe modifié. Les autres appareils ont été déconnectés.
         </Text>
       ) : null}

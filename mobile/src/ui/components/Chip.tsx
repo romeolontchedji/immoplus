@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable } from "react-native";
 import { X } from "lucide-react-native";
-import { CIBLE_MIN, rayon, sp } from "@/ui/theme/tokens";
+import { CIBLE_MIN, rayon, sp, colors } from "@/ui/theme/tokens";
 import { useTheme } from "@/ui/theme/ThemeProvider";
 import { Text } from "./Text";
 
@@ -18,7 +18,7 @@ type Props = {
 /** Pastille de filtre : inactive = blanc + bordure, active = cobalt + texte blanc. */
 export function Chip({ titre, actif, onPress, icone, retirable }: Props) {
   const { c } = useTheme();
-  const couleur = actif ? "#FFFFFF" : c.text;
+  const couleur = actif ? colors.white : c.text;
   return (
     <Pressable
       accessibilityRole="button"

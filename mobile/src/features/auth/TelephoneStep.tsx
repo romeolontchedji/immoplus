@@ -102,7 +102,7 @@ export function TelephoneStep({
                   width: 22,
                   height: 22,
                   borderRadius: 6,
-                  backgroundColor: cguAcceptees ? colors.primary : "#FFFFFF",
+                  backgroundColor: cguAcceptees ? colors.primary : colors.white,
                   borderWidth: 1.5,
                   borderColor: cguAcceptees ? colors.primary : "rgba(15, 27, 61, 0.2)",
                   justifyContent: "center",
@@ -110,7 +110,7 @@ export function TelephoneStep({
                   marginTop: 2,
                 }}
               >
-                {cguAcceptees ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : null}
+                {cguAcceptees ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
               </View>
               <Text style={{ flex: 1, fontSize: 13, color: colors.night, lineHeight: 18 }}>
                 J’accepte les{" "}
@@ -142,14 +142,14 @@ export function TelephoneStep({
           {demander.error ? (
             <View
               style={{
-                backgroundColor: "#FEE2E2",
+                backgroundColor: colors.dangerBg,
                 padding: 12,
                 borderRadius: 12,
                 marginTop: sp[2],
               }}
             >
               <Text
-                style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}
+                style={{ color: colors.danger, fontSize: 13, fontWeight: "600" }}
                 accessibilityLiveRegion="polite"
               >
                 {isApiError(demander.error)

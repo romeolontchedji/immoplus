@@ -1,3 +1,4 @@
+import { colors } from "@/ui/theme/tokens";
 import { Vibration } from "react-native";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,7 +65,7 @@ export function TelephoneScreen() {
           )}
         />
         {erreur ? (
-          <Text variante="legende" couleur="#D13B3B" accessibilityLiveRegion="polite">
+          <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
             {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.commun.erreurGenerique}
           </Text>
         ) : null}
@@ -116,12 +117,12 @@ export function TelephoneScreen() {
         )}
       />
       {erreur ? (
-        <Text variante="legende" couleur="#D13B3B" accessibilityLiveRegion="polite">
+        <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
           {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.commun.erreurGenerique}
         </Text>
       ) : null}
       {changer.isSuccess ? (
-        <Text variante="legende" couleur="#12805C" accessibilityLiveRegion="polite">Numéro mis à jour.</Text>
+        <Text variante="legende" couleur={colors.success} accessibilityLiveRegion="polite">Numéro mis à jour.</Text>
       ) : null}
       <Button
         titre="Confirmer"

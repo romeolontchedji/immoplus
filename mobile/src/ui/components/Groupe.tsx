@@ -8,7 +8,7 @@ import { Text } from "./Text";
 type Teinte = "bleu" | "soleil" | "vert" | "rouge" | "gris";
 const TEINTES: Record<Teinte, { fond: string; trait: string }> = {
   bleu: { fond: colors.blueSoft, trait: colors.blue },
-  soleil: { fond: "#FFF4DC", trait: "#A86A00" },
+  soleil: { fond: colors.warningBg, trait: colors.warning },
   vert: { fond: colors.successBg, trait: colors.success },
   rouge: { fond: colors.dangerBg, trait: colors.danger },
   gris: { fond: colors.divider, trait: colors.textMuted },
@@ -83,7 +83,7 @@ export function CarteHero({ children }: { children: ReactNode }) {
 }
 
 /** Avatar à initiales (CDC §9.3 point 3) : couleur dérivée de l'identifiant, 8 teintes. */
-const COULEURS_AVATAR = ["#1B44D6", "#0E7C66", "#B4471F", "#6A3FC8", "#0F6CA8", "#A0336B", "#3D6B1F", "#8A5300"];
+const COULEURS_AVATAR = [colors.blue, colors.success, colors.danger, colors.blueHover, colors.night, colors.sable600, colors.success, colors.warning];
 export function Avatar({ nom, id, taille = 56, surFondSombre = false }: { nom: string; id?: string; taille?: number; surFondSombre?: boolean }) {
   const initiales = nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0]?.toUpperCase() ?? "").join("") || "?";
   const graine = [...(id ?? nom)].reduce((s, ch) => (s * 31 + ch.charCodeAt(0)) >>> 0, 7);

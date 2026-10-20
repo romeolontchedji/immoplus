@@ -166,7 +166,7 @@ export function CodeStep({
                   width: 48,
                   height: 60,
                   borderRadius: 14,
-                  backgroundColor: "#FFFFFF",
+                  backgroundColor: colors.white,
                   borderWidth: 2,
                   borderColor: estRempli || estActif ? colors.primary : "rgba(15, 27, 61, 0.12)",
                   justifyContent: "center",
@@ -242,7 +242,7 @@ export function CodeStep({
         {estInscription ? (
           <View
             style={{
-              backgroundColor: "#EFF4FF",
+              backgroundColor: colors.blueSoft,
               borderRadius: 18,
               padding: 16,
               gap: 6,
@@ -261,14 +261,14 @@ export function CodeStep({
         {erreur ? (
           <View
             style={{
-              backgroundColor: "#FEE2E2",
+              backgroundColor: colors.dangerBg,
               padding: 12,
               borderRadius: 12,
               marginTop: sp[2],
             }}
           >
             <Text
-              style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}
+              style={{ color: colors.danger, fontSize: 13, fontWeight: "600" }}
               accessibilityLiveRegion="polite"
             >
               {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.erreurs.network}

@@ -95,14 +95,14 @@ export function ConnexionScreen() {
           {erreur ? (
             <View
               style={{
-                backgroundColor: "#FEE2E2",
+                backgroundColor: colors.dangerBg,
                 padding: 12,
                 borderRadius: 12,
                 marginBottom: sp[2],
               }}
             >
               <Text
-                style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}
+                style={{ color: colors.danger, fontSize: 13, fontWeight: "600" }}
                 accessibilityLiveRegion="polite"
               >
                 {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.erreurs.network}

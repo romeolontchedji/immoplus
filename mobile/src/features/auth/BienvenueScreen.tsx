@@ -27,7 +27,7 @@ export function BienvenueScreen() {
       <View
         style={{
           flex: 1.1,
-          backgroundColor: "#162B68",
+          backgroundColor: colors.night,
           paddingHorizontal: sp[4],
           paddingTop: 60,
           justifyContent: "space-between",
@@ -59,7 +59,7 @@ export function BienvenueScreen() {
       <View
         style={{
           flex: 1.4,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: colors.white,
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
           paddingHorizontal: sp[4],
@@ -91,7 +91,7 @@ export function BienvenueScreen() {
               <View
                 key={item}
                 style={{
-                  backgroundColor: "#EFF4FF",
+                  backgroundColor: colors.blueSoft,
                   paddingHorizontal: 14,
                   paddingVertical: 7,
                   borderRadius: 999,
@@ -122,7 +122,7 @@ export function BienvenueScreen() {
             style={{
               minHeight: 52,
               borderRadius: 16,
-              backgroundColor: "#FEF3C7",
+              backgroundColor: colors.warningBg,
               justifyContent: "center",
               alignItems: "center",
             }}

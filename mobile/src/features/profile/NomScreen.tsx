@@ -1,3 +1,4 @@
+import { colors } from "@/ui/theme/tokens";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,12 +48,12 @@ export function NomScreen() {
       />
       <ChoixOccupation valeur={occupation} onChange={setOccupation} />
       {erreur ? (
-        <Text variante="legende" couleur="#D13B3B" accessibilityLiveRegion="polite">
+        <Text variante="legende" couleur={colors.danger} accessibilityLiveRegion="polite">
           {isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.commun.erreurGenerique}
         </Text>
       ) : null}
       {isSubmitSuccessful && !modifier.isPending && !erreur ? (
-        <Text variante="legende" couleur="#12805C" accessibilityLiveRegion="polite">Profil mis à jour.</Text>
+        <Text variante="legende" couleur={colors.success} accessibilityLiveRegion="polite">Profil mis à jour.</Text>
       ) : null}
       <Button
         titre={t.commun.enregistrer}

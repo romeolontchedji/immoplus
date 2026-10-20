@@ -11,7 +11,7 @@ import { Logotype } from "@/ui/components/Logo";
 import { Screen } from "@/ui/components/Screen";
 import { PasswordField, TextField } from "@/ui/components/TextField";
 import { Text } from "@/ui/components/Text";
-import { sp } from "@/ui/theme/tokens";
+import { sp, colors } from "@/ui/theme/tokens";
 import { ChoixOccupation, type Occupation } from "./ChoixOccupation";
 import { EnTeteEtapes } from "./EnTeteEtapes";
 import { useAuthFlow } from "./flow";
@@ -20,7 +20,7 @@ import { nouveauMotDePasseSchema, profilSchema } from "./schemas";
 
 function Erreur({ erreur }: { erreur: unknown }) {
   if (!erreur) return null;
-  return <Text couleur="#D13B3B" accessibilityLiveRegion="polite">{isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.erreurs.network}</Text>;
+  return <Text couleur={colors.danger} accessibilityLiveRegion="polite">{isApiError(erreur) ? messageErreur(erreur.code, erreur.message) : t.erreurs.network}</Text>;
 }
 
 /**

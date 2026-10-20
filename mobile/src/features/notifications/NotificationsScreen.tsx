@@ -43,7 +43,7 @@ export function NotificationsScreen() {
   });
 
   const getIcone = (kind: string, nonLue: boolean) => {
-    const couleur = nonLue ? "#FFFFFF" : colors.textMuted;
+    const couleur = nonLue ? colors.white : colors.textMuted;
     if (kind.includes("chat") || kind.includes("message")) {
       return <MessageSquare size={18} color={couleur} />;
     }
@@ -111,7 +111,7 @@ export function NotificationsScreen() {
                           paddingHorizontal: 16,
                           paddingVertical: 9,
                           borderRadius: 999,
-                          backgroundColor: actif ? colors.night : "#FFFFFF",
+                          backgroundColor: actif ? colors.night : colors.white,
                           borderWidth: 1.5,
                           borderColor: actif ? colors.night : "rgba(15, 27, 61, 0.1)",
                         }}
@@ -120,7 +120,7 @@ export function NotificationsScreen() {
                           style={{
                             fontSize: 13,
                             fontWeight: "700",
-                            color: actif ? "#FFFFFF" : colors.night,
+                            color: actif ? colors.white : colors.night,
                           }}
                         >
                           {f.label}
@@ -154,7 +154,7 @@ export function NotificationsScreen() {
                     router.push(destination(item.kind, item.data as Record<string, unknown>, role));
                   }}
                   style={{
-                    backgroundColor: nonLue ? "#EFF4FF" : "#FFFFFF",
+                    backgroundColor: nonLue ? colors.blueSoft : colors.white,
                     borderRadius: 20,
                     padding: 16,
                     flexDirection: "row",
@@ -175,7 +175,7 @@ export function NotificationsScreen() {
                       width: 44,
                       height: 44,
                       borderRadius: 14,
-                      backgroundColor: nonLue ? colors.primary : "#F1F5F9",
+                      backgroundColor: nonLue ? colors.primary : colors.bg,
                       justifyContent: "center",
                       alignItems: "center",
                       marginTop: 2,
