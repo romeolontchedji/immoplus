@@ -14,8 +14,8 @@ valeur par défaut. L'administration est un site à part, sur `https://pilotage.
    n'arrive pas, le serveur SMTP n'est pas configuré (guide de déploiement, étape 4.1).
 4. Après plusieurs échecs de mot de passe (`ADMIN_LOCK_THRESHOLD`), le compte est bloqué un moment : la page
    **Sécurité** (django-axes) le montre et permet de débloquer.
-5. La session se ferme après `ADMIN_SESSION_IDLE_MIN` minutes d'inactivité, et dans tous les cas après
-   `ADMIN_SESSION_MAX_H` heures.
+5. La session se ferme après `ADMIN_SESSION_IDLE_MIN` minutes d'inactivité (60 par défaut), et dans tous les cas
+   après `ADMIN_SESSION_MAX_H` heures (8 par défaut).
 
 Les comptes du personnel ne se créent qu'en ligne de commande, sur le serveur :
 
@@ -176,6 +176,40 @@ version (ex. `1.2.0`).
 Après avoir modifié les textes (`serveur/apps/core/textes_legaux/`) et déployé : Paramètres › `TERMS_VERSION` + 1 et
 `LEGAL_UPDATED_AT` = la date. Chacun devra accepter les nouvelles conditions à sa prochaine connexion.
 
+### 5.8 Ranger les photos et vidéos chez Cloudinary (ou revenir au disque)
+
+Par défaut, les médias sont sur le disque du VPS. Cloudinary (gratuit jusqu'à 25 « crédits » par mois, soit environ
+25 Go de stockage et de bande passante cumulés) soulage le disque et la connexion du serveur, surtout pour les
+vidéos : elles partent alors d'un réseau de diffusion mondial.
+
+1. **Une seule fois, sur le serveur** : renseigner `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` et
+   `CLOUDINARY_API_SECRET` dans `.env` (cloudinary.com › Settings › API Keys), puis
+   `python3 outils/creer_env.py --services` et `bash infra/vps/deployer.sh` (guide de déploiement, étape 4.5).
+2. **Ici** : Paramètres › **Photos et vidéos** › choisir « Cloudinary » › Enregistrer. Sans l'étape 1, la page
+   refuse avec un message clair.
+3. Dès lors, chaque **nouvelle** photo ou vidéo est préparée sur le serveur (tailles, métadonnées EXIF retirées, WebP,
+   MP4) puis envoyée chez Cloudinary par le worker ; la copie locale est effacée. Si Cloudinary ne répond pas, le
+   worker réessaie quatre fois (1, 2, 4, 8 minutes) avant de marquer le média en échec et de prévenir le gérant.
+4. Les médias **déjà en ligne restent sur le disque** et continuent de s'afficher. Pour les déplacer aussi :
+
+   ```bash
+   immoplus run --rm worker python manage.py transferer_medias --vers cloudinary --limite 20   # essai
+   immoplus run --rm worker python manage.py transferer_medias --vers cloudinary              # le reste
+   ```
+
+**Revenir au disque** : choisir « Disque du serveur » ici (effet sur les nouveaux médias), puis, pour rapatrier
+l'existant, `transferer_medias --vers disque`. Ne retire **jamais** les clés Cloudinary de `.env` tant que des
+médias y sont rangés : leurs adresses ne fonctionneraient plus. Les médias chez Cloudinary ne sont pas dans la
+sauvegarde du serveur (Cloudinary en garde ses propres copies).
+
+### 5.9 Jour de forte affluence : « Trop de requêtes »
+
+Chaque compte connecté a son propre compteur de requêtes. Les visiteurs **non connectés**, eux, sont comptés par
+adresse IP, et beaucoup partagent la même (abonnés d'un même opérateur mobile, Wi-Fi du campus). Si des visiteurs
+signalent « Trop de requêtes » lors d'un lancement ou d'une rentrée : Paramètres › **Sécurité** › monter
+`RATE_IP_FACTOR` (ex. 3 → 6) et, pour les connexions et inscriptions, `AUTH_RATE_PER_MIN_IP` (ex. 60 → 120). Effet
+en 30 secondes ; redescendre ensuite. Capacité générale du serveur : `docs/capacite.md`.
+
 ## 6. Tous les paramètres
 
 Page **Paramètres** : chaque réglage a un champ adapté (case à cocher, nombre, liste) et la note ci-dessous sous son
@@ -183,7 +217,8 @@ champ. Un enregistrement prend effet tout de suite (cache vidé) et est inscrit 
 nouvelle valeur. Les valeurs par défaut sont posées par `manage.py seed`.
 
 Ce qui ne se règle **pas** ici, mais dans `.env` sur le serveur : domaine, adresses autorisées de l'administration,
-clés Turnstile, courriels (SMTP), notifications push, sauvegardes (guide de déploiement, étape 6).
+clés Turnstile, courriels (SMTP), notifications push, sauvegardes, compte Cloudinary, nombre de processus
+(`WEB_CONCURRENCY`) (guide de déploiement, étape 6).
 
 ### Application et maintenance
 
@@ -248,10 +283,20 @@ Verrouillages et défi anti-robot.
 | `LOGIN_LOCK_THRESHOLD` | `5` | Nombre de mauvais mots de passe d'affilée avant de bloquer temporairement la connexion (site et application). |
 | `LOGIN_LOCK_MINUTES` | `15` | Durée du premier blocage, en minutes ; elle double à chaque nouveau blocage du même compte. |
 | `LOGIN_FAILS_PER_HOUR_PER_PHONE` | `30` | Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les attaques réparties). |
+| `RATE_IP_FACTOR` | `3` | Les visiteurs non connectés sont comptés par adresse IP ; or des centaines d'abonnés mobiles ou d'étudiants du campus partagent souvent la même. Plafonds anonymes par minute et par adresse = 60 (pages publiques) ou 240 (fil) × ce nombre. Les comptes connectés ont chacun leur propre compteur. À monter un jour de forte affluence si des visiteurs voient « Trop de requêtes ». |
+| `AUTH_RATE_PER_MIN_IP` | `60` | Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après des mots de passe faux. |
 | `TURNSTILE_ENABLED` | coché | Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe oublié sur le site. |
 | `ADMIN_LOCK_THRESHOLD` | `5` | Nombre de mauvais mots de passe avant le blocage d'un compte de l'administration. |
-| `ADMIN_SESSION_IDLE_MIN` | `30` | Sans activité pendant ce nombre de minutes, la session de l'administration se ferme. |
+| `ADMIN_SESSION_IDLE_MIN` | `60` | Sans activité pendant ce nombre de minutes, la session de l'administration se ferme. |
 | `ADMIN_SESSION_MAX_H` | `8` | Une session de l'administration se ferme au bout de ce nombre d'heures, même active. |
+
+### Photos et vidéos
+
+Où sont rangés les médias des annonces.
+
+| Paramètre | Par défaut | À quoi il sert |
+|---|---|---|
+| `MEDIA_STORAGE` | `local` | S'applique aux photos et vidéos envoyées après l'enregistrement ; celles déjà en ligne restent où elles sont (commande transferer_medias pour les déplacer). Cloudinary exige le compte dans .env (CLOUDINARY_*, voir docs/administration.md). Choix : `local` = Disque du serveur (VPS) ; `cloudinary` = Cloudinary. |
 
 ### Modération
 
@@ -272,4 +317,3 @@ Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.
 | `SUBSCRIPTION_GRACE_DAYS` | `7` | Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son abonnement. |
 | `PLANS` | `[{"code": "free_v1", "label": "Gratuit V1", "price": 0, "period_months": 1, "max_active_listings": null, "active": true}, {"code": "standard", "label": "Standard", "price": null, "period_months": 1, "max_active_listings": null, "active": false}]` | Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé. |
 | `PAID_ALERTS_ENABLED` | décoché | Réservé à une alerte prioritaire payante pour les locataires, pas encore construite : à laisser décoché (aucun SMS n'est envoyé par Immo+). |
-

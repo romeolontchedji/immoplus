@@ -174,6 +174,19 @@ suffit de `PUSH_PROVIDER=expo` dans `.env`.
 
 Compte gratuit ; tu y ajouteras la sonde de l'étape 14.
 
+### 4.5 (Facultatif) Cloudinary pour les photos et vidéos
+
+Sans Cloudinary, les médias restent sur le disque du VPS : tout fonctionne. Cloudinary (offre gratuite : 25 crédits
+par mois, 1 crédit = 1 Go stocké ou 1 Go diffusé) soulage le disque et surtout la bande passante du VPS partagé, car
+les vidéos partent alors de son réseau mondial (ADR 0010). Tu peux l'ajouter plus tard, sans redéployer le code.
+
+1. Crée un compte sur **cloudinary.com** (active la double authentification).
+2. **Settings › API Keys** : note le **Cloud name**, l'**API Key** et l'**API Secret**.
+3. Valeurs pour `.env` : `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (laisse
+   `CLOUDINARY_FOLDER=immoplus`).
+4. Après le déploiement : Administration › Paramètres › **Photos et vidéos** › « Cloudinary » (détail et retour en
+   arrière : `docs/administration.md` §5.8).
+
 ## 5. Ton accès au VPS
 
 Le serveur appartient au compte `romaeus`. Pour isoler Immo+, demande-lui de créer un utilisateur dédié membre du
@@ -196,7 +209,7 @@ Puis, depuis ton ordinateur :
 
 ```bash
 ssh immoplus@213.156.133.76
-free -h && nproc && df -h /        # mémoire, processeurs, disque libre
+free -h && nproc && df -h /        # mémoire, processeurs, disque libre (garde-les : docs/capacite.md §5)
 docker network ls | grep web_proxy # le réseau du Caddy central doit exister
 ```
 
@@ -250,6 +263,8 @@ clé des sauvegardes. Ouvre-le (`nano .env`) et renseigne seulement :
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL` | Brevo (étape 4.1) |
 | `ERREURS_DESTINATAIRES` | Ton adresse : un courriel à chaque nouvelle erreur (au plus un par heure et par erreur) |
 | `RESTIC_REPOSITORY`, `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE` | Cloudflare R2 (étape 4.2, facultatif : vide = pas de copie hors du VPS) |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary (étape 4.5, facultatif : vide = médias sur le disque du VPS) |
+| `WEB_CONCURRENCY` | Processus du site et de l'API : `3` pour un VPS de 4 cœurs partagé, `2` pour 2 cœurs (`docs/capacite.md`) |
 
 Ne touche pas aux secrets générés. Régénère ensuite les fichiers des services **sans changer les secrets** :
 
@@ -561,6 +576,8 @@ docker stats --no-stream | grep immoplus     # mémoire et processeur des conten
 - [ ] Vraies clés Turnstile (pas les clés de test) : rien dans Administration › Erreurs à ce sujet.
 - [ ] Restauration d'une sauvegarde testée (et copie sur R2 si tu as choisi de l'activer).
 - [ ] Surveillance externe de `/readyz` active.
+- [ ] Capacité mesurée sur le VPS (`docs/capacite.md` §6) et `WEB_CONCURRENCY` adapté au nombre de cœurs.
+- [ ] Si Cloudinary est activé : une photo et une vidéo envoyées s'affichent depuis `res.cloudinary.com`.
 - [ ] `.env` conservé dans le coffre de l'équipe.
 - [ ] Empreinte Android dans `assetlinks.json` : un lien partagé ouvre l'application.
 - [ ] Crédits des photos d'ambiance complets (`docs/design/credits-photos.md`).

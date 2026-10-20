@@ -4,8 +4,9 @@
 > elle existe, comment elle fonctionne, quand elle intervient, comment les morceaux se parlent, comment ils sont
 > protégés, et ce qu'il faut surveiller. Il est écrit pour être relu et expliqué à d'autres.
 >
-> État décrit : 20 octobre 2026, branche `feat/refonte-design-web` : identification par nom d'utilisateur sans SMS
-> (ADR 0009), hébergement sur le VPS partagé rmeolab. Quand le code change, ce document doit suivre.
+> État décrit : 21 octobre 2026, branche `feat/refonte-design-web` : identification par nom d'utilisateur sans SMS
+> (ADR 0009), hébergement sur le VPS partagé rmeolab, médias activables chez Cloudinary (ADR 0010), capacité mesurée
+> (`docs/capacite.md`). Quand le code change, ce document doit suivre.
 
 ---
 
@@ -194,8 +195,10 @@ automatiquement, voir §18).
 4. **worker-media** (le seul à avoir `ffmpeg`, sans accès à Internet) vérifie le fichier, le convertit en MP4 720p,
    fabrique une affiche WebP, et pour une photo : retire les données cachées (EXIF, position GPS) et produit trois
    tailles WebP (480, 960, 1600 px).
-5. Les fichiers sont publiés par le **fournisseur de stockage** (aujourd'hui : le disque du serveur). L'original est
-   effacé 24 h plus tard.
+5. Les fichiers sont publiés par le **fournisseur de stockage** : le disque du serveur par défaut, ou **Cloudinary**
+   si l'équipe l'a activé dans l'administration. Dans ce cas, `worker-media` n'ayant pas Internet, c'est le
+   **worker** qui envoie les fichiers chez Cloudinary puis efface la copie locale (ADR 0010). L'original est effacé
+   24 h plus tard.
 6. Le média passe à « prêt » ; la chambre peut être publiée (il faut au moins 5 photos ; la vidéo est facultative).
 
 ---
@@ -209,10 +212,10 @@ processus Python : le premier argument choisit le rôle (`infra/docker/entrypoin
 | Conteneur | Rôle | Programme | Quand il travaille | S'il tombe… |
 |---|---|---|---|---|
 | `caddy` | Portier HTTPS, sert les fichiers statiques et médias | Caddy 2 | Toujours | Plus rien n'est accessible |
-| `web-api` | Site web + API de l'application | gunicorn + uvicorn (port 8000) | À chaque visite | Site et appli hors service |
+| `web-api` | Site web + API de l'application | gunicorn + uvicorn (port 8000), `WEB_CONCURRENCY` processus (3) | À chaque visite | Site et appli hors service |
 | `realtime` | WebSocket de la messagerie | gunicorn + uvicorn (port 8001) | Tant qu'une appli est ouverte | Plus d'instantané ; les push continuent |
 | `admin` | Administration | gunicorn + uvicorn (port 8002) | Quand l'équipe travaille | L'équipe ne peut plus modérer |
-| `worker` | Tâches : notifications, alertes, rappels | Celery, files `default` et `notifications` | En continu | Notifications en retard (rattrapées ensuite) |
+| `worker` | Tâches : notifications, alertes, rappels, envois chez Cloudinary | Celery, files `default` et `notifications` | En continu | Notifications en retard (rattrapées ensuite) |
 | `worker-media` | Traitement photos et vidéos | Celery, file `media`, 1 à la fois, 2 CPU, 1,5 Go max | À chaque envoi de média | Médias bloqués « en traitement » |
 | `beat` | Réveil : lance les tâches planifiées | Celery beat (instance unique) | Toutes les minutes | Plus de tâches planifiées |
 | `migrer` | Met la base à jour puis s'arrête | `migrate` + `collectstatic` | Au démarrage | Les autres ne démarrent pas |
@@ -254,8 +257,8 @@ si un fichier piégé exploitait une faille de `ffmpeg`, il ne pourrait rien env
 |---|---|---|
 | `pg_data` | La base de données | `postgres` |
 | `redis_queue_data` | Les files persistantes | `redis-queue` |
-| `media_tmp` | Originaux en cours d'envoi | `web-api`, `worker-media` |
-| `media_public` | Photos et vidéos traitées | `web-api`, `worker-media`, `caddy` (lecture), `admin` (lecture) |
+| `media_tmp` | Originaux en cours d'envoi | `web-api`, `worker-media`, `worker` |
+| `media_public` | Photos et vidéos traitées | `web-api`, `worker-media`, `worker` (envoi chez Cloudinary), `caddy` (lecture), `admin` (lecture) |
 | `media_private` | Réservé aux pièces privées | `admin`, `backup` uniquement |
 | `static` | CSS, JS, polices du site | `migrer` (écriture), `caddy` (lecture) |
 | `backups` | Sauvegardes de la base | `backup` |
@@ -547,8 +550,10 @@ stateDiagram-v2
 - **Traitement** (file `media`) : empreinte SHA-256 ; photos → EXIF retiré, orientation appliquée, WebP 480/960/1600 ;
   vidéos → contrôle du format (`ffprobe`), MP4 H.264 720p, affiche WebP ; délai maximal ; `ffmpeg` limité aux fichiers
   locaux.
-- **Stockage** : derrière l'interface `StorageProvider` (disque aujourd'hui, stockage objet type Cloudflare R2 plus
-  tard, sans changer le reste, ADR 0007).
+- **Stockage** : derrière l'interface `StorageProvider` (ADR 0007). Disque du serveur par défaut ; **Cloudinary**
+  s'active depuis Administration › Paramètres › Photos et vidéos (ADR 0010). Chaque média garde sa place : une clé
+  rangée chez Cloudinary commence par `cloudinary:`, donc basculer ne touche que les nouveaux envois. La commande
+  `transferer_medias` déplace l'existant dans un sens ou dans l'autre.
 - **Refus** si le disque dépasse 85 %.
 - **Où** : `apps/listings/services/medias.py`, `apps/media/`, `apps/core/providers/stockage.py`.
 
@@ -676,7 +681,7 @@ sa valeur par défaut, est dans `docs/administration.md`.
 - **Processus séparé** (`admin`), adresse séparée (`pilotage.`), réservée à des **adresses IP autorisées** (Caddy +
   intergiciel), connexion par **e-mail et mot de passe**, puis **code à 6 chiffres reçu par courriel** à chaque
   connexion (10 min, 5 essais).
-- **Protections** : 5 échecs → verrouillage (django-axes, avec historique des échecs) ; session de 30 min d'inactivité
+- **Protections** : 5 échecs → verrouillage (django-axes, avec historique des échecs) ; session de 60 min d'inactivité
   et 8 h au maximum ; sessions dans une table à part ; cookie à part ; tout est journalisé.
 - **Accès des utilisateurs** : création des gérants sans mot de passe avec **lien d'activation**, et **lien de
   réinitialisation** pour un utilisateur qui a perdu e-mail et clé de secours (après vérification de son identité).
@@ -776,8 +781,11 @@ tester d'autres personnes, il faut un **serveur en ligne**.
    seul le Caddy central le joint, par le réseau Docker `web_proxy`.
 2. **HTTPS partout** + **HSTS** (le navigateur refuse ensuite le HTTP).
 3. **Administration** : adresse cachée, liste d'adresses IP, verrouillage, sessions courtes, cookie et processus à part.
-4. **Limites de débit** (dans `redis-queue`) : connexion, inscription et clé de secours (30/min par adresse),
-   écritures (60/min), lectures (240/min), messages, conversations, médias.
+4. **Limites de débit** (dans `redis-queue`) : **par compte** pour les utilisateurs connectés (écritures 60/min,
+   lectures 240/min), **par adresse IP** pour les anonymes, avec des plafonds réglables dans l'administration
+   (`RATE_IP_FACTOR`, `AUTH_RATE_PER_MIN_IP` : 60 connexions ou inscriptions par minute et par adresse), parce que
+   beaucoup d'abonnés mobiles et tout le Wi-Fi d'un campus partagent une même adresse ; plus messages,
+   conversations, médias.
 5. **Refus par défaut** : une route d'API sans règle d'accès explicite **refuse** (`RefusParDefaut`).
 6. **Pas de fuite d'information** : réponse identique pour « compte inconnu » et « mauvais mot de passe », et pour
    le lien de mot de passe oublié ; 404 pour
@@ -810,7 +818,7 @@ ne touche pas au code métier.
 | Besoin | Interface | Aujourd'hui | Demain |
 |---|---|---|---|
 | Push | `PushProvider` | `console` | `expo` (FCM prévu) |
-| Stockage des médias | `StorageProvider` | `local` (disque) | `s3` (Cloudflare R2…) |
+| Stockage des médias | `StorageProvider` | `local` (disque) ou `cloudinary` (choisi dans l'administration) | `s3` (squelette) |
 | Paiement | `PaymentProvider` | `fake` (signé) | KKiaPay |
 | Anti-robot site | `CaptchaProvider` | `turnstile` (clés de test en développement) | Turnstile avec les vraies clés |
 
@@ -922,7 +930,8 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 | `docs/plan-actions-v2.md` | Le plan en cours et les décisions du porteur |
 | `docs/avancement.md` | Ce qui a été fait, session par session |
 | `docs/deploiement-vps-pas-a-pas.md` | Mettre en ligne, du local à la production (VPS partagé rmeolab, Cloudflare, Brevo, R2) |
-| `docs/administration.md` | L'administration : accès, rôles, pages, gestes courants et chaque paramètre |
+| `docs/administration.md` | L'administration : accès, rôles, pages, gestes courants (dont Cloudinary) et chaque paramètre |
+| `docs/capacite.md` | Capacité : utilisateurs simultanés, mesures, réglage `WEB_CONCURRENCY` |
 | `docs/documentation-vps-rmeolab.md` | Le VPS partagé : sécurisation, Caddy central, règles d'or (fourni par le propriétaire du VPS, gardé hors du dépôt) |
 | `docs/api/openapi.json` | Le contrat exact de l'API (70 points d'entrée) |
 | `infra/compose/docker-compose.yml` | Les conteneurs, réseaux et volumes |
@@ -955,7 +964,8 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 
 | Document | Contenu |
 |---|---|
-| `docs/adr/` | Les 7 décisions techniques importantes et leurs raisons |
+| `docs/adr/` | Les 10 décisions techniques importantes et leurs raisons |
+| `docs/capacite.md` | Combien d'utilisateurs simultanés, mesures, limites et leviers |
 | `docs/decisions.md` | Décisions de cadrage |
 | `docs/design/DESIGN.md`, `COPYWRITING.md`, `ECARTS.md` | Charte graphique, ton des textes, écarts assumés |
 | `docs/design-system.md` | Composants du site |

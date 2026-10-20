@@ -2,6 +2,17 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-21 : Cloudinary, capacité, session de l'administration.**
+- Cloudinary activable depuis Administration › Paramètres › Photos et vidéos (ADR 0010, sans nouvelle dépendance) :
+  clés préfixées `cloudinary:` (disque et Cloudinary cohabitent), envoi par le worker (worker-media reste sans
+  Internet), 4 nouveaux essais puis échec propre, suppression asynchrone, commande `transferer_medias` dans les deux
+  sens, CSP ouverte au CDN seulement si le compte est renseigné. Le worker monte `media_tmp` et `media_public`.
+- Capacité mesurée (`docs/capacite.md`, outil `outils/mesurer_charge.py`) : ~400 utilisateurs actifs confortables,
+  ~700 en pointe avec 3 processus. `WEB_CONCURRENCY` réglable dans `.env` (3 par défaut, 2 auparavant).
+- Limites de débit par compte pour les utilisateurs connectés (adresses partagées : CGNAT, Wi-Fi du campus) ;
+  plafonds anonymes réglables dans l'administration (`RATE_IP_FACTOR`, `AUTH_RATE_PER_MIN_IP`, 60 au lieu de 30).
+- Session de l'administration : 60 minutes d'inactivité au lieu de 30 (migration core 0011).
+
 **2026-10-20 (fin de nuit) : VPS partagé et documentation.**
 - Mode « derrière le Caddy central » du VPS partagé rmeolab : notre Caddy sans port publié, alias `immoplus-web`
   sur le réseau `web_proxy`, seule l'adresse réelle du visiteur transmise à Django, liste blanche par `client_ip`
