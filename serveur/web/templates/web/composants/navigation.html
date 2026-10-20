@@ -1,6 +1,33 @@
 {% load logeo %}
-{# Navigation — 3 états : visiteur, locataire connecté, gérant connecté #}
-{% if request.user.is_authenticated and request.user.role == "gerant" %}
+{# Navigation — visiteur ; compte connecté sur une page à barre latérale (avatar seul) ; accueil connecté. #}
+{% if barre_laterale %}
+  {# Tout le menu est dans la barre latérale : l'en-tête ne garde que l'avatar (téléphone : bouton de menu). #}
+  <nav class="navigation navigation--barre" aria-label="Compte">
+    <div class="navigation__actions">
+      <details class="menu">
+        <summary class="menu__declencheur" aria-label="Menu de ton compte">
+          <span class="navigation__avatar" aria-hidden="true">{{ request.user.initiales|default:"?" }}</span>
+          <span class="navigation__avatar-nom" aria-hidden="true">{{ request.user.prenom|default:"Moi" }}</span>
+          {% include "web/composants/icone.html" with nom="chevron-down" taille=14 %}
+        </summary>
+        <ul class="navigation__liste" role="menu">
+          <li class="navigation__menu-identite">
+            <strong>{{ request.user.full_name|default:request.user.phone_e164 }}</strong>
+            <span class="navigation__menu-role">{% if request.user.role == "gerant" %}Gérant{% else %}Locataire{% endif %}</span>
+          </li>
+          <li role="none"><a class="navigation__lien" href="/compte/profil" role="menuitem">Mon profil</a></li>
+          <li role="none" class="navigation__menu-separateur">
+            <form method="post" action="/deconnexion">
+              {% csrf_token %}
+              <button class="navigation__bouton-deconnexion" type="submit">Se déconnecter</button>
+            </form>
+          </li>
+        </ul>
+      </details>
+    </div>
+    {% include "web/composants/menu-mobile.html" %}
+  </nav>
+{% elif request.user.is_authenticated and request.user.role == "gerant" %}
   {# ── GÉRANT : barre latérale pro, ici seulement messages + cloche + avatar #}
   <nav class="navigation" aria-label="Navigation principale">
     <div class="navigation__actions">

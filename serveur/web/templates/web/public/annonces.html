@@ -1,230 +1,145 @@
 {% extends "web/base.html" %}
-{% load logeo %}
+{% load logeo static %}
 {% block titre %}{% if quartier %}Chambres à {{ quartier.name }}, Parakou{% else %}Chambres à Parakou — loyers, quartiers, visites vidéo{% endif %} — Logeo{% endblock %}
 {% block contenu %}
-  {# ===== Bannière (illustration en fond) + recherche ===== #}
-  <header class="hero-catalogue">
-    <div class="conteneur hero-catalogue__contenu">
-      <h1 class="hero-catalogue__titre">
-        {% if quartier %}
-          Chambres à {{ quartier.name }}
-        {% else %}
-          Ta prochaine chambre est à quelques minutes de tout.
-        {% endif %}
-      </h1>
-      <p class="hero-catalogue__texte">Regarde la vidéo, compare, contacte. Rien à payer avant d'avoir visité.</p>
-      <form class="recherche-hero"
-            method="get"
-            action="{{ action }}"
-            role="search">
-        {% for k, v in params.items %}
-          {% if k != "q" and k != "cursor" and v %}
-            <input type="hidden" name="{{ k }}" value="{{ v }}">
-          {% endif %}
-        {% endfor %}
-        <label class="sr-only" for="q">Rechercher un quartier, un type de chambre</label>
-        <span class="recherche-hero__icone">{% include "web/composants/icone.html" with nom="search" taille=20 %}</span>
-        <input class="recherche-hero__champ"
-               id="q"
-               name="q"
-               type="search"
-               value="{{ params.q }}"
-               placeholder="Quartier, prix, type de chambre…">
-        <button class="bouton bouton--accent" type="submit">Rechercher</button>
-      </form>
-    </div>
-  </header>
+  {% comment %}
+    Page Chambres : filtres en listes déroulantes appliqués en temps réel (js/filtres.js), colonne de filtres fixe
+    qui défile seule sur grand écran, résultats toujours visibles. Sans JavaScript, le bouton « Appliquer » reste.
+  {% endcomment %}
   <section class="section section--catalogue">
     <div class="conteneur">
       <div class="catalogue-layout">
-        {# ===== Filtres ===== #}
-        <aside class="catalogue-sidebar">
-          <form method="get"
+        <aside class="catalogue-sidebar" aria-label="Filtres">
+          <form id="filtres"
+                method="get"
                 action="{{ action }}"
-                class="catalogue-sidebar-carte"
-                role="search">
-            <div class="rangee rangee--entre">
-              <h2 class="catalogue-sidebar-carte__titre">Filtres</h2>
-              {% if actifs %}<a class="lien-petit" href="{{ action }}">Réinitialiser</a>{% endif %}
-            </div>
-            {% if params.q %}<input type="hidden" name="q" value="{{ params.q }}">{% endif %}
-            <div class="filtre-groupe">
-              <span class="filtre-groupe__titre">Quartier</span>
-              {% if not quartier %}
-                <div class="filtre-chips">
-                  <label>
-                    <input class="filtre-chip__input"
-                           type="radio"
-                           name="district"
-                           value=""
-                           {% if not params.district %}checked{% endif %}>
-                    <span class="filtre-chip">Tous</span>
+                class="catalogue-sidebar-carte filtres"
+                role="search"
+                data-filtres>
+            <label class="recherche-filtres">
+              <span class="sr-only">Rechercher</span>
+              <span class="recherche-filtres__icone">{% include "web/composants/icone.html" with nom="search" taille=18 %}</span>
+              <input class="recherche-filtres__champ"
+                     id="q"
+                     name="q"
+                     type="search"
+                     value="{{ params.q }}"
+                     autocomplete="off"
+                     placeholder="Mot-clé : forage, cuisine, marché…">
+            </label>
+            <details class="filtres__repli">
+              <summary class="filtres__entete">
+                <span class="filtres__titre">
+                  {% include "web/composants/icone.html" with nom="sliders-horizontal" taille=18 %}
+                  Filtres
+                  {% if nombre_filtres %}<span class="filtres__nombre">{{ nombre_filtres }}</span>{% endif %}
+                </span>
+                <span class="filtres__chevron" aria-hidden="true">
+                  {% include "web/composants/icone.html" with nom="chevron-down" taille=18 %}
+                </span>
+              </summary>
+              <div class="filtres__grille">
+                {% if quartier %}
+                  <input type="hidden" name="district" value="{{ quartier.slug }}">
+                {% else %}
+                  <label class="filtre">
+                    <span class="filtre__libelle">Quartier</span>
+                    <select class="champ__saisie" name="district">
+                      <option value="">Tous les quartiers</option>
+                      {% for d in quartiers %}
+                        <option value="{{ d.slug }}"
+                                {% if d.slug == params.district %}selected{% endif %}>{{ d.name }}</option>
+                      {% endfor %}
+                    </select>
                   </label>
-                  {% for d in quartiers %}
-                    <label>
-                      <input class="filtre-chip__input"
-                             type="radio"
-                             name="district"
-                             value="{{ d.slug }}"
-                             {% if d.slug == params.district %}checked{% endif %}>
-                      <span class="filtre-chip">{{ d.name }}</span>
-                    </label>
-                  {% endfor %}
-                </div>
-              {% else %}
-                <p class="texte-petit texte-doux mb-0">{{ quartier.name }}</p>
-              {% endif %}
-            </div>
-            <div class="filtre-groupe">
-              <div class="rangee rangee--entre">
-                <label class="filtre-groupe__titre" for="rent_max">Budget max</label>
-                <span class="filtre-slider-valeur">{% if params.rent_max %}Jusqu'à {{ params.rent_max|fcfa }} F/mois{% else %}Tous budgets{% endif %}</span>
-              </div>
-              <input class="champ__saisie"
-                     id="rent_max"
-                     name="rent_max"
-                     type="number"
-                     min="0"
-                     step="1000"
-                     value="{{ params.rent_max }}"
-                     placeholder="Montant en F">
-            </div>
-            <div class="filtre-groupe">
-              <span class="filtre-groupe__titre">Type</span>
-              <div class="pile pile--serree">
-                <label class="champ--case">
-                  <input type="radio"
-                         name="type"
-                         value=""
-                         {% if not params.type %}checked{% endif %}>
-                  <span class="champ__etiquette">Tous les types</span>
+                {% endif %}
+                <label class="filtre">
+                  <span class="filtre__libelle">Type de chambre</span>
+                  <select class="champ__saisie" name="type">
+                    <option value="">Tous les types</option>
+                    {% for v, l in types %}
+                      <option value="{{ v }}" {% if v == params.type %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                  </select>
                 </label>
-                {% for v, l in types %}
+                <label class="filtre">
+                  <span class="filtre__libelle">Budget maximum</span>
+                  <select class="champ__saisie" name="rent_max">
+                    <option value="">Tous les budgets</option>
+                    {% for b in budgets %}
+                      <option value="{{ b }}"
+                              {% if b|stringformat:"d" == params.rent_max %}selected{% endif %}>
+                        Jusqu'à {{ b|fcfa }} F
+                      </option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label class="filtre">
+                  <span class="filtre__libelle">Eau</span>
+                  <select class="champ__saisie" name="water">
+                    <option value="">Peu importe</option>
+                    {% for v, l in eaux %}
+                      <option value="{{ v }}" {% if v == params.water %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label class="filtre">
+                  <span class="filtre__libelle">Électricité</span>
+                  <select class="champ__saisie" name="meter">
+                    <option value="">Peu importe</option>
+                    {% for v, l in compteurs %}
+                      <option value="{{ v }}" {% if v == params.meter %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label class="filtre">
+                  <span class="filtre__libelle">Cuisine</span>
+                  <select class="champ__saisie" name="kitchen">
+                    <option value="">Peu importe</option>
+                    {% for v, l in cuisines %}
+                      <option value="{{ v }}" {% if v == params.kitchen %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label class="filtre">
+                  <span class="filtre__libelle">Trier par</span>
+                  <select class="champ__saisie" name="sort">
+                    {% for v, l in tris %}
+                      <option value="{{ v }}" {% if v == params.sort %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <div class="filtre filtre--cases">
                   <label class="champ--case">
-                    <input type="radio"
-                           name="type"
-                           value="{{ v }}"
-                           {% if v == params.type %}checked{% endif %}>
-                    <span class="champ__etiquette">{{ l }}</span>
+                    <input type="checkbox"
+                           name="bathroom"
+                           value="true"
+                           {% if params.bathroom == "true" %}checked{% endif %}>
+                    <span class="champ__etiquette">Douche interne</span>
                   </label>
-                {% endfor %}
+                  <label class="champ--case">
+                    <input type="checkbox"
+                           name="fenced"
+                           value="true"
+                           {% if params.fenced == "true" %}checked{% endif %}>
+                    <span class="champ__etiquette">Cour clôturée</span>
+                  </label>
+                </div>
               </div>
-            </div>
-            <div class="filtre-groupe">
-              <span class="filtre-groupe__titre">Équipements</span>
-              <label class="champ--case">
-                <input type="checkbox"
-                       id="bathroom"
-                       name="bathroom"
-                       value="true"
-                       {% if params.bathroom == "true" %}checked{% endif %}>
-                <span class="champ__etiquette">Douche interne</span>
-              </label>
-            </div>
-            <div class="filtre-groupe">
-              <span class="filtre-groupe__titre">Confiance</span>
-              <div class="filtre-ligne-switch">
-                <span class="filtre-ligne-switch__label">Gérants vérifiés</span>
-                <label class="interrupteur" for="verified_only">
-                  <input type="checkbox"
-                         id="verified_only"
-                         name="verified"
-                         value="true"
-                         checked>
-                  <span class="interrupteur__piste"
-                        aria-hidden="true"><span class="interrupteur__curseur"></span></span>
-                </label>
+              <div class="filtres__pied">
+                <button class="bouton bouton--primaire largeur-pleine filtres__appliquer"
+                        type="submit">Appliquer</button>
+                <a class="lien-petit" href="{{ action }}" data-reinitialiser>Réinitialiser</a>
               </div>
-            </div>
-            <button class="bouton bouton--primaire largeur-pleine" type="submit">Appliquer les filtres</button>
+            </details>
           </form>
         </aside>
-        {# ===== Résultats ===== #}
-        <div class="catalogue-contenu pile pile--large">
-          <div class="catalogue-entete-barre">
-            <h2 class="catalogue-titre-principal">
-              {% if quartier %}
-                Chambres à {{ quartier.name }}
-              {% else %}
-                Chambres à Parakou
-              {% endif %}
-            </h2>
-            <form method="get" action="{{ action }}" class="catalogue-tri-form">
-              {% for k, v in params.items %}
-                {% if k != "sort" and v %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}
-              {% endfor %}
-              <label for="sort-select">Trier :</label>
-              <select id="sort-select"
-                      name="sort"
-                      class="champ__saisie champ__saisie--pilule">
-                {% for v, l in tris %}
-                  <option value="{{ v }}" {% if v == params.sort %}selected{% endif %}>{{ l }}</option>
-                {% endfor %}
-              </select>
-              <button class="bouton bouton--petit" type="submit">Appliquer</button>
-            </form>
-          </div>
-          {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
-          {% if actifs %}
-            <div class="recapitulatif">
-              <span class="recapitulatif__etiquette">Filtres actifs</span>
-              <ul class="filtres-actifs">
-                {% for f in actifs %}
-                  <li>
-                    {% if f.fixe %}
-                      <span class="puce puce--actif">{{ f.label }}</span>
-                    {% else %}
-                      <a class="puce puce--actif puce--retirable"
-                         href="{{ f.url }}"
-                         aria-label="Retirer le filtre : {{ f.label }}">
-                        {{ f.label }} {% include "web/composants/icone.html" with nom="x" taille=14 %}
-                      </a>
-                    {% endif %}
-                  </li>
-                {% endfor %}
-              </ul>
-              <a class="recapitulatif__effacer" href="{{ action }}">Tout effacer</a>
-            </div>
-          {% endif %}
-          {% if resultat.vide %}
-            <div class="etat-vide" role="status">
-              <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="circle-help" taille=32 %}</span>
-              <div>
-                <h3 class="etat-vide__titre">Aucune chambre pour l'instant.</h3>
-                <p class="etat-vide__texte">Retire un filtre, ou laisse-nous te prévenir dès qu'une chambre correspond.</p>
-              </div>
-              <div class="etat-vide__actions">
-                {% if resultat.alerte_proposee %}
-                  <a class="bouton bouton--primaire"
-                     href="/compte/alertes?{{ requete_alerte }}">Créer une alerte pour cette recherche</a>
-                {% endif %}
-                <a class="bouton" href="{{ action }}">Effacer les filtres</a>
-              </div>
-            </div>
-          {% else %}
-            <div class="grille-annonces">
-              {% for a in resultat.items %}
-                {% include "web/composants/carte.html" %}
-              {% endfor %}
-            </div>
-            {% if resultat.next_cursor %}
-              <p class="texte-centre mt-6">
-                <a class="bouton bouton--secondaire" href="?{{ suite }}">Voir plus de chambres</a>
-              </p>
-            {% endif %}
-            {% if requete_alerte %}
-              <div class="bandeau-alerte">
-                <div>
-                  <strong>Rien ne te convient ?</strong>
-                  <p class="texte-doux mb-0">Crée une alerte, on te prévient dès qu'une chambre correspond.</p>
-                </div>
-                <a class="bouton bouton--primaire"
-                   href="/compte/alertes?{{ requete_alerte }}">Créer une alerte</a>
-              </div>
-            {% endif %}
-          {% endif %}
-        </div>
+        <div id="resultats"
+             class="catalogue-contenu"
+             aria-live="polite"
+             aria-busy="false">{% include "web/public/resultats.html" %}</div>
       </div>
     </div>
   </section>
+  <script src="{% static 'js/filtres.js' %}" defer></script>
 {% endblock %}

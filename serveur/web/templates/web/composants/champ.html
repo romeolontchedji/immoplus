@@ -22,6 +22,16 @@
           <span class="champ__oeil-cacher">{% include "web/composants/icone.html" with nom="eye-off" taille=20 %}</span>
         </button>
       </div>
+    {% elif champ.name == "code" %}
+      {# Code SMS : six cases (js/code-otp.js) ; sans script, le champ simple reste utilisable. #}
+      <div class="code-otp{% if champ.errors %} code-otp--erreur{% endif %}"
+           data-code-otp
+           {% if champ.errors %}data-erreur{% endif %}>
+        {{ champ }}
+        <div class="code-otp__cases" aria-hidden="true">
+          <span class="code-otp__case"></span><span class="code-otp__case"></span><span class="code-otp__case"></span><span class="code-otp__case"></span><span class="code-otp__case"></span><span class="code-otp__case"></span>
+        </div>
+      </div>
     {% elif champ.field.prefixe %}
       <div class="champ__groupe-prefixe">
         <span class="champ__prefixe" aria-hidden="true">{{ champ.field.prefixe }}</span>

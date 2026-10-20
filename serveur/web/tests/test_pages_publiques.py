@@ -67,8 +67,7 @@ class TestFilEtFiche:
         q = DistrictFactory(slug="zongo", name="Zongo")
         ListingFactory(district=q, title="Chambre Zongo", rent_amount=15000)
         page = html(Client().get("/annonces?district=zongo&rent_max=20000&bathroom=true"))
-        assert "Filtres actifs" in page
-        assert "Quartier : Zongo" in page and "Douche et WC internes" in page
+        assert "Quartier : Zongo" in page and "Douche interne" in page
         retrait = re.search(
             r'href="([^"]*)"[^>]*aria-label="Retirer le filtre : Quartier : Zongo"', page
         )
@@ -80,9 +79,11 @@ class TestFilEtFiche:
         ListingFactory(district=q, title="Chambre à Titirou")
         ListingFactory(title="Ailleurs")
         page = html(Client().get("/quartiers/titirou"))
+        demandes, _, voisins = page.partition('id="voisins-titre"')
+        assert "Chambres à Titirou" in demandes and "Chambre à Titirou" in demandes
         assert (
-            "Chambres à Titirou" in page and "Chambre à Titirou" in page and "Ailleurs" not in page
-        )
+            "Ailleurs" not in demandes
+        )  # un quartier proche n'est proposé qu'à part, jamais mélangé
         assert Client().get("/quartiers/inconnu").status_code == 404
 
     def test_fiche_sans_donnee_privee(self):
@@ -373,9 +374,9 @@ class TestNotificationsEtReferencement:
         notifications.creer(u.pk, "alert.match", "Nouvelle chambre", "Corps")
         c = connecte(u)
         assert "Nouvelle chambre" in html(c.get("/compte/notifications"))
-        assert "Notifications (1)" in html(c.get("/annonces"))
+        assert 'espace-barre__compteur">1<' in html(c.get("/annonces"))  # barre latérale
         assert c.post("/compte/notifications").status_code == 302
-        assert "Notifications (1)" not in html(c.get("/annonces"))
+        assert 'espace-barre__compteur">1<' not in html(c.get("/annonces"))
 
     def test_notification_lien_profond_et_lecture_individuelle(self):
         u = ClientFactory()
@@ -448,7 +449,7 @@ class TestMiseEnPageDesEspaces:
         assert re.search(r'menu-mobile__lien--actif"\s+href="/compte/favoris"', page)
 
     def test_oeil_sur_les_champs_mot_de_passe(self):
-        page = html(connecte(ClientFactory()).get("/compte"))
+        page = html(connecte(ClientFactory()).get("/compte/profil"))
         assert page.count("data-voir-mdp") == 4 and "js/mot-de-passe" in page
 
 

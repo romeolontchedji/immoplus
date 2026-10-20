@@ -116,7 +116,7 @@ def test_changement_de_mot_de_passe_deconnecte_les_autres_sessions():
     for c in (a, b):
         c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
     a.post(
-        "/compte",
+        "/compte/profil",
         {
             "action": "mot-de-passe",
             "current_password": MOT_DE_PASSE,
@@ -133,7 +133,7 @@ def test_le_nouveau_mot_de_passe_doit_etre_saisi_deux_fois_a_l_identique():
     c = Client()
     c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
     r = c.post(
-        "/compte",
+        "/compte/profil",
         {
             "action": "mot-de-passe",
             "current_password": MOT_DE_PASSE,
@@ -150,8 +150,10 @@ def test_suppression_du_compte():
     ClientFactory(phone_e164="+2290197343434")
     c = Client()
     c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
-    assert c.post("/compte", {"action": "suppression", "password": "faux"}).status_code == 200
-    r = c.post("/compte", {"action": "suppression", "password": MOT_DE_PASSE})
+    assert (
+        c.post("/compte/profil", {"action": "suppression", "password": "faux"}).status_code == 200
+    )
+    r = c.post("/compte/profil", {"action": "suppression", "password": MOT_DE_PASSE})
     assert (
         r.status_code == 302 and User.objects.get(phone_e164__startswith="del:").status == "deleted"
     )
@@ -206,10 +208,16 @@ def test_changement_de_numero(django_capture_on_commit_callbacks):
     c = Client()
     c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
     with django_capture_on_commit_callbacks(execute=True):
-        r = c.post("/compte/numero", {"phone": "97565656", "captcha": "captcha-ok"})
-    assert r.status_code == 302 and r["Location"] == "/compte/numero/code"
-    r = c.post("/compte/numero/code", {"code": "424242", "password": MOT_DE_PASSE})
-    assert r["Location"].startswith("/compte")
+        r = c.post(
+            "/compte/profil", {"action": "numero", "phone": "97565656", "captcha": "captcha-ok"}
+        )
+    assert r.status_code == 302 and r["Location"] == "/compte/profil#numero"
+    page = c.get("/compte/profil").content.decode()
+    assert "+229 97 56 56 56" in page and 'name="code"' in page  # deuxième étape, dans le profil
+    r = c.post(
+        "/compte/profil", {"action": "numero-code", "code": "424242", "password": MOT_DE_PASSE}
+    )
+    assert r["Location"].startswith("/compte/profil?numero_change=1")
     u.refresh_from_db()
     assert u.phone_e164 == "+2290197565656"
     assert c.get("/compte").status_code == 200
@@ -219,8 +227,8 @@ def test_changement_de_numero_mauvais_mot_de_passe():
     ClientFactory(phone_e164="+2290197343434")
     c = Client()
     c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
-    c.post("/compte/numero", {"phone": "97565656", "captcha": "captcha-ok"})
-    r = c.post("/compte/numero/code", {"code": "424242", "password": "faux"})
+    c.post("/compte/profil", {"action": "numero", "phone": "97565656", "captcha": "captcha-ok"})
+    r = c.post("/compte/profil", {"action": "numero-code", "code": "424242", "password": "faux"})
     assert r.status_code == 200
     assert User.objects.get(phone_e164="+2290197343434")
 
@@ -237,7 +245,7 @@ def test_gerant_cree_par_l_administration_se_connecte_puis_change_de_mot_de_pass
     assert c.post("/connexion", {"phone": "97565656", "password": FORT}).status_code == 302
     assert c.get("/pro/dashboard").status_code == 200
     r = c.post(
-        "/compte",
+        "/compte/profil",
         {
             "action": "mot-de-passe",
             "current_password": FORT,
@@ -299,3 +307,20 @@ def test_deconnecter_partout_garde_cette_session():
     assert ici.get("/compte").status_code == 200
     assert ailleurs.get("/compte").status_code == 302
     assert not u.devices.filter(revoked_at__isnull=True).exists()
+
+
+def test_les_anciennes_adresses_du_changement_de_numero_menent_au_profil():
+    ClientFactory(phone_e164="+2290197343434")
+    c = Client()
+    c.post("/connexion", {"phone": "97343434", "password": MOT_DE_PASSE})
+    assert c.get("/compte/numero")["Location"] == "/compte/profil#numero"
+
+
+def test_le_gerant_arrive_sur_son_profil_depuis_compte():
+    service_administration.creer_gerant(
+        acteur=AdminFactory(), telephone="97565656", nom="Idris Adam", zone="Banikanni",
+        mot_de_passe=FORT,
+    )  # fmt: skip
+    c = Client()
+    c.post("/connexion", {"phone": "97565656", "password": FORT})
+    assert c.get("/compte")["Location"] == "/compte/profil"

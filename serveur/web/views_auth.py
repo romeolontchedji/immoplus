@@ -270,20 +270,71 @@ def oubli_nouveau(request):
 # --------------------------------------------------------------- espace compte
 @connecte_obligatoire
 def espace_compte(request):
+    """Tableau de bord du locataire ; ses informations personnelles sont dans « Mon profil » (plan v3, E1)."""
     u = request.user
+    if u.role != "client":
+        return redirect("/compte/profil" + (f"?{request.GET.urlencode()}" if request.GET else ""))
+    from apps.chat import selectors as chat_selectors
+    from apps.listings import selectors as listing_selectors
+    from apps.listings.services import types as types_chambre
+    from apps.notifications import selectors as notif_selectors
+
+    favoris = listing_selectors.favoris_de(u.pk)
+    alertes = listing_selectors.alertes_de(u.pk)
+    quartiers = {str(q.pk): q.name for q in listing_selectors.quartiers_actifs()}
+    libelles = types_chambre.libelles()
+    alertes_actives = [
+        {
+            "id": a.pk,
+            "titre": a.label or " · ".join(
+                filter(None, [", ".join(quartiers.get(str(d), "") for d in a.district_ids or []),
+                              ", ".join(libelles.get(t, t) for t in a.room_types or [])])
+            ) or "Toutes les chambres",
+            "budget": a.max_rent,
+        }
+        for a in alertes if a.is_active
+    ][:3]  # fmt: skip
+    return render(
+        request,
+        "web/auth/compte.html",
+        {
+            "u": u,
+            "titre": "Tableau de bord",
+            "total_favoris": len(favoris),
+            "total_alertes": sum(1 for a in alertes if a.is_active),
+            "non_lus": chat_selectors.total_non_lus(u.pk, u.role),
+            "notifs_non_lues": notif_selectors.non_lues(u.pk),
+            "alertes_actives": alertes_actives,
+            "derniers_favoris": favoris[:3],
+            "consultees": listing_selectors.cartes_visibles(request.session.get("consultees", []))[
+                :3
+            ],
+        },
+    )
+
+
+@connecte_obligatoire
+def mon_profil(request):
+    """Mon profil (locataire et gérant) : nom, numéro (changé ici même, en deux étapes), mot de passe, suppression."""
+    u = request.user
+    action = request.POST.get("action") if request.method == "POST" else None
     nom = forms.ChangementNom(
-        request.POST if request.POST.get("action") == "nom" else None,
+        request.POST if action == "nom" else None,
         initial={"full_name": u.full_name, "occupation": u.occupation or ""},
     )
-    mdp = forms.ChangementMotDePasse(
-        request.POST if request.POST.get("action") == "mot-de-passe" else None
+    mdp = forms.ChangementMotDePasse(request.POST if action == "mot-de-passe" else None)
+    suppression = forms.Suppression(request.POST if action == "suppression" else None)
+    numero = forms.ChangementNumero(request.POST if action == "numero" else None)
+    numero_code = forms.ChangementNumeroCode(request.POST if action == "numero-code" else None)
+    flux = request.session.get("changement_numero")
+    message = (
+        "Ton numéro a été changé. Les autres appareils sont déconnectés."
+        if request.GET.get("numero_change")
+        else None
     )
-    suppression = forms.Suppression(
-        request.POST if request.POST.get("action") == "suppression" else None
-    )
-    message = None
+    formulaires = {"nom": nom, "mot-de-passe": mdp, "suppression": suppression, "numero": numero,
+                   "numero-code": numero_code}  # fmt: skip
     if request.method == "POST":
-        action = request.POST.get("action")
         try:
             if action == "nom" and nom.is_valid():
                 compte.modifier_profil(
@@ -304,57 +355,41 @@ def espace_compte(request):
                 compte.supprimer(u, suppression.cleaned_data["password"])
                 logout(request)
                 return redirect("/?compte_supprime=1")
+            elif action == "numero" and numero.is_valid():
+                otp.demander(
+                    numero.cleaned_data["phone"], "change_phone",
+                    _contexte_otp(request, numero.cleaned_data["captcha"]),
+                )  # fmt: skip
+                request.session["changement_numero"] = {"phone": numero.cleaned_data["phone"]}
+                return redirect("/compte/profil#numero")
+            elif action == "numero-code" and flux and numero_code.is_valid():
+                jeton = otp.verifier(
+                    flux["phone"], "change_phone", numero_code.cleaned_data["code"]
+                )
+                compte.changer_numero(u, numero_code.cleaned_data["password"], jeton)
+                request.session.pop("changement_numero", None)
+                u.refresh_from_db()
+                request.session["tv"] = u.token_version
+                return redirect("/compte/profil?numero_change=1#numero")
+            elif action == "numero-annuler":
+                request.session.pop("changement_numero", None)
+                return redirect("/compte/profil#numero")
         except ErreurMetier as erreur:
-            _signaler(
-                {"nom": nom, "mot-de-passe": mdp, "suppression": suppression}.get(action, nom),
-                erreur,
-            )
-    from apps.chat import selectors as chat_selectors
-    from apps.listings import selectors as listing_selectors
-    from apps.listings.services import types as types_chambre
-    from apps.notifications import selectors as notif_selectors
-
-    favoris = listing_selectors.favoris_de(u.pk) if u.role == "client" else []
-    alertes = listing_selectors.alertes_de(u.pk) if u.role == "client" else []
-    total_favoris, total_alertes = len(favoris), len(alertes)
-    non_lus = chat_selectors.total_non_lus(u.pk, u.role)
-    # Tableau de bord du locataire (plan v2, W6) : alertes actives résumées, derniers favoris.
-    quartiers = {str(q.pk): q.name for q in listing_selectors.quartiers_actifs()}
-    libelles = types_chambre.libelles()
-    alertes_actives = [
-        {
-            "id": a.pk,
-            "titre": a.label or " · ".join(
-                filter(None, [", ".join(quartiers.get(str(d), "") for d in a.district_ids or []),
-                              ", ".join(libelles.get(t, t) for t in a.room_types or [])])
-            ) or "Toutes les chambres",
-            "budget": a.max_rent,
-        }
-        for a in alertes if a.is_active
-    ][:3]  # fmt: skip
+            _signaler(formulaires.get(action, nom), erreur)
+    if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
+        numero.fields["captcha"].initial = "captcha-ok"
     return render(
         request,
-        "web/auth/compte.html",
+        "web/auth/profil.html",
         {
-            "u": u,
-            "nom": nom,
-            "mdp": mdp,
-            "suppression": suppression,
-            "message": message,
-            "titre": "Mon compte",
-            "total_favoris": total_favoris,
-            "total_alertes": total_alertes,
-            "non_lus": non_lus,
-            "notifs_non_lues": notif_selectors.non_lues(u.pk),
-            "alertes_actives": alertes_actives,
-            "derniers_favoris": favoris[:3],
-            "consultees": listing_selectors.cartes_visibles(request.session.get("consultees", []))[
-                :3
-            ]
-            if u.role == "client"
-            else [],
+            "u": u, "titre": "Mon profil", "nom": nom, "mdp": mdp, "suppression": suppression,
+            "numero": numero, "numero_code": numero_code, "message": message,
+            "numero_en_attente": _lisible(flux["phone"]) if flux else None,
+            "etapes_numero": ["Nouveau numéro", "Code et mot de passe"],
+            "numero_actuel": _lisible((u.phone_e164 or "").removeprefix("+229")),
+            "captcha_fictif": settings.CAPTCHA_PROVIDER == "fake", "site_key": settings.TURNSTILE_SITE_KEY,
         },
-    )
+    )  # fmt: skip
 
 
 @connecte_obligatoire
@@ -450,71 +485,11 @@ def _lisible(numero: str) -> str:
     return " ".join(chiffres[i : i + 2] for i in range(0, len(chiffres), 2))
 
 
-_LATERAL_NUMERO = {
-    "accroche": "Ton numéro, c'est ta clé.",
-    "sous_accroche": "Il sert à te connecter et à recevoir les codes de sécurité. Il n'est jamais montré aux gérants.",
-    "promesses": [
-        "Les autres appareils seront déconnectés",
-        "Ton ancien numéro sera prévenu par SMS",
-        "Tes favoris, alertes et messages restent",
-    ],
-}
-
-
 @connecte_obligatoire
 def changement_numero_telephone(request):
-    form = forms.ChangementNumero(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        try:
-            otp.demander(
-                form.cleaned_data["phone"],
-                "change_phone",
-                _contexte_otp(request, form.cleaned_data["captcha"]),
-            )
-        except ErreurMetier as erreur:
-            _signaler(form, erreur)
-        else:
-            request.session["changement_numero"] = {"phone": form.cleaned_data["phone"]}
-            return redirect("/compte/numero/code")
-    if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
-        form.fields["captcha"].initial = "captcha-ok"
-    return _page(
-        request,
-        "web/auth/formulaire.html",
-        form,
-        "Changer de numéro",
-        bouton="Recevoir un code",
-        captcha_requis=True,
-        etapes=["Nouveau numéro", "Code et mot de passe"],
-        etape_actuelle=1,
-        sous_titre="On envoie un code par SMS à ton nouveau numéro pour vérifier qu'il est bien à toi.",
-        **_LATERAL_NUMERO,
-    )
+    """Ancienne adresse : le changement de numéro se fait désormais dans « Mon profil » (plan v3, E6)."""
+    return redirect("/compte/profil#numero")
 
 
 def changement_numero_code(request):
-    flux = request.session.get("changement_numero")
-    if not flux or not request.user.is_authenticated:
-        return redirect("/connexion?next=/compte/numero")
-    form = forms.ChangementNumeroCode(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        try:
-            jeton = otp.verifier(flux["phone"], "change_phone", form.cleaned_data["code"])
-            compte.changer_numero(request.user, form.cleaned_data["password"], jeton)
-        except ErreurMetier as erreur:
-            _signaler(form, erreur)
-        else:
-            request.session.pop("changement_numero", None)
-            return redirect("/compte?numero_change=1")
-    return _page(
-        request,
-        "web/auth/formulaire.html",
-        form,
-        "Confirme le changement",
-        bouton="Changer mon numéro",
-        liens=[("/compte/numero", "Utiliser un autre numéro")],
-        etapes=["Nouveau numéro", "Code et mot de passe"],
-        etape_actuelle=2,
-        sous_titre=f"Code envoyé au +229 {_lisible(flux['phone'])}. Confirme avec ton mot de passe actuel.",
-        **_LATERAL_NUMERO,
-    )
+    return redirect("/compte/profil#numero")

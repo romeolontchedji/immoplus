@@ -1,12 +1,10 @@
 {% extends "web/espace.html" %}
 {% load logeo %}
-{% block titre %}Mon compte — Logeo{% endblock %}
+{% block titre %}Tableau de bord — Logeo{% endblock %}
 {% block espace %}
   <section class="section">
     <div class="conteneur">
       <div class="compte-dashboard">
-        {# ── Sidebar profil ─────────────────────────────────────────────────── #}
-        {# ── Contenu principal ──────────────────────────────────────────────── #}
         <div class="compte-principal">
           {% if u.role == "client" %}
             {# ── Tableau de bord du locataire (plan v2, W6) ── #}
@@ -88,111 +86,6 @@
               </div>
             {% endif %}
           {% endif %}
-          <div class="pro-entete">
-            <div>
-              {% if u.role == "client" %}
-                <h2 class="pro-entete__titre">Mes informations</h2>
-              {% else %}
-                <h1 class="pro-entete__titre">Mon compte</h1>
-              {% endif %}
-              <p class="texte-doux mb-0">Gère tes informations personnelles et tes paramètres de sécurité</p>
-            </div>
-          </div>
-          {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
-          {% if request.GET.numero_change %}
-            <div class="alerte alerte--succes" role="status">
-              <p>Ton numéro a été changé. Les autres appareils sont déconnectés.</p>
-            </div>
-          {% endif %}
-          {# Informations personnelles #}
-          <div class="compte-reglages">
-            <div class="compte-section-carte">
-              <h2 class="compte-section-carte__titre">
-                <svg width="18"
-                     height="18"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Informations personnelles
-              </h2>
-              <form method="post" class="pile">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="nom">
-                {% for champ in nom.visible_fields %}
-                  {% include "web/composants/champ.html" %}
-                {% endfor %}
-                <div>
-                  <button class="bouton bouton--primaire" type="submit">Enregistrer les modifications</button>
-                </div>
-              </form>
-            </div>
-            {# Mot de passe #}
-            <div class="compte-section-carte">
-              <h2 class="compte-section-carte__titre">
-                <svg width="18"
-                     height="18"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                Mot de passe
-              </h2>
-              <form method="post" class="pile">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="mot-de-passe">
-                {% for e in mdp.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
-                {% for champ in mdp.visible_fields %}
-                  {% include "web/composants/champ.html" %}
-                {% endfor %}
-                <div>
-                  <button class="bouton bouton--secondaire" type="submit">Changer le mot de passe</button>
-                </div>
-              </form>
-            </div>
-            {# Zone danger #}
-            <div class="compte-section-carte compte-section-carte--danger">
-              <h2 class="compte-section-carte__titre color-danger">
-                <svg width="18"
-                     height="18"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                Zone de danger
-              </h2>
-              <form method="post" class="pile">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="suppression">
-                <p class="texte-doux mb-3">Ton compte sera anonymisé. Cette action est irréversible et supprime toutes tes données.</p>
-                {% for e in suppression.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
-                {% for champ in suppression.visible_fields %}
-                  {% include "web/composants/champ.html" %}
-                {% endfor %}
-                <div>
-                  <button class="bouton bouton--danger" type="submit">Supprimer définitivement mon compte</button>
-                </div>
-              </form>
-            </div>
-          </div>
         </div>
       </div>
     </div>

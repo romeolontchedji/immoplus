@@ -17,11 +17,6 @@
       </div>
       <p class="menu-mobile__section">Navigation</p>
       <ul class="menu-mobile__liste">
-        {% if request.user.role != "gerant" %}
-          {% with l=menu.chambres %}
-            {% include "web/composants/menu-mobile-lien.html" %}
-          {% endwith %}
-        {% endif %}
         {% for l in menu.principal %}
           {% include "web/composants/menu-mobile-lien.html" %}
         {% endfor %}

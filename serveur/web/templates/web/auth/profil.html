@@ -1,0 +1,150 @@
+{% extends "web/espace.html" %}
+{% load logeo %}
+{% block titre %}Mon profil — Logeo{% endblock %}
+{% block espace %}
+  <div class="profil">
+    <header class="profil__entete">
+      <span class="profil__avatar" aria-hidden="true">{{ u.initiales|default:"?" }}</span>
+      <div class="profil__qui">
+        <h1 class="profil__nom">{{ u.full_name|default:"Mon profil" }}</h1>
+        <p class="profil__role">
+          {% if u.role == "gerant" %}
+            Gérant
+          {% else %}
+            Locataire
+          {% endif %}
+          · +229 {{ numero_actuel }}
+        </p>
+      </div>
+      {% if u.role == "gerant" %}
+        <a class="bouton bouton--secondaire profil__public"
+           href="/gerants/{{ u.pk }}">
+          {% include "web/composants/icone.html" with nom="eye" taille=18 %}
+          Voir mon profil public
+        </a>
+      {% endif %}
+    </header>
+    {% if message %}
+      <div class="alerte alerte--succes" role="status">
+        <p>{{ message }}</p>
+      </div>
+    {% endif %}
+    <div class="profil__grille">
+      <section class="compte-section-carte" aria-labelledby="titre-infos">
+        <h2 class="compte-section-carte__titre" id="titre-infos">
+          {% include "web/composants/icone.html" with nom="user-round" taille=18 %}
+          Informations personnelles
+        </h2>
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="nom">
+          {% for e in nom.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
+          {% for champ in nom.visible_fields %}
+            {% include "web/composants/champ.html" %}
+          {% endfor %}
+          <div>
+            <button class="bouton bouton--primaire" type="submit">Enregistrer</button>
+          </div>
+        </form>
+      </section>
+      <section class="compte-section-carte"
+               id="numero"
+               aria-labelledby="titre-numero">
+        <h2 class="compte-section-carte__titre" id="titre-numero">
+          {% include "web/composants/icone.html" with nom="phone" taille=18 %}
+          Numéro de téléphone
+        </h2>
+        {% if numero_en_attente %}
+          {% include "web/composants/etapes.html" with etapes=etapes_numero etape_actuelle=2 %}
+          <p class="texte-doux">
+            Code envoyé au <strong>+229 {{ numero_en_attente }}</strong>. Saisis-le, puis confirme avec ton mot de passe actuel.
+          </p>
+          <form method="post" class="pile" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="numero-code">
+            {% for e in numero_code.non_field_errors %}
+              <div class="alerte alerte--danger" role="alert">
+                <p>{{ e }}</p>
+              </div>
+            {% endfor %}
+            {% for champ in numero_code.visible_fields %}
+              {% include "web/composants/champ.html" %}
+            {% endfor %}
+            <div class="rangee">
+              <button class="bouton bouton--primaire" type="submit">Changer mon numéro</button>
+            </div>
+          </form>
+          <form method="post" class="profil__annuler">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="numero-annuler">
+            <button class="lien-bouton" type="submit">Utiliser un autre numéro</button>
+          </form>
+        {% else %}
+          <p class="texte-doux">
+            Numéro actuel : <strong>+229 {{ numero_actuel }}</strong>. Il sert à te connecter et n'est jamais montré aux autres utilisateurs.
+          </p>
+          <form method="post" class="pile" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="numero">
+            {% for e in numero.non_field_errors %}
+              <div class="alerte alerte--danger" role="alert">
+                <p>{{ e }}</p>
+              </div>
+            {% endfor %}
+            {% for champ in numero.visible_fields %}
+              {% include "web/composants/champ.html" %}
+            {% endfor %}
+            {% for champ in numero.hidden_fields %}{{ champ }}{% endfor %}
+            {% if not captcha_fictif and site_key %}
+              <div class="cf-turnstile"
+                   data-sitekey="{{ site_key }}"
+                   data-response-field-name="captcha"></div>
+              <script src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                      async
+                      defer></script>
+            {% endif %}
+            <div>
+              <button class="bouton bouton--secondaire" type="submit">Recevoir un code sur le nouveau numéro</button>
+            </div>
+          </form>
+        {% endif %}
+      </section>
+      <section class="compte-section-carte" aria-labelledby="titre-mdp">
+        <h2 class="compte-section-carte__titre" id="titre-mdp">
+          {% include "web/composants/icone.html" with nom="shield" taille=18 %}
+          Mot de passe
+        </h2>
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="mot-de-passe">
+          {% for e in mdp.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
+          {% for champ in mdp.visible_fields %}
+            {% include "web/composants/champ.html" %}
+          {% endfor %}
+          <div>
+            <button class="bouton bouton--secondaire" type="submit">Changer le mot de passe</button>
+          </div>
+        </form>
+      </section>
+      <section class="compte-section-carte compte-section-carte--danger"
+               aria-labelledby="titre-danger">
+        <h2 class="compte-section-carte__titre color-danger" id="titre-danger">
+          {% include "web/composants/icone.html" with nom="circle-alert" taille=18 %}
+          Supprimer mon compte
+        </h2>
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="suppression">
+          <p class="texte-doux mb-0">Ton compte sera anonymisé. Cette action est irréversible.</p>
+          {% for e in suppression.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
+          {% for champ in suppression.visible_fields %}
+            {% include "web/composants/champ.html" %}
+          {% endfor %}
+          <div>
+            <button class="bouton bouton--danger" type="submit">Supprimer définitivement mon compte</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+{% endblock %}

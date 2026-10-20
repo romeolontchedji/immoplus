@@ -61,23 +61,16 @@
 .espace-barre__sortie { margin: 0; padding-top: var(--sp-3); border-top: 1px solid var(--white-12); }
 .espace-barre__lien--sortie { color: var(--white-60); }
 
-/* Tablette et téléphone : la barre devient une rangée d'onglets colorée qui défile, sous l'en-tête. */
+/* Tablette et téléphone : pas de rangée d'onglets (plan v3, E3) ; le bouton de menu de l'en-tête donne accès à tout. */
 @media (max-width: 1023px) {
   .espace { grid-template-columns: minmax(0, 1fr); }
-  .espace-barre {
-    position: sticky; top: var(--hauteur-entete); z-index: 10; height: auto; overflow: visible;
-    flex-direction: row; padding: var(--sp-2) var(--sp-3); gap: 0;
-  }
-  .espace-barre__identite, .espace-barre__section, .espace-barre__sortie { display: none; }
-  .espace-barre__nav {
-    flex-direction: row; gap: var(--sp-1); overflow-x: auto; scrollbar-width: none;
-    scroll-snap-type: x proximity;
-  }
-  .espace-barre__nav::-webkit-scrollbar { display: none; }
-  .espace-barre__liste { flex-direction: row; gap: var(--sp-1); }
-  .espace-barre__lien { width: auto; white-space: nowrap; padding: var(--sp-2) var(--sp-3); font-size: var(--fs-14); scroll-snap-align: start; }
-  .espace-barre__lien--actif::before { display: none; }
+  .espace-barre { display: none; }
   .espace__principal { padding: var(--sp-5) var(--sp-4) var(--sp-10); }
+  .navigation--barre .navigation__mobile { display: inline-flex !important; }
+  .navigation--barre .navigation__actions { display: none; }
+}
+@media (min-width: 1024px) {
+  .navigation--barre .navigation__actions { display: flex; }
 }
 
 /* ─── Menu mobile du site (moins de 768 px) : panneau sous l'en-tête, liens groupés, page courante colorée ─── */

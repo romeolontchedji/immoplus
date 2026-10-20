@@ -53,23 +53,26 @@ def nav_courant(context, prefixe: str) -> str:
 
 
 MENU_LOCATAIRE = (
+    ("Chambres", "/annonces", "search", None, False),
     ("Tableau de bord", "/compte", "layout-grid", None, True),
     ("Mes favoris", "/compte/favoris", "heart", None, False),
     ("Mes alertes", "/compte/alertes", "bell-ring", None, False),
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
+    ("Mon profil", "/compte/profil", "user", None, False),
 )
 MENU_GERANT = (
     ("Tableau de bord", "/pro/dashboard", "layout-grid", None, False),
-    ("Mes annonces", "/pro/annonces", "house", None, False),
+    ("Mes annonces", "/pro/annonces", "house", None, True),
+    ("Publier une chambre", "/pro/annonces/nouvelle", "plus", None, True),
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
-    ("Mon profil", "/compte", "user", None, True),
+    ("Chambres", "/annonces", "search", None, False),
+    ("Mon profil", "/compte/profil", "user", None, False),
 )
 MENU_REGLAGES = (
     ("Préférences", "/compte/preferences", "settings", None, False),
     ("Appareils connectés", "/compte/appareils", "smartphone", None, False),
-    ("Changer de numéro", "/compte/numero", "phone", None, False),
 )
 
 

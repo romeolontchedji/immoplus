@@ -16,12 +16,16 @@ from apps.chat import selectors as chat_selectors
 from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.listings import selectors
-from apps.listings.enums import Compteur, Eau
+from apps.listings.enums import Compteur, Cuisine, Eau
 from apps.listings.services import alertes, favoris, fil, vues
 from apps.listings.services import types as types_chambre
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
 from apps.notifications import services as notifications
+
+BUDGETS = [15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000, 150000]
+# Critères de la page Chambres (le reste des paramètres est ignoré dans le récapitulatif et l'alerte).
+CRITERES = ("q", "district", "type", "rent_max", "bathroom", "fenced", "water", "meter", "kitchen")
 
 TRIS = [
     ("recent", "Plus récentes"),
@@ -64,38 +68,33 @@ def _libelle_type(valeur: str) -> str:
 
 def _recapitulatif(request, action: str, quartier) -> list:
     """Filtres actifs, chacun assorti du lien qui le retire (pour les puces effaçables)."""
-    params = {k: v for k, v in request.GET.items() if k not in ("cursor", "page")}
+    params = {k: v for k, v in request.GET.items() if k not in ("cursor", "page") and v}
     quartiers = {d.slug: d.name for d in _quartiers()}
 
     def lien_sans(cle: str) -> str:
         reste = {k: v for k, v in params.items() if k != cle}
         return f"{action}?{urlencode(reste)}" if reste else action
 
+    libelles = {
+        "q": lambda v: f"Recherche : {v}",
+        "district": lambda v: f"Quartier : {quartiers.get(v, v)}",
+        "type": lambda v: f"Type : {_libelle_type(v)}",
+        "rent_max": lambda v: f"Loyer ≤ {v} F",
+        "bathroom": lambda v: "Douche interne" if v == "true" else None,
+        "fenced": lambda v: "Clôturée" if v == "true" else None,
+        "water": lambda v: f"Eau : {dict(Eau.choices).get(v, v)}",
+        "meter": lambda v: f"Électricité : {dict(Compteur.choices).get(v, v)}",
+        "kitchen": lambda v: dict(Cuisine.choices).get(v, v),
+        "sort": lambda v: f"Tri : {dict(TRIS).get(v, v)}",
+    }
     actifs = []
-    if params.get("q"):
-        actifs.append({"label": f"Recherche : {params['q']}", "url": lien_sans("q")})
     if quartier is not None:
-        actifs.append(
-            {"label": f"Quartier : {quartier.name}", "url": lien_sans("district"), "fixe": True}
-        )
-    elif params.get("district"):
-        nom = quartiers.get(params["district"], params["district"])
-        actifs.append({"label": f"Quartier : {nom}", "url": lien_sans("district")})
-    if params.get("type"):
-        actifs.append(
-            {"label": f"Type : {_libelle_type(params['type'])}", "url": lien_sans("type")}
-        )
-    if params.get("rent_max"):
-        actifs.append({"label": f"Loyer ≤ {params['rent_max']} F", "url": lien_sans("rent_max")})
-    if params.get("bathroom") == "true":
-        actifs.append({"label": "Douche et WC internes", "url": lien_sans("bathroom")})
-    if params.get("sort"):
-        actifs.append(
-            {
-                "label": f"Tri : {dict(TRIS).get(params['sort'], params['sort'])}",
-                "url": lien_sans("sort"),
-            }
-        )
+        actifs.append({"label": f"Quartier : {quartier.name}", "url": action, "fixe": True})
+    for cle, libelle in libelles.items():
+        if cle in params and not (cle == "district" and quartier is not None):
+            texte = libelle(params[cle])
+            if texte:
+                actifs.append({"label": texte, "url": lien_sans(cle)})
     return actifs
 
 
@@ -109,29 +108,33 @@ def _liste(request, *, quartier=None, action="/annonces"):
     except ErreurMetier as e:
         erreur, resultat = (
             _message(e),
-            {"items": [], "next_cursor": None, "vide": True, "alerte_proposee": False},
+            {
+                "items": [],
+                "next_cursor": None,
+                "vide": True,
+                "alerte_proposee": False,
+                "voisins": None,
+            },
         )
     suite = ""
     if resultat.get("next_cursor"):
         reste = {k: v for k, v in request.GET.items() if k != "cursor"}
         suite = urlencode({**reste, "cursor": resultat["next_cursor"]})
-    critere_alerte = {
-        k: v
-        for k, v in request.GET.items()
-        if k in ("district", "type", "rent_max", "bathroom", "q")
-    }
+    critere_alerte = {k: v for k, v in request.GET.items() if k in CRITERES and v}
     if quartier is not None:
         critere_alerte["district"] = quartier.slug
-    return render(
-        request,
-        "web/public/annonces.html",
-        {
-            "resultat": resultat, "params": {**request.GET.dict(), "district": params.get("district", "")},
-            "quartiers": _quartiers(), "quartier": quartier, "types": _types(), "tris": TRIS, "action": action,
-            "erreur": erreur, "suite": suite, "requete_alerte": urlencode(critere_alerte),
-            "actifs": _recapitulatif(request, action, quartier),
-        },
-    )  # fmt: skip
+    contexte = {
+        "resultat": resultat, "params": {**request.GET.dict(), "district": params.get("district", "")},
+        "quartiers": _quartiers(), "quartier": quartier, "types": _types(), "tris": TRIS, "action": action,
+        "erreur": erreur, "suite": suite, "requete_alerte": urlencode(critere_alerte),
+        "actifs": _recapitulatif(request, action, quartier), "budgets": BUDGETS,
+        "eaux": Eau.choices, "compteurs": Compteur.choices, "cuisines": Cuisine.choices,
+        "nombre_filtres": sum(1 for k in CRITERES if k != "q" and request.GET.get(k)),
+    }  # fmt: skip
+    # Filtres en temps réel (js/filtres.js) : seule la zone des résultats est renvoyée.
+    if request.headers.get("X-Fragment") == "resultats":
+        return render(request, "web/public/resultats.html", contexte)
+    return render(request, "web/public/annonces.html", contexte)
 
 
 def annonces(request):

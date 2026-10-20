@@ -19,6 +19,7 @@ class _Base(forms.Form):
                 champ.prefixe = "+229"  # lu par composants/champ.html (plan v2, W8)
             if nom == "code":
                 champ.widget.attrs["class"] = "champ__saisie champ__saisie--code"
+                champ.widget.attrs.update({"maxlength": "6", "pattern": "[0-9]*"})
 
 
 class Telephone(_Base):

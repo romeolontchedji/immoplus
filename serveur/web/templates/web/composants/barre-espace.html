@@ -1,5 +1,5 @@
 {% load logeo %}
-{# Barre latérale colorée des espaces locataire et gérant ; rangée d'onglets défilante sur téléphone. #}
+{# Barre latérale fixe des comptes connectés (toutes les pages sauf l accueil) ; masquée sur téléphone, où le menu du haut la remplace. #}
 {% menu_espace as menu %}
 <aside class="espace-barre" aria-label="{{ menu.role }}">
   <div class="espace-barre__identite">

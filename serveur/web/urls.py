@@ -34,6 +34,7 @@ urlpatterns = [
     path("mot-de-passe-oublie/code", a.oubli_code, name="oubli-code"),
     path("mot-de-passe-oublie/nouveau", a.oubli_nouveau, name="oubli-nouveau"),
     path("compte", a.espace_compte, name="compte"),
+    path("compte/profil", a.mon_profil, name="profil"),
     path("compte/preferences", a.mes_preferences, name="preferences"),
     path("compte/appareils", a.mes_appareils, name="appareils"),
     path(

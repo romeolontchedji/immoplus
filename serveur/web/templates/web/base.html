@@ -38,56 +38,69 @@
         </div>
       </header>
       <main id="contenu" class="page__contenu">
+        {% if barre_laterale %}
+          {# Comptes connectés : barre latérale fixe sur toutes les pages sauf l'accueil (plan v3, E2). #}
+          <div class="espace">
+            {% include "web/composants/barre-espace.html" %}
+            <div class="espace__principal">
+        {% endif %}
         {% block contenu %}{% endblock %}
-      </main>
-      {% block pied %}
-        <footer class="pied">
-          <div class="conteneur">
-            <div class="pied__grille">
-              <div class="pied__logo-colonne">
-                <a class="logotype pied__logo" href="/" aria-label="Logeo">
-                  Logeo<span class="logotype__point">.</span>
-                </a>
-                <p class="pied__slogan">Le logement à Parakou, vu avant d'y aller.</p>
-              </div>
-              <div>
-                <p class="pied__titre">Raccourcis</p>
-                <ul class="pied__liste">
-                  <li><a href="/annonces">Chambres</a></li>
-                  <li><a href="/#comment-ca-marche">Comment ça marche</a></li>
-                  <li><a href="/#faq">FAQ</a></li>
-                  {% if request.user.is_authenticated and request.user.role == "client" %}
-                    <li><a href="/compte/alertes">Mes alertes</a></li>
-                  {% endif %}
-                </ul>
-              </div>
-              <div>
-                <p class="pied__titre">Quartiers</p>
-                <ul class="pied__liste">
-                  <li><a href="/annonces?district=banikanni">Banikanni</a></li>
-                  <li><a href="/annonces?district=guema">Guéma</a></li>
-                  <li><a href="/annonces?district=albarika">Albarika</a></li>
-                  <li><a href="/annonces?district=titirou">Titirou</a></li>
-                </ul>
-              </div>
-              <div>
-                <p class="pied__titre">Contact</p>
-                <ul class="pied__liste">
-                  <li><a href="{{ contact_equipe.tel_url }}">{{ contact_equipe.phone_display }}</a></li>
-                  <li><a href="{{ contact_equipe.whatsapp_url }}" rel="noopener">Écrire sur WhatsApp</a></li>
-                  <li><a href="/conditions">Conditions</a></li>
-                  <li><a href="/confidentialite">Confidentialité</a></li>
-                </ul>
-              </div>
-            </div>
-            <div class="pied__bas">
-              <span>© Logeo · Parakou, Bénin</span>
-              <span>FCFA · Africa/Porto-Novo</span>
-            </div>
+        {% if barre_laterale %}
           </div>
-        </footer>
-      {% endblock pied %}
+          </div>
+        {% endif %}
+      </main>
+      {% if not barre_laterale %}
+        {% block pied %}
+          <footer class="pied">
+            <div class="conteneur">
+              <div class="pied__grille">
+                <div class="pied__logo-colonne">
+                  <a class="logotype pied__logo" href="/" aria-label="Logeo">
+                    Logeo<span class="logotype__point">.</span>
+                  </a>
+                  <p class="pied__slogan">Le logement à Parakou, vu avant d'y aller.</p>
+                </div>
+                <div>
+                  <p class="pied__titre">Raccourcis</p>
+                  <ul class="pied__liste">
+                    <li><a href="/annonces">Chambres</a></li>
+                    <li><a href="/#comment-ca-marche">Comment ça marche</a></li>
+                    <li><a href="/#faq">FAQ</a></li>
+                    {% if request.user.is_authenticated and request.user.role == "client" %}
+                      <li><a href="/compte/alertes">Mes alertes</a></li>
+                    {% endif %}
+                  </ul>
+                </div>
+                <div>
+                  <p class="pied__titre">Quartiers</p>
+                  <ul class="pied__liste">
+                    <li><a href="/annonces?district=banikanni">Banikanni</a></li>
+                    <li><a href="/annonces?district=guema">Guéma</a></li>
+                    <li><a href="/annonces?district=albarika">Albarika</a></li>
+                    <li><a href="/annonces?district=titirou">Titirou</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="pied__titre">Contact</p>
+                  <ul class="pied__liste">
+                    <li><a href="{{ contact_equipe.tel_url }}">{{ contact_equipe.phone_display }}</a></li>
+                    <li><a href="{{ contact_equipe.whatsapp_url }}" rel="noopener">Écrire sur WhatsApp</a></li>
+                    <li><a href="/conditions">Conditions</a></li>
+                    <li><a href="/confidentialite">Confidentialité</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="pied__bas">
+                <span>© Logeo · Parakou, Bénin</span>
+                <span>FCFA · Africa/Porto-Novo</span>
+              </div>
+            </div>
+          </footer>
+        {% endblock pied %}
+      {% endif %}
     </div>
     <script src="{% static 'js/mot-de-passe.js' %}" defer></script>
+    <script src="{% static 'js/code-otp.js' %}" defer></script>
   </body>
 </html>
