@@ -18,6 +18,11 @@
       {% include "admin/includes_icone.html" with nom="alert" %}
       Erreurs
     </a>
+    <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == '/connexions-echouees/' %} lg-nav__lien--actif{% endif %}"
+       href="/connexions-echouees/">
+      {% include "admin/includes_icone.html" with nom="shield" %}
+      Connexions échouées (site et appli)
+    </a>
   {% endif %}
   {% for rubrique in available_apps %}
     <section class="lg-nav__rubrique{% if rubrique.app_url in request.path %} lg-nav__rubrique--courante{% endif %}">

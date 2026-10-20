@@ -459,3 +459,77 @@ class ModerationActionAdmin(admin.ModelAdmin):
         if getattr(request, "_decision_refusee", False):
             return redirect(reverse("admin:moderation_moderationaction_add"))
         return super().response_add(request, obj, post_url_continue)
+
+
+# --------------------------------------------------------------- avis des locataires (plan v3, G3 et J4)
+from apps.listings.models import Review  # noqa: E402
+from apps.listings.services import avis as service_avis  # noqa: E402
+
+
+@admin.register(Review)
+class AvisAdmin(admin.ModelAdmin):
+    """Avis publiés tout de suite ; l'équipe les relit ici et masque ceux qui posent problème (l'auteur garde son avis,
+    il disparaît seulement du public)."""
+
+    list_display = (
+        "created_at",
+        "note_etoiles",
+        "commentaire_court",
+        "annonce",
+        "auteur",
+        "visible",
+    )
+    list_filter = ("is_hidden", "rating")
+    search_fields = ("comment", "listing__title")
+    readonly_fields = ("listing", "author", "rating", "comment", "created_at", "updated_at")
+    fields = (
+        "listing",
+        "author",
+        "rating",
+        "comment",
+        "is_hidden",
+        "hidden_reason",
+        "created_at",
+        "updated_at",
+    )
+    ordering = ("-created_at",)
+    actions = ("masquer", "reafficher")
+    list_select_related = ("listing", "author")
+
+    @admin.display(description="Note", ordering="rating")
+    def note_etoiles(self, obj):
+        return f"{obj.rating}/5"
+
+    @admin.display(description="Commentaire")
+    def commentaire_court(self, obj):
+        return (obj.comment[:80] + "…") if len(obj.comment) > 80 else (obj.comment or "—")
+
+    @admin.display(description="Annonce", ordering="listing__title")
+    def annonce(self, obj):
+        return obj.listing.title
+
+    @admin.display(description="Auteur")
+    def auteur(self, obj):
+        return obj.author.full_name or "Sans nom"
+
+    @admin.display(description="Visible", boolean=True, ordering="is_hidden")
+    def visible(self, obj):
+        return not obj.is_hidden
+
+    @admin.action(description="Masquer les avis sélectionnés")
+    def masquer(self, request, queryset):
+        for r in queryset:
+            service_avis.masquer(r.pk, acteur=request.user, raison="Masqué par la modération")
+        messages.success(request, f"{queryset.count()} avis masqué(s).")
+
+    @admin.action(description="Réafficher les avis sélectionnés")
+    def reafficher(self, request, queryset):
+        for r in queryset:
+            service_avis.reafficher(r.pk, acteur=request.user)
+        messages.success(request, f"{queryset.count()} avis réaffiché(s).")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

@@ -4,6 +4,7 @@ import hashlib
 
 from apps.accounts.models import ROLES_CLIENTELE, Statut, User
 from apps.accounts.phone import NumeroInvalide, normaliser
+from apps.audit import services as audit
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
 
@@ -18,6 +19,28 @@ def _cle_telephone(saisie: str) -> tuple[str, str | None]:
     except NumeroInvalide:
         brut = (saisie or "").strip().lower()[:40]
         return "x:" + hashlib.sha256(brut.encode()).hexdigest()[:24], None
+
+
+def numero_masque(e164: str | None) -> str:
+    """« +2290197123456 » → « +229 01 ** ** 34 56 » : assez pour reconnaître un compte, jamais le numéro entier."""
+    if not e164:
+        return "numéro illisible"
+    chiffres = e164.removeprefix("+229")
+    return f"+229 {chiffres[:2]} ** ** {chiffres[-4:-2]} {chiffres[-2:]}"
+
+
+def _journaliser_echec(e164, utilisateur, client: str, verrouille: bool) -> None:
+    """Échec de connexion du site ou de l'application, visible dans l'administration (plan v3, J2)."""
+    adresse = any(
+        c in client for c in ".:"
+    )  # le site passe l'adresse IP (ou « web »), l'application son installation
+    surface = "site" if adresse or client == "web" else "application"
+    audit.enregistrer(
+        "auth.compte_verrouille" if verrouille else "auth.connexion_echouee",
+        cible=utilisateur, cible_type=None if utilisateur else "user",
+        metadata={"numero": numero_masque(e164), "surface": surface, "compte_connu": utilisateur is not None},
+        ip=client if adresse else None,
+    )  # fmt: skip
 
 
 def authentifier(saisie_telephone: str, mot_de_passe: str, client: str) -> User:
@@ -37,7 +60,8 @@ def authentifier(saisie_telephone: str, mot_de_passe: str, client: str) -> User:
         ).first()
     correct = mots_de_passe.verifier(utilisateur, mot_de_passe or "")
     if not correct or utilisateur is None:
-        verrouillage.enregistrer_echec(cle, client)
+        verrouille = verrouillage.enregistrer_echec(cle, client)
+        _journaliser_echec(e164, utilisateur, client, verrouille)
         raise verrouillage.refus_uniforme(1)
 
     if utilisateur.status == Statut.BANNED or not utilisateur.is_active:

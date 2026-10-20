@@ -537,3 +537,53 @@ class TestPageErreurs:
     def test_un_moderateur_n_y_a_pas_acces(self):
         c, _ = se_connecter(personnel(PersonnelFactory))
         assert c.get("/erreurs/").status_code == 403
+
+
+class TestPlanV3Administration:
+    def test_chaque_parametre_a_une_note(self):
+        from adminsite.parametres_page import NOTES
+        from apps.core import parametres
+
+        assert set(parametres.DEFAUTS) <= set(NOTES)
+        c, _ = se_connecter(personnel())
+        page = c.get("/core/appsetting/").content.decode()
+        assert 'class="lg-champ__note"' in page and "recommandé : le gérant marque lui-même" in page
+
+    def test_echecs_du_site_visibles_dans_l_administration(self):
+        from apps.accounts.services import authentification
+        from apps.core.errors import ErreurMetier
+
+        ClientFactory(phone_e164="+2290197343434")
+        with pytest.raises(ErreurMetier):
+            authentification.authentifier("97343434", "faux", "192.168.1.10")
+        ligne = AuditLog.objects.get(action="auth.connexion_echouee")
+        assert (
+            ligne.metadata["numero"] == "+229 01 ** ** 34 34"
+            and ligne.metadata["surface"] == "site"
+        )
+        c, _ = se_connecter(personnel())
+        page = c.get("/connexions-echouees/").content.decode()
+        assert "+229 01 ** ** 34 34" in page and "192.168.1.10" in page
+
+    def test_les_pages_de_securite_expliquent_ce_qu_elles_montrent(self):
+        c, _ = se_connecter(personnel())
+        page = c.get("/axes/accessattempt/").content.decode()
+        assert "une page vide est donc normale" in page
+
+    def test_moderateur_masque_un_avis(self):
+        import uuid
+
+        from apps.chat import services as chat
+        from apps.listings.models import Review
+        from apps.listings.services import avis
+
+        a = ListingFactory()
+        loc = ClientFactory()
+        conversation = chat.demarrer(loc, a.pk)
+        chat.envoyer(loc, conversation.pk, "Bonjour", uuid.uuid4())
+        chat.envoyer(a.gerant.user, conversation.pk, "Oui", uuid.uuid4())
+        r = avis.donner(loc, a.pk, 1, "Commentaire déplacé")
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get("/listings/review/").status_code == 200
+        c.post("/listings/review/", {"action": "masquer", "_selected_action": [str(r.pk)]})
+        assert Review.objects.get(pk=r.pk).is_hidden

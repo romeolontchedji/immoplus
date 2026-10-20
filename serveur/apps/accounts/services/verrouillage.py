@@ -53,7 +53,8 @@ def controler(telephone: str, client: str) -> None:
         raise refus_uniforme(max(1, r.ttl(cles["heure"])))
 
 
-def enregistrer_echec(telephone: str, client: str) -> None:
+def enregistrer_echec(telephone: str, client: str) -> bool:
+    """Compte un échec ; retourne vrai si cet échec déclenche le verrouillage."""
     r = redis_file.client()
     cles = _cles(telephone, client)
     seuil = int(parametres.lire("LOGIN_LOCK_THRESHOLD"))
@@ -70,6 +71,8 @@ def enregistrer_echec(telephone: str, client: str) -> None:
         duree = min(base_s * 2 ** (niveau - 1), DUREE_MAX_S)
         r.set(cles["verrou"], 1, ex=duree)
         r.delete(cles["echecs"])
+        return True
+    return False
 
 
 def enregistrer_succes(telephone: str, client: str) -> None:

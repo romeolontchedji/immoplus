@@ -467,3 +467,9 @@ textarea.lg-json { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
 .lg-erreurs-resume { margin: 0 0 var(--sp-3); padding: 0; list-style: none; display: grid; gap: var(--sp-2); }
 .lg-erreurs-resume li { list-style: none; padding: 0; }
 
+
+/* Tableau simple des pages maison (connexions échouées du site, plan v3, J2) */
+.lg-tableau { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--r-card); overflow: hidden; }
+.lg-tableau th { text-align: left; padding: var(--sp-3); font-size: var(--fs-12); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); border-bottom: 1px solid var(--divider); }
+.lg-tableau td { padding: var(--sp-3); border-bottom: 1px solid var(--divider); font-size: var(--fs-14); }
+.lg-champ__note { margin: var(--sp-1) 0 0; font-size: var(--fs-13); line-height: 1.5; color: var(--text-muted); }

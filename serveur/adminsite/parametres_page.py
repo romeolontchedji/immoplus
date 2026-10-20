@@ -40,6 +40,83 @@ CHOIX = {
         ("block", "Bloquer le message"),
     ]
 }
+
+# Note affichée sous chaque réglage (plan v3, J1) : à quoi il sert, ce que change une modification, l'unité.
+NOTES = {
+    "MAINTENANCE_ENABLED": "Coché : l'application mobile affiche un écran de maintenance au lieu de fonctionner. Le site "
+    "reste ouvert. À utiliser pendant une mise à jour du serveur.",
+    "MAINTENANCE_MESSAGE": "Texte de l'écran de maintenance (ex. « Retour vers 14 h »). Vide : message standard.",
+    "APP_NOTICE": "Petit message affiché en haut de l'application pour tous (ex. une nouveauté). Vide : rien n'est affiché.",
+    "MIN_SUPPORTED_VERSION": "Les applications plus anciennes que cette version doivent se mettre à jour avant de "
+    "continuer. Format 1.2.0. À monter seulement après publication de la nouvelle version sur les magasins.",
+    "TEAM_PHONE": "Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229…",
+    "LEGAL_PROVISIONAL": "Coché : un bandeau prévient que les mentions légales sont provisoires. À décocher quand "
+    "l'entreprise est réellement immatriculée et les champs ci-dessous exacts.",
+    "LEGAL_COMPANY": "Nom officiel de la société qui édite Logeo, repris dans les conditions et la confidentialité.",
+    "LEGAL_RCCM": "Numéro d'immatriculation au registre du commerce (RCCM).",
+    "LEGAL_IFU": "Identifiant fiscal unique (IFU) de la société.",
+    "LEGAL_ADDRESS": "Adresse du siège, affichée dans les textes légaux.",
+    "LEGAL_EMAIL": "Adresse où écrire pour une question légale ou sur ses données personnelles.",
+    "LEGAL_UPDATED_AT": "Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ.",
+    "TERMS_VERSION": "Changer ce numéro oblige chaque utilisateur à accepter de nouveau les conditions à sa prochaine "
+    "connexion. Ne le modifier que si les conditions ont réellement changé.",
+    "LISTING_PREMODERATION": "Coché : chaque annonce attend la validation de l'équipe avant d'être visible. Décoché : "
+    "seule la première annonce d'un gérant est relue.",
+    "STALE_REMINDER_DAYS": "Liste de jours sans confirmation après lesquels le gérant reçoit un rappel, ex. [7, 10]. "
+    "Utilisé seulement si le masquage automatique ci-dessous est actif.",
+    "STALE_HIDE_DAYS": "Nombre de jours sans confirmation avant que l'annonce soit masquée automatiquement. 0 = jamais "
+    "(recommandé : le gérant marque lui-même une chambre louée).",
+    "RENTED_REPORTS_THRESHOLD": "Nombre de locataires différents qui signalent « déjà louée » avant qu'un dossier "
+    "s'ouvre dans la modération.",
+    "RENTED_VIDEO_DELETE_DAYS": "Après « louée », la vidéo est supprimée au bout de ce nombre de jours (le gérant peut "
+    "annuler « louée » d'ici là).",
+    "READONLY_AFTER_RENT_DAYS": "Après « louée », les conversations de la chambre passent en lecture seule au bout de "
+    "ce nombre de jours.",
+    "ARCHIVE_AFTER_RENT_DAYS": "Après « louée », l'annonce est archivée (retirée de l'espace du gérant) au bout de ce "
+    "nombre de jours.",
+    "CAMPUS_REFERENCE": "Position de l'Université de Parakou qui sert à calculer « à 450 m de l'UP ». Format "
+    '{"latitude": 9.337, "longitude": 2.630}.',
+    "CONTACT_LEAK_MODE": "Que faire d'un numéro ou d'un lien écrit dans la messagerie : laisser passer, le masquer, "
+    "prévenir la modération ou bloquer le message. Les annonces refusent toujours les coordonnées.",
+    "MESSAGE_PER_MINUTE": "Nombre maximum de messages qu'une personne peut envoyer par minute (contre les envois en "
+    "masse).",
+    "NEW_CONVERSATIONS_PER_DAY": "Nombre maximum de nouveaux gérants qu'un locataire peut contacter par jour.",
+    "ALERTS_MAX_PER_USER": "Nombre maximum d'alertes actives par locataire.",
+    "UNANSWERED_REMINDER_H": "Un gérant qui n'a pas lu un message reçoit un rappel après ce nombre d'heures.",
+    "SMS_FALLBACK_ENABLED": "Coché : un gérant sans notification push reçoit un SMS pour un nouveau message (payant, "
+    "chaque SMS est facturé par l'agrégateur).",
+    "OTP_DAILY_BUDGET": "Nombre maximum de SMS de code envoyés par jour, par usage (inscription, mot de passe oublié, "
+    "changement de numéro). Protège la facture SMS contre les abus.",
+    "OTP_PHONE_PER_HOUR": "Nombre de codes qu'un même numéro peut demander par heure.",
+    "OTP_INSTALLATION_PER_DAY": "Nombre de codes qu'un même téléphone (installation de l'application) peut demander par "
+    "jour.",
+    "OTP_IP24_PER_DAY": "Nombre de codes demandés par jour depuis un même réseau (adresses IP voisines).",
+    "OTP_RESEND_DELAY_S": "Attente obligatoire, en secondes, avant de pouvoir redemander un code.",
+    "OTP_ALLOWED_COUNTRIES": 'Pays dont les numéros peuvent recevoir un code, en codes à deux lettres. Ex. ["BJ"] '
+    "pour le Bénin seulement.",
+    "LOGIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe d'affilée avant de bloquer temporairement la connexion "
+    "(site et application).",
+    "LOGIN_LOCK_MINUTES": "Durée du premier blocage, en minutes ; elle double à chaque nouveau blocage du même compte.",
+    "LOGIN_FAILS_PER_HOUR_PER_PHONE": "Plafond d'échecs par heure pour un numéro, tous appareils confondus (contre les "
+    "attaques réparties).",
+    "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
+    "oublié sur le site.",
+    "ADMIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe avant le blocage d'un compte de l'administration.",
+    "ADMIN_SESSION_IDLE_MIN": "Sans activité pendant ce nombre de minutes, la session de l'administration se ferme.",
+    "ADMIN_SESSION_MAX_H": "Une session de l'administration se ferme au bout de ce nombre d'heures, même active.",
+    "STAFF_READS_ALERT_THRESHOLD": "Si un membre du personnel ouvre plus de conversations que ce nombre dans la "
+    "journée, une alerte est levée (protection de la vie privée).",
+    "MODERATOR_MAX_SUSPENSION_DAYS": "Durée maximale d'une suspension décidée par un modérateur ; au-delà, il faut un "
+    "administrateur.",
+    "SUBSCRIPTION_ENABLED": "Coché : les gérants doivent avoir un abonnement actif pour publier. Désactivé en V1 : "
+    "tout est gratuit.",
+    "SUBSCRIPTION_GRACE_DAYS": "Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son "
+    "abonnement.",
+    "PLANS": "Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé.",
+    "PAID_ALERTS_ENABLED": "Coché : les locataires peuvent payer une alerte prioritaire (SMS en plus de la notification). "
+    "Désactivé en V1.",
+}
+
 LONGS = {"MAINTENANCE_MESSAGE", "APP_NOTICE", "LEGAL_ADDRESS"}
 
 
@@ -51,6 +128,12 @@ def sections() -> list[tuple[str, str, str, list[str]]]:
 
 
 def _champ(cle: str) -> forms.Field:
+    champ = _champ_brut(cle)
+    champ.note = NOTES.get(cle, "")  # lu par admin/parametres.html
+    return champ
+
+
+def _champ_brut(cle: str) -> forms.Field:
     defaut, description = parametres.DEFAUTS[cle]
     commun = {"label": description, "help_text": cle, "required": False}
     if cle in CHOIX:

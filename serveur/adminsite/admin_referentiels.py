@@ -35,5 +35,21 @@ class DistrictAdmin(admin.ModelAdmin):
     def annonces_en_ligne(self, obj):
         return obj._en_ligne
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        aides = {
+            "name": "Nom affiché partout (recherche, alertes, publication), ex. « Albarika ».",
+            "slug": "Forme pour les adresses web, remplie toute seule à partir du nom (ex. albarika).",
+            "latitude": "Centre du quartier. Sur openstreetmap.org : clic droit au centre du quartier › "
+            "« Afficher l'adresse » ; le premier nombre est la latitude (ex. 9.3372).",
+            "longitude": "Le second nombre (ex. 2.6303). Sert à la distance à l'université et aux quartiers voisins.",
+            "sort_order": "Position dans les listes : les plus petits nombres d'abord.",
+            "is_active": "Décoché : le quartier disparaît des listes ; les annonces existantes restent.",
+        }
+        for nom, aide in aides.items():
+            if nom in form.base_fields:
+                form.base_fields[nom].help_text = aide
+        return form
+
     def has_delete_permission(self, request, obj=None):
         return False

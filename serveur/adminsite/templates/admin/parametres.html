@@ -28,6 +28,7 @@
               <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
               <div class="lg-champ__saisie">
                 {{ champ }}
+                {% if champ.field.note %}<p class="lg-champ__note">{{ champ.field.note }}</p>{% endif %}
                 <code class="lg-champ__cle">{{ champ.help_text }}</code>
                 {% for e in champ.errors %}<p class="lg-champ__erreur">{{ e }}</p>{% endfor %}
               </div>

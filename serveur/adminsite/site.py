@@ -29,7 +29,7 @@ ORDRE_RUBRIQUES = ["moderation", "accounts", "listings", "axes", "audit", "core"
 ORDRE_PAGES = {
     "moderation": ["Report", "ModerationAction"],
     "accounts": ["GerantProfile", "User"],
-    "listings": ["Listing", "RoomType", "District"],
+    "listings": ["Listing", "Review", "RoomType", "District"],
     "axes": ["AccessAttempt", "AccessFailureLog", "AccessLog"],
 }
 ICONES_RUBRIQUES = {
@@ -55,8 +55,29 @@ class AdminLogeo(AdminSite):
         return [
             path("verification/", self.verification, name="verification"),
             path("erreurs/", self.admin_view(self.erreurs), name="erreurs"),
+            path(
+                "connexions-echouees/",
+                self.admin_view(self.connexions_echouees),
+                name="connexions-echouees",
+            ),
             *super().get_urls(),
         ]
+
+    def connexions_echouees(self, request):
+        """Échecs de connexion des locataires et gérants (site et application) : axes ne voit que l'administration."""
+        from django.core.exceptions import PermissionDenied
+        from django.shortcuts import render
+
+        from apps.audit.models import AuditLog
+
+        if request.user.role != "admin":
+            raise PermissionDenied
+        lignes = AuditLog.objects.filter(
+            action__in=["auth.connexion_echouee", "auth.compte_verrouille"]
+        ).order_by("-created_at")[:300]
+        contexte = {**self.each_context(request), "title": "Connexions échouées (site et application)",
+                    "lignes": lignes}  # fmt: skip
+        return render(request, "admin/connexions-echouees.html", contexte)
 
     def erreurs(self, request):
         """Suivi des erreurs (apps/core/erreurs.py) : liste regroupée, détail, « corrigée ». Administrateurs seulement."""

@@ -1,0 +1,6 @@
+{% extends "admin/change_list.html" %}
+{# Note explicative en tête de page (plan v3, J1 et J2). #}
+{% block content %}
+  <p class="lg-bandeau">Mauvais mots de passe en cours de comptage pour l'administration. La ligne disparaît dès que la personne réussit à se connecter (ou au bout de 30 minutes) : une page vide est donc normale. Après 5 échecs, l'adresse IP ou l'identifiant est bloqué 30 minutes.</p>
+  {{ block.super }}
+{% endblock %}

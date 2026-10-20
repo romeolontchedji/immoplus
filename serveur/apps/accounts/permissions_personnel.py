@@ -13,6 +13,8 @@ PERMISSIONS_MODERATEUR = frozenset(
         "listings.change_listing",
         "listings.view_roomtype",  # décision V1 : valider ou rattacher les types proposés
         "listings.change_roomtype",
+        "listings.view_review",  # plan v3 : relire et masquer les avis
+        "listings.change_review",
         "accounts.view_gerantprofile",
     }
 )
