@@ -52,6 +52,20 @@ git remote set-url --add --push origin git@github.com:Magloireaffokpe/immoplus.g
 make hooks
 ```
 
+**Ce qui va où (les deux dépôts ne se synchronisent jamais seuls entre eux) :**
+
+| Geste | Dépôt du développeur | Dépôt de référence (production) |
+|---|---|---|
+| `git push` d'une branche | ✔ reçoit la branche | ✔ reçoit la branche |
+| Fusion d'une demande **sur le dépôt de référence** | rien | ✔ son `main` avance → déployable |
+| Fusion d'une demande **sur le dépôt du développeur** | ✔ son `main` avance | **rien : ne part pas en production** |
+| Push direct sur un `main` | refusé par le hook | refusé par le hook |
+
+Les demandes de fusion se font donc **toujours** sur `romeolontchedji/immoplus` : `gh pr create --repo
+romeolontchedji/immoplus …`. Sans `--repo`, `gh` peut proposer le dépôt du développeur ; sur le site GitHub,
+vérifier que la base affichée est `romeolontchedji/immoplus` › `main`. Le `main` du dépôt du développeur reste à
+l'ancienne version, ce qui est sans conséquence ; le `main` **local** suit celui de la référence (`git pull`).
+
 Le développeur se connecte une fois à GitHub en ligne de commande (`gh auth login -w`, connexion par le navigateur :
 le code à 8 caractères s'affiche dans le terminal). Une connexion vaut pour tous les dépôts où il a les droits.
 
