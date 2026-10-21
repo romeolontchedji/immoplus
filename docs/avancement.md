@@ -2,6 +2,14 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-21 (matin) : mise en production sur `main` et CI/CD documentée.**
+- Demande de fusion n°3 fusionnée dans `main` de `romeolontchedji/immoplus` (dépôt de référence) après CI verte :
+  verrou npm complété pour `npm ci`, Pillow 13.0.0 et certifi corrigeant 9 failles (`pip-audit`), test Cloudinary
+  rendu déterministe.
+- `docs/flux-et-ci-cd.md` : dépôts, flux quotidien, hooks, workflows GitHub Actions, déploiement manuel, sécurité de
+  la chaîne. Reste à faire par le propriétaire du dépôt : protection de `main`, branche par défaut `main`,
+  CODEOWNERS.
+
 **2026-10-21 : Cloudinary, capacité, session de l'administration.**
 - Cloudinary activable depuis Administration › Paramètres › Photos et vidéos (ADR 0010, sans nouvelle dépendance) :
   clés préfixées `cloudinary:` (disque et Cloudinary cohabitent), envoi par le worker (worker-media reste sans
