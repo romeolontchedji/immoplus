@@ -28,7 +28,7 @@ cachecontrol==0.14.4
     # via pip-audit
 celery==5.6.3
     # via -r serveur/requirements/base.in
-certifi==2026.7.22
+certifi==2026.10.19
     # via
     #   requests
     #   sentry-sdk
@@ -157,7 +157,7 @@ pathspec==1.1.1
     # via djlint
 phonenumbers==9.0.40
     # via -r serveur/requirements/base.in
-pillow==12.3.0
+pillow==13.0.0
     # via
     #   -r serveur/requirements/base.in
     #   pillow-heif
