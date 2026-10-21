@@ -13,7 +13,9 @@ def compte(settings, tmp_path):
     settings.STORAGE_PROVIDER = "local"
     settings.CLOUDINARY_CLOUD_NAME = "immoplus-test"
     settings.CLOUDINARY_API_KEY = "123456"
-    settings.CLOUDINARY_API_SECRET = "abcd"
+    settings.CLOUDINARY_API_SECRET = (
+        "secret-jamais-envoye"  # hors alphabet hexadécimal des séparateurs
+    )
     settings.CLOUDINARY_FOLDER = "immoplus"
 
 
@@ -32,7 +34,8 @@ def appels(monkeypatch):
     return notes
 
 
-def test_signature_de_la_documentation_cloudinary():
+def test_signature_de_la_documentation_cloudinary(settings):
+    settings.CLOUDINARY_API_SECRET = "abcd"  # exemple officiel
     parametres = {
         "eager": "w_400,h_300,c_pad|w_260,h_200,c_crop",
         "public_id": "sample_image",
@@ -70,7 +73,9 @@ def test_publier_envoie_chaque_fichier_signe(appels):
     corps = appels[1]["corps"]
     assert b'name="public_id"\r\n\r\nimmoplus/listings/a1/m1/960\r\n' in corps
     assert b'name="api_key"\r\n\r\n123456\r\n' in corps and b"grande" in corps
-    assert b'name="signature"' in corps and b"abcd" not in corps  # le secret ne part jamais
+    assert (
+        b'name="signature"' in corps and b"secret-jamais-envoye" not in corps
+    )  # le secret ne part jamais
 
 
 def test_envoi_refuse_sans_cle_ni_secret(settings, appels):
