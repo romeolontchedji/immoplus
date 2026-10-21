@@ -1,15 +1,38 @@
-{% load i18n logeo %}
+{% load i18n immoplus static %}
 <!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="color-scheme" content="light dark">
-    <title>{% block titre %}Logeo — Trouve ta chambre à Parakou{% endblock %}</title>
+    <meta name="color-scheme" content="light">
+    <title>{% block titre %}Immo+ — Chambres à Parakou, visite en vidéo{% endblock %}</title>
     <meta name="description"
-          content="{% block description %}Trouve ta chambre à Parakou : vidéos réelles, gérants vérifiés, messagerie sûre.{% endblock %}">
-    <link rel="stylesheet" href="{% css_logeo %}">
+          content="{% block description %}Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct. Visite d'abord, paie ensuite.{% endblock %}">
+    <link rel="icon" href="{% static 'design/logo.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'design/favicon.ico' %}" sizes="any">
+    <link rel="preload"
+          href="{% static 'fonts/plus-jakarta-sans-latin.woff2' %}"
+          as="font"
+          type="font/woff2"
+          crossorigin>
+    <link rel="stylesheet" href="{% css_immoplus %}">
+    {# Aperçu des liens partagés (WhatsApp, Facebook, TikTok…) : valeurs par défaut, la fiche les précise. #}
+    <meta property="og:site_name" content="Immo+">
+    <meta property="og:locale" content="fr_FR">
+    {% block partage %}
+      <meta property="og:type" content="website">
+      <meta property="og:title"
+            content="Immo+ — Chambres à Parakou, visite en vidéo">
+      <meta property="og:description"
+            content="Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct.">
+      <meta property="og:url" content="{{ request.build_absolute_uri }}">
+      <meta property="og:image"
+            content="{{ request.scheme }}://{{ request.get_host }}{% static 'design/partage.jpg' %}">
+      <meta property="og:image:width" content="1200">
+      <meta property="og:image:height" content="630">
+      <meta name="twitter:card" content="summary_large_image">
+    {% endblock %}
     {% block tete %}{% endblock %}
   </head>
   <body>
@@ -17,16 +40,85 @@
     <div class="page">
       <header class="entete">
         <div class="conteneur entete__barre">
-          <a class="logotype" href="/">Logeo<span class="logotype__point">.</span></a>
-          {% block navigation %}{% endblock %}
+          <a class="logotype" href="/" aria-label="Immo+ — Accueil">
+            <img class="logotype__image"
+                 src="{% static 'design/logo-horizontal.svg' %}"
+                 alt="Immo+"
+                 width="144"
+                 height="36">
+          </a>
+          {% block navigation %}
+            {% include "web/composants/navigation.html" %}
+          {% endblock %}
         </div>
       </header>
       <main id="contenu" class="page__contenu">
+        {% if barre_laterale %}
+          {# Comptes connectés : barre latérale fixe sur toutes les pages sauf l'accueil (plan v3, E2). #}
+          <div class="espace">
+            {% include "web/composants/barre-espace.html" %}
+            <div class="espace__principal">
+        {% endif %}
         {% block contenu %}{% endblock %}
+        {% if barre_laterale %}
+          </div>
+          </div>
+        {% endif %}
       </main>
-      <footer class="pied">
-        <div class="conteneur">© Logeo — Parakou, Bénin</div>
-      </footer>
+      {% if not barre_laterale %}
+        {% block pied %}
+          <footer class="pied">
+            <div class="conteneur">
+              <div class="pied__grille">
+                <div class="pied__logo-colonne">
+                  <a class="logotype pied__logo" href="/" aria-label="Immo+">
+                    <img class="logotype__image"
+                         src="{% static 'design/logo-horizontal-sombre.svg' %}"
+                         alt="Immo+"
+                         width="144"
+                         height="36">
+                  </a>
+                  <p class="pied__slogan">Le logement à Parakou, vu avant d'y aller.</p>
+                </div>
+                <div>
+                  <p class="pied__titre">Raccourcis</p>
+                  <ul class="pied__liste">
+                    <li><a href="/annonces">Chambres</a></li>
+                    <li><a href="/#comment-ca-marche">Comment ça marche</a></li>
+                    <li><a href="/#faq">FAQ</a></li>
+                    {% if request.user.is_authenticated and request.user.role == "client" %}
+                      <li><a href="/compte/alertes">Mes alertes</a></li>
+                    {% endif %}
+                  </ul>
+                </div>
+                <div>
+                  <p class="pied__titre">Quartiers</p>
+                  <ul class="pied__liste">
+                    <li><a href="/annonces?district=banikanni">Banikanni</a></li>
+                    <li><a href="/annonces?district=guema">Guéma</a></li>
+                    <li><a href="/annonces?district=albarika">Albarika</a></li>
+                    <li><a href="/annonces?district=titirou">Titirou</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="pied__titre">Contact</p>
+                  <ul class="pied__liste">
+                    <li><a href="{{ contact_equipe.tel_url }}">{{ contact_equipe.phone_display }}</a></li>
+                    <li><a href="{{ contact_equipe.whatsapp_url }}" rel="noopener">Écrire sur WhatsApp</a></li>
+                    <li><a href="/conditions">Conditions</a></li>
+                    <li><a href="/confidentialite">Confidentialité</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="pied__bas">
+                <span>© Immo+ · Parakou, Bénin</span>
+                <span>FCFA · Africa/Porto-Novo</span>
+              </div>
+            </div>
+          </footer>
+        {% endblock pied %}
+      {% endif %}
     </div>
+    <script src="{% static 'js/mot-de-passe.js' %}" defer></script>
   </body>
 </html>

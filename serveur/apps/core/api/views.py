@@ -2,8 +2,15 @@
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from apps.core import services
+from apps.core import configuration, legal, services
+
+from .serializers import AppConfigOut, DocumentLegalOut
+from .throttles import LimiteLecture
 
 
 @require_GET
@@ -20,3 +27,39 @@ def readyz(request):
         status=200 if pret else 503,
         headers={"Cache-Control": "no-store"},
     )
+
+
+class ConfigurationApp(APIView):
+    """GET /v1/app-config : version minimale, maintenance, avis, drapeaux, limites, temps réel, contact de l'équipe."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=["Application"],
+        operation_id="app_config",
+        summary="Configuration distante",
+        responses={200: AppConfigOut},
+    )
+    def get(self, request):
+        return Response(
+            configuration.configuration_app(), headers={"Cache-Control": "public, max-age=60"}
+        )
+
+
+class DocumentLegal(APIView):
+    """GET /v1/legal/{slug} : conditions d'utilisation ou politique de confidentialité, même texte que le site."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [LimiteLecture]
+
+    @extend_schema(
+        tags=["Application"],
+        operation_id="legal_document",
+        summary="Texte légal (conditions, confidentialité)",
+        responses={200: DocumentLegalOut},
+    )
+    def get(self, request, slug: str):
+        return Response(legal.document(slug), headers={"Cache-Control": "public, max-age=300"})

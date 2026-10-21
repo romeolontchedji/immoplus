@@ -1,0 +1,19 @@
+{# Boutons « Précédent » / « Suivant » d'une étape de l'éditeur (js/etapes-annonce.js). Paramètres : precedent, suivant. #}
+<div class="etape__navigation">
+  {% if precedent %}
+    <button class="bouton bouton--secondaire"
+            type="button"
+            data-aller="{{ precedent }}">Précédent</button>
+  {% else %}
+    <span></span>
+  {% endif %}
+  {% if suivant %}
+    <button class="bouton bouton--primaire"
+            type="button"
+            data-aller="{{ suivant }}"
+            data-verifier>
+      Suivant
+      {% include "web/composants/icone.html" with nom="arrow-right" taille=18 %}
+    </button>
+  {% endif %}
+</div>

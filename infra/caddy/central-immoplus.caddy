@@ -1,0 +1,7 @@
+# Bloc à ajouter au Caddyfile du Caddy central du VPS partagé (~/apps/proxy/Caddyfile), puis :
+#   cd ~/apps/proxy && docker compose up -d
+# Le central obtient les certificats HTTPS des quatre noms et transmet tout au Caddy d'Immo+ (alias immoplus-web).
+# Remplacer immoplus.bj si le domaine change. L'hôte d'administration reste filtré par le Caddy d'Immo+.
+immoplus.bj, www.immoplus.bj, api.immoplus.bj, pilotage.immoplus.bj {
+	reverse_proxy immoplus-web:80
+}

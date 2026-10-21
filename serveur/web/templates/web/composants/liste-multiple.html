@@ -1,0 +1,29 @@
+{% comment %}
+  Liste déroulante à choix multiples (cases dans un menu repliable). Paramètres : `nom` (champ envoyé),
+  `libelle`, `options` (paires valeur, libellé), `choisis` (valeurs cochées), `vide` (texte quand rien n'est choisi).
+  js/listes-multiples.js résume le choix dans la ligne fermée ; sans script, le menu reste utilisable.
+{% endcomment %}
+<div class="champ">
+  <span class="champ__etiquette" id="libelle-{{ nom }}">{{ libelle }}</span>
+  <details class="liste-multiple" data-liste-multiple>
+    <summary class="liste-multiple__resume" aria-describedby="libelle-{{ nom }}">
+      <span class="liste-multiple__texte" data-resume data-vide="{{ vide }}">{{ vide }}</span>
+      <span class="liste-multiple__chevron" aria-hidden="true">
+        {% include "web/composants/icone.html" with nom="chevron-down" taille=18 %}
+      </span>
+    </summary>
+    <div class="liste-multiple__options"
+         role="group"
+         aria-labelledby="libelle-{{ nom }}">
+      {% for valeur, texte in options %}
+        <label class="liste-multiple__option">
+          <input type="checkbox"
+                 name="{{ nom }}"
+                 value="{{ valeur }}"
+                 {% if valeur in choisis %}checked{% endif %}>
+          <span>{{ texte }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </details>
+</div>

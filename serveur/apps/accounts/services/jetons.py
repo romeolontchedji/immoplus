@@ -24,7 +24,7 @@ from apps.audit import services as audit
 from apps.core import redis_file
 from apps.core.errors import ErreurMetier
 
-ISSUER = "logeo"
+ISSUER = "immoplus"
 DUREE_ACCES = timedelta(minutes=15)
 DUREE_REFRESH = timedelta(days=30)
 GRACE_S = 60

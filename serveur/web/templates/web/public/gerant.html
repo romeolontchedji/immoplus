@@ -1,0 +1,84 @@
+{% extends "web/base.html" %}
+{% load immoplus %}
+{% block titre %}{{ g.name }} — gérant sur Immo+{% endblock %}
+{% block description %}Chambres proposées par {{ g.name }} à Parakou, avis des locataires.{% endblock %}
+{% block contenu %}
+  {# Profil public d'un gérant (plan v3, F1) : accessible depuis la fiche et la messagerie ; jamais de numéro. #}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <header class="gerant-public">
+        <span class="gerant-public__avatar" aria-hidden="true">{{ g.name|default:"G"|slice:":2"|upper }}</span>
+        <div class="gerant-public__texte">
+          <h1 class="gerant-public__nom">
+            {{ g.name }}
+            {% if g.verified %}
+              <span class="badge-verifie-pill">
+                {% include "web/composants/icone.html" with nom="check" taille=12 %}
+                <span>Gérant vérifié</span>
+              </span>
+            {% endif %}
+          </h1>
+          <ul class="gerant-public__faits">
+            <li>
+              {% include "web/composants/icone.html" with nom="calendar" taille=16 %}
+              Sur Immo+ depuis {{ g.member_since|date:"F Y" }}
+            </li>
+            {% if g.median_response_min is not None %}
+              <li>
+                {% include "web/composants/icone.html" with nom="clock" taille=16 %}
+                Répond en {{ g.median_response_min|delai_reponse }} environ
+              </li>
+            {% endif %}
+            <li>
+              {% include "web/composants/icone.html" with nom="house" taille=16 %}
+              {{ g.listings|length }} chambre{{ g.listings|length|pluralize }} en ligne
+            </li>
+            <li>
+              {% include "web/composants/icone.html" with nom="star" taille=16 %}
+              {% if g.reviews.count %}
+                {{ g.reviews.average|floatformat:1 }} / 5 · {{ g.reviews.count }} avis
+              {% else %}
+                Pas encore d'avis
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      </header>
+      <section aria-labelledby="titre-chambres" class="pile">
+        <h2 class="catalogue-titre-principal" id="titre-chambres">Ses chambres</h2>
+        {% if g.listings %}
+          <div class="grille-annonces">
+            {% for a in g.listings %}
+              {% include "web/composants/carte.html" %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="texte-doux">Aucune chambre en ligne pour l'instant.</p>
+        {% endif %}
+      </section>
+      {% if g.reviews_items %}
+        <section class="fiche-bloc" aria-labelledby="titre-avis-gerant">
+          <h2 class="fiche-bloc__titre" id="titre-avis-gerant">Avis des locataires</h2>
+          <ul class="avis-liste">
+            {% for a in g.reviews_items %}
+              <li class="avis-item">
+                <div class="avis-item__tete">
+                  <span class="avis-item__auteur">{{ a.author_name }}</span>
+                  <span class="avis-item__etoiles" aria-label="{{ a.rating }} sur 5">
+                    {% for n in "12345" %}
+                      <span class="avis-item__etoile{% if forloop.counter <= a.rating %} avis-item__etoile--pleine{% endif %}">
+                        {% include "web/composants/icone.html" with nom="star" taille=14 %}
+                      </span>
+                    {% endfor %}
+                  </span>
+                  <a class="avis-item__date" href="/annonces/{{ a.listing_slug }}">{{ a.listing_title }}</a>
+                </div>
+                {% if a.comment %}<p class="avis-item__texte">{{ a.comment }}</p>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

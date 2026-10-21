@@ -99,3 +99,8 @@ def enregistrer_push(appareil: Device, fournisseur: str, jeton: str) -> None:
 
 def marquer_vu(appareil_id, ip: str | None = None) -> None:
     Device.objects.filter(pk=appareil_id).update(last_seen_at=timezone.now(), last_ip=ip or None)
+
+
+def desactiver_push(appareil_id) -> None:
+    """Jeton refusé par le fournisseur : l'appareil n'est plus utilisé pour les push tant qu'il n'a pas réenregistré un jeton."""
+    Device.objects.filter(pk=appareil_id).update(push_invalid_at=timezone.now())

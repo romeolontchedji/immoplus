@@ -10,7 +10,8 @@ DEBUG = False
 SECRET_KEY = env.texte("SECRET_KEY", "dev-secret-ne-jamais-utiliser-en-production")
 ALLOWED_HOSTS = env.liste("ALLOWED_HOSTS", "localhost,127.0.0.1")
 DOMAIN = env.texte("DOMAIN", "localhost")
-OTP_DEBUG_CODE = env.texte("OTP_DEBUG_CODE", "")
+# Adresse publique du site, pour les liens envoyés par courriel (réinitialisation, confirmation d'e-mail).
+SITE_URL = env.texte("SITE_URL") or f"https://www.{DOMAIN}"
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -47,6 +48,7 @@ MIDDLEWARE = [
 MIDDLEWARE_SITE = [
     *MIDDLEWARE[: MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1],
     "web.middleware.VersionDeSessionMiddleware",
+    "apps.core.acces_application.AccesApplicationMiddleware",  # 426 et 503 (le site et l'API, pas l'administration)
 ]
 
 ROOT_URLCONF = "config.urls_public"
@@ -61,6 +63,8 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
+                "web.context_processors.navigation",
+                "web.context_processors.contact",
             ],
         },
     }
@@ -70,7 +74,7 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.texte("DB_NAME", "logeo"),
+        "NAME": env.texte("DB_NAME", "immoplus"),
         "USER": env.texte("DB_USER", "app"),
         "PASSWORD": env.texte("DB_PASSWORD", "app-dev"),
         "HOST": env.texte("DB_HOST", "localhost"),
@@ -93,7 +97,7 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": REDIS_CACHE_URL,
-        "KEY_PREFIX": "logeo",
+        "KEY_PREFIX": "immoplus",
     }
 }
 
@@ -116,16 +120,24 @@ CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600}
 CELERY_TIMEZONE = "Africa/Porto-Novo"
+CELERY_WORKER_HIJACK_ROOT_LOGGER = (
+    False  # garde la journalisation de Django (et donc le suivi des erreurs)
+)
 
 # --- Authentification ---
 AUTH_USER_MODEL = "accounts.User"
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.Argon2PasswordHasher"]
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # 10 caractères depuis l'abandon des codes SMS (ADR 0009) : le mot de passe est le seul rempart.
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
+        "OPTIONS": {"min_length": 10},
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("username", "first_name", "last_name", "email")},
+    },
 ]
 
 # --- Régionalisation : français, fuseau du Bénin, montants en FCFA entiers ---
@@ -154,33 +166,64 @@ REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
 }
 SPECTACULAR_SETTINGS = {
-    "TITLE": "API Logeo",
-    "DESCRIPTION": "API REST de Logeo (additive uniquement, versionnée sous /v1).",
+    "TITLE": "API Immo+",
+    "DESCRIPTION": "API REST de Immo+ (additive uniquement, versionnée sous /v1).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "/static/vendor/swagger-ui",
+    "SWAGGER_UI_FAVICON_HREF": "/static/vendor/swagger-ui/favicon-32x32.png",
 }
 
 # --- Fournisseurs (interfaces dans apps.core.providers) ---
-SMS_PROVIDER = env.texte("SMS_PROVIDER", "console")
 PUSH_PROVIDER = env.texte("PUSH_PROVIDER", "console")
 STORAGE_PROVIDER = env.texte("STORAGE_PROVIDER", "local")
+# Cloudinary (ADR 0010) : activé depuis l'administration (paramètre MEDIA_STORAGE) quand le compte est renseigné.
+# Le nom du compte suffit pour construire les URL ; la clé et le secret ne sont donnés qu'au worker (envois).
+CLOUDINARY_CLOUD_NAME = env.texte("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = env.texte("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = env.texte("CLOUDINARY_API_SECRET")
+CLOUDINARY_FOLDER = env.texte("CLOUDINARY_FOLDER", "immoplus")
 VIDEO_PROVIDER = env.texte("VIDEO_PROVIDER", "local_ffmpeg")
 PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
-DEVICE_ATTESTATION_PROVIDER = env.texte("DEVICE_ATTESTATION_PROVIDER", "fake")
-CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER", "fake")
-TURNSTILE_SECRET = env.texte("TURNSTILE_SECRET")
-TURNSTILE_SITE_KEY = env.texte("TURNSTILE_SITE_KEY")
-SMS_HTTP_URL = env.texte("SMS_HTTP_URL")
-SMS_HTTP_TOKEN = env.texte("SMS_HTTP_TOKEN")
-SMS_HTTP_SECRET = env.texte("SMS_HTTP_SECRET")
+PAYMENT_WEBHOOK_SECRET = env.texte(
+    "PAYMENT_WEBHOOK_SECRET"
+)  # signature des webhooks (factice et réels)
+KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
+# Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).
+CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER") or "fake"
+TURNSTILE_SECRET = env.texte(
+    "TURNSTILE_SECRET"
+)  # clé secrète Turnstile (vérification côté serveur)
+TURNSTILE_SITE_KEY = env.texte(
+    "TURNSTILE_SITE_KEY"
+)  # clé publique Turnstile (affichage du défi dans la page)
+# Clés de test publiées par Cloudflare (le défi réussit toujours) : signalées comme erreur en production.
+TURNSTILE_CLES_DE_TEST = ("1x00000000000000000000AA", "1x0000000000000000000000000000000AA")
+PRODUCTION = False  # vrai dans les réglages public, admin et taches (garde-fous de démarrage)
 
 # --- Clés de sécurité : distinctes entre elles et de SECRET_KEY ; refusées en production si elles viennent d'ici ---
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY", "dev-jwt-ne-jamais-utiliser-en-production")
-OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY", "dev-otp-ne-jamais-utiliser-en-production")
 REDIS_QUEUE_FAKE = False
 
 # --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---
 SUBSCRIPTION_ENABLED = env.booleen("SUBSCRIPTION_ENABLED", False)
+
+# --- Courriels : codes de l'administration et alertes d'erreurs ---
+# N'importe quel serveur SMTP convient. Gratuit pour notre volume : Brevo (300 / jour), Gmail avec un « mot de passe
+# d'application » (500 / jour), ou la messagerie du nom de domaine. Seul le `worker` envoie (il a accès à Internet).
+# Envoi par SMTP (production) ; en développement, settings/local.py affiche les courriels dans la console.
+EMAIL_BACKEND = env.texte("EMAIL_BACKEND") or "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env.texte("EMAIL_HOST", "localhost")  # adresse du serveur SMTP du fournisseur
+EMAIL_PORT = env.entier("EMAIL_PORT", 587)  # 587 avec STARTTLS (le plus courant), 465 avec SSL
+EMAIL_HOST_USER = env.texte("EMAIL_HOST_USER")  # identifiant SMTP (souvent l'adresse d'envoi)
+EMAIL_HOST_PASSWORD = env.texte("EMAIL_HOST_PASSWORD")  # mot de passe ou clé SMTP du fournisseur
+EMAIL_USE_TLS = env.booleen("EMAIL_USE_TLS", True)  # chiffrement STARTTLS (port 587)
+EMAIL_USE_SSL = env.booleen(
+    "EMAIL_USE_SSL", False
+)  # chiffrement SSL direct (port 465) ; jamais avec TLS
+EMAIL_TIMEOUT = 15  # secondes avant d'abandonner un envoi (la tâche réessaie ensuite)
+# Expéditeur affiché dans les courriels de Immo+.
+DEFAULT_FROM_EMAIL = env.texte("DEFAULT_FROM_EMAIL") or "Immo+ <no-reply@localhost>"
 
 # --- Journalisation JSON ---
 LOGGING = {
@@ -189,10 +232,15 @@ LOGGING = {
     "filters": {"masque": {"()": "apps.core.logging.FiltreMasque"}},
     "formatters": {"json": {"()": "apps.core.logging.FormateurJson"}},
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["masque"]}
+        "console": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["masque"]},
+        # Suivi des erreurs (apps/core/erreurs.py) : regroupées, visibles dans l'administration, courriel limité.
+        "erreurs": {"class": "apps.core.erreurs.JournalErreursHandler", "level": "ERROR"},
     },
-    "root": {"handlers": ["console"], "level": env.texte("LOG_LEVEL", "INFO")},
+    "root": {"handlers": ["console", "erreurs"], "level": env.texte("LOG_LEVEL", "INFO")},
 }
+# Adresses qui reçoivent un courriel à chaque nouvelle erreur (au plus une fois par heure et par erreur),
+# séparées par des virgules. Vide : les erreurs restent visibles dans l'administration, sans courriel.
+ERREURS_DESTINATAIRES = env.liste("ERREURS_DESTINATAIRES")
 
 # --- En-têtes de sécurité (la CSP est posée par EnTetesSecuriteMiddleware) ---
 CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com"]

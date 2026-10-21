@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}
+  {% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Immo+ — administration
+{% endblock %}
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="preload"
+        href="{% static 'fonts/plus-jakarta-sans-latin.woff2' %}"
+        as="font"
+        type="font/woff2"
+        crossorigin>
+  <link rel="icon" href="{% static 'design/logo.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'admin/css/immoplus-adm.css' %}">
+{% endblock %}
+{% block branding %}
+  <div id="site-name">
+    <a href="{% url 'admin:index' %}" class="lg-marque">
+      <img src="{% static 'design/logo-horizontal.svg' %}" alt="Immo+" width="128" height="32">
+      <span class="lg-marque__badge">Administration</span>
+    </a>
+  </div>
+{% endblock %}
+{% block usertools %}
+  {% if has_permission %}
+    <div id="user-tools">
+      <span class="lg-utilisateur">
+        <span class="lg-utilisateur__avatar" aria-hidden="true">{{ user.get_short_name|slice:":1"|upper }}</span>
+        <span class="lg-utilisateur__nom">{{ user.get_full_name }}
+          <small>
+            {% if user.role == "admin" %}
+              Administrateur
+            {% else %}
+              Modérateur
+            {% endif %}
+          </small>
+        </span>
+      </span>
+      {% if site_url %}<a href="{{ site_url }}">Voir le site</a>{% endif %}
+      {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">Mot de passe</a>{% endif %}
+      <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+        {% csrf_token %}
+        <button type="submit">Déconnexion</button>
+      </form>
+    </div>
+  {% endif %}
+{% endblock %}

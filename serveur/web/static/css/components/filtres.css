@@ -1,0 +1,13 @@
+/* Filtres actifs : récapitulatif des critères, retirables un à un (liens, sans JavaScript). */
+.recapitulatif { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.recapitulatif__etiquette { font-size: var(--fs-14); font-weight: 600; color: var(--text-muted); }
+.filtres-actifs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.puce--retirable { text-decoration: none; color: var(--text); padding-inline-end: var(--sp-2); }
+.puce--retirable:hover { border-color: var(--danger); }
+.puce__retirer {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.35rem; height: 1.35rem; border-radius: var(--rayon-pilule);
+  background: var(--surface-sunken); color: var(--text-muted); font-size: var(--fs-14); line-height: 1;
+}
+.puce--retirable:hover .puce__retirer { background: var(--danger-bg); color: var(--danger-text); }
+.recapitulatif__effacer { font-size: var(--fs-14); }

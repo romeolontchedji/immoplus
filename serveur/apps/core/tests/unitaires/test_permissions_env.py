@@ -17,22 +17,22 @@ def test_refus_par_defaut():
     [("1", True), ("oui", True), ("TRUE", True), ("0", False), ("non", False), ("", False)],
 )
 def test_booleen(monkeypatch, valeur, attendu):
-    monkeypatch.setenv("LOGEO_X", valeur)
-    assert env.booleen("LOGEO_X") is attendu
+    monkeypatch.setenv("IMMOPLUS_X", valeur)
+    assert env.booleen("IMMOPLUS_X") is attendu
 
 
 def test_booleen_absent_utilise_le_defaut(monkeypatch):
-    monkeypatch.delenv("LOGEO_X", raising=False)
-    assert env.booleen("LOGEO_X", True) is True
+    monkeypatch.delenv("IMMOPLUS_X", raising=False)
+    assert env.booleen("IMMOPLUS_X", True) is True
 
 
 def test_entier_et_liste(monkeypatch):
-    monkeypatch.setenv("LOGEO_N", "42")
-    monkeypatch.setenv("LOGEO_L", "a, b ,, c")
-    assert env.entier("LOGEO_N") == 42
-    assert env.entier("LOGEO_ABSENT", 7) == 7
-    assert env.liste("LOGEO_L") == ["a", "b", "c"]
-    assert env.liste("LOGEO_ABSENT") == []
+    monkeypatch.setenv("IMMOPLUS_N", "42")
+    monkeypatch.setenv("IMMOPLUS_L", "a, b ,, c")
+    assert env.entier("IMMOPLUS_N") == 42
+    assert env.entier("IMMOPLUS_ABSENT", 7) == 7
+    assert env.liste("IMMOPLUS_L") == ["a", "b", "c"]
+    assert env.liste("IMMOPLUS_ABSENT") == []
 
 
 def test_application_celery_routes_par_file(settings):

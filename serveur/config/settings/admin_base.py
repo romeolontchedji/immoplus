@@ -2,20 +2,19 @@
 
 import copy
 
+from config import env
+
 from .base import *  # noqa: F403
 from .base import INSTALLED_APPS, MIDDLEWARE
 from .base import TEMPLATES as _TEMPLATES
 
 ROOT_URLCONF = "config.urls_admin"
 
-# `adminsite.apps.AdminLogeoConfig` remplace `django.contrib.admin` : son site par défaut impose la 2FA.
+# `adminsite.apps.AdminImmoplusConfig` remplace `django.contrib.admin` : connexion par e-mail et mot de passe.
 APPLICATIONS_ADMIN = [
     "django.contrib.messages",
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_static",
     "axes",
-    "adminsite.admin_config.AdminLogeoConfig",
+    "adminsite.admin_config.AdminImmoplusConfig",
     "adminsite",
 ]
 INSTALLED_APPS = [*INSTALLED_APPS, *APPLICATIONS_ADMIN]
@@ -25,12 +24,15 @@ MIDDLEWARE_ADMIN = [
     *MIDDLEWARE,
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
-# django-otp s'insère après l'authentification ; la durée de session après django-otp ; axes en dernier.
+# La durée de session s'insère après l'authentification ; axes en dernier.
 _i = MIDDLEWARE_ADMIN.index("django.contrib.auth.middleware.AuthenticationMiddleware") + 1
 MIDDLEWARE_ADMIN[_i:_i] = [
-    "django_otp.middleware.OTPMiddleware",
     "adminsite.middleware.DureeDeSessionMiddleware",
+    "adminsite.middleware.DoubleAuthMiddleware",
 ]
+# Double authentification : un code à 6 chiffres envoyé par courriel à chaque connexion (adminsite/double_auth.py).
+# Désactivable en développement seulement (ADMIN_2FA_ACTIVE=0) ; toujours active en production (settings/admin.py).
+ADMIN_2FA_ACTIVE = env.booleen("ADMIN_2FA_ACTIVE", True)
 MIDDLEWARE_ADMIN.append("axes.middleware.AxesMiddleware")
 MIDDLEWARE = MIDDLEWARE_ADMIN
 
@@ -41,13 +43,15 @@ AUTHENTICATION_BACKENDS_ADMIN = [
 AUTHENTICATION_BACKENDS = AUTHENTICATION_BACKENDS_ADMIN
 
 TEMPLATES = copy.deepcopy(_TEMPLATES)
+# Les gabarits d'`adminsite` priment (index « Vue d'ensemble »), puis ceux du site, puis les apps.
+TEMPLATES[0]["DIRS"] = [BASE_DIR / "adminsite" / "templates", *TEMPLATES[0]["DIRS"]]  # noqa: F405
 TEMPLATES[0]["OPTIONS"]["context_processors"].append(
     "django.contrib.messages.context_processors.messages"
 )
 
 # Sessions dans une table propre (`admin_sessions`), jamais celle du site ; cookie distinct.
 SESSION_ENGINE = "adminsite.stockage_sessions"
-SESSION_COOKIE_AGE = 30 * 60
+SESSION_COOKIE_AGE = 60 * 60
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_SAVE_EVERY_REQUEST = True
@@ -60,6 +64,8 @@ AXES_IPWARE_PROXY_COUNT = 1  # une seule couche de proxy : Caddy
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 AXES_RESET_ON_SUCCESS = True
 AXES_USERNAME_FORM_FIELD = "username"
+# Historique des échecs (page « Échecs de connexion ») : sans lui, la page reste vide.
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 AXES_VERBOSE = False
 
 # L'administration charge ses feuilles de style depuis son propre domaine ; les styles en ligne du site d'administration
@@ -67,5 +73,4 @@ AXES_VERBOSE = False
 CSP_STYLE_SOURCES = ["'self'", "'unsafe-inline'"]
 CSP_SCRIPT_SOURCES = ["'self'"]
 CSP_FRAME_SOURCES = ["'none'"]
-OTP_TOTP_ISSUER = "Logeo"
 LOGIN_URL = "/login/"

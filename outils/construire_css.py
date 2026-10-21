@@ -2,7 +2,7 @@
 """Assemble, minifie et empreinte le CSS du site (bibliothèque standard uniquement).
 
 Couches, dans l'ordre : tokens, base, layout, components/*.css, utilities.
-Sortie : serveur/web/static/css/dist/logeo.<empreinte>.css et manifest.json.
+Sortie : serveur/web/static/css/dist/immoplus.<empreinte>.css et manifest.json.
 """
 
 import hashlib
@@ -13,7 +13,9 @@ import sys
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
-SOURCES = Path(os.environ.get("LOGEO_CSS_SOURCES", RACINE / "serveur" / "web" / "static" / "css"))
+SOURCES = Path(
+    os.environ.get("IMMOPLUS_CSS_SOURCES", RACINE / "serveur" / "web" / "static" / "css")
+)
 DIST = SOURCES / "dist"
 COUCHES = ["tokens", "base", "layout", "components", "utilities"]
 
@@ -46,12 +48,12 @@ def construire() -> Path:
     css = assembler()
     empreinte = hashlib.sha256(css.encode("utf-8")).hexdigest()[:10]
     DIST.mkdir(parents=True, exist_ok=True)
-    for ancien in DIST.glob("logeo.*.css"):
+    for ancien in DIST.glob("immoplus.*.css"):
         ancien.unlink()
-    sortie = DIST / f"logeo.{empreinte}.css"
+    sortie = DIST / f"immoplus.{empreinte}.css"
     sortie.write_text(css, encoding="utf-8")
     (DIST / "manifest.json").write_text(
-        json.dumps({"logeo.css": f"css/dist/{sortie.name}"}, indent=2) + "\n", encoding="utf-8"
+        json.dumps({"immoplus.css": f"css/dist/{sortie.name}"}, indent=2) + "\n", encoding="utf-8"
     )
     return sortie
 

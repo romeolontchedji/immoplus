@@ -1,6 +1,8 @@
 """Annonces : création de brouillons, modification, publication et cycle de vie (CDC §9.8, §9.23, §11.1)."""
 
+import logging
 import uuid
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from django.db import connection, transaction
@@ -9,11 +11,16 @@ from django.utils.text import slugify
 
 from apps.accounts.enums import Statut, StatutVerification
 from apps.audit import services as audit
+from apps.core import parametres
 from apps.core.errors import ErreurMetier
+from apps.notifications import services as notifications
 
-from ..enums import Compteur, Eau, StatutAnnonce, StatutMedia, TypeChambre, TypeMedia
+from .. import selectors, signals
+from ..enums import PHOTOS_MIN, Compteur, Cuisine, Eau, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import District, Listing, ListingMedia
-from . import contenu, geo
+from . import contenu, geo, types
+
+journal = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from apps.accounts.models import GerantProfile
@@ -21,12 +28,15 @@ if TYPE_CHECKING:
 CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "description_md")
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
-    "deposit_months", "advance_months", "agent_fee_amount", "available_from", "has_private_bathroom", "is_fenced",
-    "water_source", "electricity_meter", "description_md",
+    "deposit_months", "advance_months", "agent_fee_amount", "water_deposit_amount", "electricity_deposit_amount",
+    "available_from", "has_private_bathroom", "is_fenced",
+    "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
+# La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
+# partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
 OBLIGATOIRES = (
-    "title", "room_type", "district", "landmark_text", "latitude", "longitude", "rent_amount", "deposit_months",
-    "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_source", "electricity_meter",
+    "title", "room_type", "district", "landmark_text", "rent_amount", "deposit_months",
+    "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter",
 )  # fmt: skip
 LIMITES_BENIN = {"latitude": (6.0, 12.6), "longitude": (0.7, 3.9)}
 
@@ -39,12 +49,23 @@ def _valider(d: dict) -> None:
     """Contrôles de valeur sur les champs présents (la base garde en plus ses contraintes)."""
     if "title" in d and len((d["title"] or "").strip()) < 5:
         raise _champ("title", "Le titre doit faire au moins 5 caractères.")
-    if "room_type" in d and d["room_type"] not in TypeChambre.values:
-        raise _champ("room_type", "Type de logement inconnu.")
-    if "water_source" in d and d["water_source"] not in Eau.values:
-        raise _champ("water_source", "Source d'eau inconnue.")
+    if "room_type" in d:
+        types.verifier_pour_annonce(d["room_type"])
+    if "water_sources" in d:
+        sources = d["water_sources"]
+        if not isinstance(sources, list | tuple) or not sources:
+            raise _champ("water_sources", "Choisis au moins une source d'eau.")
+        if any(s not in Eau.values for s in sources):
+            raise _champ("water_sources", "Source d'eau inconnue.")
+        d["water_sources"] = [
+            e for e in Eau.values if e in sources
+        ]  # sans doublon, dans l'ordre des listes
     if "electricity_meter" in d and d["electricity_meter"] not in Compteur.values:
         raise _champ("electricity_meter", "Type de compteur inconnu.")
+    if "kitchen" in d and d["kitchen"] not in ("", *Cuisine.values):
+        raise _champ("kitchen", "Type de cuisine inconnu.")
+    if "rent_negotiable" in d and not isinstance(d["rent_negotiable"], bool):
+        raise _champ("rent_negotiable", "Oui ou non attendu.")
     if "rent_amount" in d and not (isinstance(d["rent_amount"], int) and d["rent_amount"] > 0):
         raise _champ("rent_amount", "Le loyer doit être un entier positif en FCFA.")
     for nom in ("deposit_months", "advance_months"):
@@ -54,8 +75,13 @@ def _valider(d: dict) -> None:
         isinstance(d["agent_fee_amount"], int) and d["agent_fee_amount"] >= 0
     ):
         raise _champ("agent_fee_amount", "Les frais doivent être un entier positif ou nul.")
+    for nom in ("water_deposit_amount", "electricity_deposit_amount"):
+        if nom in d and not (isinstance(d[nom], int) and 0 <= d[nom] <= 10_000_000):
+            raise _champ(nom, "La caution doit être un montant positif ou nul, en francs.")
+    if (d.get("latitude") is None) != (d.get("longitude") is None):
+        raise _champ("latitude", "La position doit avoir une latitude et une longitude.")
     for nom, (bas, haut) in LIMITES_BENIN.items():
-        if nom in d and not (bas <= float(d[nom]) <= haut):
+        if d.get(nom) is not None and not (bas <= float(d[nom]) <= haut):
             raise _champ(nom, "Position hors du Bénin.")
 
 
@@ -64,6 +90,18 @@ def _quartier(identifiant) -> District:
         return District.objects.get(pk=identifiant, is_active=True)
     except (District.DoesNotExist, ValueError, TypeError, Exception) as erreur:
         raise _champ("district", "Quartier inconnu.") from erreur
+
+
+def _abonnement_permet(gerant: "GerantProfile") -> None:
+    """Point d'extension unique de l'abonnement (CDC EF-ABO-03) : toujours vrai tant que le drapeau est faux."""
+    from apps.billing import services as abonnement
+
+    if not abonnement.can_publish(gerant.pk):
+        raise ErreurMetier(
+            "subscription_required",
+            "Ton abonnement ne permet pas de publier. Renouvelle-le pour continuer.",
+            statut=402,
+        )
 
 
 def _gerant_actif(gerant: "GerantProfile") -> None:
@@ -80,8 +118,24 @@ def _annonce_du_gerant(gerant: "GerantProfile", annonce_id, *, verrou: bool = Fa
 
 
 def _vecteur_de_recherche(annonce: Listing) -> None:
-    """Titre, description en texte brut et quartier, sans accents (CDC §9.8)."""
-    texte = f"{annonce.title} {contenu.texte_brut(annonce.description_html)} {annonce.district.name} {annonce.landmark_text}"
+    """Titre, autres détails, quartier, repère et équipements, sans accents (CDC §9.8) : chercher « forage » ou
+    « cuisine » trouve les annonces qui l'indiquent dans leurs champs comme dans leurs autres détails."""
+    equipements = " ".join(
+        str(libelle)
+        for libelle in (
+            " ".join(str(dict(Eau.choices).get(e, "")) for e in annonce.water_sources or []),
+            dict(Compteur.choices).get(annonce.electricity_meter),
+            dict(Cuisine.choices).get(annonce.kitchen) if annonce.kitchen != Cuisine.NONE else "",
+            "douche interne" if annonce.has_private_bathroom else "",
+            "clôturée portail" if annonce.is_fenced else "",
+            "à débattre" if annonce.rent_negotiable else "",
+        )
+        if libelle
+    )
+    texte = (
+        f"{annonce.title} {contenu.texte_brut(annonce.description_html)} {annonce.district.name} "
+        f"{annonce.landmark_text} {types.libelle(annonce.room_type) or ''} {equipements}"
+    )
     with connection.cursor() as c:
         c.execute(
             "UPDATE listings SET search_vector = to_tsvector('french', unaccent(%s)) WHERE id = %s",
@@ -94,7 +148,10 @@ def _slug(titre: str) -> str:
 
 
 def _appliquer(annonce: Listing, donnees: dict) -> None:
+    ancien_quartier = annonce.district_id
     for nom in CHAMPS_MODIFIABLES:
+        if nom in ("latitude", "longitude"):
+            continue
         if nom in donnees:
             valeur = donnees[nom]
             if nom == "district":
@@ -105,14 +162,22 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
                 setattr(annonce, nom, " ".join(str(valeur or "").split()))
             else:
                 setattr(annonce, nom, valeur)
-    if "latitude" in donnees or "longitude" in donnees:
-        annonce.distance_to_campus_m = geo.distance_au_campus(annonce.latitude, annonce.longitude)
+    if (
+        donnees.get("latitude") is not None
+    ):  # GPS partagé par le gérant (la paire est contrôlée par `_valider`)
+        annonce.latitude, annonce.longitude = donnees["latitude"], donnees["longitude"]
+    elif annonce.district_id != ancien_quartier:  # nouveau quartier sans GPS : centre du quartier
+        annonce.latitude, annonce.longitude = annonce.district.latitude, annonce.district.longitude
+    else:
+        return
+    annonce.distance_to_campus_m = geo.distance_au_campus(annonce.latitude, annonce.longitude)
 
 
 @transaction.atomic
 def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
     _gerant_actif(gerant)
-    manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "")]
+    _abonnement_permet(gerant)
+    manquants = [n for n in OBLIGATOIRES if donnees.get(n) in (None, "", [])]
     if manquants:
         raise ErreurMetier(
             "validation_error", "Des champs obligatoires sont manquants.",
@@ -151,6 +216,7 @@ def modifier(gerant: "GerantProfile", annonce_id, donnees: dict) -> Listing:
     _appliquer(annonce, donnees)
     annonce.save()
     _vecteur_de_recherche(annonce)
+    selectors.invalider_fil()
     audit.enregistrer(
         "listing.modifiee", acteur=gerant.user, cible=annonce,
         metadata={"champs": sorted(donnees), "loyer_avant": loyer_avant, "loyer_apres": annonce.rent_amount},
@@ -159,12 +225,24 @@ def modifier(gerant: "GerantProfile", annonce_id, donnees: dict) -> Listing:
 
 
 @transaction.atomic
-def supprimer_brouillon(gerant: "GerantProfile", annonce_id) -> None:
+def supprimer(gerant: "GerantProfile", annonce_id) -> None:
+    """Supprime une annonce ou un brouillon. Une annonce déjà visible est d'abord archivée (alertes, favoris et
+    messagerie prévenus comme pour un retrait), puis disparaît de l'espace du gérant ; ses vidéos sont purgées sous
+    24 h. Les conversations restent lisibles. Une annonce retirée par la modération ne se supprime pas."""
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
-    if annonce.status != StatutAnnonce.DRAFT:
-        raise ErreurMetier("listing_locked", "Seul un brouillon peut être supprimé.", statut=409)
-    annonce.deleted_at = timezone.now()
+    if annonce.status == StatutAnnonce.REMOVED:
+        raise ErreurMetier(
+            "listing_locked", "Cette annonce a été retirée par la modération.", statut=409
+        )
+    if annonce.status not in (StatutAnnonce.DRAFT, StatutAnnonce.ARCHIVED):
+        changer_statut(annonce, StatutAnnonce.ARCHIVED, acteur=gerant.user)
+    maintenant = timezone.now()
+    ListingMedia.objects.filter(
+        listing=annonce, kind=TypeMedia.VIDEO, deleted_at__isnull=True
+    ).update(delete_after=maintenant)
+    annonce.deleted_at = maintenant
     annonce.save(update_fields=["deleted_at", "updated_at"])
+    selectors.invalider_fil()
     audit.enregistrer("listing.supprimee", acteur=gerant.user, cible=annonce)
 
 
@@ -189,6 +267,81 @@ def changer_statut(annonce: Listing, nouveau: str, *, acteur, raison: str | None
         "listing.status_changed", acteur=acteur, cible=annonce,
         metadata={"ancien": ancien, "nouveau": nouveau, "loyer": annonce.rent_amount, "raison": raison},
     )  # fmt: skip
+    selectors.invalider_fil()
+    transaction.on_commit(lambda: _apres_changement(annonce.pk, ancien, nouveau, raison))
+
+
+def _apres_changement(annonce_id, ancien: str, nouveau: str, raison: str | None) -> None:
+    """Après validation de la transaction : alertes, favoris, messagerie (signal) — sans jamais bloquer le statut."""
+    from ..tasks import notifier_alertes, notifier_indisponibilite
+
+    if nouveau == StatutAnnonce.PUBLISHED and ancien != StatutAnnonce.PUBLISHED:
+        notifier_alertes.delay(str(annonce_id))
+    if (
+        nouveau in (StatutAnnonce.RENTED, StatutAnnonce.HIDDEN)
+        and ancien == StatutAnnonce.PUBLISHED
+    ):
+        notifier_indisponibilite.delay(str(annonce_id), nouveau)
+    _prevenir_gerant(annonce_id, ancien, nouveau, raison)
+    signals.statut_annonce_change.send(
+        sender=Listing, annonce_id=annonce_id, ancien=ancien, nouveau=nouveau, raison=raison
+    )
+
+
+_MOTIFS_MASQUAGE = {
+    "stale": "Elle n'a pas été confirmée à temps. Confirme sa disponibilité pour la remettre en ligne.",
+    "moderation": "Elle a été masquée par la modération de Immo+.",
+    "gerant_suspended": "Ton compte est suspendu : elle sera remise en ligne à la levée de la suspension.",
+}
+
+
+def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) -> None:
+    """Notifications au gérant d'après l'annexe B ; l'échec d'une notification ne bloque jamais le statut."""
+    annonce = Listing.objects.filter(pk=annonce_id).first()
+    if annonce is None:
+        return
+    data = {"listing_id": str(annonce.pk), "slug": annonce.slug}
+    try:
+        if ancien == StatutAnnonce.PROCESSING and nouveau == StatutAnnonce.PUBLISHED:
+            notifications.creer(
+                annonce.gerant_id, "listing.published", "Ton annonce est en ligne",
+                f"« {annonce.title} » est visible. Les locataires qui ont une alerte correspondante sont prévenus.", data=data,
+                dedupe_key=f"published:{annonce.pk}:{annonce.published_at.isoformat() if annonce.published_at else ''}",
+            )  # fmt: skip
+        elif nouveau == StatutAnnonce.HIDDEN and raison in _MOTIFS_MASQUAGE:
+            notifications.creer(
+                annonce.gerant_id, "listing.hidden", "Ton annonce est masquée",
+                f"« {annonce.title} » : {_MOTIFS_MASQUAGE[raison]}", data={**data, "reason": raison},
+            )  # fmt: skip
+        elif nouveau == StatutAnnonce.RENTED:
+            notifications.creer(
+                annonce.gerant_id, "listing.rented_video_scheduled", "Annonce marquée louée",
+                "La vidéo sera supprimée dans 7 jours. Tu peux annuler « louée » d'ici là.", data=data,
+            )  # fmt: skip
+    except Exception:  # noqa: BLE001
+        journal.exception("notification_gerant_echouee")
+
+
+MANQUES_PUBLICATION = {
+    "gerant_non_verifie": "ton compte gérant n'est pas encore vérifié",
+    "gerant_suspendu": "ton compte gérant est suspendu",
+    "trois_photos_pretes": f"il faut au moins {PHOTOS_MIN} photos prêtes",
+}
+CHAMPS_ANNONCE = {
+    "title": "le titre", "room_type": "le type de chambre", "district": "le quartier", "landmark_text": "le repère",
+    "rent_amount": "le loyer", "deposit_months": "la caution", "advance_months": "l'avance",
+    "available_from": "la date de disponibilité", "has_private_bathroom": "la douche interne",
+    "is_fenced": "la clôture", "water_sources": "l'eau", "electricity_meter": "l'électricité",
+}  # fmt: skip
+
+
+def libelle_manque(code: str) -> str:
+    """Code de `manques_a_la_publication` → texte français (site et API)."""
+    if code in MANQUES_PUBLICATION:
+        return MANQUES_PUBLICATION[code]
+    if code.startswith("champ:"):
+        return CHAMPS_ANNONCE.get(code.split(":", 1)[1], "une information à compléter")
+    return code
 
 
 def manques_a_la_publication(annonce: Listing) -> list[str]:
@@ -201,12 +354,11 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
         manques.append("gerant_suspendu")
     for nom in OBLIGATOIRES:
         valeur = getattr(annonce, f"{nom}_id" if nom == "district" else nom, None)
-        if valeur in (None, ""):
+        if valeur in (None, "", []):
             manques.append(f"champ:{nom}")
+    # La vidéo est facultative (demande du 2026-10-20) : seules les photos sont exigées.
     media = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
-    if not media.filter(kind=TypeMedia.VIDEO).exists():
-        manques.append("video_prete")
-    if media.filter(kind=TypeMedia.PHOTO).count() < 3:
+    if media.filter(kind=TypeMedia.PHOTO).count() < PHOTOS_MIN:
         manques.append("trois_photos_pretes")
     return manques
 
@@ -215,6 +367,7 @@ def manques_a_la_publication(annonce: Listing) -> list[str]:
 def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     """Publie si toutes les conditions sont réunies ; sinon 409 `listing_not_publishable` avec les manques."""
     _gerant_actif(gerant)
+    _abonnement_permet(gerant)
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
     if annonce.status not in (StatutAnnonce.DRAFT, StatutAnnonce.PROCESSING, StatutAnnonce.HIDDEN):
         raise ErreurMetier(
@@ -226,7 +379,7 @@ def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     en_traitement = ListingMedia.objects.filter(
         listing=annonce, status__in=[StatutMedia.UPLOADED, StatutMedia.PROCESSING]
     ).exists()
-    if manques and not (en_traitement and set(manques) <= {"video_prete", "trois_photos_pretes"}):
+    if manques and not (en_traitement and set(manques) <= {"trois_photos_pretes"}):
         raise ErreurMetier(
             "listing_not_publishable", "L'annonce n'est pas encore publiable.", statut=409,
             champs={"manques": manques},
@@ -319,3 +472,79 @@ def annuler_louee(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce.rented_at = None
     mettre_en_ligne(annonce, acteur=gerant.user)
     return annonce
+
+
+# --------------------------------------------------------------- décisions de la modération
+def approuver_premiere(annonce: Listing, *, acteur) -> None:
+    """Relecture terminée : la première annonce d'un gérant est publiée (EF-ANN-11)."""
+    if annonce.status != StatutAnnonce.PROCESSING:
+        raise ErreurMetier(
+            "listing_locked", "Seule une annonce en attente de relecture s'approuve.", statut=409
+        )
+    manques = manques_a_la_publication(annonce)
+    if manques:
+        raise ErreurMetier(
+            "listing_not_publishable",
+            "L'annonce n'est pas publiable.",
+            statut=409,
+            champs={"manques": manques},
+        )
+    mettre_en_ligne(annonce, acteur=acteur)
+
+
+def refuser(annonce: Listing, *, acteur) -> None:
+    """Relecture refusée : l'annonce est masquée par la modération ; le gérant peut la corriger."""
+    if annonce.status not in (StatutAnnonce.PROCESSING, StatutAnnonce.PUBLISHED):
+        raise ErreurMetier("listing_locked", "Cette annonce ne se refuse pas.", statut=409)
+    changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="moderation")
+
+
+def masquer_pour_gerant_suspendu(gerant_user_id, *, acteur) -> int:
+    """Suspension ou bannissement d'un gérant : ses annonces en ligne sont masquées (EF-MOD-06)."""
+    total = 0
+    for annonce in Listing.objects.filter(gerant_id=gerant_user_id, status=StatutAnnonce.PUBLISHED):
+        changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="gerant_suspended")
+        total += 1
+    return total
+
+
+def remettre_apres_suspension(gerant_user_id, *, acteur) -> int:
+    """Rétablissement : les annonces masquées pour suspension reviennent en ligne si elles sont encore valides.
+
+    Une annonce devenue périmée pendant la suspension reste masquée « sans confirmation » : le gérant la confirme.
+    """
+    jours = int(parametres.lire("STALE_HIDE_DAYS"))
+    delai = timezone.now() - timedelta(days=jours) if jours > 0 else None
+    remises = 0
+    for annonce in Listing.objects.filter(
+        gerant_id=gerant_user_id, status=StatutAnnonce.HIDDEN, hidden_reason="gerant_suspended"
+    ):  # pas de select_related("gerant") : colonnes réservées illisibles pour le rôle `app`
+        perimee = delai is not None and (
+            annonce.last_confirmed_at is None or annonce.last_confirmed_at < delai
+        )
+        if perimee or manques_a_la_publication(annonce):
+            Listing.objects.filter(pk=annonce.pk).update(hidden_reason="stale")
+            continue
+        mettre_en_ligne(annonce, acteur=acteur)
+        remises += 1
+    return remises
+
+
+def archiver_du_gerant(gerant_user_id) -> int:
+    """Compte supprimé : ses annonces visibles sont archivées, ses brouillons supprimés (CDC §7.1)."""
+    total = 0
+    for annonce in Listing.objects.filter(
+        gerant_id=gerant_user_id,
+        status__in=[
+            StatutAnnonce.PUBLISHED,
+            StatutAnnonce.HIDDEN,
+            StatutAnnonce.PROCESSING,
+            StatutAnnonce.RENTED,
+        ],
+    ):
+        changer_statut(annonce, StatutAnnonce.ARCHIVED, acteur=None)
+        total += 1
+    Listing.objects.filter(
+        gerant_id=gerant_user_id, status=StatutAnnonce.DRAFT, deleted_at__isnull=True
+    ).update(deleted_at=timezone.now())
+    return total

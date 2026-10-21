@@ -1,0 +1,36 @@
+{% extends "web/base.html" %}
+{# Développement seulement (web/views.py, boite_dev) : rien de ce qui est listé ici n'est réellement envoyé. #}
+{% block titre %}Boîte de développement — Immo+{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <div>
+        <h1>Boîte de développement</h1>
+        <p class="texte-doux">Ce qui aurait été envoyé (dernière heure). Recharge la page après une action.</p>
+      </div>
+      <div class="pile">
+        <h2>Courriels</h2>
+        {% for m in courriels %}
+          <article class="carte p-5">
+            <p class="texte-doux texte-petit mb-0">{{ m.quand }} · à {{ m.a }}</p>
+            <strong>{{ m.sujet }}</strong>
+            <pre class="boite-dev__texte">{{ m.texte }}</pre>
+          </article>
+        {% empty %}
+          <p class="texte-doux">Aucun courriel.</p>
+        {% endfor %}
+      </div>
+      <div class="pile">
+        <h2>Notifications push</h2>
+        {% for m in push %}
+          <article class="carte p-5">
+            <strong>{{ m.titre }}</strong>
+            <p class="mb-0">{{ m.corps }}</p>
+          </article>
+        {% empty %}
+          <p class="texte-doux">Aucune notification.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

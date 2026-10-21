@@ -1,6 +1,7 @@
 """Médias d'annonce : création d'envoi, protocole d'envoi reprenable (tus), traitement, ordre, suppression."""
 
 import logging
+import shutil
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -11,8 +12,10 @@ from django.utils import timezone
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 from apps.media import stockage, traitement
+from apps.notifications import services as notifications
 
-from ..enums import StatutAnnonce, StatutMedia, TypeMedia
+from .. import selectors
+from ..enums import PHOTOS_MIN, StatutAnnonce, StatutMedia, TypeMedia
 from ..models import Listing, ListingMedia
 
 if TYPE_CHECKING:
@@ -143,29 +146,40 @@ def traiter(media_id) -> None:
     ListingMedia.objects.filter(pk=media.pk).update(status=StatutMedia.PROCESSING)
     source = stockage.chemin_original(media.pk)
     destination = stockage.dossier_public(media.listing_id, media.pk)
+    distant = (
+        stockage.envois_distants()
+    )  # lu une fois : un changement de réglage en cours de route est sans effet
+
+    def cle(nom):
+        return stockage.cle(media.listing_id, media.pk, nom, distant=distant)
+
     try:
         empreinte = traitement.sha256(source)
         if media.kind == TypeMedia.PHOTO:
             meta = traitement.traiter_photo(source, destination)
             champs = {"variants": meta["variants"], "playback_path": None}
-            principale = meta["variants"][max(meta["variants"], key=int)]
-            champs["poster_path"] = stockage.relatif(destination / principale)
+            champs["poster_path"] = cle(meta["variants"][max(meta["variants"], key=int)])
         else:
             meta = traitement.traiter_video(source, destination)
             champs = {
-                "playback_path": stockage.relatif(destination / meta["playback"]),
-                "poster_path": stockage.relatif(destination / meta["poster"])
-                if meta["poster"]
-                else None,
+                "playback_path": cle(meta["playback"]),
+                "poster_path": cle(meta["poster"]) if meta["poster"] else None,
                 "variants": {"mp4": meta["playback"]},
             }
+        if not distant:
+            stockage.publier(media.listing_id, media.pk, destination)  # disque : rien à faire
         ListingMedia.objects.filter(pk=media.pk).update(
-            status=StatutMedia.READY, sha256=empreinte, mime_type=meta["mime"], size_bytes=source.stat().st_size,
-            width=meta["width"], height=meta["height"], duration_s=meta.get("duration_s"), error_code=None,
-            error_detail=None, updated_at=timezone.now(), **champs,
+            sha256=empreinte, mime_type=meta["mime"], size_bytes=source.stat().st_size, width=meta["width"],
+            height=meta["height"], duration_s=meta.get("duration_s"), error_code=None, error_detail=None,
+            updated_at=timezone.now(), **champs,
         )  # fmt: skip
-        _poser_couverture(media.listing_id)
-        _suite_de_publication(media.listing_id)
+        if distant:
+            # Ce worker n'a pas Internet : l'envoi chez Cloudinary revient au worker de la file `default`.
+            from ..tasks import publier_media_distant
+
+            publier_media_distant.delay(str(media.pk))
+            return
+        _media_pret(media)
     except traitement.ErreurTraitement as erreur:
         stockage.supprimer_derives(media.listing_id, media.pk)
         ListingMedia.objects.filter(pk=media.pk).update(
@@ -174,6 +188,7 @@ def traiter(media_id) -> None:
             error_detail=erreur.message,
             updated_at=timezone.now(),
         )
+        _notifier_echec(media, erreur.message)
         _suite_de_publication(media.listing_id, echec=True)
     except Exception:  # noqa: BLE001 - une panne imprévue ne doit pas laisser le média bloqué en traitement
         journal.exception("Échec inattendu du traitement du média %s", media.pk)
@@ -182,6 +197,52 @@ def traiter(media_id) -> None:
             status=StatutMedia.FAILED, error_code="erreur_interne", error_detail="Traitement impossible. Réessaie.",
             updated_at=timezone.now(),
         )  # fmt: skip
+
+
+def _media_pret(media: ListingMedia) -> None:
+    ListingMedia.objects.filter(pk=media.pk).update(
+        status=StatutMedia.READY, updated_at=timezone.now()
+    )
+    _poser_couverture(media.listing_id)
+    selectors.invalider_fil()
+    _suite_de_publication(media.listing_id)
+
+
+def publier_distant(media_id) -> None:
+    """Envoie chez Cloudinary les dérivés préparés par `traiter`, puis rend le média prêt (worker de la file
+    `default`). Lève `ErreurStockageDistant` pour que la tâche réessaie."""
+    media = ListingMedia.objects.filter(pk=media_id, status=StatutMedia.PROCESSING).first()
+    if media is None:
+        return
+    dossier = stockage.dossier_public(media.listing_id, media.pk)
+    stockage.publier_distant(media.listing_id, media.pk, dossier)
+    shutil.rmtree(dossier, ignore_errors=True)  # la copie locale n'a plus d'usage
+    _media_pret(media)
+
+
+def echec_publication_distante(media_id) -> None:
+    """Cloudinary injoignable après plusieurs essais : le média échoue proprement, le gérant est prévenu."""
+    media = (
+        ListingMedia.objects.select_related("listing")
+        .filter(pk=media_id, status=StatutMedia.PROCESSING)
+        .first()
+    )
+    if media is None:
+        return
+    journal.error("Envoi du média %s chez Cloudinary impossible après plusieurs essais", media.pk)
+    message = "Envoi des fichiers impossible pour le moment. Réessaie plus tard."
+    ListingMedia.objects.filter(pk=media.pk).update(
+        status=StatutMedia.FAILED,
+        error_code="stockage_indisponible",
+        error_detail=message,
+        updated_at=timezone.now(),
+    )
+    _notifier_echec(media, message)
+    _suite_de_publication(media.listing_id, echec=True)
+    try:  # nettoyage en dernier : son échec ne doit pas masquer celui du média
+        stockage.supprimer_derives(media.listing_id, media.pk, distant=True)
+    except Exception:  # noqa: BLE001 - fichiers orphelins sans conséquence pour l'utilisateur
+        journal.exception("Nettoyage des fichiers du média %s impossible", media.pk)
 
 
 def _poser_couverture(annonce_id) -> None:
@@ -201,15 +262,31 @@ def _poser_couverture(annonce_id) -> None:
         ListingMedia.objects.filter(pk=premiere.pk).update(is_cover=True)
 
 
+def _notifier_echec(media: ListingMedia, motif: str) -> None:
+    """Le gérant est prévenu avec un motif lisible (annexe B : listing.media_failed)."""
+    gerant_id = (
+        Listing.objects.filter(pk=media.listing_id).values_list("gerant_id", flat=True).first()
+    )
+    if gerant_id is None:
+        return
+    nature = "vidéo" if media.kind == TypeMedia.VIDEO else "photo"
+    notifications.creer(
+        gerant_id,
+        "listing.media_failed",
+        f"Ta {nature} n'a pas pu être traitée",
+        motif,
+        data={"listing_id": str(media.listing_id), "media_id": str(media.pk)},
+        dedupe_key=f"media-failed:{media.pk}",
+    )
+
+
 def _suite_de_publication(annonce_id, *, echec: bool = False) -> None:
     """Une annonce en attente de traitement repasse en brouillon si un média échoue (CDC §11.1)."""
     from . import annonces
 
-    annonce = (
-        Listing.objects.filter(pk=annonce_id, status=StatutAnnonce.PROCESSING)
-        .select_related("gerant__user")
-        .first()
-    )
+    # Pas de `select_related("gerant")` : il charge toutes les colonnes de `gerant_profiles`, y compris celles que le
+    # rôle `app` ne peut pas lire. L'accès `annonce.gerant` passe par le gestionnaire qui les laisse de côté.
+    annonce = Listing.objects.filter(pk=annonce_id, status=StatutAnnonce.PROCESSING).first()
     if annonce is None:
         return
     if echec:
@@ -267,16 +344,18 @@ def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
     annonce = media.listing
     if annonce.status == StatutAnnonce.PUBLISHED and media.status == StatutMedia.READY:
         pret = ListingMedia.objects.filter(listing=annonce, status=StatutMedia.READY)
-        restant_video = pret.filter(kind=TypeMedia.VIDEO).exclude(pk=media.pk).exists()
         restant_photos = pret.filter(kind=TypeMedia.PHOTO).exclude(pk=media.pk).count()
-        if not restant_video or restant_photos < 3:
+        # La vidéo, facultative, peut se retirer ; les photos restent au moins PHOTOS_MIN.
+        if media.kind == TypeMedia.PHOTO and restant_photos < PHOTOS_MIN:
             raise ErreurMetier(
-                "media_required", "Une annonce publiée garde sa vidéo et au moins 3 photos. Masque l'annonce avant de supprimer.",
+                "media_required", f"Une annonce publiée garde au moins {PHOTOS_MIN} photos. Masque l'annonce avant de supprimer.",
                 statut=409,
             )  # fmt: skip
     media.status, media.deleted_at, media.is_cover = StatutMedia.DELETED, timezone.now(), False
     media.save(update_fields=["status", "deleted_at", "is_cover", "updated_at"])
-    stockage.supprimer_derives(annonce.pk, media.pk)
+    stockage.supprimer_derives(
+        annonce.pk, media.pk, distant=stockage.est_distant(media.poster_path)
+    )
     stockage.supprimer_original(media.pk)
     _poser_couverture(annonce.pk)
     audit.enregistrer(

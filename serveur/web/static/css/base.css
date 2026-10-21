@@ -1,12 +1,26 @@
 /* Base : remise à zéro légère, typographie, focus, mouvement réduit. Aucune valeur en dur. */
+/* Police hébergée par Immo+ (CDC §9 : aucune police externe) ; fichier variable 200–800, sous-ensemble latin,
+   licence SIL OFL 1.1 dans static/fonts/licence-plus-jakarta-sans.txt. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../../fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
-  font: 400 var(--fs-16) / var(--lh-texte) var(--police-texte);
+  font: 500 var(--fs-16) / var(--lh-texte) var(--police-texte);
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
-h1, h2, h3, h4 { font-family: var(--police-titre); font-weight: 700; line-height: var(--lh-titre); margin: 0 0 var(--sp-3); letter-spacing: var(--crenage-titre); text-wrap: balance; }
+h1, h2, h3, h4 {
+  font-family: var(--police-titre); font-weight: 800;
+  line-height: var(--lh-titre); margin: 0 0 var(--sp-3);
+  letter-spacing: var(--crenage-titre); text-wrap: balance;
+}
 h1 { font-size: var(--fs-30); line-height: var(--lh-titre-serre); }
 h2 { font-size: var(--fs-24); }
 h3 { font-size: var(--fs-20); }
@@ -15,6 +29,7 @@ p { margin: 0 0 var(--sp-4); max-width: var(--mesure); text-wrap: pretty; }
 a { color: var(--link); text-underline-offset: 0.2em; }
 a:hover { text-decoration-thickness: 2px; }
 img, svg, video { display: block; max-width: 100%; }
+.icone { flex-shrink: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 ul, ol { padding-left: var(--sp-6); }
 small { font-size: var(--fs-14); }
@@ -27,16 +42,12 @@ hr { border: 0; border-top: var(--bordure); margin: var(--sp-8) 0; }
 .lien-evitement {
   position: absolute; left: var(--sp-4); top: -4rem; z-index: 100;
   background: var(--primary); color: var(--on-primary); padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--rayon-1); transition: top var(--duree-1) var(--courbe);
+  border-radius: var(--r-field); transition: top var(--duree-1) var(--courbe);
 }
 .lien-evitement:focus { top: var(--sp-4); }
 
-@media (min-width: 768px) {
-  h1 { font-size: var(--fs-36); }
-}
-@media (min-width: 1024px) {
-  h1 { font-size: var(--fs-48); }
-}
+@media (min-width: 768px) { h1 { font-size: var(--fs-36); } }
+@media (min-width: 1024px) { h1 { font-size: var(--fs-48); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

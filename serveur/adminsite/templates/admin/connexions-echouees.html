@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{# Échecs de connexion des locataires et gérants (site et application), tirés du journal d'audit (plan v3, J2). #}
+{% block content %}
+  <div id="content-main">
+    <p class="lg-bandeau">
+      Chaque mot de passe refusé sur le site ou dans l'application, et chaque verrouillage automatique qui suit plusieurs
+      échecs. Le numéro est masqué. Les échecs de connexion à l'administration sont dans « Sécurité › Échecs d'accès ».
+    </p>
+    {% if lignes %}
+      <table class="lg-tableau">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Événement</th>
+            <th>Identifiant saisi</th>
+            <th>Compte existant</th>
+            <th>Provenance</th>
+            <th>Adresse IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in lignes %}
+            <tr>
+              <td>{{ l.created_at|date:"d/m/Y H:i" }}</td>
+              <td>
+                {% if l.action == "auth.compte_verrouille" %}
+                  <strong>Verrouillage</strong>
+                {% else %}
+                  Mot de passe refusé
+                {% endif %}
+              </td>
+              <td>
+                {% if l.metadata.identifiant %}
+                  {{ l.metadata.identifiant }}
+                {% else %}
+                  {{ l.metadata.numero }}
+                {% endif %}
+              </td>
+              <td>
+                {% if l.metadata.compte_connu %}
+                  Oui
+                {% else %}
+                  Non
+                {% endif %}
+              </td>
+              <td>{{ l.metadata.surface|capfirst }}</td>
+              <td>{{ l.ip|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="lg-carte">Aucun échec de connexion enregistré.</p>
+    {% endif %}
+  </div>
+{% endblock %}

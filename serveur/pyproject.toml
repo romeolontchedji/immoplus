@@ -1,7 +1,7 @@
 [project]
-name = "logeo-serveur"
+name = "immoplus-serveur"
 version = "0.1.0"
-description = "Serveur Logeo : site, API et administration (monolithe modulaire Django)."
+description = "Serveur Immo+ : site, API et administration (monolithe modulaire Django)."
 requires-python = ">=3.12"
 
 [tool.ruff]
@@ -34,11 +34,8 @@ markers = [
   "api: test d'API et de contrat",
   "ws: test temps réel (WebSocket)",
   "securite: test de sécurité",
-  "e2e: site web, Playwright + axe",
-  "lent: charge et performance",
   "pg: exige PostgreSQL réel",
   "ffmpeg: exige ffmpeg",
-  "exigence(id): identifiant d'exigence du CDC couvert (EF-XXX-NN, ENF-XXX-NN)",
 ]
 
 [tool.importlinter]
@@ -150,3 +147,18 @@ profile = "django"
 indent = 2
 max_line_length = 120
 ignore = "H030,H031"
+
+[tool.django_migration_linter]
+ignore_initial_migrations = true
+# Bibliothèque externe (django-axes) : ses migrations ne sont pas les nôtres.
+exclude_apps = ["axes"]
+# Ruptures voulues et documentées : type de logement libre (décision V1), eau à plusieurs sources, identification
+# par nom d'utilisateur, table des codes SMS et numéro de téléphone supprimés (ADR 0009). Toute nouvelle rupture
+# doit être ajoutée ici avec sa raison.
+ignore_name = [
+    "0003_types_de_logement",
+    "0011_eau_plusieurs_sources",
+    "0009_nom_utilisateur_sans_otp",
+    "0010_suppression_codes_sms",
+    "0011_suppression_du_numero",
+]

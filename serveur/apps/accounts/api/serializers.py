@@ -2,24 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.accounts.enums import Objet, Plateforme
-
-
-class OtpDemandeIn(serializers.Serializer):
-    phone = serializers.CharField(max_length=40)
-    purpose = serializers.ChoiceField(choices=[o.value for o in Objet])
-    attestation_token = serializers.CharField(max_length=4096, required=False, allow_blank=True)
-
-
-class OtpVerificationIn(serializers.Serializer):
-    phone = serializers.CharField(max_length=40)
-    purpose = serializers.ChoiceField(choices=[o.value for o in Objet])
-    code = serializers.CharField(max_length=12)
-
-
-class OtpJetonOut(serializers.Serializer):
-    otp_token = serializers.CharField()
-    expires_in = serializers.IntegerField()
+from apps.accounts.enums import Occupation, Plateforme
 
 
 class AppareilIn(serializers.Serializer):
@@ -28,20 +11,27 @@ class AppareilIn(serializers.Serializer):
 
 
 class InscriptionIn(AppareilIn):
-    otp_token = serializers.CharField(max_length=2048)
-    full_name = serializers.CharField(max_length=200)
+    username = serializers.CharField(
+        max_length=40,
+        help_text="3 à 30 caractères : lettres, chiffres, point, tiret bas (ADR 0009).",
+    )
+    first_name = serializers.CharField(max_length=60)
+    last_name = serializers.CharField(max_length=60)
     password = serializers.CharField(max_length=128, trim_whitespace=False)
     terms_accepted = serializers.BooleanField()
-
-
-class ActivationIn(AppareilIn):
-    otp_token = serializers.CharField(max_length=2048)
-    password = serializers.CharField(max_length=128, trim_whitespace=False)
-    terms_accepted = serializers.BooleanField()
+    occupation = serializers.ChoiceField(
+        choices=Occupation.values,
+        required=False,
+        allow_null=True,
+        help_text="« Tu es » (facultatif).",
+    )
 
 
 class ConnexionIn(AppareilIn):
-    phone = serializers.CharField(max_length=40)
+    username = serializers.CharField(
+        max_length=40,
+        help_text="Nom d'utilisateur (ou, jusqu'au 20/11/2026, numéro d'un ancien compte).",
+    )
     password = serializers.CharField(max_length=128, trim_whitespace=False, allow_blank=True)
 
 
@@ -49,9 +39,26 @@ class RafraichissementIn(serializers.Serializer):
     refresh_token = serializers.CharField(max_length=200)
 
 
-class MotDePasseOublieIn(serializers.Serializer):
-    otp_token = serializers.CharField(max_length=2048)
+class LienParEmailIn(serializers.Serializer):
+    identifier = serializers.CharField(
+        max_length=254, help_text="Nom d'utilisateur ou e-mail confirmé."
+    )
+
+
+class CleDeSecoursIn(serializers.Serializer):
+    username = serializers.CharField(max_length=40)
+    recovery_key = serializers.CharField(max_length=40, help_text="Ex. K7QM-2XPA-9RTD-H4WN.")
     new_password = serializers.CharField(max_length=128, trim_whitespace=False)
+
+
+class CleDeSecoursOut(serializers.Serializer):
+    recovery_key = serializers.CharField(help_text="Nouvelle clé : à montrer une seule fois.")
+
+
+class DisponibiliteOut(serializers.Serializer):
+    available = serializers.BooleanField()
+    message = serializers.CharField(allow_blank=True)
+    suggestions = serializers.ListField(child=serializers.CharField())
 
 
 class ChangementMotDePasseIn(serializers.Serializer):
@@ -59,9 +66,12 @@ class ChangementMotDePasseIn(serializers.Serializer):
     new_password = serializers.CharField(max_length=128, trim_whitespace=False)
 
 
-class ChangementNumeroIn(serializers.Serializer):
+class EmailIn(serializers.Serializer):
+    email = serializers.CharField(max_length=254)
+
+
+class MotDePasseIn(serializers.Serializer):
     password = serializers.CharField(max_length=128, trim_whitespace=False)
-    otp_token = serializers.CharField(max_length=2048)
 
 
 class SuppressionIn(serializers.Serializer):
@@ -69,7 +79,14 @@ class SuppressionIn(serializers.Serializer):
 
 
 class ProfilIn(serializers.Serializer):
-    full_name = serializers.CharField(max_length=200, required=False)
+    first_name = serializers.CharField(max_length=60, required=False)
+    last_name = serializers.CharField(max_length=60, required=False)
+    occupation = serializers.ChoiceField(
+        choices=Occupation.values,
+        required=False,
+        allow_null=True,
+        help_text="`null` efface la réponse.",
+    )
 
 
 class JetonsOut(serializers.Serializer):
@@ -80,9 +97,14 @@ class JetonsOut(serializers.Serializer):
 
 class UtilisateurOut(serializers.Serializer):
     id = serializers.UUIDField()
+    username = serializers.CharField(allow_null=True)
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
     full_name = serializers.CharField()
+    email = serializers.CharField(allow_null=True, help_text="Seulement s'il est confirmé.")
+    recovery_key_created_at = serializers.DateTimeField(allow_null=True)
+    occupation = serializers.ChoiceField(choices=Occupation.values, allow_null=True)
     role = serializers.ChoiceField(choices=["client", "gerant"])
-    phone = serializers.CharField(allow_null=True)
     terms_version = serializers.CharField(allow_null=True)
     created_at = serializers.DateTimeField()
 
@@ -91,6 +113,12 @@ class SessionOut(serializers.Serializer):
     user = UtilisateurOut()
     tokens = JetonsOut()
     device_id = serializers.UUIDField()
+
+
+class InscriptionOut(SessionOut):
+    recovery_key = serializers.CharField(
+        help_text="Clé de secours : à montrer une seule fois (ADR 0009)."
+    )
 
 
 class AppareilOut(serializers.Serializer):
@@ -106,6 +134,28 @@ class AppareilOut(serializers.Serializer):
 class JetonPushIn(serializers.Serializer):
     provider = serializers.CharField(max_length=8)
     token = serializers.CharField(max_length=4096)
+
+
+class ReglageNotification(serializers.Serializer):
+    push = serializers.BooleanField(
+        required=False, help_text="Faux : aucune notification push (absent = activé)."
+    )
+    apercu = serializers.BooleanField(
+        required=False, help_text="Messages : faux = « Nouveau message » sans le texte."
+    )
+
+
+class PreferencesSchema(serializers.Serializer):
+    """Forme documentée de `PreferencesIO` (OpenAPI) : seules les catégories envoyées changent."""
+
+    messages = ReglageNotification(required=False)
+    alertes = ReglageNotification(required=False)
+    rappels = ReglageNotification(required=False)
+    silence = serializers.ListField(
+        child=serializers.CharField(max_length=64),
+        required=False,
+        help_text="Conversations en sourdine.",
+    )
 
 
 class PreferencesIO(serializers.Serializer):

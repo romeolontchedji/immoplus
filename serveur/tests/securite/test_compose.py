@@ -117,7 +117,7 @@ def test_production_utilise_les_reglages_stricts(prod):
         prod["services"]["admin"]["environment"]["DJANGO_SETTINGS_MODULE"]
         == "config.settings.admin"
     )
-    assert prod["services"]["web-api"]["environment"]["LOGEO_RELOAD"] == "0"
+    assert prod["services"]["web-api"]["environment"]["IMMOPLUS_RELOAD"] == "0"
 
 
 def test_developpement_admin_utilise_les_reglages_locaux(pile):
@@ -173,3 +173,49 @@ def test_migrer_cree_tout_le_schema_avec_ses_propres_reglages(pile, prod):
         prod["services"]["migrer"]["environment"]["DJANGO_SETTINGS_MODULE"]
         == "config.settings.migrer"
     )
+
+
+# --- VPS partagé : derrière le Caddy central (docker-compose.vps-partage.yml) ---
+@pytest.fixture(scope="module")
+def partage():
+    return charger("docker-compose.vps-partage.yml")
+
+
+def test_vps_partage_ne_publie_aucun_port(partage):
+    assert set(partage["services"]) == {
+        "caddy"
+    }  # seul Caddy change ; aucun autre service n'est exposé
+    assert partage["services"]["caddy"]["ports"] == []
+
+
+def test_vps_partage_rejoint_le_reseau_du_proxy_central(partage):
+    reseaux = partage["services"]["caddy"]["networks"]
+    assert reseaux["web_proxy"]["aliases"] == ["immoplus-web"]
+    assert {"interne", "exposition"} <= set(reseaux)
+    assert partage["networks"]["web_proxy"]["external"] is True
+
+
+def test_vps_partage_sert_en_http_et_croit_le_proxy_central(partage):
+    env = partage["services"]["caddy"]["environment"]
+    assert env == {"SCHEMA_SITES": "http", "PROXYS_DE_CONFIANCE": "private_ranges"}
+
+
+def test_caddy_ne_transmet_que_l_adresse_reelle_du_visiteur():
+    caddyfile = (COMPOSE.parent / "caddy" / "Caddyfile").read_text(encoding="utf-8")
+    assert "header_up X-Forwarded-For {client_ip}" in caddyfile
+    assert "reverse_proxy realtime" not in caddyfile and "reverse_proxy web-api" not in caddyfile
+    assert "@autorise client_ip" in caddyfile and "remote_ip" not in caddyfile
+    # Seul en façade, personne n'est un proxy de confiance (adresse de documentation par défaut).
+    assert "{$PROXYS_DE_CONFIANCE:192.0.2.1/32}" in caddyfile
+
+
+def test_seul_le_worker_recoit_les_cles_cloudinary():
+    for modele in COMPOSE.glob("env/*.env.example"):
+        texte = modele.read_text(encoding="utf-8")
+        a_les_cles = "CLOUDINARY_API_SECRET" in texte
+        assert a_les_cles == (modele.name == "worker.env.example"), modele.name
+
+
+def test_le_worker_envoie_les_medias_prepares_sans_le_code_en_production(prod):
+    montes = {str(v).split(":")[0] for v in prod["services"]["worker"]["volumes"]}
+    assert montes == {"media_tmp", "media_public"}

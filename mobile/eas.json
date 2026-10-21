@@ -1,0 +1,25 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "channel": "development",
+      "env": { "EXPO_PUBLIC_API_URL": "http://192.168.1.10:8000" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "channel": "preview",
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.bj", "EXPO_PUBLIC_WEB_HOST": "www.immoplus.bj" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": { "buildType": "app-bundle" },
+      "channel": "production",
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.immoplus.bj", "EXPO_PUBLIC_WEB_HOST": "www.immoplus.bj" }
+    }
+  },
+  "submit": { "production": { "android": { "track": "internal" } } }
+}

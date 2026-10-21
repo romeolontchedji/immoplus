@@ -1,4 +1,4 @@
-"""Tâches des médias (file `media`, sans accès Internet)."""
+"""Tâches des annonces et des médias (traitement sur la file `media`, sans Internet ; envoi distant sur `default`)."""
 
 from celery import shared_task
 
@@ -10,6 +10,65 @@ def traiter_media(media_id: str) -> None:
     medias.traiter(media_id)
 
 
+ESSAIS_DISTANTS = 4  # nouveaux essais d'envoi chez Cloudinary : après 1, 2, 4 puis 8 minutes
+
+
+@shared_task(name="apps.listings.publier_media_distant", bind=True, max_retries=ESSAIS_DISTANTS)
+def publier_media_distant(self, media_id: str) -> None:
+    """File `default` (accès Internet) : envoi chez Cloudinary, nouveaux essais espacés avant l'échec."""
+    from apps.core.providers.stockage import ErreurStockageDistant
+
+    try:
+        medias.publier_distant(media_id)
+    except ErreurStockageDistant as erreur:
+        if self.request.retries >= ESSAIS_DISTANTS:
+            medias.echec_publication_distante(media_id)
+            return
+        raise self.retry(exc=erreur, countdown=60 * 2**self.request.retries) from erreur
+
+
 @shared_task(name="apps.media.nettoyer_envois")
 def nettoyer_envois() -> int:
     return medias.nettoyer_envois_expires()
+
+
+@shared_task(name="apps.listings.alertes")
+def notifier_alertes(annonce_id: str) -> int:
+    from .services import alertes
+
+    return alertes.notifier_correspondances(annonce_id)
+
+
+@shared_task(name="apps.listings.favoris_indisponibles")
+def notifier_indisponibilite(annonce_id: str, statut: str) -> int:
+    from .services import favoris
+
+    return favoris.notifier_indisponibilite(annonce_id, statut)
+
+
+@shared_task(name="apps.listings.vider_vues")
+def vider_compteurs_vues() -> int:
+    from .services import vues
+
+    return vues.vider_compteurs()
+
+
+@shared_task(name="apps.listings.fraicheur")
+def relances_de_fraicheur() -> dict:
+    from .services import entretien
+
+    return entretien.relances_de_fraicheur()
+
+
+@shared_task(name="apps.media.purger")
+def purger_medias() -> dict:
+    from .services import entretien
+
+    return entretien.purger_medias()
+
+
+@shared_task(name="apps.listings.archiver_louees")
+def archiver_louees() -> int:
+    from .services import entretien
+
+    return entretien.archiver_louees()

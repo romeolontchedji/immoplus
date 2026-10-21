@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "[À FOURNIR : identifiant du paquet Android]",
+      "package_name": "bj.immoplus.app",
       "sha256_cert_fingerprints": ["[À FOURNIR : empreinte de signature]"]
     }
   }

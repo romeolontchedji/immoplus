@@ -30,7 +30,7 @@ class AuthJwt(BaseAuthentication):
         return utilisateur, identite
 
     def authenticate_header(self, request):
-        return 'Bearer realm="logeo"'
+        return 'Bearer realm="immoplus"'
 
 
 class Connecte(BasePermission):
@@ -59,3 +59,17 @@ class EstClient(_Audience):
 
 class EstGerant(_Audience):
     role = "gerant"
+
+
+class EstClientOuGerant(BasePermission):
+    """Messagerie : locataires et gérants (jamais le personnel, qui passe par l'administration)."""
+
+    def has_permission(self, request, view):
+        role = (
+            request.auth.role if request.auth is not None else getattr(request.user, "role", None)
+        )
+        if role is None:
+            return False
+        if role not in ("client", "gerant"):
+            raise ErreurMetier("wrong_audience", "Ce jeton n'ouvre pas cet espace.", statut=403)
+        return True

@@ -5,3 +5,8 @@
 .carte__prix small { font-weight: 500; color: var(--text-muted); }
 .carte--interactive { transition: box-shadow var(--duree-2) var(--courbe), transform var(--duree-2) var(--courbe); }
 .carte--interactive:hover { box-shadow: var(--ombre-2); transform: translateY(-2px); }
+
+/* Loyer à débattre (plan d'actions v3, B5) */
+.annonce__debattre {
+  display: block; font-size: var(--fs-12); font-weight: 700; color: var(--text-muted); text-align: right;
+}

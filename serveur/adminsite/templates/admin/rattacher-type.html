@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>{{ title }}</h1>
+    <div class="module">
+      <h2>Type proposé : {{ type_chambre.label }}</h2>
+      <div class="lg-section">
+        <p>
+          {{ annonces }} annonce(s) portent ce type. Elles passeront sur le type choisi, ainsi que les alertes des locataires.
+          La proposition sera supprimée.
+        </p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="lg-section__actions">
+            <input type="submit" value="Rattacher" class="default">
+            <a href="{% url 'admin:listings_roomtype_changelist' %}">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

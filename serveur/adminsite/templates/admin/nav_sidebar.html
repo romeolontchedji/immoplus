@@ -1,0 +1,46 @@
+{# Menu latéral de l'administration : fond coloré, rubriques titrées avec icône, page courante en blanc. #}
+<button class="sticky toggle-nav-sidebar"
+        id="toggle-nav-sidebar"
+        aria-label="Afficher ou masquer le menu"></button>
+<nav class="sticky lg-nav"
+     id="nav-sidebar"
+     aria-label="Menu de l'administration">
+  {% url 'admin:index' as accueil %}
+  <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == accueil %} lg-nav__lien--actif{% endif %}"
+     href="{{ accueil }}"
+     {% if request.path == accueil %}aria-current="page"{% endif %}>
+    {% include "admin/includes_icone.html" with nom="grid" %}
+    Tableau de bord
+  </a>
+  {% if request.user.role == "admin" %}
+    <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == '/erreurs/' %} lg-nav__lien--actif{% endif %}"
+       href="/erreurs/">
+      {% include "admin/includes_icone.html" with nom="alert" %}
+      Erreurs
+    </a>
+    <a class="lg-nav__lien lg-nav__lien--accueil{% if request.path == '/connexions-echouees/' %} lg-nav__lien--actif{% endif %}"
+       href="/connexions-echouees/">
+      {% include "admin/includes_icone.html" with nom="shield" %}
+      Connexions échouées (site et appli)
+    </a>
+  {% endif %}
+  {% for rubrique in available_apps %}
+    <section class="lg-nav__rubrique{% if rubrique.app_url in request.path %} lg-nav__rubrique--courante{% endif %}">
+      <h2 class="lg-nav__titre">
+        {% include "admin/includes_icone.html" with nom=rubrique.icone %}
+        {{ rubrique.name }}
+      </h2>
+      <ul class="lg-nav__liste">
+        {% for page in rubrique.models %}
+          {% if page.admin_url %}
+            <li>
+              <a class="lg-nav__lien{% if page.admin_url in request.path %} lg-nav__lien--actif{% endif %}"
+                 href="{{ page.admin_url }}"
+                 {% if page.admin_url in request.path %}aria-current="page"{% endif %}>{{ page.name }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+</nav>

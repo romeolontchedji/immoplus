@@ -20,7 +20,7 @@
 	}
 }
 
-http://www.localhost {
+http://www.localhost, http://localhost, http://127.0.0.1, :80 {
 	encode zstd gzip
 	import statiques
 	handle /ws/* {
@@ -42,6 +42,7 @@ http://www.localhost {
 
 http://api.localhost {
 	encode zstd gzip
+	import statiques
 	handle /ws/* {
 		reverse_proxy realtime:8001
 	}

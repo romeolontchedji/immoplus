@@ -1,0 +1,52 @@
+{% extends "web/base.html" %}
+{% block titre %}{{ doc.title }} — Immo+{% endblock %}
+{% block description %}{{ doc.summary|truncatechars:155 }}{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur legal">
+      <header class="legal-hero">
+        <span class="legal-hero__icone">{% include "web/composants/icone.html" with nom="shield-check" taille=28 %}</span>
+        <div class="legal-hero__corps">
+          <h1 class="legal-hero__titre">{{ doc.title }}</h1>
+          <p class="legal-hero__resume">{{ doc.summary }}</p>
+          <ul class="legal-hero__puces">
+            <li>Mise à jour : {{ doc.updated_at }}</li>
+            <li>RCCM : {{ doc.editor.rccm }}</li>
+            <li>IFU : {{ doc.editor.ifu }}</li>
+            <li>Parakou, Bénin</li>
+          </ul>
+        </div>
+      </header>
+      {% if doc.provisional %}
+        <p class="legal-provisoire" role="note">
+          Version provisoire : l’identité de l’éditeur sera complétée avant l’ouverture officielle.
+        </p>
+      {% endif %}
+      <nav class="legal-sommaire" aria-label="Sommaire">
+        <ol>
+          {% for s in doc.sections %}<li><a href="#section-{{ forloop.counter }}">{{ s.title }}</a></li>{% endfor %}
+        </ol>
+      </nav>
+      {% for s in doc.sections %}
+        <article class="legal-section" id="section-{{ forloop.counter }}">
+          <h2 class="legal-section__titre">{{ s.title }}</h2>
+          <div class="legal-section__texte">{{ s.html|safe }}</div>
+        </article>
+      {% endfor %}
+      <footer class="legal-editeur">
+        {% include "web/composants/icone.html" with nom="shield" taille=20 %}
+        <p>
+          {{ doc.editor.company }} — RCCM : {{ doc.editor.rccm }} — IFU : {{ doc.editor.ifu }} —
+          {{ doc.editor.address }} — {{ doc.editor.email }}
+        </p>
+      </footer>
+      <p class="legal-autre">
+        {% if doc.slug == "conditions" %}
+          <a href="{% url 'confidentialite' %}">Lire la politique de confidentialité</a>
+        {% else %}
+          <a href="{% url 'conditions' %}">Lire les conditions d’utilisation</a>
+        {% endif %}
+      </p>
+    </div>
+  </section>
+{% endblock %}

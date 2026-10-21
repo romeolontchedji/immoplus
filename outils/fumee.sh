@@ -14,11 +14,11 @@ verifier() { # verifier <libellé> <code attendu> <url> [curl...]
   else echo "  ✗ $libelle : attendu $attendu, reçu ${code:-aucun} — voir docs/aide-ia-depannage.md"; ko=1; fi
 }
 
-echo "Test de fumée Logeo :"
+echo "Test de fumée Immo+ :"
 verifier "vivacité /healthz" 200 "$WWW/healthz"
 verifier "disponibilité /readyz (base, Redis, disque)" 200 "$WWW/readyz"
 verifier "page d'accueil" 200 "$WWW/"
-verifier "CSS empreinté servi par Caddy" 200 "$WWW/$(curl -s -m 10 "$WWW/" | grep -o 'static/css/dist/logeo\.[0-9a-f]*\.css' | head -1)"
+verifier "CSS empreinté servi par Caddy" 200 "$WWW/$(curl -s -m 10 "$WWW/" | grep -o 'static/css/dist/immoplus\.[0-9a-f]*\.css' | head -1)"
 verifier "aucune route d'administration sur le site" 404 "$WWW/admin/"
 verifier "l'hôte d'administration répond (liste blanche)" 200 "$ADMIN/healthz"
 if curl -s -m 10 -D - -o /dev/null "$WWW/healthz" | grep -qi '^content-security-policy:'; then

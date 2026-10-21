@@ -1,0 +1,459 @@
+{% extends "web/base.html" %}
+{% load immoplus static %}
+{% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Immo+{% endblock %}
+{% block description %}{{ partage.description }}{% endblock %}
+{% block partage %}
+  <link rel="canonical" href="{{ partage.url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ partage.titre }}">
+  <meta property="og:description" content="{{ partage.description }}">
+  <meta property="og:url" content="{{ partage.url }}">
+  <meta property="og:image" content="{{ partage.image }}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"
+        content="{{ f.title }}, {{ f.district.name }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ partage.titre }}">
+  <meta name="twitter:description" content="{{ partage.description }}">
+  <meta name="twitter:image" content="{{ partage.image }}">
+  <script type="application/ld+json">{{ partage.json_ld }}</script>
+{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur">
+      <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a href="/annonces">← Retour aux chambres</a>
+        <span aria-hidden="true">/</span>
+        <a href="/quartiers/{{ f.district.slug }}">{{ f.district.name }}</a>
+      </nav>
+      {% if message %}
+        <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
+      {% if f.status == "rented" %}
+        <div class="alerte alerte--avertissement" role="status">
+          <p>Cette chambre est déjà louée.</p>
+        </div>
+      {% endif %}
+      {# En-tête : quartier d'abord, puis titre, note, prix et favori (plan v3, B2 et B3) #}
+      <header class="fiche-tete">
+        <div class="fiche-tete__texte">
+          <a class="fiche-quartier" href="/quartiers/{{ f.district.slug }}">
+            {% include "web/composants/icone.html" with nom="map-pin" taille=18 %}
+            {{ f.district.name }}
+          </a>
+          <h1 class="fiche-titre">{{ f.title }}</h1>
+          <p class="fiche-tete__meta">
+            {{ f.type_label }}
+            {% if f.distance_m is not None %}· À {{ f.distance_m }} m de l'Université de Parakou{% endif %}
+            · {% if f.status == "published" %}Disponible{% else %}Déjà louée{% endif %}
+          </p>
+          <a class="fiche-note" href="#avis">
+            {% if f.reviews.count %}
+              <span class="fiche-note__etoile">{% include "web/composants/icone.html" with nom="star" taille=16 %}</span>
+              <strong>{{ f.reviews.average|floatformat:1 }}</strong>
+              <span>· {{ f.reviews.count }} avis</span>
+            {% else %}
+              <span class="fiche-note__vide">Pas encore d'avis</span>
+            {% endif %}
+          </a>
+        </div>
+        <div class="fiche-tete__prix">
+          <p class="fiche-prix-montant">
+            {{ f.rent_amount|fcfa }} F<span class="fiche-prix-mois">/ mois</span>
+          </p>
+          {% if f.rent_negotiable %}<span class="fiche-debattre">Prix à débattre</span>{% endif %}
+          <div class="fiche-tete__actions">
+            {% include "web/composants/partage.html" with chemin="/annonces/"|add:f.slug texte=partage.texte ident="fiche" %}
+            {% if request.user.is_authenticated and request.user.role == "client" %}
+              <form method="post" action="/annonces/{{ f.slug }}/favori">
+                {% csrf_token %}
+                <button type="submit"
+                        class="fiche-favori{% if f.is_favorite %} fiche-favori--actif{% endif %}"
+                        aria-pressed="{% if f.is_favorite %}true{% else %}false{% endif %}">
+                  {% include "web/composants/icone.html" with nom="heart" taille=18 %}
+                  {% if f.is_favorite %}Dans mes favoris{% else %}Ajouter aux favoris{% endif %}
+                </button>
+              </form>
+            {% elif not request.user.is_authenticated %}
+              <a class="fiche-favori" href="/connexion?next=/annonces/{{ f.slug }}">
+                {% include "web/composants/icone.html" with nom="heart" taille=18 %}
+                Ajouter aux favoris
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+      <div class="fiche-layout">
+        <div class="fiche-principale">
+          {# Galerie : une diapositive à la fois, toutes au même format, flèches pour passer (plan v3, B1) #}
+          {% if diapos %}
+            <div class="galerie" data-galerie>
+              <div class="galerie__piste"
+                   tabindex="0"
+                   aria-label="Vidéo et photos de la chambre">
+                {% for m in diapos %}
+                  <figure class="galerie__diapo"
+                          aria-label="{{ forloop.counter }} sur {{ diapos|length }}">
+                    {% if m.kind == "video" %}
+                      <video class="galerie__media"
+                             controls
+                             preload="metadata"
+                             playsinline
+                             poster="{{ m.poster_url }}">
+                        <source src="{{ m.playback_url }}" type="video/mp4">
+                      </video>
+                    {% else %}
+                      <img class="galerie__media"
+                           src="{{ m.url }}"
+                           alt="Photo {{ forloop.counter }} de {{ f.title }}"
+                           {% if not forloop.first %}loading="lazy"{% endif %}>
+                    {% endif %}
+                  </figure>
+                {% endfor %}
+              </div>
+              {% if diapos|length > 1 %}
+                <button class="galerie__fleche galerie__fleche--prec"
+                        type="button"
+                        data-galerie-prec
+                        aria-label="Photo précédente"
+                        hidden>{% include "web/composants/icone.html" with nom="chevron-left" taille=24 %}</button>
+                <button class="galerie__fleche galerie__fleche--suiv"
+                        type="button"
+                        data-galerie-suiv
+                        aria-label="Photo suivante"
+                        hidden>{% include "web/composants/icone.html" with nom="chevron-right" taille=24 %}</button>
+                <span class="galerie__compteur" data-galerie-compteur aria-live="polite">1 / {{ diapos|length }}</span>
+              {% endif %}
+              {% if f.gerant.verified %}
+                <span class="galerie__badge">
+                  {% include "web/composants/icone.html" with nom="check" taille=12 %}
+                  Gérant vérifié
+                </span>
+              {% endif %}
+            </div>
+          {% endif %}
+          {# Équipements et conditions (plan v3, B4) #}
+          <section class="fiche-bloc" aria-labelledby="titre-equipements">
+            <h2 class="fiche-bloc__titre" id="titre-equipements">Équipements</h2>
+            <ul class="equipements">
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="zap" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Électricité</span>{{ f.electricity_label|default:"Non précisé" }}</span>
+              </li>
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="droplet" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Eau</span>{{ f.water_label|default:"Non précisé" }}</span>
+              </li>
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="utensils" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Cuisine</span>{{ f.kitchen_label|default:"Non précisé" }}</span>
+              </li>
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="shower-head" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Douche et WC</span>
+                  {% if f.has_private_bathroom %}
+                    Internes
+                  {% else %}
+                    Partagés
+                  {% endif %}
+                </span>
+              </li>
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="fence" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Cour</span>
+                  {% if f.is_fenced %}
+                    Clôturée
+                  {% else %}
+                    Ouverte
+                  {% endif %}
+                </span>
+              </li>
+              <li class="equipement">
+                <span class="equipement__icone">{% include "web/composants/icone.html" with nom="calendar" taille=20 %}</span>
+                <span class="equipement__texte"><span class="equipement__libelle">Disponible</span>{{ f.available_from|date:"j F Y" }}</span>
+              </li>
+            </ul>
+            <dl class="conditions">
+              <div class="conditions__ligne">
+                <dt>Loyer</dt>
+                <dd>
+                  {{ f.rent_amount|fcfa }} F / mois
+                  {% if f.rent_negotiable %}(à débattre){% endif %}
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Caution du loyer</dt>
+                <dd>
+                  {{ f.deposit_months }} mois
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Caution eau</dt>
+                <dd>
+                  {% if f.water_deposit_amount %}
+                    {{ f.water_deposit_amount|fcfa }} F
+                  {% else %}
+                    Aucune
+                  {% endif %}
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Caution électricité</dt>
+                <dd>
+                  {% if f.electricity_deposit_amount %}
+                    {{ f.electricity_deposit_amount|fcfa }} F
+                  {% else %}
+                    Aucune
+                  {% endif %}
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Avance</dt>
+                <dd>
+                  {{ f.advance_months }} mois
+                </dd>
+              </div>
+              <div class="conditions__ligne">
+                <dt>Frais de démarcheur</dt>
+                <dd>
+                  {% if f.agent_fee_amount %}
+                    {{ f.agent_fee_amount|fcfa }} F
+                  {% else %}
+                    Aucun
+                  {% endif %}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          {% if f.description_html %}
+            <section class="fiche-bloc" aria-labelledby="titre-details">
+              <h2 class="fiche-bloc__titre" id="titre-details">Autres détails</h2>
+              <div class="fiche-description-texte">{{ f.description_html|safe }}</div>
+            </section>
+          {% endif %}
+          {# Avis des locataires (plan v3, G) #}
+          <section class="fiche-bloc" id="avis" aria-labelledby="titre-avis">
+            <div class="avis-entete">
+              <h2 class="fiche-bloc__titre" id="titre-avis">Avis des locataires</h2>
+              {% if f.reviews.count %}
+                <span class="avis-moyenne">
+                  <span class="fiche-note__etoile">{% include "web/composants/icone.html" with nom="star" taille=18 %}</span>
+                  {{ f.reviews.average|floatformat:1 }} / 5 · {{ f.reviews.count }} avis
+                </span>
+              {% endif %}
+            </div>
+            {% if peut_donner_avis %}
+              <form method="post" action="/annonces/{{ f.slug }}/avis" class="avis-form">
+                {% csrf_token %}
+                <fieldset class="etoiles">
+                  <legend class="avis-form__titre">
+                    {% if mon_avis %}
+                      Modifier ton avis
+                    {% else %}
+                      Ta note
+                    {% endif %}
+                  </legend>
+                  <div class="etoiles__choix">
+                    {% for n in notes %}
+                      <input class="etoiles__radio"
+                             type="radio"
+                             id="note-{{ n }}"
+                             name="rating"
+                             value="{{ n }}"
+                             required
+                             {% if mon_avis.rating == n %}checked{% endif %}>
+                      <label class="etoiles__etoile" for="note-{{ n }}" title="{{ n }} sur 5">
+                        {% include "web/composants/icone.html" with nom="star" taille=28 %}
+                        <span class="sr-only">{{ n }} sur 5</span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                </fieldset>
+                <label class="champ">
+                  <span class="champ__etiquette">Ton commentaire (facultatif)</span>
+                  <textarea class="champ__saisie"
+                            name="comment"
+                            rows="3"
+                            maxlength="600"
+                            placeholder="Propreté, calme, eau, électricité, accueil du gérant…">{{ mon_avis.comment|default:"" }}</textarea>
+                </label>
+                <div class="rangee">
+                  <button class="bouton bouton--primaire" type="submit">
+                    {% if mon_avis %}
+                      Mettre à jour mon avis
+                    {% else %}
+                      Publier mon avis
+                    {% endif %}
+                  </button>
+                  {% if mon_avis %}
+                    <button class="lien-bouton"
+                            type="submit"
+                            name="action"
+                            value="retirer"
+                            formnovalidate>Retirer mon avis</button>
+                  {% endif %}
+                </div>
+              </form>
+            {% elif request.user.is_authenticated and request.user.role == "client" %}
+              <p class="texte-doux">Tu pourras donner ton avis après avoir échangé avec le gérant de cette chambre.</p>
+            {% endif %}
+            {% if avis %}
+              <ul class="avis-liste">
+                {% for a in avis %}
+                  <li class="avis-item">
+                    <div class="avis-item__tete">
+                      <span class="avis-item__auteur">{{ a.author_name }}</span>
+                      <span class="avis-item__etoiles" aria-label="{{ a.rating }} sur 5">
+                        {% for n in "12345" %}
+                          <span class="avis-item__etoile{% if forloop.counter <= a.rating %} avis-item__etoile--pleine{% endif %}">
+                            {% include "web/composants/icone.html" with nom="star" taille=14 %}
+                          </span>
+                        {% endfor %}
+                      </span>
+                      <span class="avis-item__date">{{ a.created_at|date:"j F Y" }}</span>
+                    </div>
+                    {% if a.comment %}<p class="avis-item__texte">{{ a.comment }}</p>{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="texte-doux mb-0">Aucun avis pour l'instant.</p>
+            {% endif %}
+          </section>
+        </div>
+        <aside class="fiche-sidebar">
+          <div class="fiche-carte-principale">
+            {% if est_proprietaire %}
+              <a class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                 href="/pro/annonces/{{ f.id }}">Gérer cette annonce</a>
+            {% elif f.status == "published" and peut_contacter %}
+              {# Un seul bouton : il ouvre directement la discussion (plan v3, B6) #}
+              <form method="post" action="/annonces/{{ f.slug }}/contacter">
+                {% csrf_token %}
+                <button class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                        type="submit">
+                  {% include "web/composants/icone.html" with nom="message-circle" taille=18 %}
+                  Contacter le gérant
+                </button>
+              </form>
+            {% elif f.status == "published" and not request.user.is_authenticated %}
+              <a class="bouton bouton--primaire bouton--pilule largeur-pleine"
+                 href="/connexion?next=/annonces/{{ f.slug }}">Contacter le gérant</a>
+              <p class="texte-doux texte-micro texte-centre mb-0">Connecte-toi pour écrire au gérant.</p>
+            {% endif %}
+            {% if not est_proprietaire %}
+              <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Créer une alerte semblable</a>
+            {% endif %}
+            <section class="fiche-localisation" aria-labelledby="titre-localisation">
+              <h2 class="fiche-localisation__titre" id="titre-localisation">
+                {% include "web/composants/icone.html" with nom="map-pin" taille=18 %}
+                {{ f.district.name }}
+              </h2>
+              {% if f.distance_m is not None %}<p class="fiche-localisation__ligne">À {{ f.distance_m }} m de l'Université de Parakou</p>{% endif %}
+              {% if f.landmark_text %}<p class="fiche-localisation__ligne">{{ f.landmark_text }}</p>{% endif %}
+              {% if f.latitude and f.longitude %}
+                <a class="fiche-localisation__lien"
+                   href="https://www.openstreetmap.org/?mlat={{ f.latitude|stringformat:'.3f' }}&amp;mlon={{ f.longitude|stringformat:'.3f' }}#map=16/{{ f.latitude|stringformat:'.3f' }}/{{ f.longitude|stringformat:'.3f' }}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                  Voir le quartier sur la carte
+                  {% include "web/composants/icone.html" with nom="external-link" taille=14 %}
+                </a>
+                <p class="fiche-localisation__note">Seul le quartier est indiqué ; l'adresse exacte est donnée par le gérant dans la discussion.</p>
+              {% endif %}
+            </section>
+            <div class="fiche-securite-encart" role="note">
+              <strong class="fiche-securite-encart__titre">Avant de payer</strong>
+              <ol class="fiche-securite-encart__liste">
+                <li>Visite la chambre.</li>
+                <li>Demande un reçu écrit pour chaque somme.</li>
+                <li>Ne paie que le gérant, pas un intermédiaire inconnu.</li>
+              </ol>
+            </div>
+            {% if request.user.is_authenticated and request.user.role == "client" %}
+              <details class="signalement">
+                <summary class="fiche-lien-danger">
+                  {% include "web/composants/icone.html" with nom="flag" taille=14 %}
+                  Signaler cette annonce
+                </summary>
+                <form method="post"
+                      action="/annonces/{{ f.slug }}/signaler"
+                      class="pile mt-2">
+                  {% csrf_token %}
+                  <select class="champ__saisie"
+                          name="reason_code"
+                          aria-label="Motif du signalement">
+                    <option value="already_rented">Déjà louée</option>
+                    <option value="fake_listing">Fausse annonce</option>
+                    <option value="scam">Arnaque</option>
+                    <option value="other">Autre</option>
+                  </select>
+                  <button class="bouton bouton--danger bouton--petit largeur-pleine"
+                          type="submit">Confirmer le signalement</button>
+                </form>
+              </details>
+            {% endif %}
+          </div>
+        </aside>
+        {# Après le contact : sur téléphone, contacter vient avant les chambres similaires #}
+        {% if similaires %}
+          <section class="fiche-similaires" aria-labelledby="titre-similaires">
+            <h2 class="fiche-similaires-titre" id="titre-similaires">Chambres similaires</h2>
+            <div class="fiche-similaires-grille">
+              {% for s in similaires %}
+                <a class="fiche-similaire-carte" href="/annonces/{{ s.slug }}">
+                  {% if s.cover_url %}
+                    <img class="fiche-similaire-carte__image"
+                         src="{{ s.cover_url }}"
+                         alt=""
+                         loading="lazy"
+                         width="480"
+                         height="270">
+                  {% else %}
+                    <span class="fiche-similaire-carte__image fiche-similaire-carte__image--vide"
+                          aria-hidden="true"></span>
+                  {% endif %}
+                  <span class="fiche-similaire-carte__corps">
+                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
+                    <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
+                    <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
+                  </span>
+                </a>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% if f.status == "published" and not est_proprietaire %}
+    {# Téléphone : prix et contact toujours à portée de pouce #}
+    <div class="fiche-cta-mobile">
+      <div class="fiche-cta-mobile__prix">
+        <strong>{{ f.rent_amount|fcfa }} F</strong>
+        <span>
+          {% if f.rent_negotiable %}
+            / mois · à débattre
+          {% else %}
+            / mois
+          {% endif %}
+        </span>
+      </div>
+      {% if peut_contacter %}
+        <form method="post" action="/annonces/{{ f.slug }}/contacter">
+          {% csrf_token %}
+          <button class="bouton bouton--primaire" type="submit">Contacter</button>
+        </form>
+      {% elif not request.user.is_authenticated %}
+        <a class="bouton bouton--primaire"
+           href="/connexion?next=/annonces/{{ f.slug }}">Contacter</a>
+      {% endif %}
+    </div>
+  {% endif %}
+  <script src="{% static 'js/galerie.js' %}" defer></script>
+  <script src="{% static 'js/partage.js' %}" defer></script>
+{% endblock %}

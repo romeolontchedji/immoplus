@@ -1,9 +1,9 @@
-# Pile Logeo. Profils : `dev` (réglages locaux, code monté, HTTP) et `prod` (voir docker-compose.prod.yml).
+# Pile Immo+. Profils : `dev` (réglages locaux, code monté, HTTP) et `prod` (voir docker-compose.prod.yml).
 # Démarrage : `make up`. Les services de données ne publient jamais de port sur l'hôte en production.
-name: logeo
+name: immoplus
 
 x-image: &image
-  image: logeo-serveur:local
+  image: immoplus-serveur:local
   build:
     context: ../..
     dockerfile: infra/docker/Dockerfile
@@ -11,6 +11,16 @@ x-image: &image
 
 x-profils: &profils
   profiles: ["dev", "prod"]
+
+# Sondes de santé par processus. Celle de l'image (HTTP sur 8000) ne vaut que pour web-api : sans elles, realtime
+# (8001), admin (8002), les workers et beat (pas de HTTP) étaient marqués « unhealthy » alors qu'ils fonctionnaient.
+x-sante-worker: &sante_worker
+  healthcheck:
+    test: ["CMD-SHELL", "celery -A config.celery inspect ping -d celery@$$HOSTNAME --timeout 10 | grep -q pong"]
+    interval: 60s
+    timeout: 30s
+    start_period: 60s
+    retries: 3
 
 x-code-dev: &code_dev
   volumes:
@@ -32,7 +42,7 @@ services:
       - ../postgres/init:/docker-entrypoint-initdb.d:ro
     networks: [interne]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d logeo"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d immoplus"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -70,9 +80,9 @@ services:
     env_file: [env/migrer.env]
     volumes:
       - ../../serveur:/app
-      - static:/var/lib/logeo/static
+      - static:/var/lib/immoplus/static
     environment:
-      STATIC_ROOT: /var/lib/logeo/static
+      STATIC_ROOT: /var/lib/immoplus/static
       DJANGO_SETTINGS_MODULE: config.settings.migrer
     depends_on:
       postgres: {condition: service_healthy}
@@ -84,11 +94,13 @@ services:
     env_file: [env/web-api.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
-      LOGEO_RELOAD: "1"
+      IMMOPLUS_RELOAD: "1"
+      MEDIA_PUBLIC_ROOT: /var/lib/immoplus/media_public
+      MEDIA_TMP_ROOT: /var/lib/immoplus/media_tmp
     volumes:
       - ../../serveur:/app
-      - media_tmp:/var/lib/logeo/media_tmp
-      - media_public:/var/lib/logeo/media_public
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-cache: {condition: service_healthy}
@@ -98,10 +110,12 @@ services:
   realtime:
     <<: [*profils, *image, *code_dev]
     command: ["realtime"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8001/healthz || exit 1"]
     env_file: [env/realtime.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
-      LOGEO_RELOAD: "1"
+      IMMOPLUS_RELOAD: "1"
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-queue: {condition: service_healthy}
@@ -110,39 +124,51 @@ services:
   admin:
     <<: [*profils, *image, *code_dev]
     command: ["admin"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8002/healthz || exit 1"]
     env_file: [env/admin.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.admin_local
-      LOGEO_RELOAD: "1"
+      IMMOPLUS_RELOAD: "1"
+      MEDIA_PUBLIC_ROOT: /var/lib/immoplus/media_public
     volumes:
       - ../../serveur:/app
-      - media_public:/var/lib/logeo/media_public:ro
-      - media_private:/var/lib/logeo/media_private
+      - media_public:/var/lib/immoplus/media_public:ro
+      - media_private:/var/lib/immoplus/media_private
     depends_on:
       migrer: {condition: service_completed_successfully}
     networks: [interne]
 
   worker:
-    <<: [*profils, *image, *code_dev]
+    <<: [*profils, *image, *code_dev, *sante_worker]
     command: ["worker"]
     env_file: [env/worker.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      MEDIA_PUBLIC_ROOT: /var/lib/immoplus/media_public
+      MEDIA_TMP_ROOT: /var/lib/immoplus/media_tmp
+    volumes:
+      - ../../serveur:/app
+      # Envoi chez Cloudinary des dérivés préparés par worker-media (ADR 0010), qui n'a pas Internet.
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-queue: {condition: service_healthy}
     networks: [interne, sortie]
 
   worker-media:
-    <<: [*profils, *image, *code_dev]
+    <<: [*profils, *image, *code_dev, *sante_worker]
     command: ["worker-media"]
     env_file: [env/worker-media.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      MEDIA_PUBLIC_ROOT: /var/lib/immoplus/media_public
+      MEDIA_TMP_ROOT: /var/lib/immoplus/media_tmp
     volumes:
       - ../../serveur:/app
-      - media_tmp:/var/lib/logeo/media_tmp
-      - media_public:/var/lib/logeo/media_public
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
     cpus: 2.0
     mem_limit: 1536m
     depends_on:
@@ -153,6 +179,11 @@ services:
   beat:
     <<: [*profils, *image, *code_dev]
     command: ["beat"]
+    healthcheck:
+      # beat réécrit son fichier de planification à chaque envoi (une tâche part chaque minute).
+      test: ["CMD-SHELL", "find /var/lib/immoplus/celerybeat-schedule -mmin -5 | grep -q ."]
+      interval: 60s
+      start_period: 120s
     env_file: [env/beat.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
@@ -161,19 +192,24 @@ services:
     depends_on:
       migrer: {condition: service_completed_successfully}
       redis-queue: {condition: service_healthy}
+    volumes:
+      - ../../serveur:/app
+      - beat_data:/var/lib/immoplus
     networks: [interne]
 
   backup:
     <<: *profils
-    image: postgres:16-bookworm
+    image: immoplus-sauvegarde:local
+    build:
+      context: ../backup  # pg_dump + restic (ADR 0008)
     restart: unless-stopped
     command: ["bash", "/scripts/boucle.sh"]
     env_file: [env/backup.env]
     volumes:
       - ../backup:/scripts:ro
       - backups:/backups
-      - media_public:/var/lib/logeo/media_public:ro
-      - media_private:/var/lib/logeo/media_private:ro
+      - media_public:/var/lib/immoplus/media_public:ro
+      - media_private:/var/lib/immoplus/media_private:ro
     depends_on:
       postgres: {condition: service_healthy}
     networks: [interne, sortie]
@@ -212,3 +248,4 @@ volumes:
   backups:
   caddy_data:
   caddy_config:
+  beat_data:

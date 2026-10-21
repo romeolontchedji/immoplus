@@ -1,9 +1,8 @@
-"""Crée un compte du personnel (modérateur ou administrateur) avec son appareil TOTP. Jamais exposé par le web."""
+"""Crée un compte du personnel (modérateur ou administrateur). Jamais exposé par le web."""
 
 import getpass
 
 from django.core.management.base import BaseCommand, CommandError
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.accounts.models import ROLES_PERSONNEL, User
 from apps.accounts.services import mots_de_passe
@@ -12,9 +11,7 @@ from apps.core.errors import ErreurMetier
 
 
 class Command(BaseCommand):
-    help = (
-        "Crée un compte du personnel et affiche l'adresse de configuration TOTP (une seule fois)."
-    )
+    help = "Crée un compte du personnel (moderator ou admin)."
 
     def add_arguments(self, parser):
         parser.add_argument("--email", required=True)
@@ -41,12 +38,7 @@ class Command(BaseCommand):
         utilisateur = User.objects.creer_personnel(
             email=email, password=mdp, full_name=options["nom"], role=options["role"]
         )
-        appareil = TOTPDevice.objects.create(user=utilisateur, name="principal", confirmed=True)
         audit.enregistrer(
             "admin.personnel_cree", cible=utilisateur, metadata={"role": utilisateur.role}
         )
         self.stdout.write(f"Compte créé : {utilisateur.email} ({utilisateur.role}).\n")
-        self.stdout.write(
-            "Ajoute ce secret dans une application d'authentification (affiché une seule fois) :\n"
-        )
-        self.stdout.write(f"{appareil.config_url}\n")

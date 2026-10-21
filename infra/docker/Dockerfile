@@ -11,18 +11,18 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PATH="/venv/bin:$PATH" PYTHONPA
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg libpq5 libheif1 tini curl \
  && rm -rf /var/lib/apt/lists/* \
- && groupadd --system --gid 10001 logeo \
- && useradd --system --uid 10001 --gid logeo --home-dir /app --shell /usr/sbin/nologin logeo \
- && mkdir -p /app /var/lib/logeo/static /var/lib/logeo/media_tmp /var/lib/logeo/media_public /var/lib/logeo/media_private \
- && chown -R logeo:logeo /app /var/lib/logeo
+ && groupadd --system --gid 10001 immoplus \
+ && useradd --system --uid 10001 --gid immoplus --home-dir /app --shell /usr/sbin/nologin immoplus \
+ && mkdir -p /app /var/lib/immoplus/static /var/lib/immoplus/media_tmp /var/lib/immoplus/media_public /var/lib/immoplus/media_private \
+ && chown -R immoplus:immoplus /app /var/lib/immoplus
 COPY --from=construction /venv /venv
 WORKDIR /app
-COPY --chown=logeo:logeo serveur/ /app/
+COPY --chown=immoplus:immoplus serveur/ /app/
 COPY outils/construire_css.py /opt/outils/construire_css.py
-RUN LOGEO_CSS_SOURCES=/app/web/static/css python /opt/outils/construire_css.py
-COPY --chown=logeo:logeo infra/docker/entrypoint.sh /entrypoint.sh
-RUN chmod 0755 /entrypoint.sh && chown -R logeo:logeo /app/web/static
-USER logeo
+RUN IMMOPLUS_CSS_SOURCES=/app/web/static/css python /opt/outils/construire_css.py
+COPY --chown=immoplus:immoplus infra/docker/entrypoint.sh /entrypoint.sh
+RUN chmod 0755 /entrypoint.sh && chown -R immoplus:immoplus /app/web/static
+USER immoplus
 EXPOSE 8000 8001 8002
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/healthz" || exit 1

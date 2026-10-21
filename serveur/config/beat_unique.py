@@ -9,7 +9,7 @@ import redis
 from apps.core.verrou import VerrouRedis
 from config import env
 
-CLE = "logeo:verrou:beat"
+CLE = "immoplus:verrou:beat"
 
 
 def main() -> int:
@@ -20,7 +20,15 @@ def main() -> int:
         time.sleep(10)
     # Commande constante, aucune entrée externe : les alertes B603 et B607 sont sans objet.
     processus = subprocess.Popen(  # noqa: S603  # nosec B603 B607
-        ["celery", "-A", "config.celery", "beat", "-l", "info"]  # noqa: S607
+        [  # noqa: S607
+            "celery",
+            "-A",
+            "config.celery",
+            "beat",
+            "-l",
+            "info",
+            "--schedule=/var/lib/immoplus/celerybeat-schedule",
+        ]
     )
     try:
         while processus.poll() is None:

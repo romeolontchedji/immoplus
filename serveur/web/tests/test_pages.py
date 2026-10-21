@@ -9,15 +9,20 @@ from web import views
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.pg
+@pytest.mark.django_db
 def test_accueil():
     reponse = Client().get("/")
     assert reponse.status_code == 200
     html = reponse.content.decode()
     assert '<html lang="fr">' in html
-    assert "Trouve ta chambre à Parakou" in html
-    assert re.search(r'href="/static/css/dist/logeo\.[0-9a-f]{10}\.css"', html)
+    assert "Vois ta chambre avant de te déplacer." in html
+    assert 'class="accueil-hero"' in html and "Comment ça marche" in html
+    assert re.search(r'href="/static/css/dist/immoplus\.[0-9a-f]{10}\.css"', html)
 
 
+@pytest.mark.pg
+@pytest.mark.django_db  # le pied de page commun lit le contact de l'équipe (paramètre TEAM_PHONE)
 def test_styleguide_en_local():
     reponse = Client().get("/styleguide")
     assert reponse.status_code == 200
@@ -30,6 +35,8 @@ def test_styleguide_introuvable_si_desactive(settings):
         views.styleguide(RequestFactory().get("/styleguide"))
 
 
+@pytest.mark.pg
+@pytest.mark.django_db
 def test_aucun_style_ni_script_en_ligne():
     for url in ("/", "/styleguide"):
         html = Client().get(url).content.decode()

@@ -1,8 +1,23 @@
 # Caddy de production. Variables : DOMAIN, ADMIN_ALLOWED_IPS (liste d'adresses ou de plages, séparées par des espaces).
 # Les limites de corps (`request_body`) sont dans des branches `handle` distinctes : elles ne s'imbriquent jamais.
+#
+# Deux façons de le placer (docs/deploiement-vps-pas-a-pas.md) :
+# - seul en façade (serveur dédié) : HTTPS automatique, valeurs par défaut ;
+# - derrière le Caddy central d'un VPS partagé (docker-compose.vps-partage.yml) : SCHEMA_SITES=http (le central
+#   termine le HTTPS) et PROXYS_DE_CONFIANCE=private_ranges (seul le central, sur le réseau Docker, nous joint).
+# Dans les deux cas, l'adresse réelle du visiteur ({client_ip}) est la seule transmise à Django.
 {
 	servers {
 		protocols h1 h2 h3
+		# Proxys dont on croit les en-têtes X-Forwarded-* ; par défaut une adresse de documentation : personne.
+		trusted_proxies static {$PROXYS_DE_CONFIANCE:192.0.2.1/32}
+	}
+}
+
+# Vers un processus Django : une seule adresse dans X-Forwarded-For, celle du visiteur (lue par apps.core.http).
+(vers_django) {
+	reverse_proxy {args[0]} {
+		header_up X-Forwarded-For {client_ip}
 	}
 }
 
@@ -34,7 +49,13 @@
 	}
 }
 
-www.{$DOMAIN} {
+# Domaine nu : redirection permanente vers le site.
+{$SCHEMA_SITES:https}://{$DOMAIN} {
+	import en_tetes_securite
+	redir https://www.{$DOMAIN}{uri} permanent
+}
+
+{$SCHEMA_SITES:https}://www.{$DOMAIN} {
 	encode zstd gzip
 	import en_tetes_securite
 	log {
@@ -43,23 +64,23 @@ www.{$DOMAIN} {
 	}
 	import statiques
 	handle /ws/* {
-		reverse_proxy realtime:8001
+		import vers_django realtime:8001
 	}
 	handle /uploads/* {
 		request_body {
 			max_size 2MB
 		}
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 	handle {
 		request_body {
 			max_size 1MB
 		}
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 }
 
-api.{$DOMAIN} {
+{$SCHEMA_SITES:https}://api.{$DOMAIN} {
 	encode zstd gzip
 	import en_tetes_securite
 	log {
@@ -72,35 +93,36 @@ api.{$DOMAIN} {
 		file_server
 	}
 	handle /ws/* {
-		reverse_proxy realtime:8001
+		import vers_django realtime:8001
 	}
 	handle /uploads/* {
 		request_body {
 			max_size 2MB
 		}
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 	handle /v1/* {
 		request_body {
 			max_size 1MB
 		}
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 	handle /healthz {
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 	handle /readyz {
-		reverse_proxy web-api:8000
+		import vers_django web-api:8000
 	}
 	handle {
 		respond 404
 	}
 }
 
-# Hôte d'administration : nom non devinable, absent de tout lien ; liste blanche obligatoire.
+# Hôte d'administration : nom non devinable, absent de tout lien ; liste blanche obligatoire (adresse réelle du
+# visiteur, même derrière le Caddy central).
 # Si ADMIN_ALLOWED_IPS est vide, la valeur par défaut est une adresse de documentation (RFC 5737)
 # qui ne correspond à personne : l'hôte répond 404 à tout le monde.
-pilotage.{$DOMAIN} {
+{$SCHEMA_SITES:https}://pilotage.{$DOMAIN} {
 	encode zstd gzip
 	import en_tetes_securite
 	header X-Robots-Tag "noindex, nofollow"
@@ -108,7 +130,7 @@ pilotage.{$DOMAIN} {
 		output stdout
 		format json
 	}
-	@autorise remote_ip {$ADMIN_ALLOWED_IPS:192.0.2.1/32}
+	@autorise client_ip {$ADMIN_ALLOWED_IPS:192.0.2.1/32}
 	handle @autorise {
 		handle /static/* {
 			root * /srv
@@ -119,7 +141,7 @@ pilotage.{$DOMAIN} {
 			request_body {
 				max_size 5MB
 			}
-			reverse_proxy admin:8002
+			import vers_django admin:8002
 		}
 	}
 	handle {

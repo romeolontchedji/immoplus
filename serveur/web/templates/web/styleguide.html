@@ -1,5 +1,5 @@
 {% extends "web/base.html" %}
-{% block titre %}Styleguide — Logeo{% endblock %}
+{% block titre %}Styleguide — Immo+{% endblock %}
 {% block contenu %}
   <div class="conteneur section pile pile--large">
     <header class="pile--serree pile">
@@ -146,6 +146,63 @@
           </div>
         </article>
       </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-filtres">
+      <h2 id="sg-filtres">Filtres récapitulés</h2>
+      <div class="recapitulatif">
+        <span class="recapitulatif__etiquette">Filtres actifs</span>
+        <ul class="filtres-actifs">
+          <li><a class="puce puce--retirable"
+   href="#"
+   aria-label="Retirer le filtre : Quartier : Zongo">Quartier : Zongo <span class="puce__retirer" aria-hidden="true">×</span></a></li>
+          <li><a class="puce puce--retirable"
+   href="#"
+   aria-label="Retirer le filtre : Loyer ≤ 20000 FCFA">Loyer ≤ 20 000 FCFA <span class="puce__retirer" aria-hidden="true">×</span></a></li>
+        </ul>
+        <a class="recapitulatif__effacer" href="#">Tout effacer</a>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-etapes">
+      <h2 id="sg-etapes">Barre d'étapes</h2>
+      <ol class="barre-etapes">
+        <li class="barre-etapes__etape barre-etapes__etape--faite"><span class="barre-etapes__numero">1</span>Informations</li>
+        <li class="barre-etapes__etape barre-etapes__etape--active"><span class="barre-etapes__numero"
+      aria-current="step">2</span>Localisation</li>
+        <li class="barre-etapes__etape"><span class="barre-etapes__numero">3</span>Médias</li>
+        <li class="barre-etapes__etape"><span class="barre-etapes__numero">4</span>Publication</li>
+      </ol>
+    </section>
+    <section class="pile" aria-labelledby="sg-etats">
+      <h2 id="sg-etats">États vide, chargement, erreur</h2>
+      <div class="etat-vide">
+        <span class="etat-vide__symbole" aria-hidden="true">?</span>
+        <div>
+          <h3 class="etat-vide__titre">Aucune chambre à afficher</h3>
+          <p class="etat-vide__texte">Essaie d'élargir ta recherche ou de retirer un filtre.</p>
+        </div>
+        <div class="etat-vide__actions">
+          <button class="bouton bouton--primaire" type="button">Créer une alerte</button>
+          <button class="bouton" type="button">Effacer les filtres</button>
+        </div>
+      </div>
+      <div class="etat-chargement" role="status">
+        <span class="etat-chargement__rond" aria-hidden="true"></span>
+        <span>Chargement des chambres…</span>
+      </div>
+      <div class="etat-erreur" role="alert">
+        <div>
+          <p class="etat-erreur__titre">Impossible de charger</p>
+          <p>Vérifie ta connexion puis réessaie.</p>
+        </div>
+      </div>
+    </section>
+    <section class="pile" aria-labelledby="sg-liste">
+      <h2 id="sg-liste">Liste d'informations</h2>
+      <ul class="liste-infos">
+        <li><span>Caution</span><strong>2 mois</strong></li>
+        <li><span>Avance</span><strong>1 mois</strong></li>
+        <li><span>Disponible à partir du</span><strong>01/11/2026</strong></li>
+      </ul>
     </section>
   </div>
 {% endblock %}

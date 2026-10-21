@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refuse les chemins et contenus qui violent les conventions de nommage de Logeo."""
+"""Refuse les chemins et contenus qui violent les conventions de nommage de Immo+."""
 
 import os
 import re
@@ -13,6 +13,15 @@ RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEBAB = r"[a-z0-9]+(?:[.-][a-z0-9]+)*"
 SEGMENT_SOUPLE = re.compile(r"^[a-z0-9_.-]+$")
 SEGMENTS_IMPOSES = {"ISSUE_TEMPLATE", "LC_MESSAGES"}
+# Arborescences dont les noms suivent une convention externe : maquettes Design (majuscules et
+# espaces), gabarits imposés par l'admin Django (ex. change_list.html) et Expo / React Native
+# (composants en PascalCase, groupes (…), segments [id] et fichiers +not-found).
+ARBRES_SANS_CONVENTION = (
+    "docs/design/",
+    "immoplus-design-pack/",
+    "serveur/adminsite/templates/admin/",
+    "mobile/",
+)
 PAR_EXTENSION = {
     ".py": re.compile(r"^[a-z0-9_]+\.py$"),
     ".html": re.compile(rf"^{KEBAB}\.html$"),
@@ -34,6 +43,8 @@ def erreurs_chemin(chemin, conf):
         erreurs.append(
             f"{chemin} : le chemin contient un mot interdit (« backend »). Le dossier s'appelle « serveur/ »."
         )
+    if chemin.startswith(ARBRES_SANS_CONVENTION):
+        return erreurs
     segments = chemin.split("/")
     nom = segments[-1]
     for seg in segments[:-1]:
@@ -44,7 +55,12 @@ def erreurs_chemin(chemin, conf):
                 f"{chemin} : dossier « {seg} » hors convention (minuscules, chiffres, - et _)."
             )
     radical = nom.split(".")[0]
-    if nom in conf["noms_imposes"] or radical in conf["noms_majuscules"] or nom.startswith("."):
+    if (
+        nom in conf["noms_imposes"]
+        or radical in conf["noms_majuscules"]
+        or nom in {"base_site.html", "swagger_ui.html", "immoplus_admin.css"}
+        or nom.startswith((".", "_"))
+    ):
         return erreurs
     motif = PAR_EXTENSION.get(os.path.splitext(nom)[1])
     if motif is not None:

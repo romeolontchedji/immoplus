@@ -1,26 +1,16 @@
 """API /v1 des comptes : parcours complets, format d'erreur, sécurité des réponses."""
 
-from contextlib import nullcontext
-
 import pytest
-from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.accounts.models import Device, OtpCode, User
-from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory, GerantFactory
-from apps.core.providers.sms import CLE_BOITE_DEV
+from apps.accounts.models import Device, User
+from apps.accounts.services import identifiants
+from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
 
 pytestmark = [pytest.mark.api, pytest.mark.pg, pytest.mark.django_db]
 
 FORT = "un-Mot-de-passe-solide-42"
-TEL = "97565656"
-E164 = "+2290197565656"
-
-
-@pytest.fixture(autouse=True)
-def code_otp_fixe(settings):
-    settings.OTP_DEBUG_CODE = "424242"
 
 
 def api(installation="installation-test-1", **extra) -> APIClient:
@@ -32,34 +22,16 @@ def avec_jeton(client: APIClient, acces: str) -> APIClient:
     return client
 
 
-def obtenir_jeton_otp(client, objet, telephone=TEL, capture=None):
-    with capture(execute=True) if capture else nullcontext():
-        r = client.post(
-            "/v1/auth/otp/request", {"phone": telephone, "purpose": objet}, format="json"
-        )
-    assert r.status_code == 202, r.content
-    r = client.post(
-        "/v1/auth/otp/verify",
-        {"phone": telephone, "purpose": objet, "code": "424242"},
-        format="json",
-    )
-    assert r.status_code == 200, r.content
-    return r.json()["otp_token"]
+def corps_inscription(**extra) -> dict:
+    return {
+        "username": "awa.bio", "first_name": "Awa", "last_name": "Bio", "password": FORT,
+        "terms_accepted": True, "platform": "android", **extra,
+    }  # fmt: skip
 
 
-def inscrire(client, capture, nom="Awa Bio", telephone=TEL):
-    jeton = obtenir_jeton_otp(client, "signup", telephone, capture)
-    return client.post(
-        "/v1/auth/register",
-        {
-            "otp_token": jeton,
-            "full_name": nom,
-            "password": FORT,
-            "terms_accepted": True,
-            "platform": "android",
-        },
-        format="json",
-    )
+def inscrire(client, capture=None, **extra):
+    """Inscription sans code (ADR 0009) ; `capture` reste accepté pour les anciens appels."""
+    return client.post("/v1/auth/register", corps_inscription(**extra), format="json")
 
 
 @pytest.fixture
@@ -92,11 +64,14 @@ class TestParcours:
         r = inscrire(c, django_capture_on_commit_callbacks)
         assert r.status_code == 201
         corps = r.json()
-        assert corps["user"]["role"] == "client" and corps["user"]["phone"] == E164
+        assert corps["user"]["role"] == "client" and "phone" not in corps["user"]
+        assert corps["user"]["username"] == "awa.bio" and corps["user"]["first_name"] == "Awa"
         assert corps["tokens"]["expires_in"] == 900 and corps["device_id"]
+        assert len(corps["recovery_key"]) == 19  # XXXX-XXXX-XXXX-XXXX, donnée une seule fois
 
         moi = avec_jeton(api(), corps["tokens"]["access"])
         assert moi.get("/v1/me").json()["full_name"] == "Awa Bio"
+        assert "recovery_key" not in moi.get("/v1/me").json()
 
         r = api().post(
             "/v1/auth/refresh", {"refresh_token": corps["tokens"]["refresh"]}, format="json"
@@ -112,127 +87,111 @@ class TestParcours:
         assert r.status_code == 401
 
     def test_connexion(self):
-        ClientFactory(phone_e164=E164)
+        ClientFactory(username="kofi.zongo")
         r = api().post(
             "/v1/auth/login",
-            {"phone": TEL, "password": MOT_DE_PASSE, "platform": "ios"},
+            {"username": "Kofi.Zongo", "password": MOT_DE_PASSE, "platform": "ios"},
             format="json",
         )
-        assert r.status_code == 200
-        assert r.json()["user"]["phone"] == E164
+        assert r.status_code == 200  # majuscules ignorées
+        assert r.json()["user"]["username"] == "kofi.zongo"
         assert Device.objects.get().platform == "ios"
 
-    def test_activation_d_un_gerant(self, django_capture_on_commit_callbacks):
-        g = GerantFactory(phone_e164=E164)
-        g.set_unusable_password()
-        g.save()
-        c = api()
-        jeton = obtenir_jeton_otp(
-            c, "gerant_activation", capture=django_capture_on_commit_callbacks
-        )
-        r = c.post(
-            "/v1/auth/activate",
-            {"otp_token": jeton, "password": FORT, "terms_accepted": True, "platform": "android"},
-            format="json",
-        )
-        assert r.status_code == 200 and r.json()["user"]["role"] == "gerant"
-        # le jeton obtenu a l'audience « gerant »
-        import jwt
-
-        assert (
-            jwt.decode(r.json()["tokens"]["access"], options={"verify_signature": False})["aud"]
-            == "gerant"
-        )
-
-    def test_mot_de_passe_oublie(self, session, django_capture_on_commit_callbacks):
+    def test_mot_de_passe_oublie_par_cle_de_secours(self, session):
         _, corps = session
-        OtpCode.objects.update(
-            created_at=timezone.now() - timezone.timedelta(minutes=5)
-        )  # délai de renvoi écoulé
         c = api("installation-test-2")
-        jeton = obtenir_jeton_otp(c, "reset_password", capture=django_capture_on_commit_callbacks)
         r = c.post(
-            "/v1/auth/password/reset",
-            {"otp_token": jeton, "new_password": "encore-un-autre-42"},
+            "/v1/auth/password/recovery-key",
+            {"username": "awa.bio", "recovery_key": corps["recovery_key"].lower(), "new_password": "encore-un-autre-42"},
             format="json",
-        )
-        assert r.status_code == 204
+        )  # fmt: skip
+        assert r.status_code == 200 and r.json()["recovery_key"] != corps["recovery_key"]
         assert avec_jeton(api(), corps["tokens"]["access"]).get("/v1/me").status_code == 401
         r = api().post(
             "/v1/auth/login",
-            {"phone": TEL, "password": "encore-un-autre-42", "platform": "android"},
+            {"username": "awa.bio", "password": "encore-un-autre-42", "platform": "android"},
             format="json",
         )
         assert r.status_code == 200
-
-
-class TestOtpApi:
-    def test_reponse_identique_numero_connu_ou_inconnu(self, django_capture_on_commit_callbacks):
-        ClientFactory(phone_e164=E164)
-        with django_capture_on_commit_callbacks(execute=True):
-            connu = api().post(
-                "/v1/auth/otp/request", {"phone": TEL, "purpose": "reset_password"}, format="json"
-            )
-        with django_capture_on_commit_callbacks(execute=True):
-            inconnu = api("installation-test-2").post(
-                "/v1/auth/otp/request",
-                {"phone": "97000001", "purpose": "reset_password"},
-                format="json",
-            )
-        assert (
-            (connu.status_code, connu.json())
-            == (inconnu.status_code, inconnu.json())
-            == (202, {"resend_after_s": 60})
-        )
-
-    def test_changement_de_numero_exige_une_connexion(self):
-        r = api().post(
-            "/v1/auth/otp/request", {"phone": TEL, "purpose": "change_phone"}, format="json"
-        )
-        assert r.status_code == 401
-        verifier_format_erreur(r, "not_authenticated")
-
-    def test_numero_invalide(self):
-        r = api().post("/v1/auth/otp/request", {"phone": "123", "purpose": "signup"}, format="json")
-        assert r.status_code == 400 and "phone" in r.json()["error"]["fields"]
-
-    def test_usage_inconnu(self):
-        r = api().post("/v1/auth/otp/request", {"phone": TEL, "purpose": "piratage"}, format="json")
-        assert r.status_code == 400
-        verifier_format_erreur(r, "validation_error")
-
-    def test_limite_de_renvoi_donne_retry_after(self):
-        c = api()
-        c.post("/v1/auth/otp/request", {"phone": TEL, "purpose": "signup"}, format="json")
-        r = c.post("/v1/auth/otp/request", {"phone": TEL, "purpose": "signup"}, format="json")
-        assert r.status_code == 429 and int(r["Retry-After"]) >= 1
-        verifier_format_erreur(r, "otp_resend_too_soon")
-
-    def test_mauvais_code(self, django_capture_on_commit_callbacks):
-        c = api()
-        with django_capture_on_commit_callbacks(execute=True):
-            c.post("/v1/auth/otp/request", {"phone": TEL, "purpose": "signup"}, format="json")
+        # l'ancienne clé a servi : elle ne vaut plus rien
         r = c.post(
-            "/v1/auth/otp/verify",
-            {"phone": TEL, "purpose": "signup", "code": "000000"},
+            "/v1/auth/password/recovery-key",
+            {"username": "awa.bio", "recovery_key": corps["recovery_key"], "new_password": "troisieme-Mot-42"},
+            format="json",
+        )  # fmt: skip
+        assert r.status_code == 401
+
+
+class TestIdentifiantsApi:
+    def test_disponibilite_et_suggestions(self, session):
+        r = api().get(
+            "/v1/auth/username-available",
+            {"username": "AWA.BIO", "first_name": "Awa", "last_name": "Bio"},
+        )
+        corps = r.json()
+        assert corps["available"] is False and corps["suggestions"][0] == "awa.bio2"
+        assert (
+            api().get("/v1/auth/username-available", {"username": "kofi"}).json()["available"]
+            is True
+        )
+        reserve = api().get("/v1/auth/username-available", {"username": "admin"}).json()
+        assert reserve["available"] is False and "réservé" in reserve["message"]
+
+    def test_nom_deja_pris(self, session):
+        r = inscrire(api("installation-test-2"))
+        assert r.status_code == 409
+        verifier_format_erreur(r, "username_taken")
+        assert inscrire(api("installation-test-3"), username="awa.bio.2").status_code == 201
+
+    def test_lien_par_email_reponse_identique(self, session):
+        inconnu = api().post(
+            "/v1/auth/password/email-link", {"identifier": "personne"}, format="json"
+        )
+        connu = api().post("/v1/auth/password/email-link", {"identifier": "awa.bio"}, format="json")
+        assert inconnu.status_code == connu.status_code == 202
+
+    def test_cle_fausse_uniforme_et_verrouillee(self, session):
+        c = api("installation-test-5")
+        corps = {
+            "username": "awa.bio",
+            "recovery_key": "AAAA-BBBB-CCCC-DDDD",
+            "new_password": "encore-un-autre-42",
+        }
+        reponses = [
+            c.post("/v1/auth/password/recovery-key", corps, format="json") for _ in range(5)
+        ]
+        inconnu = c.post(
+            "/v1/auth/password/recovery-key", {**corps, "username": "personne"}, format="json"
+        )
+        assert {r.status_code for r in reponses} == {401}
+        assert reponses[0].json()["error"]["message"] == inconnu.json()["error"]["message"]
+        _, inscription_corps = session
+        bonne = c.post(
+            "/v1/auth/password/recovery-key",
+            {**corps, "recovery_key": inscription_corps["recovery_key"]},
             format="json",
         )
-        assert r.status_code == 400
-        verifier_format_erreur(r, "otp_invalid")
+        assert bonne.status_code == 401  # verrouillé : même la bonne clé est refusée un moment
 
-    def test_le_code_n_est_pas_dans_la_reponse(self, django_capture_on_commit_callbacks):
-        with django_capture_on_commit_callbacks(execute=True):
-            r = api().post(
-                "/v1/auth/otp/request", {"phone": TEL, "purpose": "signup"}, format="json"
-            )
-        assert "424242" not in r.content.decode()
-        assert cache.get(CLE_BOITE_DEV)
+    def test_regenerer_la_cle(self, session):
+        client, corps = session
+        assert (
+            client.post("/v1/me/recovery-key", {"password": "faux"}, format="json").status_code
+            == 400
+        )
+        r = client.post("/v1/me/recovery-key", {"password": FORT}, format="json")
+        assert r.status_code == 200 and r.json()["recovery_key"] != corps["recovery_key"]
+        u = User.objects.get(pk=corps["user"]["id"])
+        assert identifiants.cle_correcte(u, r.json()["recovery_key"])
+        assert not identifiants.cle_correcte(u, corps["recovery_key"])
 
 
 class TestFormatsEtEntetes:
     def test_installation_obligatoire(self):
         r = APIClient().post(
-            "/v1/auth/login", {"phone": TEL, "password": "x", "platform": "android"}, format="json"
+            "/v1/auth/login",
+            {"username": "awa.bio", "password": "x", "platform": "android"},
+            format="json",
         )
         assert r.status_code == 400
         verifier_format_erreur(r, "validation_error")
@@ -241,55 +200,23 @@ class TestFormatsEtEntetes:
     def test_installation_invalide(self, valeur):
         r = APIClient(HTTP_X_INSTALLATION_ID=valeur).post(
             "/v1/auth/register",
-            {
-                "otp_token": "x",
-                "full_name": "A B",
-                "password": FORT,
-                "terms_accepted": True,
-                "platform": "android",
-            },
+            corps_inscription(),
             format="json",
         )
         assert r.status_code == 400
 
-    def test_inscription_sans_installation_ne_cree_aucun_compte(
-        self, django_capture_on_commit_callbacks
-    ):
-        c = api()
-        jeton = obtenir_jeton_otp(c, "signup", capture=django_capture_on_commit_callbacks)
-        r = APIClient().post(
-            "/v1/auth/register",
-            {
-                "otp_token": jeton,
-                "full_name": "Awa Bio",
-                "password": FORT,
-                "terms_accepted": True,
-                "platform": "android",
-            },
-            format="json",
-        )
+    def test_inscription_sans_installation_ne_cree_aucun_compte(self):
+        r = APIClient().post("/v1/auth/register", corps_inscription(), format="json")
         assert r.status_code == 400 and not User.objects.exists()
-        # le jeton OTP n'est pas consommé : le client corrige l'en-tête et réessaie
-        r = c.post(
-            "/v1/auth/register",
-            {
-                "otp_token": jeton,
-                "full_name": "Awa Bio",
-                "password": FORT,
-                "terms_accepted": True,
-                "platform": "android",
-            },
-            format="json",
-        )
-        assert r.status_code == 201
+        assert inscrire(api()).status_code == 201  # le client corrige l'en-tête et réessaie
 
     def test_champs_manquants(self):
         r = api().post("/v1/auth/login", {}, format="json")
         assert r.status_code == 400
-        assert {"phone", "platform"} <= set(r.json()["error"]["fields"])
+        assert {"username", "platform"} <= set(r.json()["error"]["fields"])
 
     def test_corps_non_json(self):
-        r = api().post("/v1/auth/login", "phone=1", content_type="text/plain")
+        r = api().post("/v1/auth/login", "username=1", content_type="text/plain")
         assert r.status_code == 415
         verifier_format_erreur(r, "unsupported_media_type")
 
@@ -313,7 +240,9 @@ class TestFormatsEtEntetes:
         assert "Set-Cookie" not in client.get("/v1/me")
         csrf = APIClient(enforce_csrf_checks=True, HTTP_X_INSTALLATION_ID="installation-test-1")
         r = csrf.post(
-            "/v1/auth/login", {"phone": TEL, "password": "x", "platform": "android"}, format="json"
+            "/v1/auth/login",
+            {"username": "awa.bio", "password": "x", "platform": "android"},
+            format="json",
         )
         assert r.status_code == 401  # refus d'identifiants, pas de refus CSRF (403)
 
@@ -334,7 +263,6 @@ class TestSecuriteDesAcces:
 
     def test_jeton_expire(self, session):
         import time_machine
-        from django.utils import timezone
 
         client, _ = session
         with time_machine.travel(timezone.now() + timezone.timedelta(minutes=16), tick=False):
@@ -353,12 +281,12 @@ class TestSecuriteDesAcces:
         verifier_format_erreur(r, "account_suspended")
 
     def test_connexion_en_echec_est_uniforme_et_verrouille(self):
-        ClientFactory(phone_e164=E164)
+        ClientFactory(username="kofi.zongo")
         c = api()
-        corps = {"phone": TEL, "password": "faux", "platform": "android"}
+        corps = {"username": "kofi.zongo", "password": "faux", "platform": "android"}
         reponses = [c.post("/v1/auth/login", corps, format="json") for _ in range(5)]
         inconnu = api("installation-test-9").post(
-            "/v1/auth/login", {**corps, "phone": "97111000"}, format="json"
+            "/v1/auth/login", {**corps, "username": "personne.inconnue"}, format="json"
         )
         assert {r.status_code for r in reponses} == {401}
         assert reponses[0].json()["error"]["message"] == inconnu.json()["error"]["message"]
@@ -367,29 +295,54 @@ class TestSecuriteDesAcces:
 
     def test_limite_de_debit_par_adresse(self):
         c = api()
-        codes = [c.post("/v1/auth/login", {}, format="json").status_code for _ in range(32)]
-        assert codes[:30] == [400] * 30 and codes[30:] == [429, 429]
+        codes = [c.post("/v1/auth/login", {}, format="json").status_code for _ in range(62)]
+        assert codes[:60] == [400] * 60 and codes[60:] == [429, 429]  # AUTH_RATE_PER_MIN_IP
         r = c.post("/v1/auth/login", {}, format="json")
         verifier_format_erreur(r, "rate_limited")
         assert int(r["Retry-After"]) >= 1
 
     def test_les_adresses_sont_comptees_separement(self):
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json")
         r = APIClient(HTTP_X_INSTALLATION_ID="installation-test-1", REMOTE_ADDR="41.0.0.99").post(
             "/v1/auth/login", {}, format="json"
         )
         assert r.status_code == 400
 
+    def test_un_compte_connecte_a_son_propre_compteur_derriere_une_adresse_partagee(
+        self, monkeypatch
+    ):
+        from apps.accounts.services import appareils, jetons
+        from apps.core.api.throttles import LimiteLecture
+
+        monkeypatch.setattr(
+            LimiteLecture, "limite", 2
+        )  # anonyme : 2 × RATE_IP_FACTOR (3) = 6 par adresse
+
+        def connecte(utilisateur):
+            d, _ = appareils.ouvrir(
+                utilisateur, installation_id=f"i-{utilisateur.pk}", platform="android"
+            )
+            return avec_jeton(api(), jetons.emettre_acces(utilisateur, d))
+
+        anonymes = [api().get("/v1/listings").status_code for _ in range(7)]
+        assert anonymes[:6] == [200] * 6 and anonymes[6] == 429
+        awa, kofi = (
+            connecte(ClientFactory()),
+            connecte(ClientFactory()),
+        )  # même adresse que les anonymes
+        assert [awa.get("/v1/listings").status_code for _ in range(3)] == [200, 200, 429]
+        assert kofi.get("/v1/listings").status_code == 200
+
     def test_x_forwarded_for_ignore_hors_proxy(self):
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="9.9.9.9")
         r = api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="8.8.8.8")
         assert r.status_code == 429  # l'en-tête falsifié ne permet pas de contourner la limite
 
     def test_x_forwarded_for_lu_derriere_caddy(self, settings):
         settings.USE_X_FORWARDED_FOR = True
-        for _ in range(31):
+        for _ in range(61):
             api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="9.9.9.9")
         r = api().post("/v1/auth/login", {}, format="json", HTTP_X_FORWARDED_FOR="8.8.8.8")
         assert r.status_code == 400
@@ -398,17 +351,22 @@ class TestSecuriteDesAcces:
 class TestCompteApi:
     def test_profil(self, session):
         client, _ = session
-        r = client.patch("/v1/me", {"full_name": "Nouveau Nom"}, format="json")
-        assert r.status_code == 200 and r.json()["full_name"] == "Nouveau Nom"
-        assert client.patch("/v1/me", {"full_name": "x"}, format="json").status_code == 400
+        r = client.patch("/v1/me", {"first_name": "Aminata", "last_name": "Sanni"}, format="json")
+        assert r.status_code == 200 and r.json()["full_name"] == "Aminata Sanni"
+        assert client.patch("/v1/me", {"first_name": " "}, format="json").status_code == 400
 
     def test_le_profil_n_expose_aucun_champ_interne(self, session):
         client, _ = session
         assert set(client.get("/v1/me").json()) == {
             "id",
+            "username",
+            "first_name",
+            "last_name",
             "full_name",
+            "email",
+            "recovery_key_created_at",
+            "occupation",
             "role",
-            "phone",
             "terms_version",
             "created_at",
         }
@@ -416,15 +374,20 @@ class TestCompteApi:
     def test_role_non_modifiable_par_le_profil(self, session):
         client, corps = session
         client.patch(
-            "/v1/me", {"full_name": "Pirate", "role": "admin", "status": "active"}, format="json"
+            "/v1/me",
+            {"first_name": "Pirate", "role": "admin", "status": "active", "username": "admin2"},
+            format="json",
         )
-        assert User.objects.get(pk=corps["user"]["id"]).role == "client"
+        u = User.objects.get(pk=corps["user"]["id"])
+        assert u.role == "client" and u.username == "awa.bio"
 
     def test_changement_de_mot_de_passe(self, session):
         client, corps = session
         autre = api("installation-test-2")
         r = autre.post(
-            "/v1/auth/login", {"phone": TEL, "password": FORT, "platform": "ios"}, format="json"
+            "/v1/auth/login",
+            {"username": "awa.bio", "password": FORT, "platform": "ios"},
+            format="json",
         )
         jeton_autre = r.json()["tokens"]["access"]
         r = client.post(
@@ -457,37 +420,38 @@ class TestCompteApi:
         r = client.put("/v1/me/preferences", {"securite": {"push": False}}, format="json")
         assert r.status_code == 400
 
-    def test_changement_de_numero(self, session, django_capture_on_commit_callbacks):
-        client, _ = session
-        nouveau = "97787878"
+    def test_ajout_d_un_email_confirme_par_lien(self, session, django_capture_on_commit_callbacks):
+        from apps.accounts.services import compte
+
+        client, corps = session
         with django_capture_on_commit_callbacks(execute=True):
-            r = client.post(
-                "/v1/auth/otp/request", {"phone": nouveau, "purpose": "change_phone"}, format="json"
+            assert (
+                client.post("/v1/me/email", {"email": "awa@exemple.bj"}, format="json").status_code
+                == 202
             )
-        assert r.status_code == 202
-        jeton = client.post(
-            "/v1/auth/otp/verify",
-            {"phone": nouveau, "purpose": "change_phone", "code": "424242"},
-            format="json",
-        ).json()["otp_token"]
-        r = client.post(
-            "/v1/me/phone/change", {"password": FORT, "otp_token": jeton}, format="json"
-        )
-        assert r.status_code == 200 and r.json()["phone"] == "+2290197787878"
+        u = User.objects.get(pk=corps["user"]["id"])
+        assert u.email is None  # rien d'enregistré avant la confirmation
+        jeton = identifiants.creer_jeton(u, "email", a="awa@exemple.bj")
+        compte.confirmer_email(jeton)
+        assert client.get("/v1/me").json()["email"] == "awa@exemple.bj"
 
     def test_suppression_du_compte(self, session):
         client, corps = session
         assert client.delete("/v1/me", {"password": "faux"}, format="json").status_code == 400
         assert client.delete("/v1/me", {"password": FORT}, format="json").status_code == 204
         assert client.get("/v1/me").status_code == 401
-        assert User.objects.get(pk=corps["user"]["id"]).status == "deleted"
+        supprime = User.objects.get(pk=corps["user"]["id"])
+        assert supprime.status == "deleted" and supprime.username.startswith("supprime.")
+        assert inscrire(api("installation-test-4")).status_code == 201  # le nom est libéré
 
 
 class TestAppareilsApi:
     def test_liste_marque_l_appareil_courant(self, session):
         client, corps = session
         api("installation-test-2").post(
-            "/v1/auth/login", {"phone": TEL, "password": FORT, "platform": "ios"}, format="json"
+            "/v1/auth/login",
+            {"username": "awa.bio", "password": FORT, "platform": "ios"},
+            format="json",
         )
         liste = client.get("/v1/devices").json()
         assert len(liste) == 2
@@ -499,7 +463,9 @@ class TestAppareilsApi:
         client, _ = session
         autre = api("installation-test-2")
         r = autre.post(
-            "/v1/auth/login", {"phone": TEL, "password": FORT, "platform": "ios"}, format="json"
+            "/v1/auth/login",
+            {"username": "awa.bio", "password": FORT, "platform": "ios"},
+            format="json",
         )
         assert client.delete(f"/v1/devices/{r.json()['device_id']}").status_code == 204
         assert avec_jeton(api(), r.json()["tokens"]["access"]).get("/v1/me").status_code == 401
@@ -507,7 +473,7 @@ class TestAppareilsApi:
 
     def test_impossible_de_deconnecter_l_appareil_d_un_autre_compte(self, session):
         client, _ = session
-        victime = ClientFactory(phone_e164="+2290197343434")
+        victime = ClientFactory()
         d = Device.objects.create(
             user=victime, installation_id="installation-victime", platform="android",
             refresh_expires_at="2099-01-01T00:00:00Z",

@@ -22,6 +22,11 @@ def connexion(sender, request, user, **kwargs):
             ip=ip_client(request),
             user_agent=user_agent(request),
         )
+        from . import double_auth
+
+        double_auth.demarrer(
+            request, user
+        )  # code par courriel : la session reste bloquée jusqu'à sa saisie
 
 
 @receiver(user_logged_out)

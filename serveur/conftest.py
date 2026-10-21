@@ -15,9 +15,9 @@ def css_construit():
     import construire_css
 
     construire_css.construire()
-    from web.templatetags import logeo
+    from web.templatetags import immoplus
 
-    logeo._manifeste.cache_clear()
+    immoplus._manifeste.cache_clear()
 
 
 # --- Rôles PostgreSQL de production, recréés pour les tests de droits (CDC §8.2) ---

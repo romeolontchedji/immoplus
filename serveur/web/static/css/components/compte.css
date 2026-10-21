@@ -1,0 +1,82 @@
+/* ─── Page Mon compte ─────────────────────────────────────────────────────── */
+.compte-reglages { display: grid; gap: var(--sp-6); grid-template-columns: minmax(0, 1fr); }
+.compte-dashboard {
+  display: flex; flex-direction: column; gap: var(--sp-6);
+}
+.compte-sidebar {
+  display: flex; flex-direction: column; gap: var(--sp-5);
+}
+.compte-carte-profil {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding-bottom: var(--sp-5); border-bottom: 1px solid var(--divider);
+}
+.compte-carte-profil__nom {
+  font-size: var(--fs-17); font-weight: 800; color: var(--night); margin: 0 0 var(--sp-1);
+}
+.compte-menu {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: var(--sp-1);
+}
+.compte-menu__lien {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3); border-radius: 10px;
+  color: var(--text-muted); text-decoration: none;
+  font-size: var(--fs-15); font-weight: 700;
+  transition: color var(--duree-1), background var(--duree-1);
+}
+.compte-menu__lien svg { flex-shrink: 0; }
+.compte-menu__lien:hover { color: var(--night); background: var(--bg); text-decoration: none; }
+.compte-menu__lien--actif { color: var(--blue); background: var(--blue-soft); }
+.compte-menu__lien--actif svg { color: var(--blue); }
+
+.compte-principal {
+  flex: 1; display: flex; flex-direction: column; gap: var(--sp-6);
+}
+
+/* Section en carte */
+.compte-section-carte {
+  background: var(--surface); border: 1px solid var(--divider);
+  border-radius: var(--r-card); padding: var(--sp-6) var(--sp-8);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: var(--sp-5);
+}
+.compte-section-carte--danger {
+  border-color: var(--danger-border);
+}
+.compte-section-carte__titre {
+  font-size: var(--fs-17); font-weight: 800; color: var(--night); margin: 0;
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+
+@media (min-width: 768px) {
+  /* Réglages : profil et mot de passe côte à côte, zone de danger sur toute la largeur */
+  .compte-reglages { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .compte-reglages > .compte-section-carte--danger { grid-column: 1 / -1; }
+}
+@media (max-width: 767px) {
+  .compte-section-carte { padding: var(--sp-5); }
+}
+
+/* ---- Mon profil (plan v3, E1 et E6) ---- */
+.profil { display: flex; flex-direction: column; gap: var(--sp-6); max-width: 64rem; }
+.profil__entete {
+  display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap;
+  padding: var(--sp-5); border-radius: var(--r-card); background: var(--surface);
+  border: 1px solid var(--divider); box-shadow: var(--shadow-card);
+}
+.profil__avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 3.5rem; height: 3.5rem; border-radius: var(--r-pill);
+  background: var(--sun); color: var(--night); font-size: var(--fs-18); font-weight: 800;
+}
+.profil__qui { flex: 1; min-width: 12rem; }
+.profil__nom { margin: 0; font-size: var(--fs-24); font-weight: 800; color: var(--night); }
+.profil__role { margin: var(--sp-1) 0 0; color: var(--text-muted); font-size: var(--fs-14); }
+.profil__public { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.profil__grille { display: grid; gap: var(--sp-5); }
+@media (min-width: 1100px) { .profil__grille { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+.profil__annuler { margin: 0; }
+.lien-bouton {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--link); font: inherit; font-size: var(--fs-14); font-weight: 700; text-decoration: underline;
+}

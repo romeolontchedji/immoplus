@@ -16,18 +16,30 @@ class AuditLog(models.Model):
         blank=True,
         related_name="+",
         db_column="actor_id",
+        verbose_name="auteur",
     )
-    actor_role = models.CharField(max_length=12, null=True, blank=True)
-    action = models.CharField(max_length=64)
-    target_type = models.CharField(max_length=32, null=True, blank=True)
-    target_id = models.UUIDField(null=True, blank=True)
-    metadata = models.JSONField(default=dict, db_default={})
-    ip = models.GenericIPAddressField(null=True, blank=True)
-    user_agent = models.CharField(max_length=255, null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
+    actor_role = models.CharField(
+        max_length=12, null=True, blank=True, verbose_name="rôle de l'auteur"
+    )
+    action = models.CharField(max_length=64, verbose_name="action")
+    target_type = models.CharField(
+        max_length=32, null=True, blank=True, verbose_name="type de cible"
+    )
+    target_id = models.UUIDField(null=True, blank=True, verbose_name="cible")
+    metadata = models.JSONField(default=dict, db_default={}, verbose_name="détails")
+    ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="adresse IP")
+    user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name="navigateur")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+
+    def __str__(self) -> str:
+        return f"{self.action} · {self.created_at:%d/%m/%Y %H:%M}"
 
     class Meta:
         db_table = "audit_logs"
+        verbose_name = "entrée du journal"
+        verbose_name_plural = "journal d'activité"
         indexes = [
             models.Index(fields=["created_at"], name="audit_created_idx"),
             models.Index(fields=["actor", "created_at"], name="audit_actor_created_idx"),

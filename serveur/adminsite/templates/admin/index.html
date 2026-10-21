@@ -1,0 +1,220 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block coltype %}colM{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard lg-accueil{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+  <div id="content-main">
+    {% with v=vue_ensemble %}
+      <header class="lg-entete-page">
+        <div>
+          <h1>Bonjour {{ request.user.get_short_name }}</h1>
+          <p>Voici ce qui demande ton attention sur Immo+ aujourd'hui.</p>
+        </div>
+        {% if v.role == "admin" %}
+          <a class="lg-bouton lg-bouton--soleil"
+             href="{% url 'admin:accounts_user_nouveau_gerant' %}">{% include "admin/includes_icone.html" with nom="plus" %} Créer un gérant</a>
+        {% endif %}
+      </header>
+      {% if v.maintenance %}
+        <p class="lg-bandeau lg-bandeau--alerte">
+          {% include "admin/includes_icone.html" with nom="alert" %}
+          Le site et les applications sont en <strong>maintenance</strong>. <a href="{% url 'admin:core_appsetting_changelist' %}#application">Désactiver</a>
+        </p>
+      {% endif %}
+      {% if v.parametres_provisoires and v.role == "admin" %}
+        <p class="lg-bandeau">
+          {% include "admin/includes_icone.html" with nom="file" %}
+          L'identité légale affichée est <strong>provisoire</strong> (valeurs fictives).
+          <a href="{% url 'admin:core_appsetting_changelist' %}#contact">La compléter</a>
+        </p>
+      {% endif %}
+      <h2 class="lg-titre-section">À traiter</h2>
+      <div class="lg-grille lg-grille--3">
+        <a class="lg-tuile{% if v.moderation.hors_delai %} lg-tuile--urgent{% endif %}"
+           href="{% url 'admin:moderation_report_changelist' %}">
+          <span class="lg-tuile__icone lg-tuile__icone--rouge">{% include "admin/includes_icone.html" with nom="flag" %}</span>
+          <span class="lg-tuile__nombre">{{ v.moderation.ouverts }}</span>
+          <span class="lg-tuile__libelle">Signalements ouverts</span>
+          <span class="lg-tuile__aide">
+            {% if v.moderation.hors_delai %}
+              {{ v.moderation.hors_delai }} hors délai de 24 h
+            {% else %}
+              Tous dans les délais
+            {% endif %}
+          </span>
+        </a>
+        <a class="lg-tuile"
+           href="{% url 'admin:listings_roomtype_changelist' %}?status__exact=pending">
+          <span class="lg-tuile__icone">{% include "admin/includes_icone.html" with nom="tag" %}</span>
+          <span class="lg-tuile__nombre">{{ v.types_proposes }}</span>
+          <span class="lg-tuile__libelle">Types proposés</span>
+          <span class="lg-tuile__aide">à valider ou rattacher</span>
+        </a>
+        <a class="lg-tuile"
+           href="{% url 'admin:listings_listing_changelist' %}?status__exact=processing">
+          <span class="lg-tuile__icone lg-tuile__icone--vert">{% include "admin/includes_icone.html" with nom="eye" %}</span>
+          <span class="lg-tuile__nombre">{{ v.annonces_en_relecture }}</span>
+          <span class="lg-tuile__libelle">Annonces en relecture</span>
+          <span class="lg-tuile__aide">première publication</span>
+        </a>
+      </div>
+      <h2 class="lg-titre-section">Activité</h2>
+      <div class="lg-grille lg-grille--4">
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.locataires_total }}</span>
+          <span class="lg-chiffre__libelle">Locataires actifs</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.annonces_publiees }}</span>
+          <span class="lg-chiffre__libelle">Chambres en ligne</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">{{ v.compteurs_jour.messages }}</span>
+          <span class="lg-chiffre__libelle">Messages aujourd'hui · {{ v.compteurs_jour.conversations_started }} conversation{{ v.compteurs_jour.conversations_started|pluralize }}</span>
+        </div>
+        <div class="lg-chiffre">
+          <span class="lg-chiffre__nombre">
+            {% if v.taux_reponse is not None %}
+              {{ v.taux_reponse }} %
+            {% else %}
+              —
+            {% endif %}
+          </span>
+          <span class="lg-chiffre__libelle">Taux de réponse moyen des gérants</span>
+        </div>
+      </div>
+      {% with t=v.trafic %}
+        <h2 class="lg-titre-section">
+          Audience <small>site et application, vues de fiches</small>
+        </h2>
+        <div class="lg-audience">
+          <section class="lg-carte lg-audience__graphe" aria-labelledby="graphe-titre">
+            <header class="lg-audience__entete">
+              <h3 id="graphe-titre">14 derniers jours</h3>
+              <ul class="lg-legende">
+                <li>
+                  <span class="lg-legende__puce lg-legende__puce--web"></span>Site
+                </li>
+                <li>
+                  <span class="lg-legende__puce lg-legende__puce--app"></span>Application
+                </li>
+              </ul>
+            </header>
+            {% if not t.web_7j and not t.app_7j and not t.jours_avec_vues %}
+              <p class="lg-audience__vide">
+                Pas encore de vue comptée. Les vues s'affichent ici dès qu'une fiche est ouverte sur le site ou dans l'application.
+              </p>
+            {% endif %}
+            <svg class="lg-barres"
+                 viewBox="0 0 100 {{ t.hauteur }}"
+                 preserveAspectRatio="none"
+                 role="img"
+                 aria-label="Vues de fiches par jour : site {{ t.web_7j }}, application {{ t.app_7j }} sur 7 jours">
+              {% for j in t.jours %}
+                <rect class="lg-barres__app" x="{{ j.x }}" y="{{ j.y_app }}" width="{{ j.largeur }}" height="{{ j.h_app }}">
+                <title>{{ j.jour|date:"d/m" }} · application {{ j.app }}</title>
+                </rect>
+                <rect class="lg-barres__web" x="{{ j.x }}" y="{{ j.y_web }}" width="{{ j.largeur }}" height="{{ j.h_web }}">
+                <title>{{ j.jour|date:"d/m" }} · site {{ j.web }}</title>
+                </rect>
+              {% endfor %}
+            </svg>
+            <div class="lg-barres__axe">
+              <span>{{ t.jours.0.jour|date:"d/m" }}</span>
+              <span>Aujourd'hui</span>
+            </div>
+          </section>
+          <div class="lg-audience__chiffres">
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone">{% include "admin/includes_icone.html" with nom="monitor" %}</span>
+              <span class="lg-chiffre__nombre">{{ t.web_7j }}</span>
+              <span class="lg-chiffre__libelle">Vues sur le site · 7 jours</span>
+            </div>
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone lg-chiffre__icone--soleil">
+                {% include "admin/includes_icone.html" with nom="smartphone" %}
+              </span>
+              <span class="lg-chiffre__nombre">{{ t.app_7j }}</span>
+              <span class="lg-chiffre__libelle">
+                Vues dans l'application · 7 jours
+                {% if t.part_app is not None %}({{ t.part_app }} %){% endif %}
+              </span>
+            </div>
+            <div class="lg-chiffre">
+              <span class="lg-chiffre__icone lg-chiffre__icone--vert">
+                {% include "admin/includes_icone.html" with nom="trending" %}
+              </span>
+              <span class="lg-chiffre__nombre">{{ t.android|add:t.ios }}</span>
+              <span class="lg-chiffre__libelle">Téléphones actifs · 7 jours ({{ t.android }} Android, {{ t.ios }} iOS)</span>
+            </div>
+          </div>
+        </div>
+      {% endwith %}
+      {% if erreurs_recentes is not None %}
+        <h2 class="lg-titre-section">
+          Erreurs <small>regroupées par type, 30 derniers jours</small>
+        </h2>
+        {% if erreurs_recentes %}
+          <div class="lg-carte">
+            <ul class="lg-erreurs-resume">
+              {% for e in erreurs_recentes %}
+                <li>
+                  <strong>{{ e.type }}</strong> · {{ e.lieu }}
+                  <span class="lg-discret">{{ e.nombre }} fois · dernière le {{ e.derniere_le }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+            <a class="lg-lien-action" href="/erreurs/">Voir le détail</a>
+          </div>
+        {% else %}
+          <p class="lg-carte">Aucune erreur enregistrée. Tout va bien.</p>
+        {% endif %}
+      {% endif %}
+      <h2 class="lg-titre-section">Gérer</h2>
+      <div class="lg-grille lg-grille--3">
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="users" %} Comptes</h3>
+          <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Gérants</a>
+          <a href="{% url 'admin:accounts_user_changelist' %}">Tous les comptes</a>
+          {% if v.role == "admin" %}<a href="{% url 'admin:accounts_user_nouveau_gerant' %}">Créer un gérant</a>{% endif %}
+        </section>
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="house" %} Annonces</h3>
+          <a href="{% url 'admin:listings_listing_changelist' %}">Toutes les annonces</a>
+          <a href="{% url 'admin:listings_roomtype_changelist' %}">Types de logement</a>
+          {% if v.role == "admin" %}<a href="{% url 'admin:listings_district_changelist' %}">Quartiers</a>{% endif %}
+        </section>
+        <section class="lg-domaine">
+          <h3>{% include "admin/includes_icone.html" with nom="shield" %} Modération</h3>
+          <a href="{% url 'admin:moderation_report_changelist' %}">Signalements</a>
+          <a href="{% url 'admin:moderation_moderationaction_changelist' %}">Décisions et sanctions</a>
+          {% if v.sanctions_actives %}<span class="lg-domaine__note">{{ v.sanctions_actives }} sanction{{ v.sanctions_actives|pluralize }} en cours</span>{% endif %}
+        </section>
+        {% if v.role == "admin" %}
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="settings" %} Configuration</h3>
+            <a href="{% url 'admin:core_appsetting_changelist' %}">Paramètres</a>
+            <a href="{% url 'admin:core_appsetting_changelist' %}#application">Maintenance et version de l'app</a>
+            <a href="{% url 'admin:core_appsetting_changelist' %}#contact">Contact et identité légale</a>
+          </section>
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="card" %} Abonnement</h3>
+            <a href="{% url 'admin:billing_subscription_changelist' %}">Abonnements</a>
+            <a href="{% url 'admin:billing_payment_changelist' %}">Paiements</a>
+            <span class="lg-domaine__note">Désactivé en V1 : plan Gratuit pour tous</span>
+          </section>
+          <section class="lg-domaine">
+            <h3>{% include "admin/includes_icone.html" with nom="file" %} Journal</h3>
+            <a href="{% url 'admin:audit_auditlog_changelist' %}">Journal d'activité</a>
+            <span class="lg-domaine__note">
+              {% if v.audit_aujourdhui is not None %}{{ v.audit_aujourdhui }} entrée{{ v.audit_aujourdhui|pluralize }} aujourd'hui{% endif %}
+            </span>
+          </section>
+        {% endif %}
+      </div>
+    {% endwith %}
+  </div>
+{% endblock %}
+{% block sidebar %}{% endblock %}

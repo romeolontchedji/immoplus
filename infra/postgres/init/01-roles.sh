@@ -4,7 +4,7 @@
 # migrations de la phase 1, quand les tables existent ; ce script prépare les rôles et le schéma.
 set -euo pipefail
 
-: "${POSTGRES_DB:=logeo}"
+: "${POSTGRES_DB:=immoplus}"
 : "${APP_DB_PASSWORD:?APP_DB_PASSWORD manquant}"
 : "${ADMIN_DB_PASSWORD:?ADMIN_DB_PASSWORD manquant}"
 : "${MIGRATE_DB_PASSWORD:?MIGRATE_DB_PASSWORD manquant}"

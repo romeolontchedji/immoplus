@@ -1,7 +1,6 @@
 """Adaptateurs HTTP de l'API de comptes : valident l'entrée, appellent les services, formatent la sortie."""
 
-from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import serializers
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,9 +10,9 @@ from apps.accounts.services import (
     appareils,
     authentification,
     compte,
+    identifiants,
     inscription,
     jetons,
-    otp,
 )
 from apps.core.api.throttles import LimiteAuth, LimiteCompte
 from apps.core.errors import ErreurMetier
@@ -42,9 +41,14 @@ def _installation(request) -> str:
 def _utilisateur_out(u) -> dict:
     return {
         "id": u.pk,
+        "username": u.username,
+        "first_name": u.first_name,
+        "last_name": u.last_name,
         "full_name": u.full_name,
+        "email": u.email if u.email_verified_at else None,
+        "recovery_key_created_at": u.recovery_key_created_at,
+        "occupation": u.occupation,
         "role": u.role,
-        "phone": u.phone_e164,
         "terms_version": u.terms_version,
         "created_at": u.created_at,
     }
@@ -99,45 +103,32 @@ def _valide(serializer_class, request) -> dict:
     return serializer.validated_data
 
 
-# ---------------------------------------------------------------- OTP
-class OtpDemande(_Public):
+# ---------------------------------------------------------------- Nom d'utilisateur
+class Disponibilite(_Public):
     @extend_schema(
         tags=TAG_AUTH,
-        summary="Demander un code à usage unique",
-        description="Réponse identique que le numéro ait un compte ou non. Plafonds et coupe-circuit : CDC §5.3.",
-        request=s.OtpDemandeIn,
-        responses={
-            202: inline_serializer("OtpDemandeOut", {"resend_after_s": serializers.IntegerField()})
-        },
+        summary="Le nom d'utilisateur est-il libre ?",
+        description="Vérifié pendant la frappe à l'inscription ; propose des noms libres tirés du prénom et du nom.",
+        parameters=[
+            OpenApiParameter("username", str, required=True),
+            OpenApiParameter("first_name", str, required=False),
+            OpenApiParameter("last_name", str, required=False),
+        ],
+        responses={200: s.DisponibiliteOut},
     )
-    def post(self, request):
-        d = _valide(s.OtpDemandeIn, request)
-        if d["purpose"] == "change_phone" and request.auth is None:
-            raise ErreurMetier("not_authenticated", "Connexion requise.", statut=401)
-        otp.demander(
-            d["phone"],
-            d["purpose"],
-            otp.Contexte(
-                installation_id=installation_id(request),
-                ip=ip_client(request),
-                jeton_attestation=d.get("attestation_token"),
-                surface="app",
-            ),
+    def get(self, request):
+        q = request.query_params
+        try:
+            identifiants.valider_nom_utilisateur(q.get("username", ""))
+            libre, message = True, ""
+        except ErreurMetier as erreur:
+            libre, message = False, erreur.champs.get("username", [erreur.message])[0]
+        proposes = (
+            []
+            if libre
+            else identifiants.suggestions(q.get("first_name", ""), q.get("last_name", ""))
         )
-        return Response({"resend_after_s": 60}, status=202)
-
-
-class OtpVerification(_Public):
-    @extend_schema(
-        tags=TAG_AUTH,
-        summary="Vérifier un code",
-        request=s.OtpVerificationIn,
-        responses={200: s.OtpJetonOut},
-    )
-    def post(self, request):
-        d = _valide(s.OtpVerificationIn, request)
-        jeton = otp.verifier(d["phone"], d["purpose"], d["code"])
-        return Response({"otp_token": jeton, "expires_in": otp.VALIDITE_JETON_S})
+        return Response({"available": libre, "message": message, "suggestions": proposes})
 
 
 # ---------------------------------------------------------------- Session
@@ -145,43 +136,26 @@ class Inscription(_Public):
     @extend_schema(
         tags=TAG_AUTH,
         summary="Créer un compte locataire",
+        description="Aucun code : le compte est créé tout de suite. La clé de secours n'est donnée qu'ici.",
         request=s.InscriptionIn,
-        responses={201: s.SessionOut},
+        responses={201: s.InscriptionOut},
     )
     def post(self, request):
         _installation(
             request
         )  # avant toute écriture : un compte ne doit pas être créé sans session possible
         d = _valide(s.InscriptionIn, request)
-        utilisateur = inscription.inscrire_client(
-            d["otp_token"],
-            d["full_name"],
-            d["password"],
-            d["terms_accepted"],
+        utilisateur, cle = inscription.inscrire_client(
+            nom_utilisateur=d["username"],
+            prenom=d["first_name"],
+            nom=d["last_name"],
+            mot_de_passe=d["password"],
+            cgu_acceptees=d["terms_accepted"],
+            occupation=d.get("occupation"),
             ip=ip_client(request),
             user_agent=user_agent(request),
         )
-        return Response(_session(request, utilisateur, d), status=201)
-
-
-class Activation(_Public):
-    @extend_schema(
-        tags=TAG_AUTH,
-        summary="Activer un compte gérant",
-        request=s.ActivationIn,
-        responses={200: s.SessionOut},
-    )
-    def post(self, request):
-        _installation(request)
-        d = _valide(s.ActivationIn, request)
-        utilisateur = inscription.activer_gerant(
-            d["otp_token"],
-            d["password"],
-            d["terms_accepted"],
-            ip=ip_client(request),
-            user_agent=user_agent(request),
-        )
-        return Response(_session(request, utilisateur, d))
+        return Response({**_session(request, utilisateur, d), "recovery_key": cle}, status=201)
 
 
 class Connexion(_Public):
@@ -191,7 +165,7 @@ class Connexion(_Public):
     def post(self, request):
         client = _installation(request)
         d = _valide(s.ConnexionIn, request)
-        utilisateur = authentification.authentifier(d["phone"], d["password"], client)
+        utilisateur = authentification.authentifier(d["username"], d["password"], client)
         return Response(_session(request, utilisateur, d))
 
 
@@ -223,19 +197,36 @@ class Deconnexion(_Prive):
         return Response(status=204)
 
 
-class MotDePasseOublie(_Public):
+class LienParEmail(_Public):
     @extend_schema(
         tags=TAG_AUTH,
-        summary="Réinitialiser le mot de passe",
-        request=s.MotDePasseOublieIn,
-        responses={204: None},
+        summary="Mot de passe oublié : recevoir un lien par e-mail",
+        description="Réponse identique que le compte existe ou non. Le lien (30 min) s'ouvre sur le site.",
+        request=s.LienParEmailIn,
+        responses={202: None},
     )
     def post(self, request):
-        d = _valide(s.MotDePasseOublieIn, request)
-        inscription.reinitialiser_mot_de_passe(
-            d["otp_token"], d["new_password"], ip=ip_client(request), user_agent=user_agent(request)
-        )
-        return Response(status=204)
+        d = _valide(s.LienParEmailIn, request)
+        inscription.demander_lien_par_email(d["identifier"], ip=ip_client(request))
+        return Response(status=202)
+
+
+class CleDeSecours(_Public):
+    @extend_schema(
+        tags=TAG_AUTH,
+        summary="Mot de passe oublié : clé de secours",
+        description="Nouveau mot de passe ; retourne la nouvelle clé (l'ancienne ne sert qu'une fois).",
+        request=s.CleDeSecoursIn,
+        responses={200: s.CleDeSecoursOut},
+    )
+    def post(self, request):
+        client = _installation(request)
+        d = _valide(s.CleDeSecoursIn, request)
+        _, cle = inscription.reinitialiser_par_cle(
+            d["username"], d["recovery_key"], d["new_password"], client=client,
+            ip=ip_client(request), user_agent=user_agent(request),
+        )  # fmt: skip
+        return Response({"recovery_key": cle})
 
 
 class ChangementMotDePasse(_Prive):
@@ -267,7 +258,10 @@ class Moi(_Prive):
     )
     def patch(self, request):
         d = _valide(s.ProfilIn, request)
-        utilisateur = compte.modifier_profil(request.user, nom=d.get("full_name"))
+        options = {"occupation": d["occupation"]} if "occupation" in d else {}
+        utilisateur = compte.modifier_profil(
+            request.user, prenom=d.get("first_name"), nom=d.get("last_name"), **options
+        )
         return Response(_utilisateur_out(utilisateur))
 
     @extend_schema(
@@ -282,24 +276,37 @@ class Moi(_Prive):
         return Response(status=204)
 
 
-class ChangementNumero(_Prive):
+class AjoutEmail(_Prive):
     @extend_schema(
         tags=TAG_COMPTE,
-        summary="Changer de numéro",
-        request=s.ChangementNumeroIn,
-        responses={200: s.UtilisateurOut},
+        summary="Ajouter ou changer mon e-mail",
+        description="Envoie un lien de confirmation (24 h) ; l'e-mail ne compte qu'une fois confirmé sur le site.",
+        request=s.EmailIn,
+        responses={202: None},
     )
     def post(self, request):
-        d = _valide(s.ChangementNumeroIn, request)
-        utilisateur = compte.changer_numero(
-            request.user, d["password"], d["otp_token"], request.auth.appareil_id
+        d = _valide(s.EmailIn, request)
+        compte.demander_ajout_email(request.user, d["email"])
+        return Response(status=202)
+
+
+class NouvelleCleDeSecours(_Prive):
+    @extend_schema(
+        tags=TAG_COMPTE,
+        summary="Régénérer ma clé de secours",
+        request=s.MotDePasseIn,
+        responses={200: s.CleDeSecoursOut},
+    )
+    def post(self, request):
+        d = _valide(s.MotDePasseIn, request)
+        return Response(
+            {"recovery_key": compte.regenerer_cle_de_secours(request.user, d["password"])}
         )
-        return Response(_utilisateur_out(utilisateur))
 
 
 class Preferences(_Prive):
     @extend_schema(
-        tags=TAG_COMPTE, summary="Préférences de notification", responses={200: s.PreferencesIO}
+        tags=TAG_COMPTE, summary="Préférences de notification", responses={200: s.PreferencesSchema}
     )
     def get(self, request):
         return Response(compte.preferences(request.user))
@@ -307,8 +314,8 @@ class Preferences(_Prive):
     @extend_schema(
         tags=TAG_COMPTE,
         summary="Modifier les préférences de notification",
-        request=s.PreferencesIO,
-        responses={200: s.PreferencesIO},
+        request=s.PreferencesSchema,
+        responses={200: s.PreferencesSchema},
     )
     def put(self, request):
         return Response(compte.definir_preferences(request.user, request.data))

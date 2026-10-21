@@ -1,0 +1,96 @@
+{% extends "web/espace.html" %}
+{% load immoplus %}
+{% block titre %}Mon profil — Immo+{% endblock %}
+{% block espace %}
+  <div class="profil">
+    <header class="profil__entete">
+      <span class="profil__avatar" aria-hidden="true">{{ u.initiales|default:"?" }}</span>
+      <div class="profil__qui">
+        <h1 class="profil__nom">{{ u.full_name|default:"Mon profil" }}</h1>
+        <p class="profil__role">
+          {% if u.role == "gerant" %}
+            Gérant
+          {% else %}
+            Locataire
+          {% endif %}
+          · @{{ u.username }}
+        </p>
+      </div>
+      {% if u.role == "gerant" %}
+        <a class="bouton bouton--secondaire profil__public"
+           href="/gerants/{{ u.pk }}">
+          {% include "web/composants/icone.html" with nom="eye" taille=18 %}
+          Voir mon profil public
+        </a>
+      {% endif %}
+    </header>
+    {% if message %}
+      <div class="alerte alerte--succes" role="status">
+        <p>{{ message }}</p>
+      </div>
+    {% endif %}
+    <div class="profil__grille">
+      <section class="compte-section-carte" aria-labelledby="titre-infos">
+        <h2 class="compte-section-carte__titre" id="titre-infos">
+          {% include "web/composants/icone.html" with nom="user-round" taille=18 %}
+          Informations personnelles
+        </h2>
+        <p class="texte-doux mb-0">Nom d'utilisateur : <strong>@{{ u.username }}</strong> (il sert à te connecter).</p>
+        {% include "web/auth/section-formulaire.html" with action="nom" f=nom bouton="Enregistrer" variante="primaire" %}
+      </section>
+      <section class="compte-section-carte"
+               id="securite"
+               aria-labelledby="titre-securite">
+        <h2 class="compte-section-carte__titre" id="titre-securite">
+          {% include "web/composants/icone.html" with nom="shield-check" taille=18 %}
+          Retrouver mon compte
+        </h2>
+        <p class="texte-doux mb-0">Si tu oublies ton mot de passe : un lien par e-mail d'abord, sinon ta clé de secours.</p>
+        <h3 class="fs-16 fw-bold mb-0">Adresse e-mail</h3>
+        {% if u.email and u.email_verified_at %}
+          <p class="texte-doux mb-0">
+            Confirmée : <strong>{{ u.email }}</strong>. Tu peux la remplacer ci-dessous.
+          </p>
+        {% else %}
+          <p class="texte-doux mb-0">Aucune adresse confirmée pour l'instant : ajoute-en une, c'est le plus simple.</p>
+        {% endif %}
+        {% include "web/auth/section-formulaire.html" with action="email" f=email bouton="Envoyer un lien de confirmation" %}
+        <h3 class="fs-16 fw-bold mb-0">Clé de secours</h3>
+        <p class="texte-doux mb-0">
+          {% if u.recovery_key_created_at %}
+            Créée le {{ u.recovery_key_created_at|date:"d/m/Y" }}. Perdue ? Crées-en une nouvelle : l'ancienne ne vaudra plus rien.
+          {% else %}
+            Tu n'as pas encore de clé de secours : crées-en une.
+          {% endif %}
+        </p>
+        {% include "web/auth/section-formulaire.html" with action="cle" f=cle bouton="Créer une nouvelle clé" %}
+      </section>
+      <section class="compte-section-carte" aria-labelledby="titre-mdp">
+        <h2 class="compte-section-carte__titre" id="titre-mdp">
+          {% include "web/composants/icone.html" with nom="shield" taille=18 %}
+          Mot de passe
+        </h2>
+        {% include "web/auth/section-formulaire.html" with action="mot-de-passe" f=mot_de_passe bouton="Changer le mot de passe" %}
+      </section>
+      <section class="compte-section-carte compte-section-carte--danger"
+               aria-labelledby="titre-danger">
+        <h2 class="compte-section-carte__titre color-danger" id="titre-danger">
+          {% include "web/composants/icone.html" with nom="circle-alert" taille=18 %}
+          Supprimer mon compte
+        </h2>
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="suppression">
+          <p class="texte-doux mb-0">Ton compte sera anonymisé. Cette action est irréversible.</p>
+          {% for e in suppression.non_field_errors %}<p class="champ__erreur" role="alert">{{ e }}</p>{% endfor %}
+          {% for champ in suppression.visible_fields %}
+            {% include "web/composants/champ.html" %}
+          {% endfor %}
+          <div>
+            <button class="bouton bouton--danger" type="submit">Supprimer définitivement mon compte</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+{% endblock %}

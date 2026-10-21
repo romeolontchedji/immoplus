@@ -43,14 +43,14 @@ def donnees_annonce(quartier, **extra):
         "available_from": "2026-11-01",
         "has_private_bathroom": True,
         "is_fenced": True,
-        "water_source": "running",
+        "water_sources": ["running"],
         "electricity_meter": "individual",
         "description_md": "Chambre **calme**, eau courante.\n\n- Douche interne\n- Portail",
         **extra,
     }
 
 
-def medias_prets(annonce, photos=3, video=True):
+def medias_prets(annonce, photos=5, video=True):
     if video:
         ListingMedia.objects.create(
             listing=annonce, kind="video", status="ready", declared_size_bytes=1
@@ -85,7 +85,7 @@ class ListingFactory(factory.django.DjangoModelFactory):
     available_from = "2026-11-01"
     has_private_bathroom = True
     is_fenced = True
-    water_source = "running"
+    water_sources = factory.LazyFunction(lambda: ["running"])
     electricity_meter = "individual"
     status = "published"
     published_at = factory.LazyFunction(timezone.now)

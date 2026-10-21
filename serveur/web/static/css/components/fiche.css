@@ -1,0 +1,377 @@
+/* Fiche d'une chambre — alignée sur Web · Détail d'une chambre@1x.png */
+
+/* Fil d'ariane */
+.fil-ariane {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center;
+  color: var(--text-muted); font-size: var(--fs-14); margin-bottom: var(--sp-5);
+}
+.fil-ariane a { color: var(--blue); text-decoration: none; font-weight: 600; }
+.fil-ariane a:hover { text-decoration: underline; }
+.fil-ariane [aria-current] { color: var(--night); font-weight: 700; }
+
+/* Layout 2 colonnes */
+.fiche-layout { display: flex; flex-direction: column; gap: var(--sp-8); }
+.fiche-principale { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-6); }
+
+@media (min-width: 1024px) {
+  .fiche-layout {
+    display: grid; grid-template-columns: minmax(0, 1fr) 21.5rem;
+    align-items: start; gap: var(--sp-8);
+  }
+  .fiche-sidebar {
+    position: sticky; top: 5rem; display: flex; flex-direction: column; gap: var(--sp-4);
+    grid-column: 2; grid-row: 1 / span 2;
+  }
+  .fiche-principale { grid-column: 1; grid-row: 1; }
+  .fiche-similaires { grid-column: 1; grid-row: 2; margin-top: 0; }
+}
+
+/* Lecteur vidéo */
+.fiche-lecteur-conteneur {
+  position: relative; border-radius: var(--r-card-l);
+  overflow: hidden; background: var(--hero-blue-1); box-shadow: var(--shadow-card);
+  aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center;
+}
+.fiche-lecteur-conteneur video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.fiche-video-play-center {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 4rem; height: 4rem; border-radius: var(--r-pill);
+  background: var(--white); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-pop); pointer-events: none;
+  transition: transform var(--duree-1);
+}
+.fiche-lecteur-conteneur:hover .fiche-video-play-center {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+.fiche-video-badge-top {
+  position: absolute; top: var(--sp-4); left: var(--sp-4); z-index: 2;
+}
+.fiche-video-info-bottom {
+  position: absolute; bottom: var(--sp-4); left: var(--sp-4); z-index: 2;
+  color: var(--white); font-size: var(--fs-14); font-weight: 700;
+  text-shadow: 0 1px 3px var(--black-alpha-70);
+}
+
+/* En-tête titre & prix */
+.fiche-entete-barre {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-2);
+}
+.fiche-titre {
+  font-size: clamp(1.5rem, 3.5vw, 2.125rem); font-weight: 800; letter-spacing: -0.03em;
+  color: var(--night); margin: 0 0 var(--sp-2); line-height: 1.15;
+}
+.fiche-soustitre {
+  font-size: var(--fs-15); color: var(--text-muted); margin: 0; font-weight: 500;
+}
+.fiche-prix-colonne {
+  text-align: right; flex-shrink: 0;
+}
+.fiche-prix-montant {
+  font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; color: var(--blue);
+  font-variant-numeric: tabular-nums; margin: 0; line-height: 1;
+}
+.fiche-prix-caution {
+  display: block; font-size: var(--fs-13); font-weight: 500; color: var(--text-muted);
+  margin-top: var(--sp-1);
+}
+
+/* Pastilles caractéristiques bleues pleines (exact maquette) */
+.fiche-badges-caracteristiques {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2);
+}
+.badge-carac-bleu {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
+  background: var(--blue); color: var(--white);
+  font-size: var(--fs-14); font-weight: 700; line-height: 1.2;
+}
+
+/* Description */
+.fiche-description-texte {
+  margin-top: var(--sp-2); font-size: var(--fs-16); line-height: 1.65; color: var(--night);
+}
+
+/* Chambres similaires */
+.fiche-similaires { margin-top: var(--sp-8); }
+.fiche-similaires-titre {
+  font-size: var(--fs-22); font-weight: 800; color: var(--night); margin-bottom: var(--sp-5);
+}
+.fiche-similaires-grille {
+  display: grid; grid-template-columns: 1fr; gap: var(--sp-4);
+}
+@media (min-width: 640px) {
+  .fiche-similaires-grille { grid-template-columns: repeat(3, 1fr); }
+}
+.fiche-similaire-carte {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r-card); padding: var(--sp-5);
+  box-shadow: var(--shadow-card); text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  transition: transform var(--duree-1), box-shadow var(--duree-1), border-color var(--duree-1);
+}
+.fiche-similaire-carte:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-pop); border-color: var(--blue);
+}
+/* Image en tête de carte, bord à bord ; le texte a ses propres marges */
+.fiche-similaire-carte { overflow: hidden; padding: 0; }
+.fiche-similaire-carte__image {
+  display: block; width: 100%; max-width: none; height: auto; aspect-ratio: 16 / 9; object-fit: cover;
+  background: var(--blue-soft);
+}
+.fiche-similaire-carte__image--vide { background: var(--blue-soft) var(--motif-clair) center / var(--motif-taille); }
+.fiche-similaire-carte__corps { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4) var(--sp-5) var(--sp-5); flex: 1; }
+.fiche-similaire-carte__titre {
+  font-size: var(--fs-15); font-weight: 800; color: var(--night);
+}
+.fiche-similaire-carte__distance {
+  font-size: var(--fs-13); color: var(--text-muted);
+}
+.fiche-similaire-carte__prix {
+  font-size: var(--fs-16); font-weight: 800; color: var(--blue); margin-top: auto;
+}
+
+/* ── Carte latérale gérant & actions (exact maquette) ────────────────────── */
+.fiche-carte-principale {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-card-l); padding: var(--sp-6);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+}
+.fiche-gerant-entete {
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.fiche-gerant-avatar {
+  width: 3rem; height: 3rem; border-radius: var(--r-pill);
+  background: var(--blue-soft); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-16); font-weight: 800; flex-shrink: 0;
+}
+.fiche-gerant-meta { display: flex; flex-direction: column; gap: 2px; }
+.fiche-gerant-ligne { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.fiche-gerant-nom { font-size: var(--fs-16); font-weight: 800; color: var(--night); margin: 0; }
+.fiche-gerant-delai { font-size: var(--fs-13); color: var(--text-muted); margin: 0; }
+
+/* Boutons d'action pilule */
+.bouton--pilule {
+  border-radius: var(--r-pill); font-weight: 800; min-height: 2.875rem;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  text-decoration: none; font-size: var(--fs-15);
+}
+.bouton--pilule-doux {
+  border-radius: var(--r-pill); font-weight: 800; min-height: 2.875rem;
+  background: var(--blue-soft); color: var(--blue); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  text-decoration: none; font-size: var(--fs-15);
+  transition: background var(--duree-1), transform var(--duree-1);
+}
+.bouton--pilule-doux:hover { background: var(--blue-soft-hover); transform: translateY(-1px); }
+
+/* Visuel carte quartier */
+.fiche-localisation {
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  padding: var(--sp-4); border-radius: var(--r-card); background: var(--blue-soft);
+}
+.fiche-localisation__titre {
+  display: flex; align-items: center; gap: var(--sp-2); margin: 0;
+  font-size: var(--fs-16); font-weight: 800; color: var(--night);
+}
+.fiche-localisation__titre .icone { color: var(--blue); }
+.fiche-localisation__ligne { margin: 0; font-size: var(--fs-14); color: var(--text-muted); }
+.fiche-localisation__lien {
+  display: inline-flex; align-items: center; gap: var(--sp-1); align-self: flex-start;
+  margin-top: var(--sp-2); font-weight: 700; font-size: var(--fs-14);
+}
+.fiche-localisation__note { margin: 0; font-size: var(--fs-12); color: var(--text-muted); }
+.fiche-repere-texte {
+  font-size: var(--fs-14); color: var(--text-muted); margin: 0; line-height: 1.4;
+}
+
+/* Encart de sécurité jaune */
+.fiche-securite-encart {
+  background: var(--warning-bg); color: var(--warning);
+  border: 1px solid var(--warning-border); border-radius: var(--r-field);
+  padding: var(--sp-4); font-size: var(--fs-13); font-weight: 700;
+}
+.fiche-securite-encart__titre { display: block; margin-bottom: var(--sp-2); }
+.fiche-securite-encart__liste {
+  margin: 0; padding-left: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  font-weight: 600; line-height: 1.4;
+}
+
+/* Formulaire dépliant de contact direct */
+.fiche-form-contact {
+  background: var(--bg); border-radius: var(--r-card);
+  padding: var(--sp-4); border: 1px solid var(--divider);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.fiche-form-contact summary {
+  cursor: pointer; list-style: none;
+}
+.fiche-form-contact summary::-webkit-details-marker { display: none; }
+.fiche-form-contact[open] summary { margin-bottom: var(--sp-3); }
+
+/* Liens secondaires en bas de carte */
+.fiche-sidebar-pied {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px solid var(--divider);
+  font-size: var(--fs-13);
+}
+.fiche-lien-subtil { color: var(--text-muted); text-decoration: none; font-weight: 600; }
+.fiche-lien-subtil:hover { color: var(--blue); }
+.fiche-lien-danger { color: var(--danger); text-decoration: none; font-weight: 600; }
+.fiche-lien-danger:hover { text-decoration: underline; }
+
+
+/* ---- Fiche, plan v3 : quartier d'abord, note, prix et favori en haut ---- */
+.fiche-tete {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
+  gap: var(--sp-4) var(--sp-6); margin-bottom: var(--sp-6);
+}
+.fiche-tete__texte { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; flex: 1 1 22rem; }
+.fiche-quartier {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill);
+  background: var(--blue); color: var(--white); font-size: var(--fs-16); font-weight: 800; text-decoration: none;
+}
+.fiche-quartier:hover { background: var(--blue-hover); color: var(--white); text-decoration: none; }
+.fiche-tete .fiche-titre { margin: 0; }
+.fiche-tete__meta { margin: 0; color: var(--text-muted); font-size: var(--fs-15); }
+.fiche-note {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: var(--sp-1);
+  font-size: var(--fs-15); color: var(--night); text-decoration: none;
+}
+.fiche-note:hover { text-decoration: underline; }
+.fiche-note__etoile { display: inline-flex; color: var(--sun-hover); }
+.fiche-note__etoile .icone { fill: currentColor; }
+.fiche-note__vide { color: var(--text-muted); }
+.fiche-tete__prix { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2); }
+.fiche-tete__prix .fiche-prix-montant { margin: 0; }
+.fiche-prix-mois { font-size: var(--fs-15); font-weight: 700; color: var(--text-muted); margin-left: var(--sp-1); }
+.fiche-debattre {
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill);
+  background: var(--accent-soft); color: var(--warning); font-size: var(--fs-13); font-weight: 800;
+}
+.fiche-tete__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.fiche-favori {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); border: 1.5px solid var(--border); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--night); font: inherit; font-size: var(--fs-14); font-weight: 700;
+  cursor: pointer; text-decoration: none;
+}
+.fiche-favori:hover { border-color: var(--danger); color: var(--danger); text-decoration: none; }
+.fiche-favori--actif { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+.fiche-favori--actif .icone { fill: currentColor; }
+@media (max-width: 640px) {
+  .fiche-tete__prix { align-items: flex-start; }
+}
+
+.fiche-bloc {
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  padding: var(--sp-6); border-radius: var(--r-card); background: var(--surface);
+  border: 1px solid var(--divider); box-shadow: var(--shadow-card);
+}
+.fiche-bloc__titre { margin: 0; font-size: var(--fs-18); font-weight: 800; color: var(--night); }
+.equipements {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--sp-3);
+}
+.equipement {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3); border-radius: var(--r-field); background: var(--bg);
+}
+.equipement__icone {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.5rem; height: 2.5rem; border-radius: var(--r-pill); background: var(--blue-soft); color: var(--blue);
+}
+.equipement__texte { display: flex; flex-direction: column; font-size: var(--fs-15); font-weight: 700; color: var(--night); }
+.equipement__libelle { font-size: var(--fs-12); font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.conditions { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: var(--sp-3); margin: 0; }
+.conditions__ligne { padding: var(--sp-3); border: 1px solid var(--divider); border-radius: var(--r-field); }
+.conditions dt { font-size: var(--fs-12); color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.conditions dd { margin: var(--sp-1) 0 0; font-weight: 800; color: var(--night); }
+
+/* Avis (plan v3, G) */
+.avis-entete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.avis-moyenne { display: inline-flex; align-items: center; gap: var(--sp-1); font-weight: 800; color: var(--night); }
+.avis-form {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-4); border-radius: var(--r-field); background: var(--blue-soft);
+}
+.avis-form__titre { font-size: var(--fs-14); font-weight: 800; color: var(--night); padding: 0; margin-bottom: var(--sp-1); }
+.etoiles { border: 0; margin: 0; padding: 0; }
+/* Ordre inverse dans le code (5 → 1) pour colorer les étoiles à gauche de celle choisie, sans script. */
+.etoiles__choix { display: inline-flex; flex-direction: row-reverse; gap: var(--sp-1); }
+.etoiles__radio { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.etoiles__etoile { display: inline-flex; color: var(--border-strong); cursor: pointer; transition: color var(--duree-1); }
+.etoiles__etoile .icone { fill: currentColor; }
+.etoiles__etoile:hover, .etoiles__etoile:hover ~ .etoiles__etoile,
+.etoiles__radio:checked ~ .etoiles__etoile { color: var(--sun-hover); }
+.etoiles__radio:focus-visible + .etoiles__etoile { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: var(--r-field); }
+.avis-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.avis-item { padding-bottom: var(--sp-3); border-bottom: 1px solid var(--divider); }
+.avis-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.avis-item__tete { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.avis-item__auteur { font-weight: 800; color: var(--night); }
+.avis-item__etoiles { display: inline-flex; gap: 2px; }
+.avis-item__etoile { display: inline-flex; color: var(--border-strong); }
+.avis-item__etoile .icone { fill: currentColor; }
+.avis-item__etoile--pleine { color: var(--sun-hover); }
+.avis-item__date { font-size: var(--fs-13); color: var(--text-muted); }
+.avis-item__texte { margin: var(--sp-2) 0 0; color: var(--text); }
+
+.fiche-gerant-entete { text-decoration: none; color: inherit; border-radius: var(--r-field); }
+.fiche-gerant-entete:hover .fiche-gerant-nom { color: var(--blue); }
+.fiche-principale { display: flex; flex-direction: column; gap: var(--sp-6); }
+
+/* Profil public du gérant (plan v3, F1) */
+.gerant-public {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-5);
+  padding: var(--sp-6); border-radius: var(--r-card); background: var(--surface);
+  border: 1px solid var(--divider); box-shadow: var(--shadow-card);
+}
+.gerant-public__avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 4.5rem; height: 4.5rem; border-radius: var(--r-pill);
+  background: var(--blue-soft); color: var(--blue); font-size: var(--fs-24); font-weight: 800;
+}
+.gerant-public__texte { flex: 1; min-width: 14rem; display: flex; flex-direction: column; gap: var(--sp-3); }
+.gerant-public__nom {
+  margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3);
+  font-size: var(--fs-28); font-weight: 800; color: var(--night);
+}
+.gerant-public__faits {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5);
+  color: var(--text-muted); font-size: var(--fs-15);
+}
+.gerant-public__faits li { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.signalement > summary {
+  display: inline-flex; align-items: center; gap: var(--sp-2); list-style: none; cursor: pointer;
+}
+.signalement > summary::-webkit-details-marker { display: none; }
+.fiche-carte-principale .bouton--pilule-doux { justify-content: center; text-align: center; }
+@media (max-width: 640px) {
+  .equipements { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .equipement { flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
+  .conditions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .fiche-bloc { padding: var(--sp-4); }
+}
+/* Barre de contact fixe sur téléphone et tablette */
+.fiche-cta-mobile { display: none; }
+@media (max-width: 1023px) {
+  .fiche-cta-mobile {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--divider); box-shadow: var(--shadow-pop);
+  }
+  .fiche-cta-mobile form { margin: 0; }
+  .fiche-cta-mobile__prix { display: flex; flex-direction: column; line-height: 1.2; }
+  .fiche-cta-mobile__prix strong { font-size: var(--fs-20); font-weight: 800; color: var(--blue); }
+  .fiche-cta-mobile__prix span { font-size: var(--fs-13); color: var(--text-muted); }
+  .page:has(.fiche-cta-mobile) .page__contenu { padding-bottom: 5rem; }
+}

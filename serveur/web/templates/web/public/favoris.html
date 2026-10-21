@@ -1,0 +1,27 @@
+{% extends "web/espace.html" %}
+{% block titre %}Mes favoris — Immo+{% endblock %}
+{% block espace %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <h1>Mes favoris</h1>
+      {% if cartes %}
+        <div class="grille-annonces">
+          {% for a in cartes %}
+            {% include "web/composants/carte.html" %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="etat-vide">
+          <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="heart" taille=32 %}</span>
+          <div>
+            <h2 class="etat-vide__titre">Aucun favori</h2>
+            <p class="etat-vide__texte">Ajoute des chambres en favori depuis leur fiche pour les retrouver ici.</p>
+          </div>
+          <div class="etat-vide__actions">
+            <a class="bouton bouton--primaire" href="/annonces">Parcourir les chambres</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

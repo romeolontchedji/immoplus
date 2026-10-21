@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Valide un message de commit au format Logeo (Conventional Commits en français)."""
+"""Valide un message de commit au format Immo+ (Conventional Commits en français)."""
 
 import re
 import sys

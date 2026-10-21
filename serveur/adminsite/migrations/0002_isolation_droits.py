@@ -1,7 +1,7 @@
 """Le rôle PostgreSQL `app` (site et API) ne lit ni ne modifie rien de ce qui sert l'administration (CDC §8.2).
 
-Tables concernées : sessions d'administration, appareils TOTP et codes de secours (2FA), verrouillages `axes`,
-journal des actions de l'administration. Les droits ne sont posés que si le rôle existe (absent en test).
+Tables concernées : sessions d'administration, verrouillages `axes`, journal des actions de l'administration.
+Les droits ne sont posés que si le rôle existe (absent en test).
 """
 
 from django.db import migrations
@@ -9,9 +9,6 @@ from django.db import migrations
 TABLES = (
     "admin_sessions",
     "django_admin_log",
-    "otp_totp_totpdevice",
-    "otp_static_staticdevice",
-    "otp_static_statictoken",
     "axes_accessattempt",
     "axes_accessfailurelog",
     "axes_accesslog",
@@ -45,8 +42,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("adminsite", "0001_sessions"),
         ("admin", "0003_logentry_add_action_flag_choices"),
-        ("otp_totp", "0003_add_timestamps"),
-        ("otp_static", "0003_add_timestamps"),
         ("axes", "0010_accessattemptexpiration"),
     ]
     operations = [migrations.RunSQL(DROITS, reverse_sql=ANNULER)]

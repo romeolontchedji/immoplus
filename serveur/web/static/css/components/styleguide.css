@@ -1,3 +1,12 @@
+/* Liste d'informations clé/valeur (styleguide) */
+.liste-infos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.liste-infos li {
+  display: flex; justify-content: space-between; gap: var(--sp-4);
+  padding: var(--sp-3) 0; border-bottom: 1px solid var(--divider);
+}
+.liste-infos li:last-child { border-bottom: 0; }
+.liste-infos span { color: var(--text-muted); }
+
 /* Nuancier du styleguide (généré : une classe par jeton de couleur). */
 .nuancier { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); }
 .pastille { display: flex; flex-direction: column; gap: var(--sp-1); font-size: var(--fs-12); font-variant-numeric: tabular-nums; }

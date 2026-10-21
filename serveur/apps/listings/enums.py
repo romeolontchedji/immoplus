@@ -3,10 +3,21 @@
 from django.db import models
 
 
+class StatutTypeChambre(models.TextChoices):
+    APPROVED = "approved", "Validé"
+    PENDING = "pending", "Proposé, à valider"
+
+
+# Photos prêtes exigées pour publier une annonce (et gardées tant qu'elle est en ligne) : 5 (demande du 2026-10-20).
+PHOTOS_MIN = 5
+
+
 class TypeChambre(models.TextChoices):
+    """Types officiels de départ (décision V1) : la liste vivante est la table `room_types`."""
+
     SINGLE = "single", "Chambre simple"
-    ENTREE_COUCHER = "entree_coucher", "Entrée-coucher"
-    CHAMBRE_SALON = "chambre_salon", "Chambre-salon"
+    ENTREE_COUCHER = "entree_coucher", "Entrée-couché simple"
+    CHAMBRE_SALON = "chambre_salon", "Chambre-salon simple"
     STUDIO = "studio", "Studio"
 
 
@@ -28,14 +39,27 @@ class RaisonMasquage(models.TextChoices):
 
 
 class Eau(models.TextChoices):
-    RUNNING = "running", "Eau courante"
-    WELL = "well", "Puits"
+    """Source et comptage de l'eau (ordre d'affichage des listes)."""
+
+    INDIVIDUAL = "individual", "Compteur d'eau personnel"
+    SUB_METER = "sub_meter", "Décompteur"
+    RUNNING = "running", "Eau courante partagée"
     BOREHOLE = "borehole", "Forage"
+    WELL = "well", "Puits"
 
 
 class Compteur(models.TextChoices):
-    INDIVIDUAL = "individual", "Individuel"
-    SHARED = "shared", "Partagé"
+    """Comptage de l'électricité (SBEE)."""
+
+    INDIVIDUAL = "individual", "Compteur personnel"
+    SUB_METER = "sub_meter", "Décompteur"
+    SHARED = "shared", "Compteur partagé"
+
+
+class Cuisine(models.TextChoices):
+    PRIVATE = "private", "Cuisine interne"
+    SHARED = "shared", "Cuisine commune"
+    NONE = "none", "Pas de cuisine"
 
 
 class TypeMedia(models.TextChoices):

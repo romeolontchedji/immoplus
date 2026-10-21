@@ -1,0 +1,10 @@
+{# Un lien du menu mobile. Paramètre : `l` (libelle, url, icone, actif, compteur). #}
+<li>
+  <a class="menu-mobile__lien{% if l.actif %} menu-mobile__lien--actif{% endif %}"
+     href="{{ l.url }}"
+     {% if l.actif %}aria-current="page"{% endif %}>
+    {% include "web/composants/icone.html" with nom=l.icone taille=20 %}
+    <span>{{ l.libelle }}</span>
+    {% if l.compteur %}<span class="espace-barre__compteur">{{ l.compteur }}</span>{% endif %}
+  </a>
+</li>

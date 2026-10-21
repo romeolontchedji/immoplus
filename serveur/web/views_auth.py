@@ -1,4 +1,8 @@
-"""Pages d'authentification et d'espace compte du site (adaptateurs : aucune règle métier ici)."""
+"""Pages d'authentification et d'espace compte du site (adaptateurs : aucune règle métier ici).
+
+Sans code SMS (ADR 0009) : inscription sur une page, clé de secours affichée une fois, mot de passe oublié par
+e-mail, par clé de secours ou par l'équipe, activation des gérants par lien.
+"""
 
 from functools import wraps
 
@@ -8,15 +12,12 @@ from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from apps.accounts.services import authentification, compte, inscription, otp
+from apps.accounts.services import administration, appareils, authentification, compte, inscription
 from apps.core.errors import ErreurMetier
 from apps.core.http import ip_client, user_agent
+from apps.core.providers import captcha
 
 from . import forms
-
-
-def _contexte_otp(request, captcha: str | None) -> otp.Contexte:
-    return otp.Contexte(ip=ip_client(request), jeton_captcha=captcha, surface="web")
 
 
 def _signaler(form, erreur: ErreurMetier) -> None:
@@ -31,9 +32,20 @@ def _signaler(form, erreur: ErreurMetier) -> None:
         form.add_error(None, erreur.message)
 
 
-def _ouvrir_session(request, utilisateur) -> None:
+def _exiger_captcha(request, jeton: str | None) -> None:
+    """Turnstile (Cloudflare) sur l'inscription et le mot de passe oublié du site (ADR 0009)."""
+    if not captcha.fournisseur().verifier(jeton, ip_client(request)):
+        raise ErreurMetier("captcha_required", "Confirme que tu n'es pas un robot, puis réessaie.")
+
+
+DUREE_SE_SOUVENIR_S = 30 * 24 * 60 * 60
+
+
+def _ouvrir_session(request, utilisateur, *, se_souvenir: bool = True) -> None:
+    """Sans « se souvenir de moi », la session s'arrête à la fermeture du navigateur (ADR 0005)."""
     login(request, utilisateur, backend="django.contrib.auth.backends.ModelBackend")
     request.session["tv"] = utilisateur.token_version
+    request.session.set_expiry(DUREE_SE_SOUVENIR_S if se_souvenir else 0)
 
 
 def connecte_obligatoire(vue):
@@ -61,7 +73,12 @@ def _page(request, gabarit: str, form, titre: str, **extra):
         "site_key": settings.TURNSTILE_SITE_KEY,
         **extra,
     }  # fmt: skip
+    if request.method == "GET" and "captcha" in form.fields and settings.CAPTCHA_PROVIDER == "fake":
+        form.fields["captcha"].initial = "captcha-ok"
     return render(request, gabarit, contexte)
+
+
+FORMULAIRE = "web/auth/formulaire.html"
 
 
 # --------------------------------------------------------------- connexion
@@ -72,16 +89,20 @@ def connexion(request):
     if request.method == "POST" and form.is_valid():
         try:
             utilisateur = authentification.authentifier(
-                form.cleaned_data["phone"],
+                form.cleaned_data["username"],
                 form.cleaned_data["password"],
                 ip_client(request) or "web",
             )
         except ErreurMetier as erreur:
             _signaler(form, erreur)
         else:
-            _ouvrir_session(request, utilisateur)
+            _ouvrir_session(request, utilisateur, se_souvenir=form.cleaned_data["se_souvenir"])
             return redirect(_suite(request))
-    return _page(request, "web/auth/formulaire.html", form, "Connexion", bouton="Se connecter", suite=request.GET.get("next", ""),
+    message = (
+        "Ton mot de passe a été changé : connecte-toi." if request.GET.get("reinitialise") else None
+    )
+    return _page(request, FORMULAIRE, form, "Connexion", bouton="Se connecter", suite=request.GET.get("next", ""),
+                 message_succes=message,
                  liens=[("/inscription", "Créer un compte"), ("/mot-de-passe-oublie", "Mot de passe oublié")])  # fmt: skip
 
 
@@ -91,130 +112,99 @@ def deconnexion(request):
     return redirect("/")
 
 
-# --------------------------------------------------------------- flux OTP commun (inscription, mot de passe oublié)
-def _etape_telephone(request, objet: str, cle: str, gabarit_titre: str, suivante: str, bouton: str):
-    form = forms.Telephone(request.POST or None)
+# --------------------------------------------------------------- inscription
+def inscription_page(request):
+    if request.user.is_authenticated:
+        return redirect("/compte")
+    form = forms.Inscription(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        try:
+            _exiger_captcha(request, d["captcha"])
+            utilisateur, cle = inscription.inscrire_client(
+                nom_utilisateur=d["username"], prenom=d["first_name"], nom=d["last_name"],
+                mot_de_passe=d["password"], cgu_acceptees=d["terms_accepted"],
+                occupation=d["occupation"] or None, ip=ip_client(request), user_agent=user_agent(request),
+            )  # fmt: skip
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            _ouvrir_session(request, utilisateur)
+            request.session["cle_de_secours"] = cle  # affichée une seule fois, puis effacée
+            return redirect("/compte/cle-de-secours")
+    return _page(request, FORMULAIRE, form, "Créer un compte", bouton="Créer mon compte", captcha_requis=True,
+                 sous_titre="Sans code par SMS : ton nom d'utilisateur et ton mot de passe suffisent.",
+                 liens=[("/connexion", "J'ai déjà un compte")])  # fmt: skip
+
+
+@connecte_obligatoire
+def cle_de_secours(request):
+    """Affiche la clé de secours une seule fois, après l'inscription, l'activation ou une régénération."""
+    cle = request.session.get("cle_de_secours")
+    if not cle:
+        return redirect("/compte")
+    form = forms.CleNotee(
+        request.POST if request.method == "POST" else None
+    )  # case non cochée : POST vide
+    if request.method == "POST" and form.is_valid():
+        request.session.pop("cle_de_secours", None)
+        return redirect("/compte/profil?cle=1#securite")
+    return _page(request, FORMULAIRE, form, "Ta clé de secours", bouton="J'ai gardé ma clé, continuer",
+                 encart="web/auth/encart-cle.html", cle=cle,
+                 sous_titre="Elle te permet de choisir un nouveau mot de passe si tu l'oublies. "
+                            "Elle ne sera plus jamais affichée.")  # fmt: skip
+
+
+# --------------------------------------------------------------- mot de passe oublié
+def oubli(request):
+    """Mot de passe oublié : d'abord le lien par e-mail, puis la clé de secours, enfin l'équipe."""
+    form = forms.LienParEmail(request.POST or None)
+    envoye = False
     if request.method == "POST" and form.is_valid():
         try:
-            otp.demander(
-                form.cleaned_data["phone"],
-                objet,
-                _contexte_otp(request, form.cleaned_data["captcha"]),
+            _exiger_captcha(request, form.cleaned_data["captcha"])
+            inscription.demander_lien_par_email(
+                form.cleaned_data["identifier"], ip=ip_client(request)
             )
         except ErreurMetier as erreur:
             _signaler(form, erreur)
         else:
-            request.session[cle] = {"phone": form.cleaned_data["phone"]}
-            return redirect(suivante)
-    if request.method == "GET" and settings.CAPTCHA_PROVIDER == "fake":
-        form.fields["captcha"].initial = "captcha-ok"
-    return _page(
-        request, "web/auth/formulaire.html", form, gabarit_titre, bouton=bouton, captcha_requis=True
-    )
+            envoye = True
+    return _page(request, FORMULAIRE, form, "Mot de passe oublié", bouton="Recevoir un lien par e-mail",
+                 captcha_requis=True, encart="web/auth/encart-oubli.html", envoye=envoye,
+                 sous_titre="Si ton compte a un e-mail confirmé, nous t'envoyons un lien valable 30 minutes.",
+                 liens=[("/mot-de-passe-oublie/cle", "J'ai ma clé de secours"), ("/connexion", "Retour à la connexion")])  # fmt: skip
 
 
-def _etape_code(request, objet: str, cle: str, retour: str, suivante: str, titre: str):
-    flux = request.session.get(cle)
-    if not flux:
-        return redirect(retour)
-    form = forms.Code(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        try:
-            flux["otp_token"] = otp.verifier(flux["phone"], objet, form.cleaned_data["code"])
-        except ErreurMetier as erreur:
-            _signaler(form, erreur)
-        else:
-            request.session[cle] = flux
-            return redirect(suivante)
-    return _page(
-        request,
-        "web/auth/formulaire.html",
-        form,
-        titre,
-        bouton="Vérifier",
-        liens=[(retour, "Changer de numéro")],
-    )
-
-
-# --------------------------------------------------------------- inscription
-def inscription_telephone(request):
-    return _etape_telephone(
-        request, "signup", "inscription", "Créer un compte", "/inscription/code", "Recevoir un code"
-    )
-
-
-def inscription_code(request):
-    return _etape_code(
-        request,
-        "signup",
-        "inscription",
-        "/inscription",
-        "/inscription/profil",
-        "Saisis le code reçu",
-    )
-
-
-def inscription_profil(request):
-    flux = request.session.get("inscription")
-    if not flux or "otp_token" not in flux:
-        return redirect("/inscription")
-    form = forms.Profil(request.POST or None)
+def oubli_cle(request):
+    form = forms.CleDeSecours(request.POST or None)
     if request.method == "POST" and form.is_valid():
         d = form.cleaned_data
         try:
-            utilisateur = inscription.inscrire_client(
-                flux["otp_token"], d["full_name"], d["password"], d["terms_accepted"],
+            utilisateur, cle = inscription.reinitialiser_par_cle(
+                d["username"], d["recovery_key"], d["password"], client=ip_client(request) or "web",
                 ip=ip_client(request), user_agent=user_agent(request),
             )  # fmt: skip
         except ErreurMetier as erreur:
             _signaler(form, erreur)
-            if erreur.code in ("otp_token_invalid", "phone_already_registered"):
-                request.session.pop("inscription", None)
         else:
-            request.session.pop("inscription", None)
             _ouvrir_session(request, utilisateur)
-            return redirect("/compte")
-    return _page(
-        request,
-        "web/auth/formulaire.html",
-        form,
-        "Termine ton inscription",
-        bouton="Créer mon compte",
-    )
+            request.session["cle_de_secours"] = (
+                cle  # l'ancienne clé a servi : la nouvelle s'affiche une fois
+            )
+            return redirect("/compte/cle-de-secours")
+    return _page(request, FORMULAIRE, form, "Avec ta clé de secours", bouton="Changer mon mot de passe",
+                 sous_titre="La clé reçue à la création de ton compte (ex. K7QM-2XPA-9RTD-H4WN).",
+                 liens=[("/mot-de-passe-oublie", "Je n'ai pas ma clé")])  # fmt: skip
 
 
-# --------------------------------------------------------------- mot de passe oublié
-def oubli_telephone(request):
-    return _etape_telephone(
-        request,
-        "reset_password",
-        "oubli",
-        "Mot de passe oublié",
-        "/mot-de-passe-oublie/code",
-        "Recevoir un code",
-    )
-
-
-def oubli_code(request):
-    return _etape_code(
-        request,
-        "reset_password",
-        "oubli",
-        "/mot-de-passe-oublie",
-        "/mot-de-passe-oublie/nouveau",
-        "Saisis le code reçu",
-    )
-
-
-def oubli_nouveau(request):
-    flux = request.session.get("oubli")
-    if not flux or "otp_token" not in flux:
-        return redirect("/mot-de-passe-oublie")
+def nouveau_mot_de_passe(request, jeton):
+    """Lien reçu par e-mail ou transmis par l'équipe (usage unique)."""
     form = forms.NouveauMotDePasse(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
-            inscription.reinitialiser_mot_de_passe(
-                flux["otp_token"],
+            inscription.reinitialiser_par_lien(
+                jeton,
                 form.cleaned_data["password"],
                 ip=ip_client(request),
                 user_agent=user_agent(request),
@@ -222,60 +212,232 @@ def oubli_nouveau(request):
         except ErreurMetier as erreur:
             _signaler(form, erreur)
         else:
-            request.session.pop("oubli", None)
             return redirect("/connexion?reinitialise=1")
-    return _page(
-        request, "web/auth/formulaire.html", form, "Nouveau mot de passe", bouton="Enregistrer"
-    )
+    return _page(request, FORMULAIRE, form, "Nouveau mot de passe", bouton="Enregistrer",
+                 liens=[("/mot-de-passe-oublie", "Demander un nouveau lien")])  # fmt: skip
+
+
+def activer_gerant(request, jeton):
+    """Lien d'activation transmis par l'équipe : le gérant choisit son nom d'utilisateur et son mot de passe."""
+    form = forms.Activation(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            gerant, cle = administration.activer_gerant(
+                jeton, nom_utilisateur=form.cleaned_data["username"],
+                mot_de_passe=form.cleaned_data["password"], ip=ip_client(request),
+            )  # fmt: skip
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            _ouvrir_session(request, gerant)
+            request.session["cle_de_secours"] = cle
+            return redirect("/compte/cle-de-secours")
+    return _page(request, FORMULAIRE, form, "Active ton compte gérant", bouton="Activer mon compte",
+                 sous_titre="Choisis le nom d'utilisateur et le mot de passe avec lesquels tu te connecteras.")  # fmt: skip
+
+
+@connecte_obligatoire
+def confirmer_email(request, jeton):
+    try:
+        compte.confirmer_email(jeton)
+    except ErreurMetier as erreur:
+        return redirect(f"/compte/profil?email=erreur&code={erreur.code}#securite")
+    return redirect("/compte/profil?email=confirme#securite")
 
 
 # --------------------------------------------------------------- espace compte
 @connecte_obligatoire
 def espace_compte(request):
+    """Tableau de bord du locataire ; ses informations personnelles sont dans « Mon profil » (plan v3, E1)."""
     u = request.user
-    nom = forms.ChangementNom(
-        request.POST if request.POST.get("action") == "nom" else None,
-        initial={"full_name": u.full_name},
-    )
-    mdp = forms.ChangementMotDePasse(
-        request.POST if request.POST.get("action") == "mot-de-passe" else None
-    )
-    suppression = forms.Suppression(
-        request.POST if request.POST.get("action") == "suppression" else None
-    )
-    message = None
-    if request.method == "POST":
-        action = request.POST.get("action")
-        try:
-            if action == "nom" and nom.is_valid():
-                compte.modifier_profil(u, nom=nom.cleaned_data["full_name"])
-                message = "Ton nom a été mis à jour."
-            elif action == "mot-de-passe" and mdp.is_valid():
-                compte.changer_mot_de_passe(
-                    u, mdp.cleaned_data["current_password"], mdp.cleaned_data["new_password"]
-                )
-                update_session_auth_hash(
-                    request, u
-                )  # garde CETTE session ouverte ; les autres tombent
-                message = "Ton mot de passe a été changé. Les autres appareils sont déconnectés."
-            elif action == "suppression" and suppression.is_valid():
-                compte.supprimer(u, suppression.cleaned_data["password"])
-                logout(request)
-                return redirect("/?compte_supprime=1")
-        except ErreurMetier as erreur:
-            _signaler(
-                {"nom": nom, "mot-de-passe": mdp, "suppression": suppression}.get(action, nom),
-                erreur,
-            )
+    if u.role != "client":
+        return redirect("/compte/profil" + (f"?{request.GET.urlencode()}" if request.GET else ""))
+    from apps.chat import selectors as chat_selectors
+    from apps.listings import selectors as listing_selectors
+    from apps.listings.services import types as types_chambre
+    from apps.notifications import selectors as notif_selectors
+
+    favoris = listing_selectors.favoris_de(u.pk)
+    alertes = listing_selectors.alertes_de(u.pk)
+    quartiers = {str(q.pk): q.name for q in listing_selectors.quartiers_actifs()}
+    libelles = types_chambre.libelles()
+    alertes_actives = [
+        {
+            "id": a.pk,
+            "titre": a.label or " · ".join(
+                filter(None, [", ".join(quartiers.get(str(d), "") for d in a.district_ids or []),
+                              ", ".join(libelles.get(t, t) for t in a.room_types or [])])
+            ) or "Toutes les chambres",
+            "budget": a.max_rent,
+        }
+        for a in alertes if a.is_active
+    ][:3]  # fmt: skip
     return render(
         request,
         "web/auth/compte.html",
         {
             "u": u,
-            "nom": nom,
-            "mdp": mdp,
-            "suppression": suppression,
-            "message": message,
-            "titre": "Mon compte",
+            "titre": "Tableau de bord",
+            "total_favoris": len(favoris),
+            "total_alertes": sum(1 for a in alertes if a.is_active),
+            "non_lus": chat_selectors.total_non_lus(u.pk, u.role),
+            "notifs_non_lues": notif_selectors.non_lues(u.pk),
+            "alertes_actives": alertes_actives,
+            "derniers_favoris": favoris[:3],
+            "consultees": listing_selectors.cartes_visibles(request.session.get("consultees", []))[
+                :3
+            ],
         },
     )
+
+
+@connecte_obligatoire
+def mon_profil(request):
+    """Mon profil : prénom et nom, e-mail, clé de secours, mot de passe, suppression (ADR 0009)."""
+    u = request.user
+    action = request.POST.get("action") if request.method == "POST" else None
+
+    def lie(nom, classe, **kw):
+        return classe(request.POST if action == nom else None, **kw)
+
+    formulaires = {
+        "nom": lie("nom", forms.ChangementNom, initial={"first_name": u.first_name, "last_name": u.last_name,
+                                                       "occupation": u.occupation or ""}),
+        "email": lie("email", forms.AjoutEmail),
+        "cle": lie("cle", forms.MotDePasseActuel),
+        "mot-de-passe": lie("mot-de-passe", forms.ChangementMotDePasse),
+        "suppression": lie("suppression", forms.Suppression),
+    }  # fmt: skip
+    messages_get = {
+        "email": {"confirme": "Ton adresse e-mail est confirmée.",
+                  "erreur": "Ce lien de confirmation n'est plus valable : ajoute ton e-mail à nouveau."},
+        "cle": {"1": "Clé de secours gardée. Pense aussi à ajouter un e-mail."},
+    }  # fmt: skip
+    message = next(
+        (messages_get[c].get(request.GET[c]) for c in messages_get if request.GET.get(c)), None
+    )
+    form = formulaires.get(action)
+    if form is not None and form.is_valid():
+        d = form.cleaned_data
+        try:
+            if action == "nom":
+                compte.modifier_profil(
+                    u,
+                    prenom=d["first_name"],
+                    nom=d["last_name"],
+                    occupation=d["occupation"] or None,
+                )
+                message = "Ton profil a été mis à jour."
+            elif action == "email":
+                compte.demander_ajout_email(u, d["email"])
+                message = (
+                    f"Un lien de confirmation a été envoyé à {d['email']} (valable 24 heures)."
+                )
+            elif action == "cle":
+                request.session["cle_de_secours"] = compte.regenerer_cle_de_secours(
+                    u, d["password"]
+                )
+                return redirect("/compte/cle-de-secours")
+            elif action == "mot-de-passe":
+                compte.changer_mot_de_passe(u, d["current_password"], d["new_password"])
+                update_session_auth_hash(
+                    request, u
+                )  # garde CETTE session ouverte ; les autres tombent
+                message = "Ton mot de passe a été changé. Les autres appareils sont déconnectés."
+            elif action == "suppression":
+                compte.supprimer(u, d["password"])
+                logout(request)
+                return redirect("/?compte_supprime=1")
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+    return render(
+        request,
+        "web/auth/profil.html",
+        {"u": u, "titre": "Mon profil", "message": message, **{k.replace("-", "_"): f for k, f in formulaires.items()}},
+    )  # fmt: skip
+
+
+@connecte_obligatoire
+def mes_preferences(request):
+    u = request.user
+    form = forms.Preferences(
+        request.POST or None, valeurs=compte.preferences(u)
+    )  # fmt: skip
+    message = None
+    if request.method == "POST" and form.is_valid():
+        try:
+            compte.definir_preferences(u, form.vers_valeurs())
+        except ErreurMetier as erreur:
+            _signaler(form, erreur)
+        else:
+            message = "Tes préférences de notification sont enregistrées."
+    return render(
+        request,
+        "web/auth/preferences.html",
+        {"form": form, "message": message, "titre": "Préférences de notification"},
+    )
+
+
+def _navigateur(ua: str) -> str:
+    """« Chrome sur Android » : lecture simple de l'en-tête User-Agent pour reconnaître la session en cours."""
+    ua = ua or ""
+    navigateur = next(
+        (
+            nom
+            for cle, nom in (
+                ("Edg/", "Edge"),
+                ("OPR/", "Opera"),
+                ("Firefox/", "Firefox"),
+                ("Chrome/", "Chrome"),
+                ("Safari/", "Safari"),
+            )
+            if cle in ua
+        ),
+        "Navigateur",
+    )
+    systeme = next(
+        (
+            nom
+            for cle, nom in (
+                ("Android", "Android"),
+                ("iPhone", "iPhone"),
+                ("iPad", "iPad"),
+                ("Windows", "Windows"),
+                ("Mac OS", "Mac"),
+                ("Linux", "Linux"),
+            )
+            if cle in ua
+        ),
+        None,
+    )
+    return f"{navigateur} sur {systeme}" if systeme else navigateur
+
+
+@connecte_obligatoire
+def mes_appareils(request):
+    message = None
+    if request.method == "POST" and request.POST.get("action") == "partout":
+        nombre = compte.deconnecter_partout(request.user)
+        request.user.refresh_from_db()
+        request.session["tv"] = request.user.token_version  # cette session-ci reste ouverte
+        message = f"{nombre} appareil{'s' if nombre > 1 else ''} et toutes les autres sessions du site sont déconnectés."
+    return render(
+        request,
+        "web/auth/appareils.html",
+        {
+            "appareils": appareils.lister(request.user),
+            "session_courante": _navigateur(user_agent(request)),
+            "message": message,
+            "titre": "Appareils connectés",
+        },
+    )
+
+
+@require_POST
+@connecte_obligatoire
+def revoquer_appareil(request, appareil_id):
+    try:
+        appareils.revoquer(request.user, appareil_id)
+    except ErreurMetier:
+        pass  # 404 silencieux : ne révèle pas l'existence d'un appareil d'autrui
+    return redirect("/compte/appareils")

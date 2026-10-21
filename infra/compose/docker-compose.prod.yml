@@ -6,40 +6,44 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.migrer
     volumes: !override
-      - static:/var/lib/logeo/static
+      - static:/var/lib/immoplus/static
   web-api:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
-      LOGEO_RELOAD: "0"
+      IMMOPLUS_RELOAD: "0"
     volumes: !override
-      - media_tmp:/var/lib/logeo/media_tmp
-      - media_public:/var/lib/logeo/media_public
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
   realtime:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
-      LOGEO_RELOAD: "0"
+      IMMOPLUS_PROCESSUS: realtime
+      IMMOPLUS_RELOAD: "0"
     volumes: !override []
   admin:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.admin
-      LOGEO_RELOAD: "0"
+      IMMOPLUS_RELOAD: "0"
     volumes: !override
-      - media_public:/var/lib/logeo/media_public:ro
-      - media_private:/var/lib/logeo/media_private
+      - media_public:/var/lib/immoplus/media_public:ro
+      - media_private:/var/lib/immoplus/media_private
   worker:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.public
-    volumes: !override []
+    volumes: !override
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
   worker-media:
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.public
+      DJANGO_SETTINGS_MODULE: config.settings.taches
     volumes: !override
-      - media_tmp:/var/lib/logeo/media_tmp
-      - media_public:/var/lib/logeo/media_public
+      - media_tmp:/var/lib/immoplus/media_tmp
+      - media_public:/var/lib/immoplus/media_public
   beat:
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.public
-    volumes: !override []
+      DJANGO_SETTINGS_MODULE: config.settings.taches
+    volumes: !override
+      - beat_data:/var/lib/immoplus
   caddy:
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     ports: !override

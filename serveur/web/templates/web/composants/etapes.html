@@ -1,0 +1,9 @@
+{# Barre de progression. Paramètres : `etapes` (liste de libellés), `etape_actuelle` (1-indexé). #}
+<ol class="barre-etapes">
+  {% for label in etapes %}
+    <li class="barre-etapes__etape{% if forloop.counter < etape_actuelle %} barre-etapes__etape--faite{% elif forloop.counter == etape_actuelle %} barre-etapes__etape--active{% endif %}">
+      <span class="barre-etapes__numero"
+            {% if forloop.counter == etape_actuelle %}aria-current="step"{% endif %}>{{ forloop.counter }}</span>{{ label }}
+    </li>
+  {% endfor %}
+</ol>

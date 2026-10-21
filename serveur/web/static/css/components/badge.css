@@ -1,8 +1,57 @@
-.badge { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 1.5rem; padding: 0 var(--sp-3); border-radius: var(--rayon-pilule); font-size: var(--fs-12); font-weight: 600; background: var(--surface-sunken); color: var(--text-muted); border: var(--bordure); }
-.badge--succes { background: var(--succes-bg); color: var(--succes-text); border-color: transparent; }
-.badge--avertissement { background: var(--avertissement-bg); color: var(--avertissement-text); border-color: transparent; }
-.badge--danger { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
-.badge--information { background: var(--information-bg); color: var(--information-text); border-color: transparent; }
-.badge--marque { background: var(--primary-soft); color: var(--on-primary-soft); border-color: transparent; }
-.puce { display: inline-flex; align-items: center; min-height: var(--cible); padding: 0 var(--sp-4); border-radius: var(--rayon-pilule); border: 1px solid var(--border-strong); background: var(--surface); font-size: var(--fs-14); font-weight: 500; cursor: pointer; }
-.puce[aria-pressed="true"] { background: var(--primary-soft); color: var(--on-primary-soft); border-color: var(--primary); }
+/* Badges et puces — DESIGN.md §5 */
+/* Badge générique */
+.badge {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  min-height: 1.5rem; padding: 0.1875rem var(--sp-3);
+  border-radius: var(--r-pill); font-size: var(--fs-12); font-weight: 700;
+  background: var(--bg); color: var(--text-muted); border: 1px solid var(--border);
+  letter-spacing: 0.01em;
+}
+/* Statuts sémantiques */
+.badge--succes   { background: var(--success-bg); color: var(--success);  border-color: transparent; }
+.badge--avertissement { background: var(--warning-bg); color: var(--warning); border-color: transparent; }
+.badge--danger   { background: var(--danger-bg);  color: var(--danger);   border-color: transparent; }
+.badge--information { background: var(--blue-soft); color: var(--blue);   border-color: transparent; }
+.badge--marque   { background: var(--blue-soft); color: var(--blue);      border-color: transparent; }
+.badge--neutre   { background: var(--divider);   color: var(--text-muted); border-color: transparent; }
+.badge--video    { background: var(--black-alpha-70); color: var(--white);          border-color: transparent; }
+.badge--duree    { background: var(--black-alpha-70); color: var(--white);          border-color: transparent; }
+
+/* Badge "Vérifié" — pilule verte avec icône */
+.badge-verifie {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0.1875rem 0.5rem; border-radius: var(--r-pill);
+  background: var(--success); color: var(--white);
+  font-size: var(--fs-12); font-weight: 700;
+}
+.badge-verifie svg { width: 12px; height: 12px; }
+
+/* Statuts de table/liste (DESIGN.md §5) */
+.statut-active      { background: var(--success-bg);  color: var(--success);  }
+.statut-attente     { background: var(--warning-bg);  color: var(--warning);  }
+.statut-sans-video  { background: var(--warning-bg);  color: var(--warning);  }
+.statut-louee       { background: var(--divider);     color: var(--text-muted); }
+.statut-suspendu,
+.statut-signale     { background: var(--danger-bg);   color: var(--danger);   }
+[class^="statut-"],
+[class*=" statut-"] {
+  display: inline-flex; align-items: center;
+  padding: 0.25rem 0.75rem; border-radius: var(--r-pill);
+  font-size: var(--fs-13); font-weight: 700;
+}
+
+/* Chips / filtres (DESIGN.md §5 : pilule, 13–14/700) */
+.puce {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  min-height: 2.25rem; padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-pill); border: 1.5px solid var(--border);
+  background: var(--surface); font-size: var(--fs-14); font-weight: 700; color: var(--night);
+  cursor: pointer; text-decoration: none;
+  transition: background var(--duree-1), border-color var(--duree-1);
+}
+.puce:hover { border-color: var(--blue); color: var(--blue); text-decoration: none; }
+.puce--actif, .puce[aria-pressed="true"] {
+  background: var(--blue); color: var(--white); border-color: var(--blue);
+}
+.puce--retirable { gap: var(--sp-2); }
+.puce__retirer { opacity: 0.75; font-size: var(--fs-12); }

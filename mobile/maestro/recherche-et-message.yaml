@@ -1,0 +1,14 @@
+# Parcours : trouver une chambre, ouvrir la fiche, écrire au gérant. Suppose un locataire connecté et des annonces (make seed DEMO=1).
+appId: bj.immoplus.app
+---
+- launchApp
+- tapOn: "Recherche"
+- tapOn: "Rechercher"
+- inputText: "studio"
+- pressKey: Enter
+- tapOn:
+    text: ".*FCFA par mois.*"
+    index: 0
+- assertVisible: "Écrire au gérant"
+- tapOn: "Écrire au gérant"
+- assertVisible: "Écrire au gérant"

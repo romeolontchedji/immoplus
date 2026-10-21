@@ -56,10 +56,9 @@ class TestCreation:
         assert 0 < a["distance_to_campus_m"] < 2000 and a["district_name"] == quartier.name
         assert a["address_private"] == "Rue 12, maison bleue"
         annonce = Listing.objects.get(pk=a["id"])
-        assert (
-            "<strong>calme</strong>" in annonce.description_html
-            and "<li>Douche interne</li>" in annonce.description_html
-        )
+        # « Autres détails » en texte simple : les marques de mise en forme disparaissent, les lignes restent.
+        assert "<strong>" not in annonce.description_html and "calme" in annonce.description_html
+        assert "**" not in annonce.description_md
         assert Listing.objects.filter(pk=a["id"], search_vector__isnull=False).exists()
         assert AuditLog.objects.filter(action="listing.cree").exists()
 
@@ -149,6 +148,40 @@ class TestAutorisations:
         assert r.status_code == 200 and r.json()[0]["slug"] == quartier.slug
 
 
+class TestPosition:
+    """Décision V7 : la position n'est plus demandée ; centre du quartier, ou GPS partagé par le gérant."""
+
+    def test_sans_position_la_chambre_est_au_centre_du_quartier(self, pro):
+        quartier = DistrictFactory(latitude=9.36, longitude=2.61)
+        corps = donnees_annonce(quartier)
+        corps.pop("latitude"), corps.pop("longitude")
+        r = pro.post("/v1/pro/listings", corps, format="json")
+        assert r.status_code == 201, r.content
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.36, 2.61)
+        assert r.json()["distance_to_campus_m"] == geo.distance_au_campus(9.36, 2.61)
+
+    def test_une_seule_coordonnee_refusee(self, pro, quartier):
+        corps = donnees_annonce(quartier)
+        corps.pop("longitude")
+        r = pro.post("/v1/pro/listings", corps, format="json")
+        assert r.status_code == 400 and "latitude" in r.json()["error"]["fields"]
+
+    def test_changer_de_quartier_replace_la_chambre(self, pro, quartier):
+        a = creer(pro, quartier, latitude="9.341000", longitude="2.633000")
+        autre = DistrictFactory(latitude=9.38, longitude=2.6)
+        r = pro.patch(f"/v1/pro/listings/{a['id']}", {"district": str(autre.pk)}, format="json")
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.38, 2.6)
+
+    def test_le_gps_reste_si_le_quartier_ne_change_pas(self, pro, quartier):
+        a = creer(pro, quartier, latitude="9.341000", longitude="2.633000")
+        r = pro.patch(
+            f"/v1/pro/listings/{a['id']}",
+            {"district": str(quartier.pk), "rent_amount": 26000},
+            format="json",
+        )
+        assert (r.json()["latitude"], r.json()["longitude"]) == (9.341, 2.633)
+
+
 class TestModification:
     def test_modifier_recalcule_la_distance(self, pro, quartier):
         a = creer(pro, quartier)
@@ -167,8 +200,19 @@ class TestModification:
         assert pro.delete(f"/v1/pro/listings/{a['id']}").status_code == 204
         assert pro.get(f"/v1/pro/listings/{a['id']}").status_code == 404
 
-    def test_une_annonce_publiee_ne_se_supprime_pas(self, gerant, pro):
+    def test_une_annonce_publiee_se_supprime_et_disparait(
+        self, gerant, pro, django_capture_on_commit_callbacks
+    ):
         a = ListingFactory(gerant=gerant)
+        with django_capture_on_commit_callbacks(execute=True):
+            assert pro.delete(f"/v1/pro/listings/{a.pk}").status_code == 204
+        a.refresh_from_db()
+        assert a.status == "archived" and a.deleted_at is not None
+        assert pro.get(f"/v1/pro/listings/{a.pk}").status_code == 404
+        assert APIClient().get(f"/v1/listings/{a.slug}").status_code == 404
+
+    def test_une_annonce_retiree_par_la_moderation_ne_se_supprime_pas(self, gerant, pro):
+        a = ListingFactory(gerant=gerant, status="removed")
         assert pro.delete(f"/v1/pro/listings/{a.pk}").status_code == 409
 
 
@@ -177,7 +221,8 @@ class TestPublication:
         a = creer(pro, quartier)
         r = pro.post(f"/v1/pro/listings/{a['id']}/publish")
         assert r.status_code == 409 and r.json()["error"]["code"] == "listing_not_publishable"
-        assert {"video_prete", "trois_photos_pretes"} <= set(r.json()["error"]["fields"]["manques"])
+        manques = set(r.json()["error"]["fields"]["manques"])
+        assert "trois_photos_pretes" in manques and "video_prete" not in manques
 
     def test_gerant_non_verifie(self, quartier):
         from apps.accounts.tests.fabriques import GerantProfileFactory
@@ -282,21 +327,19 @@ class TestServicesPurs:
         assert 110_000 < geo.haversine_m(9.0, 2.63, 10.0, 2.63) < 112_000  # un degré de latitude
         assert geo.arrondir_50(1234) == 1250 and geo.arrondir_position(9.340987) == 9.341
 
-    def test_apercu_markdown(self, pro):
-        r = pro.post("/v1/pro/markdown/preview", {"markdown": "### Titre\n- a\n- b"}, format="json")
-        assert (
-            r.status_code == 200
-            and "<h3>Titre</h3>" in r.json()["html"]
-            and r.json()["html"].count("<li>") == 2
+    def test_apercu_en_texte_simple(self, pro):
+        r = pro.post(
+            "/v1/pro/markdown/preview", {"markdown": "### Titre\n- a\n- **b**"}, format="json"
         )
+        assert r.status_code == 200
+        assert r.json()["html"] == "<p>Titre<br>- a<br>- b</p>"
 
     def test_description_trop_longue(self):
         from apps.core.errors import ErreurMetier
 
         with pytest.raises(ErreurMetier):
             contenu.rendre("a" * 4001)
-        with pytest.raises(ErreurMetier):
-            contenu.rendre("\n".join(f"- ligne {i}" for i in range(41)))
+        assert contenu.rendre("<b>x</b> & 3 < 4")[1] == "<p>x &amp; 3 &lt; 4</p>"  # texte échappé
 
     @pytest.mark.parametrize(
         "texte", ["mon numéro est caché", "écris sur WhatsApp", "telegram svp"]
@@ -304,3 +347,35 @@ class TestServicesPurs:
     def test_mots_cles_seulement_signales(self, texte):
         d = contenu.detecter(texte)
         assert d.faibles and not d.fort
+
+
+class TestPreparationEtStatistiques:
+    """Pour l'espace gérant mobile (MM5, MM7) : mêmes sources que le site."""
+
+    def test_ce_qui_manque_pour_publier(self, pro, quartier):
+        a = creer(pro, quartier)
+        r = pro.get(f"/v1/pro/listings/{a['id']}/readiness")
+        assert r.status_code == 200 and r.json()["publishable"] is False
+        manques = r.json()["missing"]
+        assert {
+            "code": "trois_photos_pretes",
+            "label": "il faut au moins 5 photos prêtes",
+        } in manques
+        assert not any(m["code"] == "video_prete" for m in manques)  # vidéo facultative
+
+    def test_statistiques_par_jour(self, pro, quartier):
+        from apps.core import stats
+
+        a = creer(pro, quartier)
+        stats.incrementer("views", 4, sujet=a["id"])
+        stats.incrementer("conversations_started", sujet=a["id"])
+        r = pro.get(f"/v1/pro/listings/{a['id']}/stats?days=7")
+        corps = r.json()
+        assert r.status_code == 200 and corps["days"] == 7 and len(corps["daily"]) == 7
+        assert (corps["views"], corps["contacts"], corps["favorites"]) == (4, 1, 0)
+        assert corps["daily"][-1]["views"] == 4
+
+    def test_l_annonce_d_un_autre_gerant_est_introuvable(self, pro):
+        autre = ListingFactory()
+        assert pro.get(f"/v1/pro/listings/{autre.pk}/stats").status_code == 404
+        assert pro.get(f"/v1/pro/listings/{autre.pk}/readiness").status_code == 404

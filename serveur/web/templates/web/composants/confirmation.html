@@ -1,0 +1,23 @@
+{% comment %}
+Confirmation d'une action destructrice, sans JS ni attribut en ligne.
+Paramètres : action (valeur POST), question, libelle (bouton d'ouverture),
+libelle_confirmer, form_action (URL facultative), extras (liste de {nom, valeur}).
+{% endcomment %}
+<details class="confirmation">
+  <summary class="bouton bouton--danger bouton--petit">{{ libelle|default:"Supprimer" }}</summary>
+  <div class="confirmation__corps">
+    <p class="confirmation__question">{{ question }}</p>
+    <form method="post"
+          {% if form_action %} action="{{ form_action }}"{% endif %}>
+      {% csrf_token %}
+      <input type="hidden" name="action" value="{{ action }}">
+      {% if media_id %}<input type="hidden" name="media_id" value="{{ media_id }}">{% endif %}
+      {% if alerte_id %}<input type="hidden" name="alerte_id" value="{{ alerte_id }}">{% endif %}
+      {% for champ in extras %}
+        <input type="hidden" name="{{ champ.nom }}" value="{{ champ.valeur }}">
+      {% endfor %}
+      <button class="bouton bouton--danger bouton--petit"
+              type="submit">{{ libelle_confirmer|default:"Oui, supprimer" }}</button>
+    </form>
+  </div>
+</details>

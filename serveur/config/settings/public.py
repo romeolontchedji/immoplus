@@ -12,21 +12,27 @@ DEBUG = False
 
 if env.texte("SECRET_KEY") == "" or env.texte("SECRET_KEY").startswith("dev-"):
     raise ImproperlyConfigured("SECRET_KEY de production absente ou de développement.")
-if env.booleen("DEBUG") or env.texte("OTP_DEBUG_CODE"):
-    raise ImproperlyConfigured(
-        "DEBUG et OTP_DEBUG_CODE sont interdits avec les réglages « public »."
-    )
+if env.booleen("DEBUG"):
+    raise ImproperlyConfigured("DEBUG est interdit avec les réglages « public ».")
 
 SECRET_KEY = env.texte("SECRET_KEY")
-JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
-OTP_HMAC_KEY = env.texte("OTP_HMAC_KEY")
-for _nom, _valeur in (("JWT_SIGNING_KEY", JWT_SIGNING_KEY), ("OTP_HMAC_KEY", OTP_HMAC_KEY)):
-    if not _valeur or _valeur.startswith("dev-"):
-        raise ImproperlyConfigured(f"{_nom} de production absente ou de développement.")
-if len({SECRET_KEY, JWT_SIGNING_KEY, OTP_HMAC_KEY}) != 3:
+PRODUCTION = True
+# Le défi anti-robot factice se remplit tout seul : en production, il laisserait passer n'importe quel robot.
+if env.texte("CAPTCHA_PROVIDER", "fake") in ("", "fake"):
     raise ImproperlyConfigured(
-        "SECRET_KEY, JWT_SIGNING_KEY et OTP_HMAC_KEY doivent être trois clés différentes."
+        "CAPTCHA_PROVIDER=turnstile est obligatoire en production (clés Cloudflare)."
     )
+# Hôtes servis : le site et l'API du domaine, plus l'adresse interne des contrôles de santé (curl 127.0.0.1).
+# Sans cette liste, Django répondrait 400 à toute requête en production.
+_DOMAINE = env.texte("DOMAIN")
+if not _DOMAINE or _DOMAINE == "localhost":
+    raise ImproperlyConfigured("DOMAIN de production absent (ex. immoplus.bj).")
+ALLOWED_HOSTS = [f"www.{_DOMAINE}", f"api.{_DOMAINE}", "127.0.0.1", "localhost"]
+JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY")  # distincte de celle de l'administration
+if not JWT_SIGNING_KEY or JWT_SIGNING_KEY.startswith("dev-"):
+    raise ImproperlyConfigured("JWT_SIGNING_KEY de production absente ou de développement.")
+if SECRET_KEY == JWT_SIGNING_KEY:
+    raise ImproperlyConfigured("SECRET_KEY et JWT_SIGNING_KEY doivent être deux clés différentes.")
 
 # Site : cookie `__Host-lgsid`, sessions en `cached_db`.
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"

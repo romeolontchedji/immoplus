@@ -1,0 +1,317 @@
+{% extends "web/espace.html" %}
+{% load immoplus static %}
+{% block titre %}Mes alertes — Immo+{% endblock %}
+{% block espace %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <div>
+        <h1 class="mb-2">Mes alertes</h1>
+        <p class="texte-doux">Sois prévenu dès qu'une chambre correspond, avant qu'elle parte.</p>
+      </div>
+      {% if message %}
+        <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
+      <div class="alertes-entete">
+        <details class="alertes-nouvelle"{% if ouvrir %} open{% endif %}>
+          <summary class="bouton bouton--primaire alertes-nouvelle__bouton">
+            {% include "web/composants/icone.html" with nom="plus" taille=18 %}
+            {% if edition %}Modifier l'alerte{% else %}Créer une nouvelle alerte{% endif %}
+          </summary>
+          {# ── Formulaire : visible seulement après « Créer une nouvelle alerte » ── #}
+          <div class="carte p-6 alertes-nouvelle__carte">
+            <form method="post" class="pile" novalidate data-alerte-formulaire>
+              {% csrf_token %}
+              {% if edition %}
+                <input type="hidden" name="action" value="modifier">
+                <input type="hidden" name="alerte_id" value="{{ edition.id }}">
+              {% else %}
+                <input type="hidden" name="action" value="creer">
+              {% endif %}
+              <p class="alerte alerte--danger"
+                 role="alert"
+                 tabindex="-1"
+                 data-alerte-erreur
+                 hidden>Choisis d'abord au moins une option.</p>
+              <div class="grille grille--2">
+                {% include "web/composants/liste-multiple.html" with nom="district_ids" libelle="Quartiers" options=quartiers choisis=proposition.district_ids vide="Tous les quartiers" %}
+                {% include "web/composants/liste-multiple.html" with nom="room_types" libelle="Types de chambre" options=types choisis=proposition.room_types vide="Tous les types" %}
+              </div>
+              <div class="grille grille--2">
+                <div class="champ">
+                  <label class="champ__etiquette" for="max_rent">Budget maximum</label>
+                  <select class="champ__saisie" id="max_rent" name="max_rent" data-critere>
+                    <option value="">Peu importe</option>
+                    {% for b in budgets %}
+                      <option value="{{ b }}"
+                              {% if b|stringformat:"d" == proposition.max_rent|stringformat:"s" %}selected{% endif %}>
+                        Jusqu'à {{ b|fcfa }} F / mois
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="champ">
+                  <label class="champ__etiquette" for="max_distance_m">Distance de l'UP</label>
+                  <select class="champ__saisie"
+                          id="max_distance_m"
+                          name="max_distance_m"
+                          data-critere>
+                    <option value="">Peu importe</option>
+                    {% for v, l in distances %}
+                      <option value="{{ v }}"
+                              {% if v|stringformat:"d" == proposition.max_distance_m|stringformat:"s" %}selected{% endif %}>
+                        À {{ l }} au plus
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="grille grille--2">
+                {% include "web/composants/liste-multiple.html" with nom="water_sources" libelle="Eau" options=eaux choisis=proposition.water_sources vide="Peu importe" %}
+                {% include "web/composants/liste-multiple.html" with nom="electricity_meters" libelle="Électricité" options=compteurs choisis=proposition.electricity_meters vide="Peu importe" %}
+              </div>
+              <div class="grille grille--2">
+                {% include "web/composants/liste-multiple.html" with nom="kitchens" libelle="Cuisine" options=cuisines choisis=proposition.kitchens vide="Peu importe" %}
+                {% include "web/composants/liste-multiple.html" with nom="indispensables" libelle="Indispensables" options=indispensables choisis=proposition.indispensables vide="Rien d'obligatoire" %}
+              </div>
+              <div class="champ">
+                <label class="champ__etiquette" for="label">Nom de l'alerte (facultatif)</label>
+                <input class="champ__saisie"
+                       id="label"
+                       name="label"
+                       placeholder="Ex : Chambre Zongo ou Albarika"
+                       maxlength="80"
+                       value="{{ proposition.label }}">
+              </div>
+              <div class="d-flex gap-3 align-items-center mt-3 flex-wrap">
+                <button class="bouton bouton--primaire bouton--grand" type="submit">
+                  {% if edition %}Enregistrer les modifications{% else %}Créer l'alerte{% endif %}
+                </button>
+                <a class="bouton bouton--fantome" href="/compte/alertes">Annuler</a>
+              </div>
+            </form>
+          </div>
+        </details>
+      </div>
+      {# ── Alertes actives seulement ───────────────────────────────────────────── #}
+      {% if alertes %}
+        <div class="pile">
+          <h2 class="fs-18 fw-bold mb-0">Alertes actives ({{ alertes|length }})</h2>
+          <ul class="liste-annonces">
+            {% for ligne in alertes %}
+              <li class="carte p-5">
+                <div class="d-flex justify-content-between align-items-start gap-4 flex-wrap">
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <strong class="fs-16">{{ ligne.objet.label|default:"Alerte logement" }}</strong>
+                      {% if ligne.objet.is_active %}
+                        <span class="badge badge--succes">Active</span>
+                      {% else %}
+                        <span class="badge badge--neutre">En pause</span>
+                      {% endif %}
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 text-muted texte-petit mb-3">
+                      <span class="d-inline-flex align-items-center gap-1">
+                        <svg width="14"
+                             height="14"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             aria-hidden="true">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {% if ligne.quartiers %}{{ ligne.quartiers|join:", " }}{% else %}Tous quartiers{% endif %}
+                      </span>
+                      {% if ligne.types %}
+                        <span>·</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                          <svg width="14"
+                               height="14"
+                               viewBox="0 0 24 24"
+                               fill="none"
+                               stroke="currentColor"
+                               stroke-width="2"
+                               stroke-linecap="round"
+                               stroke-linejoin="round"
+                               aria-hidden="true">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          </svg>
+                          {{ ligne.types|join:", " }}
+                        </span>
+                      {% endif %}
+                      {% if ligne.objet.max_rent %}
+                        <span>·</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                          <svg width="14"
+                               height="14"
+                               viewBox="0 0 24 24"
+                               fill="none"
+                               stroke="currentColor"
+                               stroke-width="2"
+                               stroke-linecap="round"
+                               stroke-linejoin="round"
+                               aria-hidden="true">
+                            <rect x="2" y="4" width="20" height="16" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                          </svg>
+                          Max {{ ligne.objet.max_rent|fcfa }} F
+                        </span>
+                      {% endif %}
+                      {% for e in ligne.equipements %}
+                        <span>·</span>
+                        <span class="badge badge--neutre">{{ e }}</span>
+                      {% endfor %}
+                    </div>
+                    <p class="alerte-carte__trouve">
+                      {% if ligne.nombre %}
+                        {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }} en ligne correspond{{ ligne.nombre|pluralize:"ent" }} déjà à cette alerte.
+                      {% else %}
+                        Aucune chambre en ligne pour l'instant : tu seras prévenu dès qu'une chambre correspond.
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="rangee">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="alerte_id" value="{{ ligne.objet.id }}">
+                      {% if ligne.objet.is_active %}
+                        <input type="hidden" name="action" value="pause">
+                        <button class="bouton bouton--petit bouton--secondaire" type="submit">Mettre en pause</button>
+                      {% else %}
+                        <input type="hidden" name="action" value="reactiver">
+                        <button class="bouton bouton--petit bouton--primaire" type="submit">Réactiver</button>
+                      {% endif %}
+                    </form>
+                    <a class="bouton bouton--petit bouton--secondaire"
+                       href="{{ ligne.lien }}">
+                      Voir {% if ligne.nombre %}les {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }}{% else %}les chambres{% endif %}
+                    </a>
+                    <a class="bouton bouton--petit bouton--fantome"
+                       href="/compte/alertes?modifier={{ ligne.objet.id }}">Modifier</a>
+                    {% include "web/composants/confirmation.html" with action="supprimer" question="Supprimer définitivement cette alerte ?" alerte_id=ligne.objet.id %}
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <div class="etat-vide">
+          <div class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="bell" taille=32 %}</div>
+          <h2 class="etat-vide__titre">Aucune alerte active.</h2>
+          <p class="etat-vide__texte">Crée-en une : c'est le moyen le plus simple de ne rien rater.</p>
+        </div>
+      {% endif %}
+      {% if en_pause %}
+        <details class="alertes-pause">
+          <summary class="alertes-pause__titre">Alertes en pause ({{ en_pause|length }})</summary>
+          <ul class="liste-annonces">
+            {% for ligne in en_pause %}
+              <li class="carte p-5">
+                <div class="d-flex justify-content-between align-items-start gap-4 flex-wrap">
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <strong class="fs-16">{{ ligne.objet.label|default:"Alerte logement" }}</strong>
+                      {% if ligne.objet.is_active %}
+                        <span class="badge badge--succes">Active</span>
+                      {% else %}
+                        <span class="badge badge--neutre">En pause</span>
+                      {% endif %}
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 text-muted texte-petit mb-3">
+                      <span class="d-inline-flex align-items-center gap-1">
+                        <svg width="14"
+                             height="14"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             aria-hidden="true">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {% if ligne.quartiers %}{{ ligne.quartiers|join:", " }}{% else %}Tous quartiers{% endif %}
+                      </span>
+                      {% if ligne.types %}
+                        <span>·</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                          <svg width="14"
+                               height="14"
+                               viewBox="0 0 24 24"
+                               fill="none"
+                               stroke="currentColor"
+                               stroke-width="2"
+                               stroke-linecap="round"
+                               stroke-linejoin="round"
+                               aria-hidden="true">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          </svg>
+                          {{ ligne.types|join:", " }}
+                        </span>
+                      {% endif %}
+                      {% if ligne.objet.max_rent %}
+                        <span>·</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                          <svg width="14"
+                               height="14"
+                               viewBox="0 0 24 24"
+                               fill="none"
+                               stroke="currentColor"
+                               stroke-width="2"
+                               stroke-linecap="round"
+                               stroke-linejoin="round"
+                               aria-hidden="true">
+                            <rect x="2" y="4" width="20" height="16" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                          </svg>
+                          Max {{ ligne.objet.max_rent|fcfa }} F
+                        </span>
+                      {% endif %}
+                      {% for e in ligne.equipements %}
+                        <span>·</span>
+                        <span class="badge badge--neutre">{{ e }}</span>
+                      {% endfor %}
+                    </div>
+                    <p class="alerte-carte__trouve">
+                      {% if ligne.nombre %}
+                        {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }} en ligne correspond{{ ligne.nombre|pluralize:"ent" }} déjà à cette alerte.
+                      {% else %}
+                        Aucune chambre en ligne pour l'instant : tu seras prévenu dès qu'une chambre correspond.
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="rangee">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="alerte_id" value="{{ ligne.objet.id }}">
+                      {% if ligne.objet.is_active %}
+                        <input type="hidden" name="action" value="pause">
+                        <button class="bouton bouton--petit bouton--secondaire" type="submit">Mettre en pause</button>
+                      {% else %}
+                        <input type="hidden" name="action" value="reactiver">
+                        <button class="bouton bouton--petit bouton--primaire" type="submit">Réactiver</button>
+                      {% endif %}
+                    </form>
+                    <a class="bouton bouton--petit bouton--secondaire"
+                       href="{{ ligne.lien }}">
+                      Voir {% if ligne.nombre %}les {{ ligne.nombre }} chambre{{ ligne.nombre|pluralize }}{% else %}les chambres{% endif %}
+                    </a>
+                    <a class="bouton bouton--petit bouton--fantome"
+                       href="/compte/alertes?modifier={{ ligne.objet.id }}">Modifier</a>
+                    {% include "web/composants/confirmation.html" with action="supprimer" question="Supprimer définitivement cette alerte ?" alerte_id=ligne.objet.id %}
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+    </div>
+  </section>
+  <script src="{% static 'js/listes-multiples.js' %}" defer></script>
+{% endblock %}

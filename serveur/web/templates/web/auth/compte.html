@@ -1,37 +1,93 @@
-{% extends "web/base.html" %}
-{% block titre %}Mon compte — Logeo{% endblock %}
-{% block navigation %}
-  <form method="post"
-        action="/deconnexion">{% csrf_token %}<button class="bouton bouton--fantome"
-        type="submit">Se déconnecter</button></form>
-{% endblock %}
-{% block contenu %}
+{% extends "web/espace.html" %}
+{% load immoplus %}
+{% block titre %}Tableau de bord — Immo+{% endblock %}
+{% block espace %}
   <section class="section">
-    <div class="conteneur conteneur--texte pile pile--large">
-      <h1>Mon compte</h1>
-      {% if message %}<div class="alerte alerte--succes" role="status"><p>{{ message }}</p></div>{% endif %}
-      <p class="texte-doux">{{ u.full_name }} · {{ u.phone_e164 }} · {{ u.get_role_display }}</p>
-      <form method="post" class="pile"><h2>Mon nom</h2>{% csrf_token %}<input type="hidden" name="action" value="nom">
-        {% for champ in nom.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Enregistrer</button>
-      </form>
-      <form method="post"
-            class="pile"><h2>Mot de passe</h2>{% csrf_token %}<input type="hidden"
-       name="action"
-       value="mot-de-passe">
-        {% for e in mdp.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
-        {% for champ in mdp.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton" type="submit">Changer le mot de passe</button>
-      </form>
-      <form method="post"
-            class="pile"><h2>Supprimer mon compte</h2>{% csrf_token %}<input type="hidden"
-       name="action"
-       value="suppression">
-        <p class="texte-doux">Ton compte sera anonymisé. Cette action est définitive.</p>
-        {% for e in suppression.non_field_errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}
-        {% for champ in suppression.visible_fields %}<div class="champ"><label class="champ__etiquette" for="{{ champ.id_for_label }}">{{ champ.label }}</label>{{ champ }}{% for e in champ.errors %}<p class="champ__erreur">{{ e }}</p>{% endfor %}</div>{% endfor %}
-        <button class="bouton bouton--danger" type="submit">Supprimer définitivement</button>
-      </form>
+    <div class="conteneur">
+      <div class="compte-dashboard">
+        <div class="compte-principal">
+          {% if u.role == "client" %}
+            {# ── Tableau de bord du locataire (plan v2, W6) ── #}
+            <div class="tableau-loc__hero">
+              <h1 class="tableau-loc__salut">Bonjour {{ u.prenom|default:u.full_name }}</h1>
+              <p class="tableau-loc__texte">
+                {% if non_lus %}
+                  Tu as {{ non_lus }} message{{ non_lus|pluralize }} non lu{{ non_lus|pluralize }}.
+                {% elif alertes_actives %}
+                  Tes alertes veillent : on te prévient dès qu'une chambre correspond.
+                {% else %}
+                  Crée une alerte pour être prévenu avant les autres.
+                {% endif %}
+              </p>
+              <a class="bouton bouton--accent" href="/annonces">Voir les chambres</a>
+            </div>
+            <nav class="tableau-loc__raccourcis" aria-label="Raccourcis">
+              <a class="tableau-loc__tuile" href="/compte/favoris">
+                <span class="tableau-loc__icone tableau-loc__icone--rouge">
+                  {% include "web/composants/icone.html" with nom="heart" taille=20 %}
+                </span>
+                <span class="tableau-loc__nombre">{{ total_favoris }}</span>
+                <span class="tableau-loc__libelle">Favori{{ total_favoris|pluralize }}</span>
+              </a>
+              <a class="tableau-loc__tuile" href="/compte/alertes">
+                <span class="tableau-loc__icone tableau-loc__icone--soleil">
+                  {% include "web/composants/icone.html" with nom="search" taille=20 %}
+                </span>
+                <span class="tableau-loc__nombre">{{ total_alertes }}</span>
+                <span class="tableau-loc__libelle">Alerte{{ total_alertes|pluralize }}</span>
+              </a>
+              <a class="tableau-loc__tuile" href="/compte/messages">
+                <span class="tableau-loc__icone">{% include "web/composants/icone.html" with nom="message-circle" taille=20 %}</span>
+                <span class="tableau-loc__nombre">{{ non_lus }}</span>
+                <span class="tableau-loc__libelle">Non lu{{ non_lus|pluralize }}</span>
+              </a>
+              <a class="tableau-loc__tuile" href="/compte/notifications">
+                <span class="tableau-loc__icone tableau-loc__icone--vert">
+                  {% include "web/composants/icone.html" with nom="bell" taille=20 %}
+                </span>
+                <span class="tableau-loc__nombre">{{ notifs_non_lues }}</span>
+                <span class="tableau-loc__libelle">Notification{{ notifs_non_lues|pluralize }}</span>
+              </a>
+            </nav>
+            <div class="compte-section-carte">
+              <h2 class="compte-section-carte__titre">Mes alertes actives</h2>
+              {% if alertes_actives %}
+                <ul class="tableau-loc__liste">
+                  {% for a in alertes_actives %}
+                    <li>
+                      <a href="/compte/alertes?modifier={{ a.id }}">{{ a.titre }}</a>
+                      {% if a.budget %}<span class="texte-doux">≤ {{ a.budget|fcfa }} F</span>{% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="texte-doux mb-2">Aucune alerte active.</p>
+                <a class="bouton bouton--secondaire" href="/compte/alertes">Créer une alerte</a>
+              {% endif %}
+            </div>
+            {% if derniers_favoris %}
+              <div class="pile">
+                <h2 class="compte-section-carte__titre">Mes derniers favoris</h2>
+                <div class="grille-annonces">
+                  {% for a in derniers_favoris %}
+                    {% include "web/composants/carte.html" %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            {% if consultees %}
+              <div class="pile">
+                <h2 class="compte-section-carte__titre">Tu as regardé récemment</h2>
+                <div class="grille-annonces">
+                  {% for a in consultees %}
+                    {% include "web/composants/carte.html" %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
     </div>
   </section>
 {% endblock %}

@@ -1,0 +1,69 @@
+{% extends "web/espace.html" %}
+{% block titre %}Appareils connectés — Immo+{% endblock %}
+{# Plan d'actions v2, W7 : expliquer ce qu'est un appareil, montrer la session en cours, tout déconnecter. #}
+{% block espace %}
+  <section class="section">
+    <div class="conteneur conteneur--texte pile">
+      <h1>Appareils connectés</h1>
+      <div class="appareils-explication">
+        <span class="appareils-explication__icone">
+          {% include "web/composants/icone.html" with nom="shield-check" taille=22 %}
+        </span>
+        <p class="mb-0">
+          Un appareil, c'est un téléphone où l'application Immo+ est connectée à ton compte, ou ce navigateur.
+          Si tu ne reconnais pas un appareil, ou si tu as perdu ton téléphone, déconnecte-le : il devra retrouver ton
+          mot de passe pour revenir.
+        </p>
+      </div>
+      {% if message %}
+        <div class="alerte alerte--succes" role="status">
+          <p>{{ message }}</p>
+        </div>
+      {% endif %}
+      <h2 class="appareils-titre">Ce navigateur</h2>
+      <ul class="liste-appareils">
+        <li class="liste-appareils__item liste-appareils__item--courant">
+          <span class="liste-appareils__icone">{% include "web/composants/icone.html" with nom="monitor" taille=20 %}</span>
+          <div class="liste-appareils__texte">
+            <p class="liste-appareils__nom">{{ session_courante }}</p>
+            <p class="texte-doux">Session en cours sur le site</p>
+          </div>
+          <span class="badge badge--succes">Ici</span>
+        </li>
+      </ul>
+      <h2 class="appareils-titre">Application Immo+</h2>
+      {% if appareils %}
+        <ul class="liste-appareils">
+          {% for a in appareils %}
+            <li class="liste-appareils__item">
+              <span class="liste-appareils__icone">{% include "web/composants/icone.html" with nom="smartphone" taille=20 %}</span>
+              <div class="liste-appareils__texte">
+                <p class="liste-appareils__nom">{{ a.label|default:"Téléphone" }}</p>
+                <p class="texte-doux">
+                  {{ a.get_platform_display }} · dernière activité {{ a.last_seen_at|date:"j F Y à H:i"|default:"inconnue" }}
+                </p>
+              </div>
+              <form method="post" action="/compte/appareils/{{ a.pk }}/revoquer">
+                {% csrf_token %}
+                <button class="bouton bouton--fantome bouton--petit" type="submit">Déconnecter</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="texte-doux">Aucun téléphone connecté pour l'instant.</p>
+      {% endif %}
+      <div class="compte-section-carte compte-section-carte--danger">
+        <h2 class="compte-section-carte__titre">Tout déconnecter</h2>
+        <p class="texte-doux">
+          Déconnecte tous les téléphones et toutes les autres sessions du site. Ce navigateur reste connecté.
+          Pense aussi à changer ton mot de passe si quelqu'un le connaît.
+        </p>
+        {% include "web/composants/confirmation.html" with action="partout" libelle="Déconnecter tous les autres appareils" question="Tous les autres appareils devront se reconnecter avec ton mot de passe. Continuer ?" libelle_confirmer="Oui, tout déconnecter" %}
+      </div>
+      <p>
+        <a class="bouton bouton--fantome" href="/compte">Retour au compte</a>
+      </p>
+    </div>
+  </section>
+{% endblock %}

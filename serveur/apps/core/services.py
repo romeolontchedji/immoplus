@@ -2,10 +2,11 @@
 
 import shutil
 
-import redis
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
+
+from apps.core import redis_file
 
 
 def _base() -> bool:
@@ -20,7 +21,8 @@ def _cache() -> bool:
 
 
 def _file() -> bool:
-    return bool(redis.Redis.from_url(settings.REDIS_QUEUE_URL, socket_timeout=2).ping())
+    # Même client que les compteurs de sécurité et les files (simulé en mémoire pendant les tests).
+    return bool(redis_file.client().ping())
 
 
 def _disque() -> bool:

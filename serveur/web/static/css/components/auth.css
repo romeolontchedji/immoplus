@@ -1,0 +1,104 @@
+/* ─── Auth (connexion / inscription) ──── layout 2 colonnes ───────────────── */
+.auth-layout {
+  display: flex; min-height: 100vh; min-height: 100dvh;
+}
+.auth-lateral {
+  display: none; /* masqué sur mobile */
+  position: relative; overflow: hidden;
+  flex: 0 0 42%; max-width: 640px;
+  background: var(--voile-auth), url("../../design/photos/accueil-2-960.webp") 70% center / cover no-repeat,
+    var(--night);
+  color: var(--white); flex-direction: column; padding: var(--sp-10);
+}
+.auth-lateral__logo { display: none; } /* l'en-tête du site porte déjà le logo */
+.auth-lateral__contenu {
+  position: relative; z-index: 1; flex: 1;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center;
+}
+.auth-lateral__titre {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800; line-height: 1.1; letter-spacing: -0.03em;
+  color: var(--white); margin-bottom: var(--sp-4);
+}
+.auth-lateral__sous-titre {
+  font-size: var(--fs-16); color: var(--white-65); margin-bottom: var(--sp-6);
+}
+.auth-lateral__promesses {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3);
+  text-align: left; /* liste centrée en bloc, coches alignées entre elles */
+}
+.auth-lateral__promesses li {
+  display: flex; align-items: center; gap: var(--sp-3);
+  font-size: var(--fs-15); font-weight: 700; color: var(--white-80);
+}
+.auth-lateral__promesses li svg { color: var(--white-55); flex-shrink: 0; }
+/* Panneau formulaire */
+.auth-formulaire {
+  flex: 1; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--sp-10) var(--sp-6);
+}
+.auth-formulaire__inner {
+  width: 100%; max-width: 30rem;
+  background: var(--surface); border-radius: var(--r-card-l);
+  padding: var(--sp-10) var(--sp-8);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: var(--sp-6);
+}
+.auth-formulaire__titre {
+  font-size: var(--fs-28); font-weight: 800; letter-spacing: -0.03em;
+  color: var(--night); margin: 0;
+}
+.auth-formulaire__sous-titre {
+  font-size: var(--fs-16); color: var(--text-muted);
+  margin: calc(-1 * var(--sp-4)) 0 0;
+}
+.auth-formulaire__liens {
+  border-top: 1px solid var(--divider); padding-top: var(--sp-5);
+  text-align: center; display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.auth-formulaire__liens p { margin: 0; font-size: var(--fs-14); color: var(--text-muted); }
+.auth-formulaire__liens a { color: var(--blue); font-weight: 700; }
+.auth-formulaire__note { font-size: var(--fs-13); color: var(--text-muted); }
+
+/* Étapes */
+.auth-etapes { margin-bottom: var(--sp-2); }
+
+@media (min-width: 768px) {
+  .auth-lateral { display: flex; }
+  .auth-formulaire { padding: var(--sp-12) var(--sp-10); }
+}
+@media (max-width: 767px) {
+  .auth-formulaire__inner {
+    padding: var(--sp-6); border-radius: var(--r-card); box-shadow: none; background: transparent;
+  }
+}
+
+/* Plan v3, E4 : textes centrés, vraie photo dans le panneau */
+.auth-formulaire__titre, .auth-formulaire__sous-titre { text-align: center; }
+.auth-formulaire__sous-titre { margin-inline: auto; max-width: 28rem; }
+.auth-etapes { display: flex; justify-content: center; }
+@media (min-width: 1280px) {
+  .auth-lateral { background-image: var(--voile-auth), url("../../design/photos/accueil-2-1600.webp"); }
+}
+
+/* Clé de secours (ADR 0009) : grande, lisible, facile à recopier ou à capturer. */
+.cle-secours {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-5); margin-bottom: var(--sp-4);
+  border: 2px dashed var(--primary); border-radius: var(--r-card); background: var(--blue-soft);
+}
+.cle-secours__valeur {
+  margin: 0; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: clamp(var(--fs-17), 5.6vw, var(--fs-24)); font-weight: 800; letter-spacing: 0.04em; color: var(--night);
+  user-select: all; white-space: nowrap; text-align: center; /* une seule ligne : plus facile à recopier */
+}
+.cle-secours__statut { margin: 0; min-height: 1.2em; font-size: var(--fs-13); font-weight: 700; color: var(--success); }
+.cle-secours__conseils { margin: 0; padding-left: var(--sp-5); font-size: var(--fs-14); color: var(--text-muted); }
+.oubli-portes {
+  display: flex; flex-direction: column; gap: var(--sp-2); margin: 0 0 var(--sp-4); padding-left: var(--sp-5);
+  font-size: var(--fs-14); color: var(--text-muted);
+}
+.oubli-portes strong { color: var(--night); }

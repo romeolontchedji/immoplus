@@ -1,0 +1,48 @@
+{% load immoplus %}
+{# Barre latérale fixe des comptes connectés (toutes les pages sauf l accueil) ; masquée sur téléphone, où le menu du haut la remplace. #}
+{% menu_espace as menu %}
+<aside class="espace-barre" aria-label="{{ menu.role }}">
+  <div class="espace-barre__identite">
+    <span class="espace-barre__avatar" aria-hidden="true">{{ request.user.initiales|default:"?" }}</span>
+    <span class="espace-barre__qui">
+      <strong class="espace-barre__nom">{{ request.user.full_name|default:request.user.username }}</strong>
+      <span class="espace-barre__role">{{ menu.role }}</span>
+    </span>
+  </div>
+  <nav class="espace-barre__nav" aria-label="{{ menu.role }}">
+    <p class="espace-barre__section">Navigation</p>
+    <ul class="espace-barre__liste">
+      {% for l in menu.principal %}
+        <li>
+          <a class="espace-barre__lien{% if l.actif %} espace-barre__lien--actif{% endif %}"
+             href="{{ l.url }}"
+             {% if l.actif %}aria-current="page"{% endif %}>
+            {% include "web/composants/icone.html" with nom=l.icone taille=18 %}
+            <span>{{ l.libelle }}</span>
+            {% if l.compteur %}<span class="espace-barre__compteur">{{ l.compteur }}</span>{% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="espace-barre__section">Réglages</p>
+    <ul class="espace-barre__liste">
+      {% for l in menu.reglages %}
+        <li>
+          <a class="espace-barre__lien{% if l.actif %} espace-barre__lien--actif{% endif %}"
+             href="{{ l.url }}"
+             {% if l.actif %}aria-current="page"{% endif %}>
+            {% include "web/composants/icone.html" with nom=l.icone taille=18 %}
+            <span>{{ l.libelle }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <form class="espace-barre__sortie" method="post" action="/deconnexion">
+    {% csrf_token %}
+    <button class="espace-barre__lien espace-barre__lien--sortie" type="submit">
+      {% include "web/composants/icone.html" with nom="log-out" taille=18 %}
+      <span>Se déconnecter</span>
+    </button>
+  </form>
+</aside>

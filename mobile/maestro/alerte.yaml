@@ -1,0 +1,10 @@
+# Parcours : créer une alerte depuis une recherche sans résultat. Suppose un locataire connecté.
+appId: bj.immoplus.app
+---
+- launchApp
+- tapOn: "Recherche"
+- tapOn: "Rechercher"
+- inputText: "introuvable-xyz"
+- pressKey: Enter
+- assertVisible: "Aucune chambre ne correspond"
+- tapOn: "Créer une alerte"

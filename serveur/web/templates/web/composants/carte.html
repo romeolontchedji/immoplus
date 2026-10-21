@@ -1,0 +1,72 @@
+{% load immoplus %}
+<article class="carte carte--interactive">
+  <a class="annonce__lien"
+     href="/annonces/{{ a.slug }}"
+     aria-label="{{ a.title }}, {{ a.rent_amount|fcfa }} F par mois">
+    <div class="annonce__media">
+      {% if a.cover_url %}
+        <img class="annonce__image"
+             src="{{ a.cover_url }}"
+             alt=""
+             aria-hidden="true"
+             loading="lazy"
+             width="480"
+             height="240">
+      {% else %}
+        <div class="annonce__image annonce__image--vide"
+             role="img"
+             aria-label="Pas de photo"></div>
+      {% endif %}
+      {% if a.gerant.verified %}
+        <span class="annonce__badge-verifie" aria-label="Gérant vérifié">
+          <span class="badge-verifie">
+            <svg width="12"
+                 height="12"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            Vérifié
+          </span>
+        </span>
+      {% endif %}
+      {% if a.has_video %}
+        <div class="annonce__play-btn" aria-hidden="true">
+          <svg width="22"
+               height="22"
+               viewBox="0 0 24 24"
+               fill="currentColor"
+               aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+        </div>
+        {% if a.video_duration_s %}
+          <span class="annonce__duree"
+                aria-label="Durée de la vidéo : {{ a.video_duration_s|duree_video }}">{{ a.video_duration_s|duree_video }}</span>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="annonce__corps">
+      <div class="annonce__ligne-titre">
+        <span class="annonce__type-quartier">{{ a.room_type_label }} · {{ a.district.name }}</span>
+        <p class="annonce__prix">
+          {{ a.rent_amount|fcfa }} F
+          {% if a.rent_negotiable %}<span class="annonce__debattre">à débattre</span>{% endif %}
+        </p>
+      </div>
+      <p class="annonce__proximite">
+        {% if a.distance_m %}
+          À {{ a.distance_m }} m de l'UP
+        {% else %}
+          {{ a.district.name }}
+        {% endif %}
+      </p>
+    </div>
+  </a>
+</article>

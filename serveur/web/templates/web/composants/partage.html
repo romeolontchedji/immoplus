@@ -1,0 +1,65 @@
+{% load immoplus %}
+{% comment %}
+  Bouton « Partager » d'une chambre (WhatsApp, Facebook, applications du téléphone dont TikTok, lien à copier).
+  Paramètres : `chemin` (ex. /annonces/<slug>), `texte` (phrase jointe au lien), `ident` (unique dans la page),
+  `petit` (variante des listes). Sans script, le menu s'ouvre quand même et le lien se copie à la main.
+{% endcomment %}
+{% with lien=request.scheme|add:"://"|add:request.get_host|add:chemin %}
+  <details class="partage{% if petit %} partage--petit{% endif %}" data-partage>
+    <summary class="bouton {% if petit %}bouton--petit bouton--secondaire{% else %}bouton--accent{% endif %} partage__bouton">
+      {% include "web/composants/icone.html" with nom="share-2" taille=18 %}
+      Partager
+    </summary>
+    <div class="partage__menu"
+         role="group"
+         aria-label="Partager cette chambre">
+      <button type="button"
+              class="partage__option"
+              data-partage-natif
+              data-url="{{ lien }}"
+              data-texte="{{ texte }}"
+              hidden>
+        {% include "web/composants/icone.html" with nom="smartphone" taille=18 %}
+        TikTok, Instagram et autres applications
+      </button>
+      <a class="partage__option"
+         href="https://wa.me/?text={{ texte|urlencode:'' }}%0A{{ lien|urlencode:'' }}"
+         target="_blank"
+         rel="noopener noreferrer">
+        {% include "web/composants/icone.html" with nom="message-circle" taille=18 %}
+        WhatsApp
+      </a>
+      <a class="partage__option"
+         href="https://www.facebook.com/sharer/sharer.php?u={{ lien|urlencode:'' }}"
+         target="_blank"
+         rel="noopener noreferrer">
+        {% include "web/composants/icone.html" with nom="facebook" taille=18 %}
+        Facebook
+      </a>
+      <div class="partage__copie">
+        <label class="champ__etiquette" for="lien-{{ ident }}">Lien de la chambre</label>
+        <div class="partage__ligne">
+          <input class="champ partage__champ"
+                 id="lien-{{ ident }}"
+                 type="text"
+                 value="{{ lien }}"
+                 readonly
+                 data-partage-lien>
+          <button type="button"
+                  class="bouton bouton--petit bouton--primaire"
+                  data-partage-copier>
+            {% include "web/composants/icone.html" with nom="copy" taille=16 %}
+            Copier
+          </button>
+        </div>
+        <p class="partage__statut"
+           role="status"
+           aria-live="polite"
+           data-partage-statut></p>
+      </div>
+      <p class="partage__note">
+        Pour TikTok ou Instagram : copie le lien et colle-le dans ta vidéo, ta story ou ta bio. L'aperçu montre la photo, le prix et le quartier.
+      </p>
+    </div>
+  </details>
+{% endwith %}

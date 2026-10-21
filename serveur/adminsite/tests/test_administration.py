@@ -1,9 +1,8 @@
-"""Administration : isolation, 2FA obligatoire, verrouillage, liste blanche, actions journalisées."""
+"""Administration : isolation, connexion par mot de passe, verrouillage, liste blanche, actions journalisées."""
 
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from adminsite import middleware as mw
 from apps.accounts.models import GerantProfile, User
@@ -15,6 +14,7 @@ from apps.accounts.tests.fabriques import (
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
+from apps.listings.tests.fabriques import ListingFactory
 from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
@@ -37,32 +37,28 @@ def reglages_admin():
 
 
 def personnel(fabrique=AdminFactory):
-    u = fabrique()
-    TOTPDevice.objects.create(user=u, name="p", confirmed=True)
-    return u
+    return fabrique()
 
 
-def code_totp(u) -> str:
-    from django_otp.oath import totp
+def dernier_code(adresse: str) -> str | None:
+    """Code à 6 chiffres du dernier courriel envoyé à `adresse` (tâches exécutées sur place en test)."""
+    import re
 
-    appareil = TOTPDevice.objects.get(user=u)
-    return (
-        f"{totp(appareil.bin_key, step=appareil.step, t0=appareil.t0, digits=appareil.digits):06d}"
-    )
+    from django.core import mail
+
+    for message in reversed(mail.outbox):
+        if adresse in message.to:
+            trouve = re.search(r"\b(\d{6})\b", message.subject)
+            return trouve.group(1) if trouve else None
+    return None
 
 
-def se_connecter(u, mdp=MOT_DE_PASSE, jeton=None, client=None):
+def se_connecter(u, mdp=MOT_DE_PASSE, client=None, *, double_auth=True):
+    """Mot de passe, puis (si accepté) le code reçu par courriel, comme un vrai membre de l'équipe."""
     c = client or Client()
-    r = c.post(
-        "/login/",
-        {
-            "username": u.email,
-            "password": mdp,
-            "otp_token": jeton or code_totp(u),
-            "otp_device": "",
-            "next": "/",
-        },
-    )
+    r = c.post("/login/", {"username": u.email, "password": mdp, "next": "/"})
+    if double_auth and r.status_code == 302 and (code := dernier_code(u.email)):
+        c.post("/verification/", {"code": code, "next": "/"})
     return c, r
 
 
@@ -71,40 +67,20 @@ class TestConnexion:
         r = Client().get("/login/")
         assert r.status_code == 200 and "Adresse e-mail" in r.content.decode()
 
-    def test_connexion_avec_mot_de_passe_et_code(self):
+    def test_connexion_avec_mot_de_passe(self):
         u = personnel()
         c, r = se_connecter(u)
         assert r.status_code == 302
         assert c.get("/").status_code == 200
-
-    def test_mot_de_passe_seul_ne_suffit_pas(self):
-        u = personnel()
-        c, r = se_connecter(u, jeton="000000")
-        assert r.status_code == 200  # formulaire réaffiché
-        assert c.get("/").status_code == 302  # redirigé vers la connexion
-
-    def test_sans_code_la_connexion_est_refusee(self):
-        u = personnel()
-        c = Client()
-        r = c.post(
-            "/login/", {"username": u.email, "password": MOT_DE_PASSE, "otp_token": "", "next": "/"}
-        )
-        assert r.status_code == 200 and c.get("/").status_code == 302
 
     def test_mauvais_mot_de_passe(self):
         u = personnel()
         c, r = se_connecter(u, mdp="faux")
         assert r.status_code == 200 and c.get("/").status_code == 302
 
-    def test_compte_sans_appareil_totp_ne_peut_pas_entrer(self):
-        u = AdminFactory()
-        c, r = se_connecter(u, jeton="123456")
-        assert c.get("/").status_code == 302
-
     @pytest.mark.parametrize("fabrique", [ClientFactory, GerantFactory])
     def test_un_locataire_ou_un_gerant_ne_peut_pas_entrer(self, fabrique):
-        u = fabrique(email="client@logeo.test")
-        TOTPDevice.objects.create(user=u, name="p", confirmed=True)
+        u = fabrique(email="client@immoplus.test")
         c, _ = se_connecter(u)
         assert c.get("/").status_code == 302
 
@@ -127,6 +103,20 @@ class TestConnexion:
         ligne = AuditLog.objects.get(action="admin.connexion_echec")
         assert u.email not in str(ligne.metadata) and ligne.actor_id is None
 
+    def test_l_echec_est_garde_dans_l_historique_avec_un_message_clair(self):
+        from axes.models import AccessFailureLog
+
+        u = personnel()
+        _, r = se_connecter(u, mdp="faux")
+        assert "Adresse e-mail ou mot de passe incorrect." in r.content.decode()
+        assert AccessFailureLog.objects.filter(username=u.email).count() == 1
+
+    def test_les_connexions_affichent_le_compte_et_non_son_identifiant(self):
+        u = personnel()
+        c, _ = se_connecter(u)
+        page = c.get("/axes/accesslog/").content.decode()
+        assert u.email in page
+
     def test_le_cookie_de_session_a_son_propre_nom(self, settings):
         u = personnel()
         c, _ = se_connecter(u)
@@ -140,7 +130,7 @@ class TestVerrouillage:
         u = personnel()
         for _ in range(5):
             se_connecter(u, mdp="faux")
-        c, r = se_connecter(u)  # bon mot de passe et bon code : refusé quand même
+        c, r = se_connecter(u)  # bon mot de passe : refusé quand même
         assert r.status_code == 429
         assert c.get("/").status_code == 302
         assert not AuditLog.objects.filter(action="admin.connexion").exists()
@@ -164,7 +154,7 @@ class TestSession:
 
         assert Session.objects.count() == 0  # la table du site n'est pas touchée
 
-    def test_inactivite_de_trente_minutes(self):
+    def test_inactivite_d_une_heure(self):
         u = personnel()
         c, _ = se_connecter(u)
         assert c.get("/").status_code == 200
@@ -173,7 +163,9 @@ class TestSession:
 
         from adminsite.models import AdminSession
 
-        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=31), tick=False):
+        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=50), tick=False):
+            assert c.get("/").status_code == 200  # 50 min d'inactivité : encore ouverte
+        with time_machine.travel(timezone.now() + timezone.timedelta(minutes=50 + 61), tick=False):
             assert c.get("/").status_code == 302
         assert AdminSession.objects.count() <= 1
 
@@ -248,37 +240,37 @@ class TestActions:
             assert Client().get("/").status_code == 200  # accueil du site
             assert Client().get("/login/").status_code == 404
 
-    def test_creation_d_un_gerant(self):
+    def test_creation_d_un_gerant_puis_lien_d_activation(self):
         c, admin_ = self.connecte()
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {
-                "phone": "97343434",
-                "full_name": "Koffi Gérant",
-                "display_name": "Koffi",
-                "zone": "Banikanni",
-            },
-        )
-        assert r.status_code == 302
-        g = User.objects.get(phone_e164="+2290197343434")
-        assert g.role == "gerant" and not g.has_usable_password()
+            {"first_name": "Koffi", "last_name": "Gérant", "display_name": "Koffi",
+             "zone": "Banikanni"},
+        )  # fmt: skip
+        page = r.content.decode()
+        assert r.status_code == 200 and "/activer/" in page and "wa.me/?text=" in page
+        g = User.objects.get(role="gerant")
+        assert g.full_name == "Koffi Gérant" and not g.has_usable_password() and g.username is None
         assert GerantProfile.complets.get(user=g).created_by == admin_
         assert AuditLog.objects.filter(action="gerant.cree", actor=admin_).exists()
+        assert AuditLog.objects.filter(action="gerant.lien_activation", actor=admin_).exists()
 
-    def test_creation_d_un_gerant_avec_un_numero_existant(self):
-        ClientFactory(phone_e164="+2290197343434")
-        c, _ = self.connecte()
-        r = c.post(
-            reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "full_name": "X Y", "zone": "Z"},
-        )
-        assert r.status_code == 200 and User.objects.filter(role="gerant").count() == 0
+    def test_lien_de_reinitialisation_depuis_la_fiche_du_compte(self):
+        c, admin_ = self.connecte()
+        locataire = ClientFactory()
+        fiche = c.get(reverse("admin:accounts_user_change", args=[locataire.pk])).content.decode()
+        assert "Générer un lien de réinitialisation" in fiche
+        r = c.get(reverse("admin:accounts_user_lien", args=[locataire.pk, "reinitialisation"]))
+        assert r.status_code == 200 and "/mot-de-passe/nouveau/" in r.content.decode()
+        assert AuditLog.objects.filter(
+            action="auth.lien_reinitialisation_equipe", actor=admin_
+        ).exists()
 
     def test_un_moderateur_ne_cree_pas_de_gerant(self):
         c, _ = self.connecte(PersonnelFactory)
         r = c.post(
             reverse("admin:accounts_user_nouveau_gerant"),
-            {"phone": "97343434", "full_name": "X Y", "zone": "Z"},
+            {"first_name": "X", "last_name": "Y", "zone": "Z"},
         )
         assert r.status_code in (302, 403) and not User.objects.filter(role="gerant").exists()
 
@@ -347,22 +339,47 @@ class TestActions:
         from apps.core import parametres
 
         c, _ = self.connecte()
-        parametres.definir("OTP_PHONE_PER_HOUR", 3)
+        parametres.definir("LOGIN_LOCK_THRESHOLD", 3)
         from apps.core.models import AppSetting
 
-        ligne = AppSetting.objects.get(key="OTP_PHONE_PER_HOUR")
+        ligne = AppSetting.objects.get(key="LOGIN_LOCK_THRESHOLD")
         r = c.post(reverse("admin:core_appsetting_change", args=[ligne.pk]), {"value": "5"})
         assert r.status_code == 302
-        assert parametres.lire("OTP_PHONE_PER_HOUR") == 5
+        assert parametres.lire("LOGIN_LOCK_THRESHOLD") == 5
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
 
 
-def test_totp_valide_une_seule_fois():
-    u = personnel()
-    jeton = code_totp(u)
-    _, r1 = se_connecter(u, jeton=jeton)
-    _, r2 = se_connecter(u, jeton=jeton)  # même code rejoué
-    assert r1.status_code == 302 and r2.status_code == 200
+class TestTableauDeBord:
+    def test_la_vue_d_ensemble_s_affiche_avec_des_donnees_reelles(self):
+        from apps.core import stats
+        from apps.moderation.models import Report
+
+        admin_ = personnel()
+        c, _ = se_connecter(admin_)
+        annonce = ListingFactory(status="published")
+        Report.objects.create(
+            reporter=ClientFactory(),
+            source="user",
+            target_type="listing",
+            target_id=annonce.pk,
+            listing=annonce,
+            reason_code="fake_listing",
+            details="Fausse annonce",
+        )
+        stats.incrementer("messages", 4)
+        r = c.get("/")
+        assert r.status_code == 200
+        html = r.content.decode()
+        assert "À traiter" in html
+        assert "Signalements ouverts" in html and ">1<" in html
+        assert ">4<" in html  # compteur messages du jour
+        assert reverse("admin:moderation_report_changelist") in html
+
+    def test_le_moderateur_ne_voit_pas_le_journal_ni_le_lien_admin(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        html = c.get("/").content.decode()
+        assert "À traiter" in html
+        assert "Journal d'activité" not in html and "Paramètres" not in html
 
 
 def test_les_controles_systeme_de_django_sont_sans_erreur():
@@ -371,3 +388,217 @@ def test_les_controles_systeme_de_django_sont_sans_erreur():
 
     erreurs = [e for e in checks.run_checks() if e.level >= checks.ERROR]
     assert erreurs == [], erreurs
+
+
+class TestParametresParTheme:
+    """Page « Paramètres » : réglages rangés par thème, champs typés, journalisés avec l'avant et l'après."""
+
+    def test_modifier_la_maintenance(self):
+        from apps.audit.models import AuditLog
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        page = c.get(reverse("admin:core_appsetting_changelist")).content.decode()
+        assert "Application et maintenance" in page and "Contact et identité légale" in page
+        r = c.post(
+            reverse("admin:core_appsetting_changelist"),
+            {"section": "application", "application-MAINTENANCE_ENABLED": "on", "application-MAINTENANCE_MESSAGE": "Travaux",
+             "application-APP_NOTICE": "", "application-MIN_SUPPORTED_VERSION": "1.2.0"},
+        )  # fmt: skip
+        assert r.status_code == 302
+        assert (
+            parametres.lire("MAINTENANCE_ENABLED") is True
+            and parametres.lire("MIN_SUPPORTED_VERSION") == "1.2.0"
+        )
+        ligne = AuditLog.objects.filter(
+            action="parametre.modifie", metadata__cle="MAINTENANCE_ENABLED"
+        ).get()
+        assert ligne.metadata["avant"] is False and ligne.metadata["apres"] is True
+        parametres.definir("MAINTENANCE_ENABLED", False)
+
+    def test_json_invalide_refuse(self):
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        avant = parametres.lire("PLANS")
+        r = c.post(
+            reverse("admin:core_appsetting_changelist"),
+            {
+                "section": "abonnement",
+                "abonnement-SUBSCRIPTION_GRACE_DAYS": "7",
+                "abonnement-PLANS": "[pas du json",
+            },
+        )
+        assert r.status_code == 200 and parametres.lire("PLANS") == avant
+
+    def test_un_moderateur_ne_voit_pas_les_parametres(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get(reverse("admin:core_appsetting_changelist")).status_code in (302, 403)
+
+
+def test_quartiers_geres_sans_suppression():
+    from apps.listings.models import District
+
+    c, _ = se_connecter(personnel())
+    r = c.post(
+        reverse("admin:listings_district_add"),
+        {"name": "Kpébié Nord", "slug": "kpebie-nord", "latitude": "9.35", "longitude": "2.62", "sort_order": "40", "is_active": "on"},
+    )  # fmt: skip
+    assert r.status_code == 302 and District.objects.filter(slug="kpebie-nord").exists()
+    d = District.objects.get(slug="kpebie-nord")
+    assert c.get(reverse("admin:listings_district_delete", args=[d.pk])).status_code == 403
+
+
+class TestAudienceEtMenu:
+    def test_audience_sans_file_des_gerants_et_menu_ordonne(self):
+        from apps.core import stats
+
+        stats.incrementer("views", 4, sujet="canal:web")
+        stats.incrementer("views", 2, sujet="canal:app")
+        c, _ = se_connecter(personnel())
+        page = c.get("/").content.decode()
+        assert (
+            "Audience" in page and "Vues sur le site" in page and "Gérants à vérifier" not in page
+        )
+        menu = page[page.index('id="nav-sidebar"') :]
+        # Rubriques par usage : la modération d'abord, l'abonnement (désactivé) en dernier
+        assert menu.index("Modération") < menu.index("Comptes") < menu.index("Abonnement")
+
+
+class TestDoubleAuthentification:
+    def test_sans_le_code_aucune_page_n_est_accessible(self):
+        u = personnel()
+        c, r = se_connecter(u, double_auth=False)
+        assert r.status_code == 302
+        page = c.get("/")
+        assert page.status_code == 302 and page["Location"].startswith("/verification/")
+        code = dernier_code(u.email)
+        assert code and len(code) == 6
+        from django.core import mail
+
+        assert "valable 10 minutes" in mail.outbox[-1].body
+
+    def test_le_bon_code_ouvre_l_administration_et_se_journalise(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        r = c.post("/verification/", {"code": dernier_code(u.email), "next": "/"})
+        assert r.status_code == 302 and c.get("/").status_code == 200
+        assert AuditLog.objects.filter(action="admin.2fa_reussie", actor_id=u.pk).exists()
+
+    def test_cinq_codes_faux_deconnectent(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        bon = dernier_code(u.email)
+        faux = "000000" if bon != "000000" else "111111"
+        for _ in range(4):
+            assert "Code incorrect" in c.post("/verification/", {"code": faux}).content.decode()
+        r = c.post("/verification/", {"code": faux})
+        assert r.status_code == 302 and "double_auth=bloque" in r["Location"]
+        assert c.get("/").status_code == 302  # plus connecté
+        assert (
+            c.post("/verification/", {"code": bon}).status_code == 302
+        )  # l'ancien code ne vaut plus rien
+        assert c.get("/").status_code == 302
+
+    def test_renvoi_limite_a_une_minute(self):
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        page = c.post("/verification/", {"renvoyer": "1"}).content.decode()
+        assert "Patiente une minute" in page
+
+    def test_code_expire(self):
+        from apps.core import redis_file
+
+        u = personnel()
+        c, _ = se_connecter(u, double_auth=False)
+        for cle in redis_file.client().scan_iter("admin:2fa:*"):
+            redis_file.client().delete(cle)
+        r = c.post("/verification/", {"code": dernier_code(u.email)})
+        assert "double_auth=expire" in r["Location"]
+
+
+class TestPageErreurs:
+    def test_l_administrateur_voit_et_corrige_les_erreurs(self):
+        import logging
+
+        from apps.core import erreurs
+
+        try:
+            raise KeyError("absent")
+        except KeyError:
+            logging.getLogger("apps.essai").exception("Échec de test")
+        c, _ = se_connecter(personnel())
+        assert "KeyError" in c.get("/").content.decode()
+        page = c.get("/erreurs/").content.decode()
+        assert "KeyError" in page and "Corrigée" in page
+        c.post("/erreurs/", {"resoudre": erreurs.liste()[0]["id"]})
+        assert erreurs.liste() == []
+
+    def test_un_moderateur_n_y_a_pas_acces(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get("/erreurs/").status_code == 403
+
+
+class TestPlanV3Administration:
+    def test_chaque_parametre_a_une_note(self):
+        from adminsite.parametres_page import NOTES
+        from apps.core import parametres
+
+        assert set(parametres.DEFAUTS) <= set(NOTES)
+        c, _ = se_connecter(personnel())
+        page = c.get("/core/appsetting/").content.decode()
+        assert 'class="lg-champ__note"' in page and "recommandé : le gérant marque lui-même" in page
+
+    def test_cloudinary_s_active_depuis_les_parametres_seulement_s_il_est_configure(self):
+        from apps.core import parametres
+
+        c, _ = se_connecter(personnel())
+        envoi = {"section": "medias", "medias-MEDIA_STORAGE": "cloudinary"}
+        with override_settings(CLOUDINARY_CLOUD_NAME=""):
+            page = c.post("/core/appsetting/", envoi).content.decode()
+        assert "Cloudinary n&#x27;est pas configuré" in page
+        assert parametres.lire("MEDIA_STORAGE") == "local"
+        with override_settings(CLOUDINARY_CLOUD_NAME="immoplus-test"):
+            c.post("/core/appsetting/", envoi)
+        assert parametres.lire("MEDIA_STORAGE") == "cloudinary"
+
+    def test_inactivite_de_l_administration_d_une_heure(self):
+        from apps.core import parametres
+
+        assert parametres.lire("ADMIN_SESSION_IDLE_MIN") == 60
+
+    def test_echecs_du_site_visibles_dans_l_administration(self):
+        from apps.accounts.services import authentification
+        from apps.core.errors import ErreurMetier
+
+        ClientFactory(username="kofi.zongo")
+        with pytest.raises(ErreurMetier):
+            authentification.authentifier("kofi.zongo", "faux", "192.168.1.10")
+        ligne = AuditLog.objects.get(action="auth.connexion_echouee")
+        assert ligne.metadata["identifiant"] == "kofi.zongo" and ligne.metadata["surface"] == "site"
+        c, _ = se_connecter(personnel())
+        page = c.get("/connexions-echouees/").content.decode()
+        assert "kofi.zongo" in page and "192.168.1.10" in page
+
+    def test_les_pages_de_securite_expliquent_ce_qu_elles_montrent(self):
+        c, _ = se_connecter(personnel())
+        page = c.get("/axes/accessattempt/").content.decode()
+        assert "une page vide est donc normale" in page
+
+    def test_moderateur_masque_un_avis(self):
+        import uuid
+
+        from apps.chat import services as chat
+        from apps.listings.models import Review
+        from apps.listings.services import avis
+
+        a = ListingFactory()
+        loc = ClientFactory()
+        conversation = chat.demarrer(loc, a.pk)
+        chat.envoyer(loc, conversation.pk, "Bonjour", uuid.uuid4())
+        chat.envoyer(a.gerant.user, conversation.pk, "Oui", uuid.uuid4())
+        r = avis.donner(loc, a.pk, 1, "Commentaire déplacé")
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get("/listings/review/").status_code == 200
+        c.post("/listings/review/", {"action": "masquer", "_selected_action": [str(r.pk)]})
+        assert Review.objects.get(pk=r.pk).is_hidden

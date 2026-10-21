@@ -1,17 +1,17 @@
-"""Modèles des comptes : utilisateurs, codes à usage unique, appareils, profils de gérants (CDC §9.3 à §9.6)."""
+"""Modèles des comptes : utilisateurs, appareils, profils de gérants (CDC §9.3 à §9.6, ADR 0009)."""
 
 import uuid
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
-from django.db.models.functions import Now
+from django.db.models.functions import Lower, Now
 from django.utils import timezone
 
 from .enums import (  # noqa: F401  (réexportées : l'import historique depuis `models` continue de fonctionner)
     ROLES_CLIENTELE,
     ROLES_PERSONNEL,
     FournisseurPush,
-    Objet,
+    Occupation,
     Plateforme,
     Role,
     Statut,
@@ -43,25 +43,56 @@ class User(AbstractBaseUser):
     """Locataires, gérants et personnel dans une seule table ; le personnel n'ouvre que l'administration."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone_e164 = models.CharField(max_length=16, unique=True, null=True, blank=True)
-    email = models.EmailField(max_length=254, unique=True, null=True, blank=True)
-    phone_verified_at = models.DateTimeField(null=True, blank=True)
-    password = models.CharField("password", max_length=255, db_column="password_hash")
-    full_name = models.CharField(max_length=120)
-    role = models.CharField(max_length=12, choices=Role.choices)
-    status = models.CharField(
-        max_length=12, choices=Statut.choices, default=Statut.ACTIVE, db_default="active"
+    # Clé du compte (ADR 0009) : unique sans tenir compte des majuscules ; absent pour le personnel et pour un
+    # gérant qui n'a pas encore activé son compte.
+    username = models.CharField(
+        max_length=30, null=True, blank=True, verbose_name="nom d'utilisateur"
     )
-    suspended_until = models.DateTimeField(null=True, blank=True)
-    avatar_path = models.CharField(max_length=255, null=True, blank=True)
-    token_version = models.IntegerField(default=0, db_default=0)
-    terms_version = models.CharField(max_length=16, null=True, blank=True)
-    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    email = models.EmailField(
+        max_length=254, unique=True, null=True, blank=True, verbose_name="e-mail"
+    )
+    email_verified_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="e-mail confirmé le"
+    )
+    password = models.CharField("password", max_length=255, db_column="password_hash")
+    first_name = models.CharField(max_length=60, default="", db_default="", verbose_name="prénom")
+    last_name = models.CharField(max_length=60, default="", db_default="", verbose_name="nom")
+    # « Prénom Nom », tenu à jour par `definir_noms` : reste la forme affichée partout.
+    full_name = models.CharField(max_length=120, verbose_name="nom complet")
+    # Clé de secours du mot de passe oublié (ADR 0009) : seule son empreinte Argon2 est gardée.
+    recovery_key_hash = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="empreinte de la clé de secours"
+    )
+    recovery_key_created_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="clé de secours créée le"
+    )
+    occupation = models.CharField(
+        max_length=16, choices=Occupation.choices, null=True, blank=True, verbose_name="tu es"
+    )
+    role = models.CharField(max_length=12, choices=Role.choices, verbose_name="rôle")
+    status = models.CharField(
+        max_length=12,
+        choices=Statut.choices,
+        default=Statut.ACTIVE,
+        db_default="active",
+        verbose_name="statut",
+    )
+    suspended_until = models.DateTimeField(null=True, blank=True, verbose_name="suspendu jusqu'au")
+    avatar_path = models.CharField(max_length=255, null=True, blank=True, verbose_name="photo")
+    token_version = models.IntegerField(default=0, db_default=0, verbose_name="version de sécurité")
+    terms_version = models.CharField(
+        max_length=16, null=True, blank=True, verbose_name="version des conditions"
+    )
+    terms_accepted_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="conditions acceptées le"
+    )
     notif_prefs = models.JSONField(default=dict, db_default={})
-    last_seen_at = models.DateTimeField(null=True, blank=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+    last_seen_at = models.DateTimeField(null=True, blank=True, verbose_name="dernière activité")
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="supprimé le")
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
 
     last_login = None  # supprimé : voir `last_seen_at`
     USERNAME_FIELD = "id"
@@ -70,6 +101,8 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = "users"
+        verbose_name = "compte"
+        verbose_name_plural = "comptes"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(role__in=[r.value for r in Role]), name="users_role_valide"
@@ -78,20 +111,45 @@ class User(AbstractBaseUser):
                 condition=models.Q(status__in=[s.value for s in Statut]), name="users_status_valide"
             ),
             models.CheckConstraint(
-                condition=~models.Q(role__in=["client", "gerant"])
-                | models.Q(phone_e164__isnull=False),
-                name="users_clientele_a_un_numero",
+                condition=models.Q(occupation__isnull=True)
+                | models.Q(occupation__in=[o.value for o in Occupation]),
+                name="users_occupation_valide",
             ),
             models.CheckConstraint(
                 condition=~models.Q(role__in=["moderator", "admin"])
                 | models.Q(email__isnull=False),
                 name="users_personnel_a_un_email",
             ),
+            models.CheckConstraint(
+                condition=~models.Q(role="client") | models.Q(username__isnull=False),
+                name="users_locataire_a_un_nom_utilisateur",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(username__isnull=True)
+                | models.Q(username__regex=r"^[a-z0-9][a-z0-9._]{1,28}[a-z0-9]$"),
+                name="users_nom_utilisateur_valide",
+            ),
+            models.UniqueConstraint(Lower("username"), name="users_nom_utilisateur_unique"),
         ]
-        indexes = [models.Index(fields=["role", "status"], name="users_role_status_idx")]
+        indexes = [
+            models.Index(fields=["role", "status"], name="users_role_status_idx"),
+        ]
 
     def __str__(self) -> str:
-        return self.full_name or str(self.id)
+        return self.full_name or self.username or str(self.id)
+
+    def definir_noms(self, prenom: str, nom: str) -> None:
+        """Prénom et nom séparés (ADR 0009) ; `full_name` garde la forme affichée « Prénom Nom »."""
+        self.first_name = " ".join((prenom or "").split())[:60]
+        self.last_name = " ".join((nom or "").split())[:60]
+        self.full_name = f"{self.first_name} {self.last_name}".strip()[:120]
+
+    def get_full_name(self) -> str:
+        return self.full_name or self.email or ""
+
+    def get_short_name(self) -> str:
+        """Salutation de l'administration (« Bienvenue, Awa ») au lieu de l'identifiant technique."""
+        return self.prenom or self.get_full_name()
 
     # --- Droits : déduits du rôle, jamais d'un champ modifiable par l'application publique ---
     @property
@@ -101,6 +159,23 @@ class User(AbstractBaseUser):
     @property
     def is_superuser(self) -> bool:
         return self.role == Role.ADMIN and self.is_active
+
+    @property
+    def initiales(self) -> str:
+        if self.full_name:
+            parties = self.full_name.strip().split()
+            if len(parties) >= 2:
+                return f"{parties[0][0]}{parties[1][0]}".upper()
+            return parties[0][:2].upper()
+        return "U"
+
+    @property
+    def prenom(self) -> str:
+        if self.first_name:
+            return self.first_name
+        if self.full_name:
+            return self.full_name.strip().split()[0]
+        return ""
 
     @property
     def est_personnel(self) -> bool:
@@ -129,43 +204,6 @@ class User(AbstractBaseUser):
         from apps.accounts.permissions_personnel import autorise_module
 
         return autorise_module(self, app_label)
-
-
-class OtpCode(models.Model):
-    """Un enregistrement par code envoyé : sert aussi à compter les envois et leur coût (budget, plafonds)."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone_e164 = models.CharField(max_length=16)
-    purpose = models.CharField(max_length=20, choices=Objet.choices)
-    code_hmac = models.CharField(max_length=64)
-    expires_at = models.DateTimeField()
-    attempts = models.SmallIntegerField(default=0, db_default=0)
-    consumed_at = models.DateTimeField(null=True, blank=True)
-    installation_id = models.CharField(max_length=64, null=True, blank=True)
-    ip = models.GenericIPAddressField(null=True, blank=True)
-    provider_ref = models.CharField(max_length=80, null=True, blank=True)
-    unit_cost_xof = models.SmallIntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-
-    class Meta:
-        db_table = "otp_codes"
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(purpose__in=[o.value for o in Objet]),
-                name="otp_codes_objet_valide",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(attempts__gte=0, attempts__lte=5), name="otp_codes_essais_bornes"
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["phone_e164", "purpose", "-created_at"], name="otp_phone_purpose_idx"
-            ),
-            models.Index(fields=["installation_id", "created_at"], name="otp_installation_idx"),
-            models.Index(fields=["ip", "created_at"], name="otp_ip_idx"),
-            models.Index(fields=["purpose", "created_at"], name="otp_purpose_date_idx"),
-        ]
 
 
 class Device(models.Model):
@@ -240,17 +278,24 @@ class GerantProfile(models.Model):
     """Extension 1-1 d'un compte gérant. Pièces chiffrées lisibles depuis l'administration seulement."""
 
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, primary_key=True, related_name="gerant_profile"
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="gerant_profile",
+        verbose_name="compte",
     )
-    display_name = models.CharField(max_length=120, null=True, blank=True)
-    zone = models.CharField(max_length=160)
+    display_name = models.CharField(
+        max_length=120, null=True, blank=True, verbose_name="nom affiché"
+    )
+    zone = models.CharField(max_length=160, verbose_name="zone")
     verification_status = models.CharField(
         max_length=12,
         choices=StatutVerification.choices,
         default=StatutVerification.PENDING,
         db_default="pending",
+        verbose_name="vérification",
     )
-    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name="vérifié le")
     verified_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -258,25 +303,44 @@ class GerantProfile(models.Model):
         blank=True,
         related_name="+",
         db_column="verified_by",
+        verbose_name="vérifié par",
     )
     interview_notes = models.TextField(null=True, blank=True)
     id_doc_type = models.CharField(max_length=20, choices=TypePiece.choices, null=True, blank=True)
     id_doc_path = models.CharField(max_length=255, null=True, blank=True)
     extra_doc_path = models.CharField(max_length=255, null=True, blank=True)
     docs_retain_until = models.DateField(null=True, blank=True)
-    response_rate_30d = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    median_response_min = models.IntegerField(null=True, blank=True)
-    created_by = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="+", db_column="created_by"
+    response_rate_30d = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="taux de réponse (30 j)"
     )
-    created_at = models.DateTimeField(default=timezone.now, db_default=Now())
-    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+    median_response_min = models.IntegerField(
+        null=True, blank=True, verbose_name="délai médian de réponse (min)"
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="created_by",
+        verbose_name="créé par",
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="créé le"
+    )
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now(), verbose_name="modifié le")
+
+    def __str__(self) -> str:
+        return self.display_name or getattr(self.user, "full_name", "") or "Gérant"
 
     objects = GerantProfileManager()
     complets = models.Manager()  # administration : toutes les colonnes
 
     class Meta:
         db_table = "gerant_profiles"
+        verbose_name = "gérant"
+        verbose_name_plural = "gérants"
+        # `annonce.gerant` (clé étrangère) passe par le gestionnaire de base : il doit lui aussi laisser de côté les
+        # colonnes réservées, sinon le rôle `app` reçoit « permission denied for table gerant_profiles ».
+        base_manager_name = "objects"
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(verification_status__in=[s.value for s in StatutVerification]),

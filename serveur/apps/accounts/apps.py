@@ -3,6 +3,7 @@ from django.apps import AppConfig
 
 class AccountsConfig(AppConfig):
     name = "apps.accounts"
+    verbose_name = "Comptes"
     label = "accounts"
     default_auto_field = "django.db.models.BigAutoField"
 

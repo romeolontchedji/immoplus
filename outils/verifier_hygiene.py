@@ -14,7 +14,7 @@ TAILLE_MAX = 1024 * 1024
 EXCEPTIONS_TAILLE = (
     "serveur/web/static/vendor/",
     "docs/api/openapi.json",
-    "docs/api/logeo.postman_collection.json",
+    "docs/api/immoplus.postman_collection.json",
 )
 CODE = (".py", ".js")
 DEBOGAGE = [
@@ -37,6 +37,8 @@ SECRETS = [
 ]
 # Référence du projet : contient des URL de développement factices (ex. utilisateur:utilisateur@hôte).
 SANS_CONTROLE_SECRETS = ("docs/cahier-des-charges.md",)
+# Bibliothèques tierces minifiées : faux positifs à répétition (ex. formulaires OAuth de Swagger UI).
+SANS_CONTROLE_SECRETS_ARBRES = ("serveur/web/static/vendor/",)
 SAUVEGARDES = re.compile(r"(\.bak|\.dump|\.sql\.gz|\.sqlite3|~|\.orig|\.rej)$")
 
 
@@ -64,7 +66,7 @@ def erreurs_fichier(chemin, indexe, exempt_secrets=SANS_CONTROLE_SECRETS):
             for motif, libelle in DEBOGAGE:
                 if motif.search(ligne):
                     erreurs.append(f"{chemin}:{numero} : {libelle}.")
-    if chemin not in exempt_secrets:
+    if chemin not in exempt_secrets and not chemin.startswith(SANS_CONTROLE_SECRETS_ARBRES):
         for numero, ligne in enumerate(texte.splitlines(), start=1):
             for motif, libelle in SECRETS:
                 if motif.search(ligne):

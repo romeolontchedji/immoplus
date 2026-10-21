@@ -4,8 +4,9 @@ set -eu
 
 cmd="${1:-web-api}"
 [ "$#" -gt 0 ] && shift
+export IMMOPLUS_SERVICE="$cmd"  # nom du processus, repris par le suivi des erreurs
 reload=""
-[ "${LOGEO_RELOAD:-0}" = "1" ] && reload="--reload"
+[ "${IMMOPLUS_RELOAD:-0}" = "1" ] && reload="--reload"
 
 case "$cmd" in
   web-api)

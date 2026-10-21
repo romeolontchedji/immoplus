@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Accueil</a> › Paramètres
+  </div>
+{% endblock %}
+{% block content %}
+  <div id="content-main" class="lg-parametres">
+    <p class="lg-intro">
+      Ces réglages s'appliquent sans redéploiement, en moins d'une minute, au site et aux applications. Chaque modification est
+      inscrite au journal d'activité.
+    </p>
+    <nav class="lg-sommaire" aria-label="Thèmes">
+      {% for b in blocs %}<a href="#{{ b.code }}">{{ b.titre }}</a>{% endfor %}
+    </nav>
+    {% for b in blocs %}
+      <section class="lg-carte-section" id="{{ b.code }}">
+        <header class="lg-carte-section__entete">
+          <h2>{{ b.titre }}</h2>
+          {% if b.aide %}<p>{{ b.aide }}</p>{% endif %}
+        </header>
+        <form method="post" class="lg-formulaire">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="{{ b.code }}">
+          {% if b.form.non_field_errors %}<div class="errornote">{{ b.form.non_field_errors }}</div>{% endif %}
+          {% for champ in b.form %}
+            <div class="lg-champ{% if champ.field.widget.input_type == 'checkbox' %} lg-champ--case{% endif %}{% if champ.errors %} lg-champ--erreur{% endif %}">
+              <label for="{{ champ.id_for_label }}">{{ champ.label }}</label>
+              <div class="lg-champ__saisie">
+                {{ champ }}
+                {% if champ.field.note %}<p class="lg-champ__note">{{ champ.field.note }}</p>{% endif %}
+                <code class="lg-champ__cle">{{ champ.help_text }}</code>
+                {% for e in champ.errors %}<p class="lg-champ__erreur">{{ e }}</p>{% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+          {% if modifiable %}
+            <div class="lg-formulaire__actions">
+              <button type="submit" class="lg-bouton">Enregistrer « {{ b.titre }} »</button>
+            </div>
+          {% endif %}
+        </form>
+      </section>
+    {% endfor %}
+  </div>
+{% endblock %}

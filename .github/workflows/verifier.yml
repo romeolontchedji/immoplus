@@ -12,11 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LOGEO_STRICT: "1"
+  IMMOPLUS_STRICT: "1"
   DB_HOST: localhost
-  DB_NAME: logeo
-  DB_USER: logeo_ci
-  DB_PASSWORD: logeo-ci
+  DB_NAME: immoplus
+  DB_USER: immoplus_ci
+  DB_PASSWORD: immoplus-ci
   REDIS_QUEUE_URL: redis://localhost:6379/1
   REDIS_CACHE_URL: redis://localhost:6379/0
 
@@ -27,12 +27,12 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: logeo_ci
-          POSTGRES_PASSWORD: logeo-ci
-          POSTGRES_DB: logeo
+          POSTGRES_USER: immoplus_ci
+          POSTGRES_PASSWORD: immoplus-ci
+          POSTGRES_DB: immoplus
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U logeo_ci" --health-interval 5s --health-timeout 3s --health-retries 20
+          --health-cmd "pg_isready -U immoplus_ci" --health-interval 5s --health-timeout 3s --health-retries 20
       redis:
         image: redis:7
         ports: ["6379:6379"]
@@ -49,21 +49,43 @@ jobs:
       - run: pip install -r serveur/requirements/dev.txt
       - name: Contrôles (format, hygiène, noms, lint, imports, tests)
         run: outils/verifier_tout.sh
-      - name: Tests d'intégration et de sécurité
-        run: cd serveur && python -m pytest -q -m "integration or securite"
       - name: Couverture
-        run: cd serveur && python -m pytest -q -m "not lent and not e2e" --cov=apps --cov=web --cov=config --cov-fail-under=85
+        run: cd serveur && python -m pytest -q --cov=apps --cov=web --cov=config --cov-fail-under=85
       - name: Preuve des hooks Git
         run: bash outils/tester_hooks.sh
       - name: Audit des dépendances
         run: pip-audit -r serveur/requirements/base.txt --strict --no-deps --disable-pip
+
+  mobile:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - name: Types
+        run: npm run typecheck
+      - name: Lint (les erreurs bloquent, les avertissements non)
+        run: npx eslint .
+      - name: Tests
+        run: npm test -- --ci
+      - name: Client d'API à jour avec le contrat du serveur
+        run: |
+          npx --yes openapi-typescript@7.4.4 ../docs/api/openapi.json -o /tmp/api.d.ts
+          diff -q /tmp/api.d.ts src/api/genere/api.d.ts || { echo "Client d'API périmé : régénère-le (npm run api:generer)"; exit 1; }
 
   image:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Construction de l'image
-        run: docker build -f infra/docker/Dockerfile -t logeo-serveur:ci .
+        run: docker build -f infra/docker/Dockerfile -t immoplus-serveur:ci .
       - name: Validation de la configuration Compose
         run: |
           python3 outils/creer_env.py

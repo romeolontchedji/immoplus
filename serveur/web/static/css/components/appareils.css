@@ -1,0 +1,21 @@
+/* Appareils connectés (plan d'actions v2, W7). */
+.appareils-explication {
+  display: flex; gap: var(--sp-3); align-items: flex-start; padding: var(--sp-4);
+  border-radius: var(--r-card); background: var(--blue-soft); color: var(--night);
+}
+.appareils-explication__icone { flex: none; color: var(--blue); display: inline-flex; }
+.appareils-titre { margin: var(--sp-2) 0 0; font-size: var(--fs-16); }
+.liste-appareils { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.liste-appareils__item {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--rayon-2);
+}
+.liste-appareils__item--courant { border-color: var(--success); }
+.liste-appareils__icone {
+  flex: none; width: 2.5rem; height: 2.5rem; border-radius: var(--r-field); background: var(--bg); color: var(--night);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.liste-appareils__texte { flex: 1; min-width: 0; }
+.liste-appareils__nom { margin: 0; font-weight: 600; }
+.liste-appareils__item p { margin: 0; }
+.liste-appareils__item form { margin: 0; }

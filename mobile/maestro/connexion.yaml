@@ -1,0 +1,15 @@
+# Parcours : un locataire se connecte. Fournir un compte de test : le mot de passe via la variable MOT_DE_PASSE (maestro test -e MOT_DE_PASSE=…).
+appId: bj.immoplus.app
+---
+- launchApp:
+    clearState: true
+- tapOn: "Profil"
+- tapOn: "Se connecter"
+- tapOn: "Numéro de téléphone"
+- inputText: "97000001"
+- tapOn: "Mot de passe"
+- inputText: "${MOT_DE_PASSE}"
+- tapOn:
+    text: "Se connecter"
+    index: 1
+- assertVisible: "Profil"

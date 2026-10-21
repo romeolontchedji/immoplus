@@ -11,7 +11,6 @@ redis
 psycopg[binary,pool]
 PyJWT
 argon2-cffi
-django-otp
 django-axes
 phonenumbers
 Pillow
@@ -21,3 +20,4 @@ markdown-it-py
 cryptography
 sentry-sdk
 uvicorn-worker
+django-migration-linter

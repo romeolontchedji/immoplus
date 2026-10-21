@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{# Second temps de la connexion : code à 6 chiffres reçu par courriel (adminsite/double_auth.py). #}
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+{% block usertools %}{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+  <div id="content-main" class="lg-double-auth">
+    <h1>Vérification en deux étapes</h1>
+    <p class="lg-double-auth__texte">
+      Un code à 6 chiffres vient d'être envoyé à <strong>{{ courriel }}</strong>. Il est valable 10 minutes.
+    </p>
+    {% if message %}
+      <p class="{% if niveau == 'erreur' %}errornote{% else %}lg-bandeau{% endif %}"
+         role="status">{{ message }}</p>
+    {% endif %}
+    <form method="post" action="/verification/">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-row">
+        <label for="code">Code reçu par courriel</label>
+        <input id="code"
+               name="code"
+               type="text"
+               inputmode="numeric"
+               autocomplete="one-time-code"
+               maxlength="6"
+               pattern="[0-9]{6}"
+               required
+               autofocus>
+      </div>
+      <div class="submit-row">
+        <input type="submit" value="Vérifier">
+      </div>
+    </form>
+    <form method="post"
+          action="/verification/"
+          class="lg-double-auth__secondaire">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit"
+              name="renvoyer"
+              value="1"
+              class="lg-lien-bouton">Je n'ai rien reçu : renvoyer un code</button>
+    </form>
+    <form method="post" action="/logout/" class="lg-double-auth__secondaire">
+      {% csrf_token %}
+      <button type="submit" class="lg-lien-bouton">Se déconnecter</button>
+    </form>
+  </div>
+{% endblock %}

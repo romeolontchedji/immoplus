@@ -1,9 +1,23 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <p class="help">Le gérant reçoit un code par SMS pour choisir son mot de passe. Aucun mot de passe n'est communiqué.</p>
-    <input type="submit" value="Créer le compte gérant" class="default">
-  </form>
+  <div id="content-main">
+    <h1>Créer un gérant</h1>
+    <div class="module">
+      <h2>Nouveau compte gérant</h2>
+      <div class="lg-section">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <p class="help">
+            Aucun mot de passe à attribuer : après la création, un lien d'activation s'affiche. Envoie-le au gérant par
+            WhatsApp ou e-mail ; il y choisira son nom d'utilisateur et son mot de passe.
+          </p>
+          <div class="lg-section__actions">
+            <input type="submit" value="Créer le compte gérant" class="default">
+            <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 {% endblock %}

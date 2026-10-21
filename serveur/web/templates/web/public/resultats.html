@@ -1,0 +1,105 @@
+{% load immoplus %}
+{# Zone des résultats de la page Chambres, renvoyée seule à chaque changement de filtre (js/filtres.js). #}
+<div class="pile pile--large">
+  <div class="catalogue-entete-barre">
+    <h1 class="catalogue-titre-principal">
+      {% if quartier %}
+        Chambres à {{ quartier.name }}
+      {% else %}
+        Chambres à Parakou
+      {% endif %}
+    </h1>
+    {% if not resultat.vide %}
+      <span class="catalogue-compte">{{ resultat.items|length }}{% if resultat.next_cursor %}+{% endif %} chambre{{ resultat.items|length|pluralize }}</span>
+    {% endif %}
+  </div>
+  {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
+  {% if actifs %}
+    <div class="recapitulatif">
+      <ul class="filtres-actifs">
+        {% for f in actifs %}
+          <li>
+            {% if f.fixe %}
+              <span class="puce puce--actif">{{ f.label }}</span>
+            {% else %}
+              <a class="puce puce--actif puce--retirable"
+                 href="{{ f.url }}"
+                 data-filtre-lien
+                 aria-label="Retirer le filtre : {{ f.label }}">
+                {{ f.label }} {% include "web/composants/icone.html" with nom="x" taille=14 %}
+              </a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      <a class="recapitulatif__effacer" href="{{ action }}" data-filtre-lien>Tout effacer</a>
+    </div>
+  {% endif %}
+  {% if resultat.vide %}
+    <div class="etat-vide" role="status">
+      <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="search" taille=32 %}</span>
+      <div>
+        <h2 class="etat-vide__titre">
+          {% if params.district %}
+            Aucune chambre ne correspond dans ce quartier.
+          {% else %}
+            Aucune chambre ne correspond pour l'instant.
+          {% endif %}
+        </h2>
+        <p class="etat-vide__texte">
+          {% if resultat.voisins %}
+            Regarde juste en dessous : des chambres avec les mêmes critères dans les quartiers voisins.
+          {% else %}
+            Retire un filtre, ou crée une alerte : on te prévient dès qu'une chambre correspond.
+          {% endif %}
+        </p>
+      </div>
+      {% if resultat.alerte_proposee %}
+        <div class="etat-vide__actions">
+          <a class="bouton bouton--primaire"
+             href="/compte/alertes?{{ requete_alerte }}">Créer une alerte pour cette recherche</a>
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="grille-annonces">
+      {% for a in resultat.items %}
+        {% include "web/composants/carte.html" %}
+      {% endfor %}
+    </div>
+    {% if resultat.next_cursor %}
+      <p class="texte-centre">
+        <a class="bouton bouton--secondaire" href="?{{ suite }}">Voir plus de chambres</a>
+      </p>
+    {% endif %}
+  {% endif %}
+  {% if resultat.voisins %}
+    <section class="voisins" aria-labelledby="voisins-titre">
+      <div class="voisins__entete">
+        <span class="voisins__icone">{% include "web/composants/icone.html" with nom="map-pin" taille=20 %}</span>
+        <div>
+          <h2 class="voisins__titre" id="voisins-titre">Aussi dans les quartiers voisins</h2>
+          <p class="voisins__texte">
+            Mêmes critères, à quelques minutes :
+            {% for d in resultat.voisins.districts %}<strong>{{ d.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}
+          </p>
+        </div>
+      </div>
+      <div class="grille-annonces">
+        {% for a in resultat.voisins.items %}
+          {% include "web/composants/carte.html" %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+  {% if not resultat.vide and requete_alerte %}
+    <div class="bandeau-alerte">
+      <div>
+        <strong>Rien ne te convient ?</strong>
+        <p class="texte-doux mb-0">Crée une alerte, on te prévient dès qu'une chambre correspond.</p>
+      </div>
+      <a class="bouton bouton--primaire"
+         href="/compte/alertes?{{ requete_alerte }}">Créer une alerte</a>
+    </div>
+  {% endif %}
+</div>

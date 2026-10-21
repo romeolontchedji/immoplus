@@ -1,7 +1,64 @@
-.alerte { display: flex; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--rayon-2); border: 1px solid transparent; font-size: var(--fs-14); }
+/* Alertes/bannières de feedback */
+.alerte {
+  display: flex; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-card); border: 1.5px solid transparent;
+  font-size: var(--fs-15); line-height: 1.5;
+}
 .alerte__titre { font-weight: 700; margin: 0 0 var(--sp-1); }
 .alerte p { margin: 0; }
-.alerte--succes { background: var(--succes-bg); color: var(--succes-text); }
-.alerte--avertissement { background: var(--avertissement-bg); color: var(--avertissement-text); }
-.alerte--danger { background: var(--danger-bg); color: var(--danger-text); }
-.alerte--information { background: var(--information-bg); color: var(--information-text); }
+.alerte--succes   { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+.alerte--avertissement { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+.alerte--danger   { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+.alerte--information { background: var(--blue-soft); color: var(--blue); border-color: var(--info-border); }
+
+/* Incitation vidéo (dashboard gérant) */
+.alerte--incitation {
+  background: var(--warning-bg); color: var(--night);
+  border-color: var(--warning-border);
+  justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-4);
+}
+.alerte--incitation .alerte__texte strong { display: block; font-size: var(--fs-15); font-weight: 700; margin-bottom: var(--sp-1); }
+.alerte--incitation .alerte__texte p { font-size: var(--fs-14); color: var(--text-muted); }
+
+/* Page « Mes alertes » : liste à gauche, formulaire à droite (collant) sur grand écran */
+.alertes-grille { display: grid; gap: var(--sp-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1200px) {
+  .alertes-grille { grid-template-columns: minmax(0, 1.4fr) minmax(22rem, 1fr); }
+  .alertes-grille__formulaire .grille--2 { grid-template-columns: minmax(0, 1fr); }
+  .alertes-grille__formulaire { position: sticky; top: calc(var(--hauteur-entete) + var(--sp-6)); }
+}
+.alerte-carte__trouve { margin: var(--sp-2) 0 0; font-size: var(--fs-14); font-weight: 700; color: var(--success); }
+
+/* Page Alertes : formulaire replié sous « Créer une nouvelle alerte », alertes en pause à part (2026-10-20). */
+.alertes-nouvelle__bouton { list-style: none; cursor: pointer; align-self: flex-start; }
+.alertes-nouvelle__bouton::-webkit-details-marker { display: none; }
+.alertes-nouvelle[open] .alertes-nouvelle__bouton { display: none; }
+.alertes-nouvelle__carte { margin-top: var(--sp-4); }
+.alertes-pause { border-top: 1px solid var(--divider); padding-top: var(--sp-4); }
+.alertes-pause__titre { cursor: pointer; font-weight: 700; color: var(--text-muted); }
+.alertes-pause[open] .alertes-pause__titre { margin-bottom: var(--sp-4); }
+
+/* Liste déroulante à choix multiples */
+.liste-multiple { position: relative; }
+.liste-multiple__resume {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2);
+  min-height: var(--cible); padding: var(--sp-2) var(--sp-4);
+  border: 1.5px solid var(--border); border-radius: var(--r-field); background: var(--surface);
+  color: var(--text-muted); font-size: var(--fs-15); cursor: pointer; list-style: none;
+}
+.liste-multiple__resume::-webkit-details-marker { display: none; }
+.liste-multiple__resume:focus-visible { outline: none; box-shadow: var(--anneau-focus); }
+.liste-multiple--remplie .liste-multiple__resume { color: var(--night); font-weight: 700; border-color: var(--primary); }
+.liste-multiple__texte { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.liste-multiple[open] .liste-multiple__chevron { transform: rotate(180deg); }
+.liste-multiple__options {
+  position: absolute; z-index: 20; top: calc(100% + var(--sp-1)); left: 0; right: 0;
+  display: flex; flex-direction: column; max-height: 18rem; overflow-y: auto; padding: var(--sp-2);
+  border: 1px solid var(--divider); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-pop);
+}
+.liste-multiple__option {
+  display: flex; align-items: center; gap: var(--sp-3); min-height: var(--cible);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field); cursor: pointer; color: var(--night);
+}
+.liste-multiple__option:hover { background: var(--blue-soft); }
+.liste-multiple__option input { width: 1.1rem; height: 1.1rem; margin: 0; accent-color: var(--primary); }

@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>{{ title }} — {{ compte.full_name }}</h1>
+    <div class="module">
+      <div class="lg-section">
+        {% if activation %}
+          <p>
+            Compte gérant prêt. Transmets ce lien à <strong>{{ compte.full_name }}</strong> : il y choisira son nom
+            d'utilisateur et son mot de passe, puis recevra sa clé de secours. Valable <strong>72 heures</strong>,
+            une seule fois.
+          </p>
+        {% else %}
+          <p>
+            Ne transmets ce lien qu'après avoir vérifié l'identité de <strong>{{ compte.full_name }}</strong>
+            (appel au numéro enregistré, questions sur son compte). Valable <strong>24 heures</strong>, une seule fois.
+            Cette opération est journalisée.
+          </p>
+        {% endif %}
+        <p>
+          <label for="lien-compte"><strong>Lien</strong></label>
+          <br>
+          <input id="lien-compte"
+                 class="vTextField"
+                 type="text"
+                 readonly
+                 value="{{ url }}">
+        </p>
+        <div class="lg-section__actions">
+          {% if whatsapp %}
+            <a class="button default"
+               href="{{ whatsapp }}"
+               target="_blank"
+               rel="noopener noreferrer">Envoyer par WhatsApp</a>
+          {% endif %}
+          <a href="{% url 'admin:accounts_user_change' compte.pk %}">Retour au compte</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

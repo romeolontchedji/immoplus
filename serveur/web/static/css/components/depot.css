@@ -1,0 +1,61 @@
+/* Envoi des médias dans l'éditeur d'annonce (plan d'actions v2, W3). */
+.depot-recap { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.depot-recap__item {
+  display: inline-flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill); background: var(--warning-bg); color: var(--warning); font-size: var(--fs-13); font-weight: 700;
+}
+.depot-recap__item--ok { background: var(--success-bg); color: var(--success); }
+
+.depot { display: grid; gap: var(--sp-3); }
+.depot__zone {
+  display: grid; justify-items: center; gap: var(--sp-2); padding: var(--sp-8) var(--sp-4); text-align: center; cursor: pointer;
+  border: 2px dashed var(--border-strong); border-radius: var(--r-card); background: var(--bg);
+  transition: border-color var(--duree-1), background var(--duree-1);
+}
+.depot__zone:hover, .depot__zone--survol { border-color: var(--blue); background: var(--blue-soft); }
+.depot__icone {
+  width: 3.5rem; height: 3.5rem; border-radius: var(--r-pill); background: var(--surface); color: var(--blue);
+  display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--shadow-card);
+}
+.depot__titre { font-weight: 800; color: var(--night); }
+.depot__aide { font-size: var(--fs-13); color: var(--text-muted); max-width: 32rem; }
+/* Sans JavaScript, le champ natif reste utilisable ; avec, la zone suffit (le champ reste atteignable au clavier). */
+.depot--actif .depot__fichier { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.depot--actif .depot__fichier:focus-visible + .depot__envois, .depot__zone:focus-within { outline: 2px solid var(--blue); }
+.depot__envois { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.depot__envoi {
+  display: grid; grid-template-columns: minmax(0, 1fr) 8rem auto; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-field); background: var(--surface); border: 1px solid var(--divider);
+  font-size: var(--fs-14);
+}
+.depot__envoi-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.depot__envoi progress { width: 100%; accent-color: var(--blue); }
+.depot__envoi-info { font-size: var(--fs-13); color: var(--text-muted); }
+.depot__envoi--ok .depot__envoi-info { color: var(--success); font-weight: 700; }
+.depot__envoi--erreur { grid-template-columns: minmax(0, 1fr); border-color: var(--danger); }
+.depot__envoi--erreur progress { display: none; }
+.depot__envoi--erreur .depot__envoi-info { color: var(--danger); font-weight: 700; }
+.depot__etat { margin: 0; font-size: var(--fs-14); color: var(--text-muted); }
+
+.medias-grille { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
+.media-carte { border: 1px solid var(--divider); border-radius: var(--r-card); overflow: hidden; background: var(--surface); }
+.media-carte--erreur { border-color: var(--danger); }
+.media-carte__vignette { position: relative; aspect-ratio: 3 / 2; background: var(--bg); }
+.media-carte__vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-carte__vide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.media-carte__genre, .media-carte__couverture {
+  position: absolute; top: var(--sp-2); padding: 2px var(--sp-2); border-radius: var(--r-pill); font-size: var(--fs-12); font-weight: 800;
+}
+.media-carte__genre { left: var(--sp-2); background: var(--night); color: var(--white); }
+.media-carte__couverture { right: var(--sp-2); background: var(--sun); color: var(--night); }
+.media-carte__corps { padding: var(--sp-3); display: grid; gap: var(--sp-2); }
+.media-carte__statut { font-size: var(--fs-13); font-weight: 700; color: var(--text-muted); }
+.media-carte__statut--pret { color: var(--success); }
+.media-carte__statut--cours { color: var(--blue); }
+.media-carte__erreur { margin: 0; font-size: var(--fs-13); color: var(--danger); }
+.media-carte__actions { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.media-carte__actions form { margin: 0; }
+@media (max-width: 30rem) {
+  .depot__envoi:not(.depot__envoi--erreur) { grid-template-columns: minmax(0, 1fr) auto; }
+  .depot__envoi:not(.depot__envoi--erreur) progress { grid-column: 1 / -1; grid-row: 2; }
+}

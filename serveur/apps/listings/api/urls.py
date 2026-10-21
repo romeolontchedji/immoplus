@@ -2,9 +2,26 @@ from django.urls import path
 
 from . import views as v
 from . import views_media as m
+from . import views_publics as p
+from . import views_tableau as t
 
 urlpatterns = [
     path("districts", v.Quartiers.as_view(), name="districts"),
+    path("room-types", v.TypesChambre.as_view(), name="room-types"),
+    path("pro/room-types", v.TypesChambrePro.as_view(), name="pro-room-types"),
+    path("pro/dashboard", t.Tableau.as_view(), name="pro-dashboard"),
+    path("listings", p.Fil.as_view(), name="listings"),
+    path("listings/<str:ident>", p.Fiche.as_view(), name="listing"),
+    path("listings/<str:ident>/views", p.Vue.as_view(), name="listing-views"),
+    path("listings/<str:ident>/similar", p.Similaires.as_view(), name="listing-similar"),
+    path("listings/<str:ident>/reviews", p.Avis.as_view(), name="listing-reviews"),
+    path("listings/<str:ident>/my-review", p.MonAvis.as_view(), name="listing-my-review"),
+    path("gerants/<str:gerant_id>", p.ProfilGerant.as_view(), name="gerant-public"),
+    path("me/favorites", p.Favoris.as_view(), name="favorites"),
+    path("me/favorites/<uuid:annonce_id>", p.FavoriDetail.as_view(), name="favorite"),
+    path("alert-options", p.OptionsAlerte.as_view(), name="alert-options"),
+    path("me/alerts", p.Alertes.as_view(), name="alerts"),
+    path("me/alerts/<str:alerte_id>", p.AlerteDetail.as_view(), name="alert"),
     path("pro/listings", v.AnnoncesPro.as_view(), name="pro-listings"),
     path("pro/listings/<uuid:annonce_id>", v.AnnonceProDetail.as_view(), name="pro-listing"),
     path(
@@ -18,6 +35,16 @@ urlpatterns = [
         name="pro-listing-confirm",
     ),
     path("pro/listings/<uuid:annonce_id>/hide", v.Masquage.as_view(), name="pro-listing-hide"),
+    path(
+        "pro/listings/<uuid:annonce_id>/readiness",
+        v.PreparationAnnonce.as_view(),
+        name="pro-listing-readiness",
+    ),
+    path(
+        "pro/listings/<uuid:annonce_id>/stats",
+        v.StatistiquesAnnonce.as_view(),
+        name="pro-listing-stats",
+    ),
     path(
         "pro/listings/<uuid:annonce_id>/mark-rented",
         v.MarquerLouee.as_view(),

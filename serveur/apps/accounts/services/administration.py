@@ -1,31 +1,37 @@
 """Actions du personnel sur les comptes (appelées par l'administration ; toujours journalisées)."""
 
+import logging
+
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import GerantProfile, Role, Statut, StatutVerification, User
-from apps.accounts.phone import NumeroInvalide, normaliser
 from apps.audit import services as audit
-from apps.core import parametres
 from apps.core.errors import ErreurMetier
 
-from . import appareils, jetons
+from .. import signals
+from . import appareils, identifiants, jetons
+
+journal = logging.getLogger(__name__)
 
 
 def creer_gerant(
-    *, acteur: User, telephone: str, nom: str, zone: str, nom_affiche: str | None = None
+    *,
+    acteur: User,
+    prenom: str,
+    nom: str,
+    zone: str,
+    nom_affiche: str | None = None,
 ) -> User:
-    """Crée un compte gérant sans mot de passe utilisable : le gérant l'active par OTP (EF-AUT-09)."""
-    try:
-        e164 = normaliser(telephone, tuple(parametres.lire("OTP_ALLOWED_COUNTRIES")))
-    except NumeroInvalide as erreur:
-        raise ErreurMetier(
-            "validation_error", "Numéro invalide.", champs={"phone": [str(erreur)]}
-        ) from erreur
-    if User.objects.filter(phone_e164=e164).exists():
-        raise ErreurMetier("phone_already_registered", "Ce numéro a déjà un compte.", statut=409)
+    """Crée un gérant sans mot de passe (ADR 0009) : il choisit nom d'utilisateur et mot de passe par le lien
+    d'activation (`lien_activation`) que l'équipe lui transmet."""
+    from . import inscription
+
+    prenom, nom = inscription.noms_valides(prenom, nom)
     with transaction.atomic():
-        gerant = User(phone_e164=e164, full_name=" ".join(nom.split()), role=Role.GERANT)
+        gerant = User(role=Role.GERANT)
+        gerant.definir_noms(prenom, nom)
         gerant.set_unusable_password()
         gerant.save()
         GerantProfile.complets.create(
@@ -36,6 +42,50 @@ def creer_gerant(
         )
         audit.enregistrer("gerant.cree", acteur=acteur, cible=gerant)
     return gerant
+
+
+def lien_activation(*, acteur: User, gerant: User) -> str:
+    """Lien d'activation d'un gérant (72 h, usage unique), à transmettre par WhatsApp ou e-mail."""
+    if gerant.role != Role.GERANT or gerant.has_usable_password():
+        raise ErreurMetier("already_active", "Ce compte gérant est déjà activé.", statut=409)
+    audit.enregistrer("gerant.lien_activation", acteur=acteur, cible=gerant)
+    return f"{settings.SITE_URL}/activer/{identifiants.creer_jeton(gerant, 'activation')}"
+
+
+def activer_gerant(
+    jeton: str, *, nom_utilisateur: str, mot_de_passe: str, ip: str | None = None
+) -> tuple[User, str]:
+    """Le gérant choisit son nom d'utilisateur et son mot de passe ; retourne (compte, clé de secours)."""
+    gerant, _ = identifiants.lire_jeton(jeton, "activation")
+    if gerant.role != Role.GERANT or gerant.has_usable_password():
+        raise ErreurMetier("link_invalid", "Ce lien n'est plus valable.", statut=400)
+    gerant.username = identifiants.valider_nom_utilisateur(nom_utilisateur)
+    from . import mots_de_passe
+
+    mots_de_passe.valider(mot_de_passe, utilisateur=gerant)
+    gerant.password = mots_de_passe.hacher(mot_de_passe)
+    cle = identifiants.nouvelle_cle_de_secours(gerant)
+    gerant.save(
+        update_fields=[
+            "username",
+            "password",
+            "recovery_key_hash",
+            "recovery_key_created_at",
+            "updated_at",
+        ]
+    )
+    audit.enregistrer("gerant.active", acteur=gerant, cible=gerant, ip=ip)
+    return gerant, cle
+
+
+def lien_reinitialisation(*, acteur: User, cible: User) -> str:
+    """Dernier recours du mot de passe oublié (ADR 0009) : lien de 24 h, après vérification de l'identité."""
+    if cible.role not in (Role.CLIENT, Role.GERANT) or not cible.has_usable_password():
+        raise ErreurMetier(
+            "forbidden", "Seul un locataire ou un gérant activé peut recevoir ce lien.", statut=403
+        )
+    audit.enregistrer("auth.lien_reinitialisation_equipe", acteur=acteur, cible=cible)
+    return f"{settings.SITE_URL}/mot-de-passe/nouveau/{identifiants.creer_jeton(cible, 'reinitialisation_equipe')}"
 
 
 def definir_verification(*, acteur: User, profil: GerantProfile, statut: str) -> None:
@@ -54,6 +104,8 @@ def definir_verification(*, acteur: User, profil: GerantProfile, statut: str) ->
     audit.enregistrer(
         "gerant.verification", acteur=acteur, cible=profil.user, metadata={"statut": statut}
     )
+    if statut == StatutVerification.VERIFIED:
+        signals.gerant_verifie.send(sender=None, gerant_id=profil.pk)
 
 
 def changer_statut(
@@ -68,6 +120,7 @@ def changer_statut(
         raise ErreurMetier("forbidden", "Seul un administrateur modifie le personnel.", statut=403)
     if cible.pk == acteur.pk:
         raise ErreurMetier("forbidden", "Tu ne peux pas modifier ton propre statut.", statut=403)
+    ancien = cible.status
     cible.status = statut
     cible.suspended_until = jusqu_a if statut == Statut.SUSPENDED else None
     if statut != Statut.ACTIVE:
@@ -86,6 +139,7 @@ def changer_statut(
             "motif": motif[:200],
         },
     )
+    signals.statut_compte_change.send(sender=User, utilisateur=cible, ancien=ancien, nouveau=statut)
 
 
 def changer_role(*, acteur: User, cible: User, role: str) -> None:
@@ -107,3 +161,30 @@ def changer_role(*, acteur: User, cible: User, role: str) -> None:
     audit.enregistrer(
         "compte.role", acteur=acteur, cible=cible, metadata={"ancien": ancien, "nouveau": role}
     )
+
+
+def lever_suspension_echue(cible: User) -> bool:
+    """Fin de suspension : le compte redevient actif, sans acteur humain (tâche planifiée)."""
+    if (
+        cible.status != Statut.SUSPENDED
+        or cible.suspended_until is None
+        or cible.suspended_until > timezone.now()
+    ):
+        return False
+    cible.status, cible.suspended_until = Statut.ACTIVE, None
+    cible.save()
+    audit.enregistrer("compte.suspension_levee", cible=cible, metadata={"automatique": True})
+    signals.statut_compte_change.send(
+        sender=User, utilisateur=cible, ancien=Statut.SUSPENDED, nouveau=Statut.ACTIVE
+    )
+    return True
+
+
+def maj_indicateurs_gerants(indicateurs: dict) -> int:
+    """Écrit le taux et le délai de réponse calculés chaque nuit : {identifiant du gérant: (taux %, délai en minutes)}."""
+    total = 0
+    for gerant_id, (taux, delai) in indicateurs.items():
+        total += GerantProfile.objects.filter(pk=gerant_id).update(
+            response_rate_30d=taux, median_response_min=delai
+        )
+    return total

@@ -8,7 +8,7 @@ Légende : Exécuté ✅ · Simulé ⚠️ · Non exécuté ⛔ — mesures du 6
 |---|---|---|
 | Contrôles Git (commit, branche, noms, hygiène) et trois hooks | Exécuté ✅ | `bash outils/tester_hooks.sh` : 9 cas, 10 verdicts conformes (sortie ci-dessous) |
 | Scripts d'outils | Exécuté ✅ | `python3 -m unittest discover -s outils/tests` : 38 tests, OK |
-| Serveur Django (unitaires, intégration, sécurité) | Exécuté ✅ | `pytest` : 79 tests passés, couverture 95 % (seuil 85 %) |
+| Serveur Django (unitaires, intégration, sécurité) | Exécuté ✅ | `pytest` : 79 tests passés à la phase 0 ; 816 en fin de session (voir `docs/a-verifier.md`), couverture 92 % (seuil 85 %) |
 | Réglages `public` et `admin` refusent DEBUG, OTP_DEBUG_CODE, secret `dev-` | Exécuté ✅ | `serveur/tests/securite/test_reglages.py`, sous-processus |
 | `manage.py check` (local, test, admin_local) et `check --deploy` (public, admin) | Exécuté ✅ | aucune erreur |
 | `/healthz`, `/readyz` (base, cache, file, disque ; 503 si Redis coupé ou disque plein) | Exécuté ✅ | `apps/core/tests/integration/test_sante.py` |
@@ -33,7 +33,7 @@ Légende : Exécuté ✅ · Simulé ⚠️ · Non exécuté ⛔ — mesures du 6
 
 ```
 9 files already formatted
-Contrôles Logeo :
+Contrôles Immo+ :
   ✔ noms et mots interdits
   ✔ hygiène (secrets, débogage, tailles)
   ✔ nom de la branche courante

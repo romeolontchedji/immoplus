@@ -1,6 +1,9 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ..enums import Compteur, Eau, StatutAnnonce, TypeChambre
+from ..enums import Compteur, Cuisine, Eau, StatutAnnonce, StatutTypeChambre
+from ..services import types
 
 
 class DistrictOut(serializers.Serializer):
@@ -13,22 +16,55 @@ class DistrictOut(serializers.Serializer):
 
 class AnnonceIn(serializers.Serializer):
     title = serializers.CharField(max_length=120)
-    room_type = serializers.ChoiceField(choices=[t.value for t in TypeChambre])
+    room_type = serializers.CharField(
+        max_length=40, help_text="Slug d'un type de `GET /v1/pro/room-types` (validé ou proposé)."
+    )
     district = serializers.UUIDField()
     landmark_text = serializers.CharField(max_length=160)
     address_private = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
-    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    latitude = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        required=False,
+        allow_null=True,
+        help_text="Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.",
+    )
+    longitude = serializers.DecimalField(
+        max_digits=9, decimal_places=6, required=False, allow_null=True
+    )
     rent_amount = serializers.IntegerField(min_value=1)
     deposit_months = serializers.IntegerField(min_value=0, max_value=12)
     advance_months = serializers.IntegerField(min_value=0, max_value=12)
     agent_fee_amount = serializers.IntegerField(min_value=0, required=False)
+    water_deposit_amount = serializers.IntegerField(
+        min_value=0,
+        max_value=10_000_000,
+        required=False,
+        help_text="Caution eau en F (0 = aucune).",
+    )
+    electricity_deposit_amount = serializers.IntegerField(
+        min_value=0,
+        max_value=10_000_000,
+        required=False,
+        help_text="Caution électricité en F (0 = aucune).",
+    )
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
-    water_source = serializers.ChoiceField(choices=[e.value for e in Eau])
+    water_sources = serializers.ListField(
+        child=serializers.ChoiceField(choices=[e.value for e in Eau]), allow_empty=False, max_length=len(Eau),
+        help_text="Une ou plusieurs sources : individual, sub_meter, running, borehole, well.",
+    )  # fmt: skip
     electricity_meter = serializers.ChoiceField(choices=[c.value for c in Compteur])
-    description_md = serializers.CharField(max_length=6000, required=False, allow_blank=True)
+    kitchen = serializers.ChoiceField(
+        choices=[c.value for c in Cuisine], required=False, allow_blank=True,
+        help_text="private (interne), shared (commune), none (aucune) ; vide = non précisé.",
+    )  # fmt: skip
+    rent_negotiable = serializers.BooleanField(required=False, help_text="Loyer à débattre.")
+    description_md = serializers.CharField(
+        max_length=6000, required=False, allow_blank=True,
+        help_text="Autres détails, en texte simple (la mise en forme est retirée).",
+    )  # fmt: skip
 
 
 class AnnonceProOut(serializers.Serializer):
@@ -36,6 +72,7 @@ class AnnonceProOut(serializers.Serializer):
     slug = serializers.CharField()
     title = serializers.CharField()
     room_type = serializers.CharField()
+    room_type_label = serializers.SerializerMethodField()
     district = serializers.UUIDField(source="district_id")
     district_name = serializers.CharField(source="district.name")
     landmark_text = serializers.CharField()
@@ -47,11 +84,18 @@ class AnnonceProOut(serializers.Serializer):
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
     agent_fee_amount = serializers.IntegerField()
+    water_deposit_amount = serializers.IntegerField()
+    electricity_deposit_amount = serializers.IntegerField()
     available_from = serializers.DateField()
     has_private_bathroom = serializers.BooleanField()
     is_fenced = serializers.BooleanField()
-    water_source = serializers.CharField()
+    water_sources = serializers.ListField(child=serializers.CharField())
     electricity_meter = serializers.CharField()
+    kitchen = serializers.CharField()
+    rent_negotiable = serializers.BooleanField()
+    views_total = serializers.SerializerMethodField(
+        help_text="Vues de l'annonce depuis sa publication (vues du jour comprises)."
+    )
     description_md = serializers.CharField()
     status = serializers.ChoiceField(choices=[s.value for s in StatutAnnonce])
     hidden_reason = serializers.CharField(allow_null=True)
@@ -59,6 +103,19 @@ class AnnonceProOut(serializers.Serializer):
     last_confirmed_at = serializers.DateTimeField(allow_null=True)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_views_total(self, annonce) -> int:
+        from .. import selectors
+
+        stats = self.context.get("stats")
+        if stats is None:
+            stats = selectors.stats_par_annonce([annonce.pk])
+        return stats.get(annonce.pk, {}).get("views_total", 0)
+
+    @extend_schema_field(OpenApiTypes.STR)
+    def get_room_type_label(self, annonce) -> str:
+        return types.libelle(annonce.room_type) or annonce.room_type
 
 
 class ApercuIn(serializers.Serializer):
@@ -96,3 +153,47 @@ class MediaOut(serializers.Serializer):
 class OrdreMediasIn(serializers.Serializer):
     order = serializers.ListField(child=serializers.UUIDField(), allow_empty=False, max_length=20)
     cover = serializers.UUIDField(required=False, allow_null=True)
+
+
+class TypeChambreOut(serializers.Serializer):
+    slug = serializers.CharField()
+    label = serializers.CharField()
+    count = serializers.IntegerField(help_text="Annonces publiées de ce type.")
+
+
+class TypeChambreProOut(serializers.Serializer):
+    slug = serializers.CharField()
+    label = serializers.CharField()
+    status = serializers.ChoiceField(
+        choices=StatutTypeChambre.values,
+        help_text="`pending` : utilisable par toi tout de suite, visible dans les filtres après validation.",
+    )
+
+
+class PropositionTypeIn(serializers.Serializer):
+    label = serializers.CharField(max_length=40, help_text="Nom du type, 3 à 40 caractères.")
+
+
+class ManqueOut(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
+class PreparationOut(serializers.Serializer):
+    publishable = serializers.BooleanField()
+    missing = ManqueOut(many=True)
+
+
+class StatJourOut(serializers.Serializer):
+    day = serializers.DateField()
+    views = serializers.IntegerField()
+    favorites = serializers.IntegerField()
+    contacts = serializers.IntegerField()
+
+
+class StatistiquesOut(serializers.Serializer):
+    days = serializers.IntegerField()
+    views = serializers.IntegerField()
+    favorites = serializers.IntegerField()
+    contacts = serializers.IntegerField()
+    daily = StatJourOut(many=True)

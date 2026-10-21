@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.services import appareils, jetons
 from apps.accounts.tests.fabriques import ClientFactory
+from apps.listings.enums import PHOTOS_MIN
 from apps.listings.models import ListingMedia
 from apps.listings.services import medias
 
@@ -159,6 +160,48 @@ class TestPhotos:
                 == 204
             )
         assert ListingMedia.objects.get(pk=r["id"]).status == "ready"
+
+
+class TestFournisseurDeStockage:
+    """Un autre fournisseur se branche par réglage : le code métier, la base et l'API ne changent pas."""
+
+    def test_un_fournisseur_objet_recoit_les_derives_et_donne_les_url(
+        self, pro, annonce, settings, monkeypatch, tmp_path, django_capture_on_commit_callbacks
+    ):
+        from apps.core.providers import stockage as fournisseurs
+
+        publies, supprimes = {}, []
+
+        class Objet(fournisseurs.StorageProvider):
+            def dossier_de_travail(self, prefixe):
+                d = tmp_path / "travail" / prefixe
+                d.mkdir(parents=True, exist_ok=True)
+                return d
+
+            def publier(self, prefixe, dossier):
+                publies[prefixe] = sorted(f.name for f in dossier.iterdir())
+
+            def url_publique(self, cle):
+                return f"https://cdn.exemple.bj/{cle}" if cle else None
+
+            def supprimer(self, prefixe):
+                supprimes.append(prefixe)
+
+            def espace_suffisant(self):
+                return True
+
+        monkeypatch.setitem(fournisseurs.FOURNISSEURS, "objet", Objet)
+        settings.STORAGE_PROVIDER = "objet"
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        prefixe = f"listings/{annonce.pk}/{mid}"
+        assert m.status == "ready" and m.poster_path.startswith(prefixe)
+        assert publies[prefixe] == ["w480.webp", "w960.webp"]
+        assert not (settings.MEDIA_ROOT / "listings").exists()  # rien sur le disque public
+        liste = pro.get(f"/v1/pro/listings/{annonce.pk}/media").json()
+        assert liste[0]["poster_url"] == f"https://cdn.exemple.bj/{m.poster_path}"
+        assert pro.delete(f"/v1/pro/listings/{annonce.pk}/media/{mid}").status_code == 204
+        assert supprimes == [prefixe]
 
 
 class TestProtocole:
@@ -387,12 +430,14 @@ class TestGestion:
         nouvelle = ListingMedia.objects.filter(listing=annonce, is_cover=True)
         assert nouvelle.count() == 1 and nouvelle.get().pk != couverture.pk
 
-    def test_une_annonce_publiee_garde_sa_video_et_trois_photos(self, pro, gerant):
+    def test_une_annonce_publiee_garde_ses_photos_pas_forcement_sa_video(self, pro, gerant):
         publiee = ListingFactory(gerant=gerant)
-        medias_prets(publiee, photos=3)
-        video = ListingMedia.objects.get(listing=publiee, kind="video")
-        r = pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{video.pk}")
+        medias_prets(publiee, photos=5)
+        photo = ListingMedia.objects.filter(listing=publiee, kind="photo").first()
+        r = pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{photo.pk}")
         assert r.status_code == 409 and r.json()["error"]["code"] == "media_required"
+        video = ListingMedia.objects.get(listing=publiee, kind="video")
+        assert pro.delete(f"/v1/pro/listings/{publiee.pk}/media/{video.pk}").status_code == 204
 
     def test_nettoyage_des_envois_expires(self, annonce):
         m = ListingMedia.objects.create(
@@ -446,7 +491,7 @@ class TestVideo:
     ):
         ListingFactory(gerant=gerant)  # le gérant a déjà une annonce publiée : pas de relecture
         a = ListingFactory(gerant=gerant, status="processing", published_at=None)
-        for _ in range(3):
+        for _ in range(PHOTOS_MIN):
             envoyer(pro, a.pk, jpeg(taille=(640, 480)), "photo", django_capture_on_commit_callbacks)
         envoyer(pro, a.pk, video(tmp_path), "video", django_capture_on_commit_callbacks)
         a.refresh_from_db()
@@ -455,3 +500,132 @@ class TestVideo:
 
 def test_dossier_district_inutilise():
     assert DistrictFactory  # (fabrique importée pour les autres modules)
+
+
+class TestDroitsRoleApp:
+    """Régression : sous le rôle PostgreSQL `app`, charger le gérant d'une annonce ne doit jamais lire les colonnes
+    réservées à l'administration (`permission denied for table gerant_profiles` faisait échouer toute photo
+    envoyée sur une annonce en attente de publication)."""
+
+    @staticmethod
+    def _en_tant_que_app():
+        from contextlib import contextmanager
+
+        from django.db import connection
+
+        @contextmanager
+        def bloc():
+            with connection.cursor() as c:
+                c.execute("SET LOCAL ROLE app")
+            try:
+                yield
+            finally:
+                with connection.cursor() as c:
+                    c.execute("RESET ROLE")
+
+        return bloc()
+
+    def test_photo_sur_annonce_en_traitement(self, pro, gerant, django_capture_on_commit_callbacks):
+        from apps.listings.models import Listing
+
+        annonce = ListingFactory(gerant=gerant, status="processing", published_at=None)
+        with self._en_tant_que_app():
+            mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+            assert ListingMedia.objects.get(pk=mid).status == "ready"
+            assert Listing.objects.get(pk=annonce.pk).status in ("processing", "draft", "published")
+
+    def test_manques_a_la_publication_lisible_par_app(self, gerant):
+        from apps.listings.models import Listing
+        from apps.listings.services import annonces
+
+        annonce = ListingFactory(gerant=gerant, status="draft", published_at=None)
+        with self._en_tant_que_app():
+            manques = annonces.manques_a_la_publication(Listing.objects.get(pk=annonce.pk))
+        assert "gerant_non_verifie" not in manques
+
+
+class TestCloudinary:
+    """ADR 0010 : préparé par worker-media, envoyé par le worker, lu par le CDN ; le disque reste pour l'existant."""
+
+    @pytest.fixture(autouse=True)
+    def compte(self, settings, monkeypatch):
+        from apps.core import parametres
+        from apps.core.providers import stockage as fournisseurs
+
+        settings.CLOUDINARY_CLOUD_NAME, settings.CLOUDINARY_API_KEY = "immoplus-test", "123456"
+        settings.CLOUDINARY_API_SECRET, settings.CLOUDINARY_FOLDER = "abcd", "immoplus"
+        parametres.definir("MEDIA_STORAGE", "cloudinary")
+        self.appels, self.panne = [], False
+
+        def faux(fournisseur, methode, url, corps=None, entetes=None):
+            if self.panne:
+                raise fournisseurs.ErreurStockageDistant("Cloudinary : injoignable")
+            self.appels.append((methode, url))
+            return {}
+
+        monkeypatch.setattr(fournisseurs.CloudinaryStorageProvider, "_requete", faux)
+
+    def test_photo_envoyee_puis_servie_par_le_cdn(
+        self, pro, annonce, settings, django_capture_on_commit_callbacks
+    ):
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.status == "ready" and m.poster_path.startswith("cloudinary:listings/")
+        assert len(self.appels) == len(m.variants)  # une variante = un envoi
+        assert not (
+            settings.MEDIA_ROOT / "listings" / str(annonce.pk) / mid
+        ).exists()  # copie locale retirée
+        liste = pro.get(f"/v1/pro/listings/{annonce.pk}/media").json()
+        assert liste[0]["poster_url"].startswith(
+            "https://res.cloudinary.com/immoplus-test/image/upload/immoplus/listings/"
+        )
+
+    def test_cloudinary_injoignable_le_media_echoue_proprement(
+        self, pro, annonce, monkeypatch, django_capture_on_commit_callbacks
+    ):
+        from apps.listings import tasks
+
+        monkeypatch.setattr(
+            tasks, "ESSAIS_DISTANTS", 0
+        )  # dernier essai d'emblée (pas de rejeu en test)
+        self.panne = True
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.status == "failed" and m.error_code == "stockage_indisponible"
+
+    def test_le_disque_garde_ses_medias_et_le_transfert_les_deplace(
+        self, pro, annonce, settings, django_capture_on_commit_callbacks
+    ):
+        from django.core.management import call_command
+
+        from apps.core import parametres
+
+        parametres.definir("MEDIA_STORAGE", "local")
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.poster_path.startswith("listings/") and self.appels == []
+        call_command("transferer_medias", "--vers", "cloudinary")
+        m.refresh_from_db()
+        assert m.poster_path.startswith("cloudinary:listings/") and len(self.appels) == len(
+            m.variants
+        )
+        assert not (settings.MEDIA_ROOT / "listings" / str(annonce.pk) / mid).exists()
+
+    def test_retour_au_disque(
+        self, pro, annonce, settings, monkeypatch, django_capture_on_commit_callbacks
+    ):
+        from django.core.management import call_command
+
+        from apps.core.providers import stockage as fournisseurs
+
+        mid = envoyer(pro, annonce.pk, jpeg(), "photo", django_capture_on_commit_callbacks)
+        monkeypatch.setattr(
+            fournisseurs.CloudinaryStorageProvider,
+            "telecharger",
+            lambda self, cle, destination: destination.write_bytes(b"image"),
+        )
+        call_command("transferer_medias", "--vers", "disque")
+        m = ListingMedia.objects.get(pk=mid)
+        assert m.poster_path.startswith("listings/")
+        assert (settings.MEDIA_ROOT / m.poster_path).read_bytes() == b"image"
+        assert ("DELETE", next(u for _, u in self.appels if "resources/image" in u)) in self.appels
