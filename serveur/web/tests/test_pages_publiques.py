@@ -80,7 +80,7 @@ class TestFilEtFiche:
         ListingFactory(title="Ailleurs")
         page = html(Client().get("/quartiers/titirou"))
         demandes, _, voisins = page.partition('id="voisins-titre"')
-        assert "Chambres à Titirou" in demandes and "Chambre à Titirou" in demandes
+        assert "Chambres à louer à Titirou" in demandes and "Chambre à Titirou" in demandes
         assert (
             "Ailleurs" not in demandes
         )  # un quartier proche n'est proposé qu'à part, jamais mélangé

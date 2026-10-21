@@ -29,6 +29,9 @@ BUDGETS = [15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000, 150000]
 # Critères de la page Chambres (le reste des paramètres est ignoré dans le récapitulatif et l'alerte).
 CRITERES = ("q", "district", "type", "rent_max", "bathroom", "fenced", "water", "meter", "kitchen")
 
+# Page « près de l'université » : chambres à moins de cette distance du campus, les plus proches d'abord.
+PRES_DU_CAMPUS_M = 1500
+
 TRIS = [
     ("recent", "Plus récentes"),
     ("rent_asc", "Loyer croissant"),
@@ -100,8 +103,49 @@ def _recapitulatif(request, action: str, quartier) -> list:
     return actifs
 
 
-def _liste(request, *, quartier=None, action="/annonces"):
+def _seo_liste(request, *, quartier=None, campus=False) -> dict:
+    """Titre, description, titre de page et adresse canonique d'une liste (référencement et partage).
+
+    Une liste filtrée, triée ou paginée n'est qu'une variante de la page : `noindex` et canonique vers la page nue,
+    pour que Google n'indexe qu'une adresse par sujet.
+    """
+    base = _base_site(request)
+    if campus:
+        km = f"{PRES_DU_CAMPUS_M / 1000:g}".replace(".", ",")
+        seo = {
+            "titre": "Chambres à louer près de l'Université de Parakou (UP) — Immo+",
+            "h1": "Chambres à louer près de l'Université de Parakou",
+            "description": f"Chambres, entrées-couchers et studios à louer à moins de {km} km de l'Université de Parakou (UP), les plus proches d'abord : "
+            "loyer, distance du campus, visite en vidéo, gérants vérifiés.",
+            "intro": f"Toutes les chambres à moins de {km} km du campus de l'Université de Parakou, de la plus proche à la "
+            "plus éloignée. La distance est mesurée à vol d'oiseau depuis le campus.",
+            "url": f"{base}/pres-de-l-universite",
+        }
+    elif quartier is not None:
+        seo = {
+            "titre": f"Chambres à louer à {quartier.name}, Parakou — Immo+",
+            "h1": f"Chambres à louer à {quartier.name}",
+            "description": f"Chambres, entrées-couchers et studios à louer à {quartier.name} (Parakou) : loyers, "
+            "distance de l'Université de Parakou, visite en vidéo, gérants vérifiés.",
+            "url": f"{base}/quartiers/{quartier.slug}",
+        }
+    else:
+        seo = {
+            "titre": "Chambres à louer à Parakou — loyers, quartiers, visite vidéo — Immo+",
+            "h1": "Chambres à louer à Parakou",
+            "description": "Chambres, entrées-couchers et studios à louer à Parakou, près de l'Université de "
+            "Parakou et dans tous les quartiers : loyers, visite en vidéo, gérants vérifiés.",
+            "url": f"{base}/annonces",
+        }
+    seo["noindex"] = any(v for v in request.GET.values())
+    return seo
+
+
+def _liste(request, *, quartier=None, action="/annonces", forces=None, campus=False):
     params = request.GET.copy()
+    forces = forces or {}
+    for cle, valeur in forces.items():
+        params.setdefault(cle, valeur)
     if quartier is not None:
         params["district"] = quartier.slug
     erreur = None
@@ -122,11 +166,14 @@ def _liste(request, *, quartier=None, action="/annonces"):
     if resultat.get("next_cursor"):
         reste = {k: v for k, v in request.GET.items() if k != "cursor"}
         suite = urlencode({**reste, "cursor": resultat["next_cursor"]})
-    critere_alerte = {k: v for k, v in request.GET.items() if k in CRITERES and v}
+    critere_alerte = {
+        k: v for k, v in {**forces, **request.GET.dict()}.items() if k in CRITERES and v
+    }
     if quartier is not None:
         critere_alerte["district"] = quartier.slug
     contexte = {
-        "resultat": resultat, "params": {**request.GET.dict(), "district": params.get("district", "")},
+        "resultat": resultat, "params": {**forces, **request.GET.dict(), "district": params.get("district", "")},
+        "seo": _seo_liste(request, quartier=quartier, campus=campus),
         "quartiers": _quartiers(), "quartier": quartier, "types": _types(), "tris": TRIS, "action": action,
         "erreur": erreur, "suite": suite, "requete_alerte": urlencode(critere_alerte),
         "actifs": _recapitulatif(request, action, quartier), "budgets": BUDGETS,
@@ -148,6 +195,13 @@ def quartier(request, slug):
     if d is None:
         raise Http404
     return _liste(request, quartier=d, action=f"/quartiers/{slug}")
+
+
+def pres_universite(request):
+    """Page d'entrée « chambre à louer près de l'Université de Parakou » (référencement) : catalogue limité au
+    voisinage du campus, trié par distance ; les filtres restent utilisables."""
+    forces = {"max_distance_m": str(PRES_DU_CAMPUS_M), "sort": "distance"}
+    return _liste(request, action="/pres-de-l-universite", forces=forces, campus=True)
 
 
 # --------------------------------------------------------------- fiche
@@ -205,6 +259,7 @@ def _partage(request, f) -> dict:
     image = f"{base}/annonces/{f['slug']}/apercu.jpg"
     loyer = f"{f['rent_amount']:,}".replace(",", " ")
     titre = f"{f['title']} — {loyer} F/mois · {f['district']['name']}, Parakou"
+    video = next((m for m in f["media"] if m["kind"] == "video" and m.get("playback_url")), None)
     description = partage.resume({**f, "room_type_label": _libelle_type(f["room_type"])})
     lieu = {
         "@type": "Accommodation",
@@ -293,7 +348,21 @@ def _partage(request, f) -> dict:
         "titre": titre,
         "description": description,
         "texte": f"{f['title']} à {f['district']['name']}, {loyer} F/mois, sur Immo+",
+        "video": _video_partage(base, video),
         "json_ld": _json_ld(donnees),
+    }
+
+
+def _video_partage(base: str, video: dict | None) -> dict | None:
+    """Vidéo de la visite pour l'aperçu des liens (og:video) : adresse absolue, lue sur place par les plateformes
+    qui le permettent ; les autres gardent l'image."""
+    if not video:
+        return None
+    url = video["playback_url"]
+    return {
+        "url": url if url.startswith("http") else f"{base}{url}",
+        "width": video.get("width") or 720,
+        "height": video.get("height") or 1280,
     }
 
 
@@ -773,14 +842,17 @@ def mes_notifications(request):
 
 # --------------------------------------------------------------- référencement
 def robots(request):
-    contenu = "User-agent: *\nAllow: /\nDisallow: /compte\nDisallow: /pro\nDisallow: /connexion\nDisallow: /inscription\n"
+    contenu = (
+        "User-agent: *\nAllow: /\nDisallow: /compte\nDisallow: /pro\nDisallow: /connexion\nDisallow: /inscription\n"
+        "Disallow: /mot-de-passe\nDisallow: /activer\nDisallow: /deconnexion\n"
+    )
     contenu += f"Sitemap: {_base_site(request)}/sitemap.xml\n"
     return HttpResponse(contenu, content_type="text/plain; charset=utf-8")
 
 
 def sitemap(request):
     base = _base_site(request)
-    urls = [(f"{base}/", None), (f"{base}/annonces", None)]
+    urls = [(f"{base}/", None), (f"{base}/annonces", None), (f"{base}/pres-de-l-universite", None)]
     urls += [(f"{base}/quartiers/{d.slug}", None) for d in _quartiers()]
     urls += [(f"{base}/annonces/{slug}", maj) for slug, maj in selectors.slugs_publies()]
     corps = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

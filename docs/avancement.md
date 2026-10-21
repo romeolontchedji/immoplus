@@ -2,6 +2,15 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-10-21 : référencement.**
+- Page `/pres-de-l-universite` (chambres à moins de 1,5 km du campus, les plus proches d'abord), liée depuis le pied
+  de page et le plan du site. Titres et descriptions des listes centrés sur « chambres à louer » et l'Université de
+  Parakou ; canonique partout, `noindex, follow` pour les listes filtrées, triées ou paginées ; pied de page vers les
+  pages de quartier. Fiche : vidéo déclarée dans l'aperçu (`og:video`), titre « … à louer à <quartier> ». Accueil :
+  canonique et données structurées `WebSite` et `Organization`. `robots.txt` ferme aussi mot de passe et activation.
+- `docs/referencement.md` : ce que voient les plateformes et Google, gestes hors code (Search Console, fiche
+  d'établissement, liens).
+
 **2026-10-21 (matin) : mise en production sur `main` et CI/CD documentée.**
 - Demande de fusion n°3 fusionnée dans `main` de `romeolontchedji/immoplus` (dépôt de référence) après CI verte :
   verrou npm complété pour `npm ci`, Pillow 13.0.0 et certifi corrigeant 9 failles (`pip-audit`), test Cloudinary

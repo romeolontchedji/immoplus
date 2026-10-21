@@ -1,7 +1,11 @@
 {% extends "web/base.html" %}
 {% load static immoplus %}
 {% block titre %}Chambres à louer à Parakou, visite en vidéo — Immo+{% endblock %}
-{% block description %}Cherche une chambre, un entrée-coucher ou un studio à Parakou. Regarde la visite en vidéo, contacte un gérant vérifié, crée une alerte. Visite d'abord, paie ensuite.{% endblock %}
+{% block description %}Chambre, entrée-coucher ou studio à louer à Parakou, près de l'Université de Parakou (UP) et dans tous les quartiers. Visite en vidéo, gérants vérifiés, alertes. Visite d'abord, paie ensuite.{% endblock %}
+{% block tete %}
+  <link rel="canonical" href="{{ canonique }}">
+  <script type="application/ld+json">{{ json_ld }}</script>
+{% endblock %}
 {% block contenu %}
   {# ═══════════════════════════════════════════════════════ BANNIÈRE HÉRO ═══ #}
   <section class="accueil-hero" aria-labelledby="hero-titre">
