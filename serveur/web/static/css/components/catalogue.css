@@ -103,6 +103,7 @@
 .catalogue-titre-principal {
   font-size: var(--fs-24); font-weight: 800; color: var(--night); margin: 0;
 }
+.catalogue-intro { color: var(--text-muted); font-size: var(--fs-15); margin: 0; }
 .catalogue-vues-toggle {
   display: inline-flex; gap: 0; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden;
 }

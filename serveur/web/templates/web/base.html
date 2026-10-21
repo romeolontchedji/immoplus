@@ -84,6 +84,7 @@
                   <p class="pied__titre">Raccourcis</p>
                   <ul class="pied__liste">
                     <li><a href="/annonces">Chambres</a></li>
+                    <li><a href="/pres-de-l-universite">Près de l'université</a></li>
                     <li><a href="/#comment-ca-marche">Comment ça marche</a></li>
                     <li><a href="/#faq">FAQ</a></li>
                     {% if request.user.is_authenticated and request.user.role == "client" %}
@@ -94,10 +95,10 @@
                 <div>
                   <p class="pied__titre">Quartiers</p>
                   <ul class="pied__liste">
-                    <li><a href="/annonces?district=banikanni">Banikanni</a></li>
-                    <li><a href="/annonces?district=guema">Guéma</a></li>
-                    <li><a href="/annonces?district=albarika">Albarika</a></li>
-                    <li><a href="/annonces?district=titirou">Titirou</a></li>
+                    <li><a href="/quartiers/banikanni">Banikanni</a></li>
+                    <li><a href="/quartiers/guema">Guéma</a></li>
+                    <li><a href="/quartiers/albarika">Albarika</a></li>
+                    <li><a href="/quartiers/titirou">Titirou</a></li>
                   </ul>
                 </div>
                 <div>
