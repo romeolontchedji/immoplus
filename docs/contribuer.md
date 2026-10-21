@@ -14,7 +14,9 @@ push, l'ensemble des contrôles. **N'utilise jamais `--no-verify`** : la CI refa
 
 1. Crée une branche : `git switch -c feat/messagerie-envoi-message` (modèle : `type/mots-en-minuscules-separes-par-des-tirets`).
 2. Fais des commits cohérents : `feat(messagerie): envoyer un message`, puis une ligne `Refs: EF-MSG-03` pour `feat` et `fix`.
-3. `make verifier` avant de pousser, puis `git push -u origin <branche>` et ouvre une demande de fusion (titre au même format).
+3. `make verifier` avant de pousser, puis `git push -u origin <branche>` et ouvre une demande de fusion vers `main` du
+   dépôt de référence `romeolontchedji/immoplus` (titre au même format). Flux complet, CI et déploiement :
+   `docs/flux-et-ci-cd.md`.
 4. Mets à jour `docs/avancement.md` à la fin de chaque session.
 
 Fusion : classique ou « rebase », **jamais « squash »** (l'historique propre est la règle).
@@ -29,7 +31,8 @@ IMMOPLUS_PREMIER_PUSH=1 git push -u origin main
 
 ## 4. Protéger `main` côté GitHub (obligatoire : les hooks locaux se contournent)
 
-Dans *Settings → Branches → Add rule* pour `main`, ou en ligne de commande (remplace `OWNER/REPO`) :
+Dans *Settings → Branches → Add rule* pour `main`, ou en ligne de commande (remplace `OWNER/REPO` ; pour la
+production : `romeolontchedji/immoplus`, commande prête dans `docs/flux-et-ci-cd.md` §7) :
 
 ```bash
 gh api -X PUT repos/OWNER/REPO/branches/main/protection --input - <<'JSON'
@@ -53,7 +56,9 @@ après la première exécution.
 ## 5. Ajouter une dépendance
 
 Interdit sans ADR (`docs/adr/`). Ajoute-la dans `serveur/requirements/base.in` ou `dev.in`, régénère les fichiers `.txt`
-avec `pip freeze` dans un environnement propre, et explique le choix.
+avec `uv pip compile serveur/requirements/base.in -o serveur/requirements/base.txt --python-version 3.12` (idem
+`dev`), et explique le choix. Pour une simple mise à jour de sécurité : même commande avec
+`--upgrade-package <paquet>`.
 
 ## 6. Dépannage
 

@@ -974,6 +974,7 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 | `docs/audit-tests-securite.md` | Ce que les tests de sécurité prouvent |
 | `docs/verification.md` | Comment vérifier le travail |
 | `docs/contribuer.md` | Comment contribuer (branches, commits, contrôles) |
+| `docs/flux-et-ci-cd.md` | Du commit à la production : dépôts, hooks, CI GitHub Actions, déploiement |
 | `docs/environnement-generation.md` | Génération de l'environnement |
 | `docs/reste-a-faire.md`, `docs/a-verifier.md` | Listes de suivi |
 
