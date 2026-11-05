@@ -13,6 +13,16 @@
           <p>{{ message }}</p>
         </div>
       {% endif %}
+      {% if sans_email %}
+        <div class="carte p-5 pile" data-email-alertes>
+          <h2 class="fs-18 fw-bold mb-0">Reçois tes alertes par e-mail</h2>
+          <p class="texte-doux mb-0">
+            Donne ton adresse e-mail : dès qu'une chambre correspond à une alerte, on t'écrit, sans que tu aies à
+            revenir sur le site. Tu confirmes l'adresse par un lien, et tu peux mettre une alerte en pause à tout moment.
+          </p>
+          {% include "web/auth/section-formulaire.html" with action="email" f=form_email bouton="Recevoir mes alertes par e-mail" variante="primaire" %}
+        </div>
+      {% endif %}
       <div class="alertes-entete">
         <details class="alertes-nouvelle"{% if ouvrir %} open{% endif %}>
           <summary class="bouton bouton--primaire alertes-nouvelle__bouton">

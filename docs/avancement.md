@@ -18,6 +18,12 @@
 - Textes de l'accueil reformulés (sous-titre, piliers, étapes, FAQ) ; `docs/design/COPYWRITING.md` aligné. Restent à
   revoir dans le même esprit : pages Chambres, fiche, alertes, quartiers.
 - Guide de déploiement aligné sur la doc du VPS : compte `romaeus`, alias SSH `github-immoplus`, `caddy validate`.
+- Alertes : (1) à la création d'une alerte, les chambres déjà en ligne qui correspondent sont signalées d'un seul coup
+  (`alertes.signaler_existantes`, notification `alert.digest`, clé `alert-initial:<alerte>`) ; (2) les alertes
+  (`alert.match`, `alert.digest`) partent aussi par courriel si le compte a une adresse confirmée ; la page
+  `/compte/alertes` demande l'adresse quand elle manque. Pas de changement d'API ni de schéma. Reste : une pause ou
+  une reprise d'alerte ne rejoue pas les chambres déjà en ligne ; l'application mobile n'a pas encore de jeton push,
+  donc le courriel est aujourd'hui le seul envoi actif. Tests écrits mais non exécutés en local (CI).
 
 **2026-10-21 : référencement.**
 - Page `/pres-de-l-universite` (chambres à moins de 1,5 km du campus, les plus proches d'abord), liée depuis le pied

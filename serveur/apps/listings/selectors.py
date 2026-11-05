@@ -690,7 +690,7 @@ def alertes_correspondantes(annonce_id) -> list[tuple[uuid.UUID, uuid.UUID]]:
     return list(requete.values_list("pk", "user_id"))
 
 
-def nombre_pour_alerte(alerte: Alert) -> int:
+def annonces_pour_alerte(alerte: Alert):
     """Chambres en ligne qui correspondent aujourd'hui à une alerte (mêmes règles que `alertes_correspondantes`)."""
     requete = Listing.objects.filter(status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True)
     if alerte.district_ids:
@@ -711,7 +711,12 @@ def nombre_pour_alerte(alerte: Alert) -> int:
         requete = requete.filter(electricity_meter__in=alerte.electricity_meters)
     if alerte.kitchens:
         requete = requete.filter(kitchen__in=alerte.kitchens)
-    return requete.count()
+    return requete
+
+
+def nombre_pour_alerte(alerte: Alert) -> int:
+    """Nombre de chambres en ligne qui correspondent aujourd'hui à une alerte."""
+    return annonces_pour_alerte(alerte).count()
 
 
 def locataires_favoris(annonce_id) -> list:

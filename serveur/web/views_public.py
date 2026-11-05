@@ -14,6 +14,7 @@ from django.templatetags.static import static
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
+from apps.accounts.services import compte as service_compte
 from apps.chat import selectors as chat_selectors
 from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
@@ -24,6 +25,8 @@ from apps.listings.services import types as types_chambre
 from apps.moderation import services as moderation
 from apps.notifications import selectors as notif_selectors
 from apps.notifications import services as notifications
+
+from . import forms
 
 BUDGETS = [15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000, 150000]
 # Critères de la page Chambres (le reste des paramètres est ignoré dans le récapitulatif et l'alerte).
@@ -572,10 +575,22 @@ def mes_alertes(request):
     if request.user.role != "client":
         raise Http404
     message = niveau = None
+    sans_email = not (request.user.email and request.user.email_verified_at)
+    form_email = forms.AjoutEmail(request.POST if request.POST.get("action") == "email" else None)
     if request.method == "POST":
         action = request.POST.get("action")
         try:
-            if action == "supprimer":
+            if action == "email":
+                if form_email.is_valid():
+                    adresse = form_email.cleaned_data["email"]
+                    service_compte.demander_ajout_email(request.user, adresse)
+                    message = (
+                        f"Un lien de confirmation a été envoyé à {adresse} (valable 24 heures). Une fois l'adresse "
+                        "confirmée, tes alertes t'arriveront aussi par e-mail."
+                    )
+                else:
+                    message, niveau = "Cette adresse e-mail n'est pas valide.", "danger"
+            elif action == "supprimer":
                 alertes.supprimer(request.user, request.POST.get("alerte_id"))
                 message = "Alerte supprimée."
             elif action == "pause":
@@ -591,7 +606,11 @@ def mes_alertes(request):
                 message = "Alerte modifiée."
             else:
                 alertes.creer(request.user, _donnees_alerte(request.POST))
-                message = "Alerte créée : tu seras prévenu des nouvelles chambres."
+                message = (
+                    "Alerte créée : ajoute ton e-mail ci-dessous pour être prévenu des chambres qui correspondent."
+                    if sans_email
+                    else "Alerte créée : tu seras prévenu par e-mail des chambres qui correspondent."
+                )
         except ErreurMetier as e:
             message, niveau = _message(e), "danger"
     proposition = _criteres_proposes(request.GET)
@@ -671,7 +690,8 @@ def mes_alertes(request):
          "distances": DISTANCES_ALERTE, "eaux": Eau.choices, "compteurs": Compteur.choices,
          "cuisines": [c for c in Cuisine.choices if c[0] != Cuisine.NONE],
          "indispensables": (("douche", "Douche et WC internes"), ("cloture", "Cour clôturée")),
-         "message": message, "niveau": niveau, "proposition": proposition, "edition": edition, "ouvrir": ouvrir},
+         "message": message, "niveau": niveau, "proposition": proposition, "edition": edition, "ouvrir": ouvrir,
+         "sans_email": sans_email, "form_email": form_email},
     )  # fmt: skip
 
 

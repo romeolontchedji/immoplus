@@ -6,6 +6,7 @@ d'envoi ne remonte jamais à l'appelant : il est consigné dans la ligne et repr
 
 import logging
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -30,6 +31,8 @@ CATEGORIES = {
     "favorite.unavailable": "alertes",
 }
 NON_DESACTIVABLES = {"account.sanction"}
+# Les alertes partent aussi par courriel (adresse confirmée) : un visiteur du site n'a pas toujours l'application.
+KINDS_COURRIEL = {"alert.match", "alert.digest"}
 
 # Canaux Android créés par l'application (mobile/src/features/notifications/push.ts). Les messages sont prioritaires :
 # bannière immédiate, son et vibration, même téléphone en veille, comme une messagerie.
@@ -149,6 +152,8 @@ def _apres_creation(notification_id, motif: str | None) -> None:
             "notification": _jsonable(resume(notification)),
         },
     )
+    if notification.kind in KINDS_COURRIEL and motif != "categorie_coupee":
+        envoyer_courriel(notification)
     if motif:
         signals.push_regle.send(
             sender=Notification, kind=notification.kind, data=notification.data, motif="saute"
@@ -157,6 +162,41 @@ def _apres_creation(notification_id, motif: str | None) -> None:
     from .tasks import envoyer_push
 
     envoyer_push.delay(str(notification.pk))
+
+
+def _texte_courriel(n: Notification, prenom: str) -> str:
+    site = settings.SITE_URL
+    lignes = [f"Bonjour {prenom}," if prenom else "Bonjour,", "", n.body, ""]
+    liste = n.data.get("_liste") or []
+    if liste:
+        lignes += [f"- {c['resume']} : {site}/annonces/{c['slug']}" for c in liste]
+        lignes.append("")
+    elif n.data.get("slug"):
+        lignes += [f"Voir la chambre : {site}/annonces/{n.data['slug']}", ""]
+    lignes += [
+        f"Toutes tes alertes : {site}/compte/alertes",
+        "",
+        "Tu reçois ce message parce que tu as créé une alerte sur Immo+. Pour ne plus le recevoir, mets l'alerte "
+        "en pause ou supprime-la depuis la page ci-dessus.",
+    ]
+    return "\n".join(lignes) + "\n"
+
+
+def envoyer_courriel(n: Notification) -> str:
+    """Courriel d'une alerte, si le compte a une adresse confirmée ; sans elle, la notification reste dans le centre
+    (et en push) seulement. Un échec d'envoi ne remonte jamais à l'appelant (reprises dans la tâche d'envoi)."""
+    from apps.core.tasks import envoyer_courriel as tache_envoi
+
+    contact = comptes.contact_courriel(n.user_id)
+    if contact is None:
+        return "sans_adresse"
+    adresse, prenom = contact
+    try:
+        tache_envoi.delay([adresse], f"Immo+ · {n.title}", _texte_courriel(n, prenom))
+    except Exception:  # noqa: BLE001 - une file indisponible ne doit jamais empêcher le push
+        journal.exception("courriel d'alerte non déposé dans la file")
+        return "echec"
+    return "envoye"
 
 
 def _jsonable(resume: dict) -> dict:

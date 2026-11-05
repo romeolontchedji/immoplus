@@ -28,6 +28,64 @@ def boite():
     return cache.get(push.CLE_BOITE_PUSH_DEV, [])
 
 
+class TestCourrielDesAlertes:
+    def confirme(self, **kw):
+        from django.utils import timezone
+
+        return ClientFactory(email="awa@exemple.test", email_verified_at=timezone.now(), **kw)
+
+    def test_alerte_envoyee_par_courriel_a_l_adresse_confirmee(
+        self, django_capture_on_commit_callbacks
+    ):
+        from django.core import mail
+
+        creer_et_envoyer(
+            django_capture_on_commit_callbacks, self.confirme(), data={"slug": "chambre-x"}
+        )
+        assert len(mail.outbox) == 1
+        m = mail.outbox[0]
+        assert m.to == ["awa@exemple.test"] and m.subject == "Immo+ · Titre"
+        assert "Corps" in m.body and "/annonces/chambre-x" in m.body and "/compte/alertes" in m.body
+
+    def test_recapitulatif_liste_les_chambres(self, django_capture_on_commit_callbacks):
+        from django.core import mail
+
+        creer_et_envoyer(
+            django_capture_on_commit_callbacks,
+            self.confirme(),
+            kind="alert.digest",
+            data={"_liste": [{"slug": "a-1", "resume": "Studio · 20 000 F/mois · Zongo"}]},
+        )
+        assert "- Studio · 20 000 F/mois · Zongo : " in mail.outbox[0].body
+        assert "/annonces/a-1" in mail.outbox[0].body
+
+    def test_sans_adresse_confirmee_aucun_courriel(self, django_capture_on_commit_callbacks):
+        from django.core import mail
+
+        creer_et_envoyer(django_capture_on_commit_callbacks, ClientFactory())
+        creer_et_envoyer(
+            django_capture_on_commit_callbacks, ClientFactory(email="non-confirmee@exemple.test")
+        )
+        assert mail.outbox == []
+
+    def test_categorie_alertes_coupee_aucun_courriel(self, django_capture_on_commit_callbacks):
+        from django.core import mail
+
+        u = self.confirme()
+        u.notif_prefs = {"alertes": {"push": False}}
+        u.save()
+        creer_et_envoyer(django_capture_on_commit_callbacks, u)
+        assert mail.outbox == []
+
+    def test_les_autres_notifications_ne_partent_pas_par_courriel(
+        self, django_capture_on_commit_callbacks
+    ):
+        from django.core import mail
+
+        creer_et_envoyer(django_capture_on_commit_callbacks, self.confirme(), kind="message.received")
+        assert mail.outbox == []
+
+
 class TestCreation:
     def test_cree_une_ligne_et_envoie_le_push(self, django_capture_on_commit_callbacks):
         u = ClientFactory()
