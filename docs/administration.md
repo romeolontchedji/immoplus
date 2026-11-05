@@ -237,7 +237,7 @@ Affichés sur le site, dans l'app et dans les textes légaux.
 
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
-| `TEAM_PHONE` | `+2290156201400` | Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229… |
+| `TEAM_PHONE` | `+2290160239288` | Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229… |
 | `LEGAL_PROVISIONAL` | coché | Coché : un bandeau prévient que les mentions légales sont provisoires. À décocher quand l'entreprise est réellement immatriculée et les champs ci-dessous exacts. |
 | `LEGAL_COMPANY` | `IMMOPLUS SARL` | Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité. |
 | `LEGAL_RCCM` | `RB/PKO/26 B 00001` | Numéro d'immatriculation au registre du commerce (RCCM). |

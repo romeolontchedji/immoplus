@@ -94,7 +94,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
   1. `Contacte l'équipe Immo+` — `Par WhatsApp ou appel, avec tes pièces.`
   2. `On vérifie, puis on crée ton compte` — `Pièce d'identité, justificatif, court entretien.`
   3. `Publie et reçois des demandes` — `Une vidéo, des photos, et tu vois qui regarde ta chambre.`
-  - Bouton : `Contacter l'équipe · +229 01 56 20 14 00`
+  - Bouton : `Contacter l'équipe · +229 01 60 23 92 88`
 
 ### Bloc de prévention (bande bleu clair, avant la FAQ)
 - **Titre** : `Une vraie chambre n'a pas besoin que tu paies avant de la voir.`
@@ -119,7 +119,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 ### Pied de page
 - Tagline : `Le logement à Parakou, vu avant d'y aller.`
 - Colonnes : `Raccourcis` · `Quartiers` · `Contact` · `Conditions · Confidentialité`
-- Contact : `+229 01 56 20 14 00 · WhatsApp · Appel`
+- Contact : `+229 01 60 23 92 88 · WhatsApp · Appel`
 
 ---
 
@@ -235,7 +235,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - **Titre** : `Un compte gérant se mérite, et ça rassure tes futurs locataires.`
 - **Texte** : `Pas d'inscription automatique : c'est ce qui protège les locataires et donne de la valeur à ton badge Vérifié.`
 - **Étapes** : 1. `Contacte-nous` — `Par WhatsApp ou appel.` 2. `Fournis tes pièces` — `Pièce d'identité et justificatif d'activité.` 3. `Court entretien` — `Pour valider que tu es un vrai gérant.` 4. `L'équipe crée ton compte` — `Tu reçois un lien pour choisir ton nom d'utilisateur et ton mot de passe.`
-- Boutons : `Écrire sur WhatsApp` · `Appeler +229 01 56 20 14 00` · `J'ai déjà un compte, me connecter`
+- Boutons : `Écrire sur WhatsApp` · `Appeler +229 01 60 23 92 88` · `J'ai déjà un compte, me connecter`
 
 ### Création du compte (par l'équipe, lien d'activation)
 - L'équipe crée le compte (prénom, nom, zone), puis envoie au gérant un **lien d'activation** (72 h, usage unique) par WhatsApp ou e-mail.

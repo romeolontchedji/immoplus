@@ -20,8 +20,8 @@ def test_app_config_publique_et_complete():
     assert corps["limits"]["photos_max"] == 10 and corps["limits"]["message_max_length"] == 2000
     assert corps["realtime"]["path"] == "/ws/v1/"
     assert corps["contact"] == {
-        "phone": "+2290156201400",
-        "whatsapp_url": "https://wa.me/2290156201400",
+        "phone": "+2290160239288",
+        "whatsapp_url": "https://wa.me/2290160239288",
     }
 
 
@@ -39,17 +39,17 @@ def test_abonnement_reste_faux_meme_si_le_parametre_est_vrai():
 
 def test_contact_equipe_formate():
     assert configuration.contact_equipe() == {
-        "phone": "+2290156201400",
-        "phone_display": "+229 01 56 20 14 00",
-        "tel_url": "tel:+2290156201400",
-        "whatsapp_url": "https://wa.me/2290156201400",
+        "phone": "+2290160239288",
+        "phone_display": "+229 01 60 23 92 88",
+        "tel_url": "tel:+2290160239288",
+        "whatsapp_url": "https://wa.me/2290160239288",
     }
 
 
 def test_pied_de_page_utilise_le_bon_numero():
     html = Client().get("/").content.decode()
-    assert 'href="https://wa.me/2290156201400"' in html
-    assert "22901562014000" not in html  # ancien lien avec un 0 de trop
+    assert 'href="https://wa.me/2290160239288"' in html
+    assert "22901602392880" not in html  # ancien lien avec un 0 de trop
 
 
 def test_alertes_payantes_restent_cachees_meme_si_le_parametre_est_active():
