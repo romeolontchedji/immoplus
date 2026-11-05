@@ -83,7 +83,7 @@ django-migration-linter==6.0.0
     # via
     #   -r serveur/requirements/base.in
     #   -r serveur/requirements/dev.in
-djangorestframework==3.18.1
+djangorestframework==3.18.2
     # via
     #   -r serveur/requirements/base.in
     #   drf-spectacular
