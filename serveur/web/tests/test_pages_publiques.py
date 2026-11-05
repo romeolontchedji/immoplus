@@ -254,6 +254,33 @@ class TestEspaceLocataire:
         r = connecte(u).post("/compte/alertes", {"action": "creer", "max_rent": "10000"})
         assert "alertes actives" in html(r)
 
+    def test_la_page_demande_l_e_mail_s_il_manque(self):
+        page = html(connecte(ClientFactory()).get("/compte/alertes"))
+        assert "Reçois tes alertes par e-mail" in page and "data-email-alertes" in page
+
+    def test_la_page_ne_demande_rien_si_l_e_mail_est_confirme(self):
+        from django.utils import timezone
+
+        u = ClientFactory(email="awa@exemple.test", email_verified_at=timezone.now())
+        assert "data-email-alertes" not in html(connecte(u).get("/compte/alertes"))
+
+    def test_ajout_de_l_e_mail_depuis_la_page_des_alertes(self):
+        from django.core import mail
+
+        r = connecte(ClientFactory()).post(
+            "/compte/alertes", {"action": "email", "email": "awa@exemple.test"}
+        )
+        assert "lien de confirmation" in html(r)
+        assert len(mail.outbox) == 1 and "/compte/email/confirmer/" in mail.outbox[0].body
+
+    def test_e_mail_invalide_refuse(self):
+        from django.core import mail
+
+        r = connecte(ClientFactory()).post(
+            "/compte/alertes", {"action": "email", "email": "pas-une-adresse"}
+        )
+        assert "pas valide" in html(r) and mail.outbox == []
+
     def test_un_gerant_n_a_pas_d_alertes(self):
         assert connecte(gerant_verifie().user).get("/compte/alertes").status_code == 404
 

@@ -167,7 +167,10 @@ def creer(utilisateur, donnees: dict) -> Alert:
     propre = _valider(donnees)
     _exiger_un_critere(propre)
     _verifier_plafond(utilisateur)
-    return Alert.objects.create(user=utilisateur, **propre)
+    alerte = Alert.objects.create(user=utilisateur, **propre)
+    if alerte.is_active:
+        signaler_existantes(alerte)
+    return alerte
 
 
 def _trouver(utilisateur, alerte_id) -> Alert:
@@ -207,6 +210,51 @@ def supprimer(utilisateur, alerte_id) -> None:
 
 
 PLAFOND_ALERTE_PAR_JOUR = 3
+
+
+LISTE_INITIALE_MAX = 5
+
+
+def _resume(annonce: Listing) -> str:
+    return " · ".join(
+        (
+            types_chambre.libelle(annonce.room_type),
+            f"{textes.francs(annonce.rent_amount)}/mois",
+            annonce.district.name,
+        )
+    )
+
+
+def signaler_existantes(alerte: Alert) -> int:
+    """À la création d'une alerte, les chambres déjà en ligne qui lui correspondent sont signalées d'un seul coup
+    (une notification et un courriel, les plus récentes d'abord) ; sinon l'alerte resterait muette jusqu'à la
+    prochaine publication. Une seule fois par alerte (clé d'unicité)."""
+    requete = selectors.annonces_pour_alerte(alerte)
+    total = requete.count()
+    if not total:
+        return 0
+    recentes = list(
+        requete.select_related("district").order_by("-published_at", "-id")[:LISTE_INITIALE_MAX]
+    )
+    nom = alerte.label or recentes[0].district.name
+    data = {"alert_id": str(alerte.pk), "count": total}
+    if total == 1:
+        titre = f"Une chambre correspond déjà à ton alerte « {nom} »"
+        corps = f"{_resume(recentes[0])}. Vois-la avant qu'elle parte."
+        data |= {"listing_id": str(recentes[0].pk), "slug": recentes[0].slug}
+    else:
+        titre = f"{total} chambres correspondent déjà à ton alerte « {nom} »"
+        corps = "Les plus récentes d'abord. Ouvre tes alertes pour les voir toutes."
+    data["_liste"] = [{"slug": a.slug, "resume": _resume(a)} for a in recentes]  # privé : courriel seulement
+    n = notifications.creer(
+        alerte.user_id,
+        "alert.digest",
+        titre,
+        corps,
+        data=data,
+        dedupe_key=f"alert-initial:{alerte.pk}",
+    )
+    return 1 if n else 0
 
 
 def _recapitulatif(alerte_id, utilisateur_id, nom: str) -> int:

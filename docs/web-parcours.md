@@ -31,7 +31,7 @@ contraste, en une seule fois.
 | Commande | Route | Méthode | Vue | Service / sélecteur | Permission | Succès | Erreurs |
 |---|---|---|---|---|---|---|---|
 | Voir ses favoris | `/compte/favoris` | GET | `mes_favoris` | `selectors.favoris_de` | client/gerant connecté | liste | 302 connexion |
-| Voir/créer/supprimer une alerte | `/compte/alertes` | GET/POST | `mes_alertes` | `services.alertes`, `selectors.alertes_de` | client | message | 404 si gérant ; plafond d'alertes |
+| Voir/créer/supprimer une alerte ; ajouter son e-mail (`action=email`) | `/compte/alertes` | GET/POST | `mes_alertes` | `services.alertes`, `selectors.alertes_de`, `compte.demander_ajout_email` | client | message | 404 si gérant ; plafond d'alertes ; e-mail invalide ou déjà lié |
 | Voir ses conversations | `/compte/messages` | GET | `mes_conversations` | `chat.selectors` | client/gerant | liste | 302 |
 | Lire/écrire/bloquer | `/compte/messages/<id>` | GET/POST | `conversation` | `chat.services.{envoyer,bloquer,debloquer,lire}` | participant | message | 404 tiers ; `ErreurMetier` |
 | Voir ses notifications | `/compte/notifications` | GET | `mes_notifications` | `notifications.selectors` | client/gerant | liste | 302 |

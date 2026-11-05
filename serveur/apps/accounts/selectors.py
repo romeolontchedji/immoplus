@@ -14,6 +14,25 @@ def utilisateur_par_id(identifiant) -> User:
         ) from erreur
 
 
+def contact_courriel(utilisateur_id) -> tuple[str, str] | None:
+    """(adresse confirmée, prénom) d'un compte actif, sinon None : rien n'est envoyé à une adresse non confirmée."""
+    ligne = (
+        User.objects.filter(
+            pk=utilisateur_id,
+            status="active",
+            deleted_at__isnull=True,
+            email__isnull=False,
+            email_verified_at__isnull=False,
+        )
+        .values_list("email", "first_name", "username")
+        .first()
+    )
+    if ligne is None:
+        return None
+    adresse, prenom, nom_utilisateur = ligne
+    return adresse, prenom or nom_utilisateur or ""
+
+
 def appareil_par_id(identifiant) -> Device | None:
     return Device.objects.filter(pk=identifiant).first()
 

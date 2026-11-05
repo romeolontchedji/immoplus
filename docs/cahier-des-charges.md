@@ -963,6 +963,8 @@ Chaque exigence indique ses surfaces (APP, WEB, ADM, §3.1) et sa priorité. « 
 | EF-ALR-02 | Créer une alerte : quartiers, loyer maximum, types, douche et WC internes, distance maximale ; 5 alertes actives au plus. | Toutes (locataire) | M |
 | EF-ALR-03 | Correspondance à la publication, tâche asynchrone ; une seule notification par couple alerte/annonce (clé d'unicité). | Back | M |
 | EF-ALR-04 | Un favori qui devient loué ou masqué déclenche une notification. | Toutes | S |
+| EF-ALR-05 | À la création d'une alerte, les chambres déjà en ligne qui correspondent sont signalées d'un seul coup (une notification de récapitulatif, une seule fois par alerte). | Toutes (locataire) | M |
+| EF-ALR-06 | Une alerte part aussi par courriel quand le compte a une adresse confirmée (site : l'adresse est demandée sur la page des alertes si elle manque) ; la préférence « Alertes » coupée supprime aussi le courriel. | Web, Back | M |
 
 ### 7.6 Messagerie (EF-MSG)
 

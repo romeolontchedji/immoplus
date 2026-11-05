@@ -517,6 +517,47 @@ class TestAlertes:
         Alert.objects.create(user=ClientFactory())
         assert alertes.notifier_correspondances(a.pk) == 0
 
+    def test_une_nouvelle_alerte_signale_les_chambres_deja_en_ligne(self):
+        q, autre = DistrictFactory(), DistrictFactory()
+        ListingFactory(district=q, rent_amount=20000)
+        ListingFactory(district=q, rent_amount=25000)
+        ListingFactory(district=autre, rent_amount=20000)  # autre quartier
+        ListingFactory(district=q, status="draft", published_at=None)  # pas en ligne
+        u = ClientFactory()
+        alerte = alertes.creer(u, {"district_ids": [str(q.pk)]})
+        n = Notification.objects.get(user=u, kind="alert.digest")
+        assert n.dedupe_key == f"alert-initial:{alerte.pk}"
+        assert n.title == f"2 chambres correspondent déjà à ton alerte « {q.name} »"
+        assert n.data["count"] == 2 and len(n.data["_liste"]) == 2
+
+    def test_une_seule_chambre_existante_mene_a_sa_fiche(self):
+        q = DistrictFactory()
+        a = ListingFactory(district=q, rent_amount=20000)
+        u = ClientFactory()
+        alertes.creer(u, {"district_ids": [str(q.pk)], "label": "Pas cher"})
+        n = Notification.objects.get(user=u, kind="alert.digest")
+        assert n.title == "Une chambre correspond déjà à ton alerte « Pas cher »"
+        assert n.data["slug"] == a.slug and n.data["listing_id"] == str(a.pk)
+
+    def test_aucune_chambre_existante_aucune_notification(self):
+        q = DistrictFactory()
+        ListingFactory(district=DistrictFactory())
+        alertes.creer(ClientFactory(), {"district_ids": [str(q.pk)]})
+        assert not Notification.objects.filter(kind="alert.digest").exists()
+
+    def test_les_chambres_existantes_ne_sont_signalees_qu_une_fois(self):
+        q = DistrictFactory()
+        ListingFactory(district=q)
+        alerte = alertes.creer(ClientFactory(), {"district_ids": [str(q.pk)]})
+        assert alertes.signaler_existantes(alerte) == 0
+        assert Notification.objects.filter(kind="alert.digest").count() == 1
+
+    def test_une_alerte_creee_en_pause_ne_signale_rien(self):
+        q = DistrictFactory()
+        ListingFactory(district=q)
+        alertes.creer(ClientFactory(), {"district_ids": [str(q.pk)], "is_active": False})
+        assert not Notification.objects.filter(kind="alert.digest").exists()
+
 
 class TestNotificationsGerant:
     def test_masquage_par_peremption_previent_le_gerant(self, django_capture_on_commit_callbacks):
