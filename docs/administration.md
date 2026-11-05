@@ -17,7 +17,12 @@ valeur par défaut. L'administration est un site à part, sur `https://pilotage.
 5. La session se ferme après `ADMIN_SESSION_IDLE_MIN` minutes d'inactivité (60 par défaut), et dans tous les cas
    après `ADMIN_SESSION_MAX_H` heures (8 par défaut).
 
-Les comptes du personnel ne se créent qu'en ligne de commande, sur le serveur :
+Un **administrateur** crée les comptes du personnel depuis l'administration : **Comptes › Tous les comptes › Nouveau
+personnel** (nom, adresse e-mail réelle, rôle, mot de passe initial et confirmation). Le mot de passe se transmet par
+un canal sûr, jamais par e-mail ; l'action est journalisée (`admin.personnel_cree`). Un modérateur n'y a pas accès.
+
+Le **tout premier** compte administrateur, ou un compte quand plus personne ne peut se connecter, se crée en ligne de
+commande, sur le serveur :
 
 ```bash
 immoplus run --rm admin python manage.py creer_personnel --email awa@immoplus.bj --nom "Awa B." --role moderator

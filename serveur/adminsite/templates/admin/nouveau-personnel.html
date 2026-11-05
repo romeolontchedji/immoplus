@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>Créer un membre du personnel</h1>
+    <div class="module">
+      <h2>Nouveau compte du personnel</h2>
+      <div class="lg-section">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <p class="help">
+            Le compte se connecte avec son adresse e-mail et ce mot de passe, puis avec un code envoyé par courriel à
+            chaque connexion : l'adresse doit donc être réelle. Un administrateur voit tout, y compris les comptes et le
+            journal. Transmets le mot de passe par un canal sûr, jamais par e-mail.
+          </p>
+          <div class="lg-section__actions">
+            <input type="submit" value="Créer le compte" class="default">
+            <a href="{% url 'admin:accounts_user_changelist' %}">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
