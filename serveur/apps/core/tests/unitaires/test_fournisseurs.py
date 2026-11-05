@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 
@@ -26,3 +28,19 @@ class TestCaptcha:
         settings.TURNSTILE_SECRET = "s"
         monkeypatch.setattr(captcha, "URL_VERIFICATION", "http://127.0.0.1:1/x")
         assert captcha.TurnstileProvider().verifier("jeton") is False
+
+    @pytest.mark.parametrize(
+        ("secret", "signale"), [("1x0000000000000000000000000000000AA", True), ("vraie-cle", False)]
+    )
+    def test_cles_de_test_signalees_en_production_quand_le_defi_est_actif(
+        self, settings, caplog, secret, signale
+    ):
+        settings.PRODUCTION = True
+        settings.TURNSTILE_SECRET = secret
+        journal = logging.getLogger("apps.core.securite")
+        journal.addHandler(caplog.handler)  # le journal de l'application ne remonte pas toujours à la racine
+        try:
+            captcha.TurnstileProvider()
+        finally:
+            journal.removeHandler(caplog.handler)
+        assert ("Clés de TEST Turnstile" in caplog.text) is signale

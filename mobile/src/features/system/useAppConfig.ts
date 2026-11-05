@@ -16,7 +16,7 @@ export function useAppConfig() {
 }
 
 /** Repli si la configuration n'est pas encore chargée (hors ligne au premier lancement). */
-const CONTACT_PAR_DEFAUT = { phone: "+2290156201400", whatsapp_url: "https://wa.me/2290156201400" };
+const CONTACT_PAR_DEFAUT = { phone: "+2290160239288", whatsapp_url: "https://wa.me/2290160239288" };
 
 /** Contact de l'équipe Immo+ (même source que le site : paramètre `TEAM_PHONE`). */
 export function useContactEquipe() {

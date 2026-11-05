@@ -6,12 +6,19 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.models import GerantProfile, Role, Statut, StatutVerification, User
+from apps.accounts.models import (
+    ROLES_PERSONNEL,
+    GerantProfile,
+    Role,
+    Statut,
+    StatutVerification,
+    User,
+)
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 
 from .. import signals
-from . import appareils, identifiants, jetons
+from . import appareils, identifiants, jetons, mots_de_passe
 
 journal = logging.getLogger(__name__)
 
@@ -42,6 +49,35 @@ def creer_gerant(
         )
         audit.enregistrer("gerant.cree", acteur=acteur, cible=gerant)
     return gerant
+
+
+def creer_personnel(*, acteur: User, email: str, nom: str, role: str, mot_de_passe: str) -> User:
+    """Crée un compte du personnel (modérateur ou administrateur) depuis l'administration.
+
+    Réservé aux administrateurs. La commande `creer_personnel` reste le moyen de créer le tout premier compte."""
+    if acteur.role != Role.ADMIN or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    if role not in ROLES_PERSONNEL:
+        raise ErreurMetier(
+            "validation_error", "Rôle inconnu.", champs={"role": ["Valeur inconnue"]}
+        )
+    email, nom = email.strip().lower(), nom.strip()
+    if User.objects.filter(email__iexact=email).exists():
+        raise ErreurMetier(
+            "conflict",
+            "Un compte existe déjà avec cet e-mail.",
+            statut=409,
+            champs={"email": ["Déjà utilisé"]},
+        )
+    mots_de_passe.valider(mot_de_passe)
+    with transaction.atomic():
+        utilisateur = User.objects.creer_personnel(
+            email=email, password=mot_de_passe, full_name=nom, role=role
+        )
+        audit.enregistrer(
+            "admin.personnel_cree", acteur=acteur, cible=utilisateur, metadata={"role": role}
+        )
+    return utilisateur
 
 
 def lien_activation(*, acteur: User, gerant: User) -> str:

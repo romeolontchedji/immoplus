@@ -4,6 +4,9 @@
     <li>
       <a href="{% url 'admin:accounts_user_nouveau_gerant' %}" class="addlink">Nouveau gérant</a>
     </li>
+    <li>
+      <a href="{% url 'admin:accounts_user_nouveau_personnel' %}" class="addlink">Nouveau personnel</a>
+    </li>
   {% endif %}
   {{ block.super }}
 {% endblock %}
