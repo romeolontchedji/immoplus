@@ -22,4 +22,5 @@ def entier(nom: str, defaut: int = 0) -> int:
 
 
 def liste(nom: str, defaut: str = "") -> list[str]:
-    return [x.strip() for x in os.environ.get(nom, defaut).split(",") if x.strip()]
+    """Éléments séparés par des virgules ou des espaces (Caddy lit ses listes avec des espaces : un seul format)."""
+    return os.environ.get(nom, defaut).replace(",", " ").split()
