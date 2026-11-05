@@ -33,6 +33,9 @@ def test_entier_et_liste(monkeypatch):
     assert env.entier("IMMOPLUS_ABSENT", 7) == 7
     assert env.liste("IMMOPLUS_L") == ["a", "b", "c"]
     assert env.liste("IMMOPLUS_ABSENT") == []
+    # Même liste que celle de Caddy : des espaces suffisent comme séparateur.
+    monkeypatch.setenv("IMMOPLUS_L", "10.0.0.1/32 10.0.0.2/32")
+    assert env.liste("IMMOPLUS_L") == ["10.0.0.1/32", "10.0.0.2/32"]
 
 
 def test_application_celery_routes_par_file(settings):
