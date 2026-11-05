@@ -15,7 +15,7 @@ def test_accueil():
     reponse = Client().get("/")
     assert reponse.status_code == 200
     html = reponse.content.decode()
-    assert '<html lang="fr">' in html
+    assert '<html lang="fr" data-theme="light">' in html
     assert "Vois ta chambre avant de te déplacer." in html
     assert 'class="accueil-hero"' in html and "Comment ça marche" in html
     assert re.search(r'href="/static/css/dist/immoplus\.[0-9a-f]{10}\.css"', html)
@@ -42,7 +42,8 @@ def test_aucun_style_ni_script_en_ligne():
         html = Client().get(url).content.decode()
         assert " style=" not in html
         assert "<style" not in html
-        assert not re.search(r"<script(?![^>]*\bsrc=)", html)
+        # Seul script sans src admis : les données structurées (JSON-LD), jamais exécutées par le navigateur.
+        assert not re.search(r"<script(?![^>]*\bsrc=)(?![^>]*application/ld\+json)", html)
         assert not re.search(r"\son[a-z]+=", html)
 
 

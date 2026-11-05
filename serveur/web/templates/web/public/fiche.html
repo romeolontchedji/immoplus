@@ -1,6 +1,6 @@
 {% extends "web/base.html" %}
 {% load immoplus static %}
-{% block titre %}{{ f.title }} — {{ f.district.name }}, Parakou — Immo+{% endblock %}
+{% block titre %}{{ f.title }} — à louer à {{ f.district.name }}, Parakou — Immo+{% endblock %}
 {% block description %}{{ partage.description }}{% endblock %}
 {% block partage %}
   <link rel="canonical" href="{{ partage.url }}">
@@ -14,6 +14,14 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt"
         content="{{ f.title }}, {{ f.district.name }}">
+  {% if partage.video %}
+    {# Visite en vidéo : lue dans l'aperçu par les plateformes qui le permettent (Facebook, Telegram…). #}
+    <meta property="og:video" content="{{ partage.video.url }}">
+    <meta property="og:video:secure_url" content="{{ partage.video.url }}">
+    <meta property="og:video:type" content="video/mp4">
+    <meta property="og:video:width" content="{{ partage.video.width }}">
+    <meta property="og:video:height" content="{{ partage.video.height }}">
+  {% endif %}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ partage.titre }}">
   <meta name="twitter:description" content="{{ partage.description }}">

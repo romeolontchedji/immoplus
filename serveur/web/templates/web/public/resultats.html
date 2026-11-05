@@ -2,17 +2,12 @@
 {# Zone des résultats de la page Chambres, renvoyée seule à chaque changement de filtre (js/filtres.js). #}
 <div class="pile pile--large">
   <div class="catalogue-entete-barre">
-    <h1 class="catalogue-titre-principal">
-      {% if quartier %}
-        Chambres à {{ quartier.name }}
-      {% else %}
-        Chambres à Parakou
-      {% endif %}
-    </h1>
+    <h1 class="catalogue-titre-principal">{{ seo.h1 }}</h1>
     {% if not resultat.vide %}
       <span class="catalogue-compte">{{ resultat.items|length }}{% if resultat.next_cursor %}+{% endif %} chambre{{ resultat.items|length|pluralize }}</span>
     {% endif %}
   </div>
+  {% if seo.intro %}<p class="catalogue-intro">{{ seo.intro }}</p>{% endif %}
   {% if erreur %}<div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>{% endif %}
   {% if actifs %}
     <div class="recapitulatif">

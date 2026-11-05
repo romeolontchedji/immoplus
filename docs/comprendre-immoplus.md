@@ -966,6 +966,7 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 |---|---|
 | `docs/adr/` | Les 10 décisions techniques importantes et leurs raisons |
 | `docs/capacite.md` | Combien d'utilisateurs simultanés, mesures, limites et leviers |
+| `docs/referencement.md` | Référencement Google, aperçus de partage, Search Console |
 | `docs/decisions.md` | Décisions de cadrage |
 | `docs/design/DESIGN.md`, `COPYWRITING.md`, `ECARTS.md` | Charte graphique, ton des textes, écarts assumés |
 | `docs/design-system.md` | Composants du site |
@@ -974,6 +975,7 @@ Adresses locales : site `http://www.localhost:8080`, API `http://api.localhost:8
 | `docs/audit-tests-securite.md` | Ce que les tests de sécurité prouvent |
 | `docs/verification.md` | Comment vérifier le travail |
 | `docs/contribuer.md` | Comment contribuer (branches, commits, contrôles) |
+| `docs/flux-et-ci-cd.md` | Du commit à la production : dépôts, hooks, CI GitHub Actions, déploiement |
 | `docs/environnement-generation.md` | Génération de l'environnement |
 | `docs/reste-a-faire.md`, `docs/a-verifier.md` | Listes de suivi |
 

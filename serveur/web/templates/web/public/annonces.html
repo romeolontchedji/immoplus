@@ -1,6 +1,11 @@
 {% extends "web/base.html" %}
 {% load immoplus static %}
-{% block titre %}{% if quartier %}Chambres à {{ quartier.name }}, Parakou{% else %}Chambres à Parakou — loyers, quartiers, visites vidéo{% endif %} — Immo+{% endblock %}
+{% block titre %}{{ seo.titre }}{% endblock %}
+{% block description %}{{ seo.description }}{% endblock %}
+{% block tete %}
+  <link rel="canonical" href="{{ seo.url }}">
+  {% if seo.noindex %}<meta name="robots" content="noindex, follow">{% endif %}
+{% endblock %}
 {% block contenu %}
   {% comment %}
     Page Chambres : filtres en listes déroulantes appliqués en temps réel (js/filtres.js), colonne de filtres fixe

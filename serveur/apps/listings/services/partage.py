@@ -51,7 +51,7 @@ def resume(f: dict) -> str:
     """Caractéristiques principales en une phrase : aperçu du lien et description pour les moteurs de recherche."""
     morceaux = [f.get("room_type_label") or "", f"{f['district']['name']}, Parakou"]
     if f.get("distance_m") is not None:
-        morceaux.append(f"à {f['distance_m']} m de l'UP")
+        morceaux.append(f"à {f['distance_m']} m de l'Université de Parakou")
     loyer = f"{f['rent_amount']:,}".replace(",", " ") + " F/mois"
     morceaux.append(loyer + (" (à débattre)" if f.get("rent_negotiable") else ""))
     equipements = [

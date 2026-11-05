@@ -595,6 +595,7 @@ docker stats --no-stream | grep immoplus     # mémoire et processeur des conten
 - [ ] Vraies clés Turnstile (pas les clés de test) : rien dans Administration › Erreurs à ce sujet.
 - [ ] Restauration d'une sauvegarde testée (et copie sur R2 si tu as choisi de l'activer).
 - [ ] Surveillance externe de `/readyz` active.
+- [ ] Google Search Console validée (TXT dans le DNS), plan du site envoyé, indexation demandée (`docs/referencement.md` §3).
 - [ ] Capacité mesurée sur le VPS (`docs/capacite.md` §6) et `WEB_CONCURRENCY` adapté au nombre de cœurs.
 - [ ] Si Cloudinary est activé : une photo et une vidéo envoyées s'affichent depuis `res.cloudinary.com`.
 - [ ] `.env` conservé dans le coffre de l'équipe.

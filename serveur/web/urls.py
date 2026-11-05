@@ -21,6 +21,7 @@ urlpatterns = [
     path("annonces/<slug:slug>/avis", pub.donner_avis, name="avis"),
     path("gerants/<uuid:gerant_id>", pub.profil_gerant, name="profil-gerant"),
     path("quartiers/<slug:slug>", pub.quartier, name="quartier"),
+    path("pres-de-l-universite", pub.pres_universite, name="pres-universite"),
     path("compte/favoris", pub.mes_favoris, name="favoris"),
     path("compte/alertes", pub.mes_alertes, name="alertes"),
     path("compte/messages", pub.mes_conversations, name="messages"),
