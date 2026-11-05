@@ -9,7 +9,15 @@
 - Le réglage `TURNSTILE_ENABLED` existait dans l'administration sans être lu : il est branché (`captcha.actif()`),
   désactivé par défaut ; décoché, ni défi ni widget Cloudflare. À cocher avec les vraies clés. L'alerte « clés de
   test Turnstile en production » ne part plus au démarrage : elle n'est émise que si le défi est actif avec ces clés.
-- Piège : le thème sombre du système rendait des textes illisibles ; correctif sur la branche `fix/theme-clair-force`.
+- Piège : le thème sombre du système rendait des textes illisibles ; correctif fusionné (PR n°7).
+- Numéro de l'équipe : `+229 01 60 23 92 88`. Piège : `seed` a déjà écrit l'ancien numéro (et `TURNSTILE_ENABLED`
+  à vrai, ancien défaut) dans `app_settings` : une valeur existante n'est jamais écrasée, il faut la changer dans
+  Administration › Paramètres.
+- Création des comptes du personnel depuis l'administration (Comptes › Nouveau personnel, réservé aux administrateurs,
+  journalisée) ; la commande `creer_personnel` reste pour le premier compte.
+- Textes de l'accueil reformulés (sous-titre, piliers, étapes, FAQ) ; `docs/design/COPYWRITING.md` aligné. Restent à
+  revoir dans le même esprit : pages Chambres, fiche, alertes, quartiers.
+- Guide de déploiement aligné sur la doc du VPS : compte `romaeus`, alias SSH `github-immoplus`, `caddy validate`.
 
 **2026-10-21 : référencement.**
 - Page `/pres-de-l-universite` (chambres à moins de 1,5 km du campus, les plus proches d'abord), liée depuis le pied

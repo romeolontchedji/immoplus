@@ -4,8 +4,11 @@ Ce guide part de ton ordinateur et arrive à Immo+ en ligne en HTTPS sur le **VP
 à côté des autres applications de ce serveur. Chaque étape donne la commande exacte et ce que tu dois voir. Si une
 étape ne donne pas le résultat attendu, ne passe pas à la suivante.
 
-> Référence du serveur : `docs/documentation-vps-rmeolab.md` (sécurisation, Caddy central, règles d'or). Ce guide ne
-> refait pas ce qui y est déjà fait : le serveur est sécurisé, Docker est installé, le Caddy central tourne.
+> Référence du serveur : la documentation du VPS rmeolab (sécurisation, Caddy central, règles d'or), fournie par le
+> propriétaire et **gardée hors du dépôt** (jamais commitée). Ce guide ne refait pas ce qui y est déjà fait : le
+> serveur est sécurisé, Docker est installé, le Caddy central tourne. Il suit sa méthode « ajouter une nouvelle
+> application » : un dossier `~/apps/<nom>` sous le compte `romaeus`, une clé de déploiement par dépôt (alias SSH),
+> le réseau partagé `web_proxy` avec un alias unique, un bloc dans le Caddyfile central.
 
 ## 0. Vue d'ensemble
 
@@ -41,7 +44,7 @@ l'étape.
 | Code, contrôles, demandes de fusion vers `main` du dépôt de référence (étape 2) | ✔ | |
 | Comptes Cloudflare, Brevo, Expo, Cloudinary, stockage des sauvegardes (étapes 3 et 4) | | ✔ |
 | DNS du domaine `immoplus.bj` | | ✔ |
-| Accès au VPS, clé de déploiement, `.env`, déploiement (étapes 5 à 12) | | ✔ |
+| Accès au VPS (compte `romaeus`), clé de déploiement, `.env`, déploiement (étapes 5 à 12) | | ✔ |
 | Bloc Immo+ du Caddy central, minuterie d'autoguérison | | ✔ |
 | Compilation et publication de l'application (étape 13) | l'un ou l'autre, avec le compte Expo de l'hébergeur | ✔ |
 | Mises à jour en production (étape 15) : `deployer.sh` après chaque fusion | | ✔ |
@@ -151,6 +154,13 @@ Quatre enregistrements de type **A** vers l'adresse du VPS (`213.156.133.76`), d
 **Résultat attendu** (sur ton ordinateur, après propagation) : `dig +short www.immoplus.bj` affiche `213.156.133.76`,
 de même pour `immoplus.bj`, `api` et `pilotage` (sous Windows : `nslookup www.immoplus.bj 8.8.8.8`).
 
+**Domaine provisoire.** Tant que `immoplus.bj` n'est pas acheté, on peut tout installer sous `immoplus.rmeolab.com` :
+`DOMAIN=immoplus.rmeolab.com` dans `.env` suffit (le serveur en déduit `www.`, `api.` et `pilotage.`), sans changer le
+code. Les noms ont un niveau de plus : un enregistrement `*.rmeolab.com` ne les couvre pas. Crée `immoplus`,
+`www.immoplus`, `api.immoplus` et `pilotage.immoplus` (ou `immoplus` et `*.immoplus`), tous en A vers le VPS. Pour passer
+à `.bj` plus tard : quatre enregistrements DNS, `DOMAIN` dans `.env`, `python3 outils/creer_env.py --services`, le bloc
+du Caddy central (étape 9), `bash infra/vps/deployer.sh`, et les noms d'hôte du nouveau domaine dans Turnstile.
+
 ## 4. Les autres comptes
 
 ### 4.1 Courriels : Brevo (SMTP)
@@ -205,40 +215,44 @@ les vidéos partent alors de son réseau mondial (ADR 0010). Tu peux l'ajouter p
 4. Après le déploiement : Administration › Paramètres › **Photos et vidéos** › « Cloudinary » (détail et retour en
    arrière : `docs/administration.md` §5.8).
 
-## 5. L'utilisateur Immo+ sur le VPS
+## 5. Préparer le serveur
 
-Le serveur appartient au compte `romaeus` (l'hébergeur). Pour isoler Immo+ des autres applications, il crée un
-utilisateur dédié membre du groupe `docker`, avec la clé publique de la personne qui déploiera (la sienne, ou celle
-d'un membre de l'équipe) :
+Comme les autres applications du VPS (présence, WiFiSecure), Immo+ vit dans `~/apps/immoplus` sous le compte
+`romaeus` du propriétaire : pas d'utilisateur dédié. Les commandes qui suivent sont lancées par le propriétaire.
 
-```bash
-# à lancer par le propriétaire du VPS
-sudo adduser --disabled-password --gecos "Immo+" immoplus
-sudo usermod -aG docker immoplus
-sudo install -d -m 700 -o immoplus -g immoplus /home/immoplus/.ssh
-echo "<ta clé publique ssh-ed25519 …>" | sudo tee -a /home/immoplus/.ssh/authorized_keys
-sudo chown immoplus:immoplus /home/immoplus/.ssh/authorized_keys && sudo chmod 600 /home/immoplus/.ssh/authorized_keys
-```
+1. **Instantané LWS** dans le panel (nom descriptif et date, par exemple `avant-immoplus-2026-10-25`) : c'est le bouton
+   « annuler » avant une grosse manipulation. Ce n'est pas une sauvegarde durable.
+2. Connecte-toi et note l'état du serveur :
 
-> Être dans le groupe `docker` donne la main sur **tous** les conteneurs du serveur, y compris ceux des autres
-> projets. Tu ne lances donc des commandes que dans le dossier d'Immo+ et jamais `docker system prune`,
-> `docker volume rm` ni `docker compose down -v`.
+   ```bash
+   ssh romaeus@213.156.133.76
+   free -h && nproc && df -h /                          # mémoire, processeurs, disque libre (docs/capacite.md §5)
+   docker network ls | grep web_proxy                   # le réseau du Caddy central doit exister
+   docker ps --format 'table {{.Names}}\t{{.Status}}'   # note les conteneurs présents : tous doivent rester à la fin
+   sudo ufw status                                      # 22, 80 et 443 déjà ouverts : rien à ajouter
+   ```
 
-Puis, depuis ton ordinateur :
+3. Copie de secours du Caddyfile central, pour pouvoir revenir en arrière à l'étape 9 :
 
-```bash
-ssh immoplus@213.156.133.76
-free -h && nproc && df -h /        # mémoire, processeurs, disque libre (garde-les : docs/capacite.md §5)
-docker network ls | grep web_proxy # le réseau du Caddy central doit exister
-```
+   ```bash
+   cp ~/apps/proxy/Caddyfile ~/apps/proxy/Caddyfile.avant-immoplus
+   ```
 
-**Résultat attendu :** la connexion s'ouvre sans mot de passe. Immo+ a besoin d'environ **3 Go de mémoire** et
-**20 Go de disque** au départ (plus les vidéos). Si la mémoire libre est juste, demande au propriétaire d'ajouter un
-fichier d'échange de 2 Go (ffmpeg, qui réduit les vidéos, en consomme ponctuellement).
+> Seul le Caddy central publie des ports (80 et 443) : Docker contourne UFW pour les ports publiés. Aucun conteneur
+> d'Immo+ n'en publie en mode partagé. Tu ne lances des commandes que dans `~/apps/immoplus`, et jamais
+> `docker system prune`, `docker volume rm` ni `docker compose down -v` (règles d'or, section 18).
+
+**Résultat attendu :** Immo+ a besoin d'environ **3 Go de mémoire** et **20 Go de disque** au départ (plus les
+vidéos). Si la mémoire libre est juste, demande un fichier d'échange de 2 Go (ffmpeg, qui réduit les vidéos, en
+consomme ponctuellement).
 
 ## 6. Récupérer le code et le configurer
 
 ### 6.1 Clé de déploiement GitHub (lecture seule)
+
+Une clé par dépôt : GitHub refuse qu'une même clé de déploiement serve à deux dépôts, et `~/.ssh/config` utilise déjà
+`github.com` pour la présence. Immo+ prend donc un **alias** (`github-immoplus`), comme WiFiSecure. Ne modifie pas le
+bloc `Host github.com` existant.
 
 ```bash
 ssh-keygen -t ed25519 -C "vps-rmeolab-immoplus" -f ~/.ssh/github_immoplus -N ""
@@ -250,14 +264,15 @@ du dépôt), titre `VPS rmeolab`, **sans** cocher « Allow write access ».
 
 ```bash
 cat >> ~/.ssh/config <<'CONF'
-Host github.com
+
+Host github-immoplus
     HostName github.com
     User git
     IdentityFile ~/.ssh/github_immoplus
     IdentitiesOnly yes
 CONF
-ssh -T git@github.com                       # « Hi romeolontchedji/immoplus! … »
-mkdir -p ~/apps && git clone git@github.com:romeolontchedji/immoplus.git ~/apps/immoplus
+ssh -T git@github-immoplus                  # « Hi romeolontchedji/immoplus! … »
+mkdir -p ~/apps && git clone git@github-immoplus:romeolontchedji/immoplus.git ~/apps/immoplus
 cd ~/apps/immoplus && git checkout main
 ```
 
@@ -335,8 +350,8 @@ docker run --rm --network web_proxy curlimages/curl:8.10.1 -s -o /dev/null -w "%
 
 Ordre obligatoire, comme pour toute application du serveur : **DNS en place (étape 3.4) → bloc ajouté → certificat**.
 
-Le propriétaire du VPS ajoute au Caddyfile central le bloc fourni dans le dépôt
-(`infra/caddy/central-immoplus.caddy`) :
+Le propriétaire du VPS ajoute **à la fin** du Caddyfile central le bloc fourni dans le dépôt
+(`infra/caddy/central-immoplus.caddy`), sans toucher aux blocs des autres applications :
 
 ```
 immoplus.bj, www.immoplus.bj, api.immoplus.bj, pilotage.immoplus.bj {
@@ -344,12 +359,23 @@ immoplus.bj, www.immoplus.bj, api.immoplus.bj, pilotage.immoplus.bj {
 }
 ```
 
+Avec le domaine provisoire, les quatre noms sont `immoplus.rmeolab.com`, `www.immoplus.rmeolab.com`,
+`api.immoplus.rmeolab.com` et `pilotage.immoplus.rmeolab.com`.
+
+Ce Caddy sert aussi la présence et WiFiSecure : une faute de syntaxe les couperait. On valide donc avant de recharger.
+
 ```bash
 # par le propriétaire du VPS
-cd ~/apps/proxy && nano Caddyfile        # coller le bloc
+cd ~/apps/proxy && nano Caddyfile                                        # ajouter le bloc
+docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile   # « Valid configuration » exigé
 docker compose up -d                      # recharge le Caddy central
 docker compose logs -f caddy              # attendre « certificate obtained successfully » pour les 4 noms (Ctrl+C)
+curl -sI https://presence.rmeolab.com | head -1                          # les autres applications répondent toujours
 ```
+
+Si les journaux ne montrent aucune demande de certificat, le conteneur n'a pas relu le fichier : recharge à chaud avec
+`docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile`. En cas de problème, remets
+`Caddyfile.avant-immoplus` (étape 5) à la place du Caddyfile et recharge de la même façon.
 
 Les autres applications du serveur ne sont pas touchées.
 
@@ -418,7 +444,7 @@ fois par heure, ensuite il faut intervenir). Elle ne touche **que** les conteneu
 
 ```bash
 # par le propriétaire du VPS, dans le dossier d'Immo+
-sudo bash /home/immoplus/apps/immoplus/infra/vps/installer-autoguerison.sh
+sudo bash ~/apps/immoplus/infra/vps/installer-autoguerison.sh
 journalctl -t immoplus-autoguerison        # historique
 ```
 
@@ -541,7 +567,7 @@ Administration › **Erreurs**.
 À chaque nouvelle version poussée sur `main` (étape 2) :
 
 ```bash
-ssh immoplus@213.156.133.76
+ssh romaeus@213.156.133.76
 cd ~/apps/immoplus
 immoplus exec backup bash /scripts/boucle.sh une-fois      # sauvegarde juste avant (conseillé)
 bash infra/vps/deployer.sh
@@ -581,6 +607,14 @@ docker stats --no-stream | grep immoplus     # mémoire et processeur des conten
   dépôt ni dans une messagerie.
 - 🌐 **DNS en nuage gris** si tu utilises Cloudflare (étape 3.3).
 - 📸 **Instantané LWS** avant toute grosse manipulation, **sauvegarde Immo+** avant chaque mise à jour.
+- 📦 **Une clé de déploiement par dépôt**, en lecture seule, avec son alias SSH (`github-immoplus`).
+- 🔁 **Ordre HTTPS** : DNS qui pointe vers le VPS, puis conteneurs démarrés (contrôle de l'étape 8), puis bloc du Caddy
+  central : sinon Let's Encrypt échoue et limite les nouvelles tentatives.
+- 🛡️ **Caddy central** : copie de secours et `caddy validate` avant tout rechargement, puis vérification que les autres
+  applications répondent encore.
+- 🚪 **Aucun conteneur d'Immo+ ne publie de port** en mode partagé : seul le Caddy central est en façade.
+- 💾 **Sauvegardes hors du serveur** : le service LWS Basic est « sans garantie ». Sans R2, copie les sauvegardes sur
+  ton ordinateur (étape 12.2).
 
 ## 19. Avant d'ouvrir au public : liste de contrôle
 
