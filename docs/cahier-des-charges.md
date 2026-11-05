@@ -2045,7 +2045,7 @@ Valeurs de départ. Celles marquées « base » sont lues dans `app_settings` et
 | Lectures de conversation par jour avant alerte | 20 par compte | base | §11.11 |
 | Suspension maximale par un modérateur | 30 jours | base | Au-delà : administrateur |
 | Abonnement | désactivé | base | `SUBSCRIPTION_ENABLED`, `SUBSCRIPTION_GRACE_DAYS` = 7, `PLANS` |
-| Défi anti-robot du site | activé | base | `TURNSTILE_ENABLED` ; obligatoire dès 80 % du budget OTP |
+| Défi anti-robot du site | désactivé au lancement (décision du 2026-11-05, avant la création du compte Cloudflare) | base | `TURNSTILE_ENABLED` ; à activer avec les vraies clés Cloudflare |
 | Cache du fil · cache des statistiques | 60 s · 5 min | code | §4.6, §7.10 |
 | Pages de liste | 10 par défaut, 50 au plus | code | §10.1 |
 | Point de référence du campus | à renseigner | base | `CAMPUS_REFERENCE` |

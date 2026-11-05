@@ -102,7 +102,8 @@ NOTES = {
     "même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après "
     "des mots de passe faux.",
     "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
-    "oublié sur le site.",
+    "oublié sur le site. Décoché (réglage au lancement) : aucun défi, et le widget n'est pas chargé ; seules les "
+    "limites de débit freinent les robots. À cocher quand les vraies clés Cloudflare sont dans le serveur.",
     "ADMIN_LOCK_THRESHOLD": "Nombre de mauvais mots de passe avant le blocage d'un compte de l'administration.",
     "ADMIN_SESSION_IDLE_MIN": "Sans activité pendant ce nombre de minutes, la session de l'administration se ferme.",
     "ADMIN_SESSION_MAX_H": "Une session de l'administration se ferme au bout de ce nombre d'heures, même active.",

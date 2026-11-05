@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
+from apps.core import parametres
+
 URL_VERIFICATION = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 
@@ -47,6 +49,11 @@ class TurnstileProvider(CaptchaProvider):
                 return bool(json.loads(reponse.read()).get("success"))
         except (urllib.error.URLError, TimeoutError, OSError, ValueError):
             return False  # en cas de doute, le défi est considéré comme échoué
+
+
+def actif() -> bool:
+    """Vrai si le site exige le défi : paramètre d'administration `TURNSTILE_ENABLED` (désactivé au lancement)."""
+    return bool(parametres.lire("TURNSTILE_ENABLED"))
 
 
 def fournisseur() -> CaptchaProvider:
