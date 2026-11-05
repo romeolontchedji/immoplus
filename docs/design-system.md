@@ -19,7 +19,10 @@ Tout est défini dans `serveur/web/static/css/tokens.css` :
 
 ## Thèmes
 
-Clair par défaut, sombre selon la préférence du système, ou forcé par `data-theme="light|dark"` sur `<html>`.
+Clair par défaut, ou forcé par `data-theme="light|dark"` sur `<html>`. Le site (`web/base.html`) et l'administration
+(`theme-clair.js`) imposent `light` : plusieurs composants gardent des couleurs sombres fixes et devenaient illisibles
+quand le système du visiteur était en mode sombre. Le thème sombre selon la préférence du système reste défini dans
+`tokens.css` ; pour le réactiver, il faut d'abord corriger ces composants et retirer `data-theme="light"`.
 Les deux définitions sombres doivent rester identiques ; `outils/contraste.py` le contrôle, ainsi que les contrastes WCAG AA
 (4,5:1 pour le texte, 3:1 pour le focus et les éléments d'interface).
 
