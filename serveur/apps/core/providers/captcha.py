@@ -1,6 +1,7 @@
 """Défi anti-robot du site : Cloudflare Turnstile et version factice (CDC §5.3)."""
 
 import json
+import logging
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -33,6 +34,15 @@ class TurnstileProvider(CaptchaProvider):
         if not self.secret:
             raise ImproperlyConfigured(
                 "TURNSTILE_SECRET est requis pour le fournisseur « turnstile »."
+            )
+        if getattr(settings, "PRODUCTION", False) and self.secret in getattr(
+            settings, "TURNSTILE_CLES_DE_TEST", ()
+        ):
+            # Erreur volontaire, seulement quand le défi est actif (le fournisseur n'est créé qu'alors) : elle
+            # remonte dans l'administration (« Erreurs ») et par courriel.
+            logging.getLogger("apps.core.securite").error(
+                "Clés de TEST Turnstile en production : l'anti-robot laisse tout passer. "
+                "Renseigne TURNSTILE_SITE_KEY et TURNSTILE_SECRET (Cloudflare) puis redémarre."
             )
 
     def verifier(self, jeton, ip=None) -> bool:

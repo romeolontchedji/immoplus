@@ -7,8 +7,8 @@
   `github-immoplus`, bloc ajouté au Caddy central) sous `imos-plus.com` (`www.`, `api.`, `pilotage.`). Courriels :
   SMTP LWS, nom d'hôte du serveur (`mailNN.lwspanel.com`) et non `mail.<domaine>` dont le certificat ne correspond pas.
 - Le réglage `TURNSTILE_ENABLED` existait dans l'administration sans être lu : il est branché (`captcha.actif()`),
-  désactivé par défaut ; décoché, ni défi ni widget Cloudflare. À cocher avec les vraies clés. Les clés de test de
-  `.env` restent signalées dans Erreurs à chaque démarrage tant qu'elles ne sont pas remplacées.
+  désactivé par défaut ; décoché, ni défi ni widget Cloudflare. À cocher avec les vraies clés. L'alerte « clés de
+  test Turnstile en production » ne part plus au démarrage : elle n'est émise que si le défi est actif avec ces clés.
 - Piège : le thème sombre du système rendait des textes illisibles ; correctif sur la branche `fix/theme-clair-force`.
 
 **2026-10-21 : référencement.**
