@@ -245,7 +245,8 @@ def signaler_existantes(alerte: Alert) -> int:
     else:
         titre = f"{total} chambres correspondent déjà à ton alerte « {nom} »"
         corps = "Les plus récentes d'abord. Ouvre tes alertes pour les voir toutes."
-    data["_liste"] = [{"slug": a.slug, "resume": _resume(a)} for a in recentes]  # privé : courriel seulement
+    # Clé privée (préfixe `_`) : réservée au courriel, jamais exposée par l'API des notifications.
+    data["_liste"] = [{"slug": a.slug, "resume": _resume(a)} for a in recentes]
     n = notifications.creer(
         alerte.user_id,
         "alert.digest",
