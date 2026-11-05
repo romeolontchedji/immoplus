@@ -33,7 +33,9 @@ def _signaler(form, erreur: ErreurMetier) -> None:
 
 
 def _exiger_captcha(request, jeton: str | None) -> None:
-    """Turnstile (Cloudflare) sur l'inscription et le mot de passe oublié du site (ADR 0009)."""
+    """Turnstile (Cloudflare) sur l'inscription et le mot de passe oublié du site (ADR 0009), si le défi est actif."""
+    if not captcha.actif():
+        return
     if not captcha.fournisseur().verifier(jeton, ip_client(request)):
         raise ErreurMetier("captcha_required", "Confirme que tu n'es pas un robot, puis réessaie.")
 
@@ -69,6 +71,7 @@ def _suite(request) -> str:
 def _page(request, gabarit: str, form, titre: str, **extra):
     contexte = {
         "form": form, "titre": titre,
+        "captcha_actif": captcha.actif(),
         "captcha_fictif": settings.CAPTCHA_PROVIDER == "fake",
         "site_key": settings.TURNSTILE_SITE_KEY,
         **extra,

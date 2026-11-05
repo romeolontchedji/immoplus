@@ -2,6 +2,15 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-05 : mise en ligne sur le VPS rmeolab et défi anti-robot désactivable.**
+- Immo+ déployé sur le VPS partagé (`~/apps/immoplus`, compte `romaeus`, clé de déploiement avec alias SSH
+  `github-immoplus`, bloc ajouté au Caddy central) sous `imos-plus.com` (`www.`, `api.`, `pilotage.`). Courriels :
+  SMTP LWS, nom d'hôte du serveur (`mailNN.lwspanel.com`) et non `mail.<domaine>` dont le certificat ne correspond pas.
+- Le réglage `TURNSTILE_ENABLED` existait dans l'administration sans être lu : il est branché (`captcha.actif()`),
+  désactivé par défaut ; décoché, ni défi ni widget Cloudflare. À cocher avec les vraies clés. Les clés de test de
+  `.env` restent signalées dans Erreurs à chaque démarrage tant qu'elles ne sont pas remplacées.
+- Piège : le thème sombre du système rendait des textes illisibles ; correctif sur la branche `fix/theme-clair-force`.
+
 **2026-10-21 : référencement.**
 - Page `/pres-de-l-universite` (chambres à moins de 1,5 km du campus, les plus proches d'abord), liée depuis le pied
   de page et le plan du site. Titres et descriptions des listes centrés sur « chambres à louer » et l'Université de

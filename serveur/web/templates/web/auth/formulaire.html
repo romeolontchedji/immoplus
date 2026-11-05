@@ -124,7 +124,7 @@
             {% include "web/composants/champ.html" %}
           {% endfor %}
           {% for champ in form.hidden_fields %}{{ champ }}{% endfor %}
-          {% if captcha_requis and not captcha_fictif and site_key %}
+          {% if captcha_requis and captcha_actif and not captcha_fictif and site_key %}
             <div class="cf-turnstile"
                  data-sitekey="{{ site_key }}"
                  data-response-field-name="captcha"></div>

@@ -285,7 +285,7 @@ Verrouillages et défi anti-robot.
 | `LOGIN_FAILS_PER_HOUR_PER_PHONE` | `30` | Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les attaques réparties). |
 | `RATE_IP_FACTOR` | `3` | Les visiteurs non connectés sont comptés par adresse IP ; or des centaines d'abonnés mobiles ou d'étudiants du campus partagent souvent la même. Plafonds anonymes par minute et par adresse = 60 (pages publiques) ou 240 (fil) × ce nombre. Les comptes connectés ont chacun leur propre compteur. À monter un jour de forte affluence si des visiteurs voient « Trop de requêtes ». |
 | `AUTH_RATE_PER_MIN_IP` | `60` | Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après des mots de passe faux. |
-| `TURNSTILE_ENABLED` | coché | Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe oublié sur le site. |
+| `TURNSTILE_ENABLED` | décoché | Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe oublié sur le site. Décoché (réglage au lancement) : aucun défi et le widget n'est pas chargé ; seules les limites de débit freinent les robots. À cocher quand les vraies clés Cloudflare sont dans `.env`. |
 | `ADMIN_LOCK_THRESHOLD` | `5` | Nombre de mauvais mots de passe avant le blocage d'un compte de l'administration. |
 | `ADMIN_SESSION_IDLE_MIN` | `60` | Sans activité pendant ce nombre de minutes, la session de l'administration se ferme. |
 | `ADMIN_SESSION_MAX_H` | `8` | Une session de l'administration se ferme au bout de ce nombre d'heures, même active. |

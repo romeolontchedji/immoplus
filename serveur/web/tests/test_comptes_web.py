@@ -14,6 +14,7 @@ from apps.accounts.tests.fabriques import (
     ClientFactory,
     DeviceFactory,
 )
+from apps.core import parametres
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db]
 FORT = "un-Mot-de-passe-solide-42"
@@ -61,8 +62,30 @@ def test_inscription_sur_une_page_puis_cle_de_secours():
 
 
 def test_inscription_sans_defi_refusee():
+    parametres.definir("TURNSTILE_ENABLED", True)
     r = Client().post("/inscription", {**INSCRIPTION, "captcha": ""})
     assert r.status_code == 200 and "robot" in r.content.decode() and not User.objects.exists()
+
+
+def test_defi_desactive_par_defaut_inscription_sans_jeton_acceptee():
+    assert parametres.lire("TURNSTILE_ENABLED") is False
+    r = Client().post("/inscription", {**INSCRIPTION, "captcha": ""})
+    assert r.status_code == 302 and User.objects.filter(username="awa.bio").exists()
+
+
+def test_mot_de_passe_oublie_sans_jeton_quand_le_defi_est_desactive():
+    r = Client().post("/mot-de-passe-oublie", {"identifier": "personne", "captcha": ""})
+    assert r.status_code == 200 and "robot" not in r.content.decode()
+
+
+@pytest.mark.parametrize("actif", [True, False])
+def test_widget_turnstile_charge_seulement_si_le_defi_est_actif(settings, actif):
+    settings.CAPTCHA_PROVIDER = "turnstile"
+    settings.TURNSTILE_SITE_KEY = "cle-du-site"
+    parametres.definir("TURNSTILE_ENABLED", actif)
+    page = Client().get("/inscription").content.decode()
+    assert ("cf-turnstile" in page) is actif
+    assert ("challenges.cloudflare.com" in page) is actif
 
 
 def test_nom_d_utilisateur_deja_pris():
