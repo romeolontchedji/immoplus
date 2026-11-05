@@ -82,7 +82,9 @@ class TestCourrielDesAlertes:
     ):
         from django.core import mail
 
-        creer_et_envoyer(django_capture_on_commit_callbacks, self.confirme(), kind="message.received")
+        creer_et_envoyer(
+            django_capture_on_commit_callbacks, self.confirme(), kind="message.received"
+        )
         assert mail.outbox == []
 
 

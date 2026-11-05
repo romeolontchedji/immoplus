@@ -38,7 +38,8 @@ class TestCaptcha:
         settings.PRODUCTION = True
         settings.TURNSTILE_SECRET = secret
         journal = logging.getLogger("apps.core.securite")
-        journal.addHandler(caplog.handler)  # le journal de l'application ne remonte pas toujours à la racine
+        # Le journal de l'application ne remonte pas toujours à la racine : on y branche la capture.
+        journal.addHandler(caplog.handler)
         try:
             captcha.TurnstileProvider()
         finally:

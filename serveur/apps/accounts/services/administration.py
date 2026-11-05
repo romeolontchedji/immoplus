@@ -67,7 +67,7 @@ def creer_personnel(*, acteur: User, email: str, nom: str, role: str, mot_de_pas
             "conflict",
             "Un compte existe déjà avec cet e-mail.",
             statut=409,
-            champs={"email": ["Déjà utilisé"]},
+            champs={"email": ["Un compte existe déjà avec cette adresse e-mail."]},
         )
     mots_de_passe.valider(mot_de_passe)
     with transaction.atomic():
