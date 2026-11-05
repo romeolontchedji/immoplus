@@ -141,7 +141,7 @@ de lecture sur le dépôt (`permissions: contents: read`) : la CI ne publie rien
 Après chaque fusion sur `main`, sur le VPS :
 
 ```bash
-ssh immoplus@213.156.133.76
+ssh romaeus@213.156.133.76
 cd ~/apps/immoplus
 immoplus exec backup bash /scripts/boucle.sh une-fois     # sauvegarde juste avant (alias de l'étape 7 du guide)
 bash infra/vps/deployer.sh

@@ -48,6 +48,24 @@ class NouveauGerantForm(forms.Form):
     zone = forms.CharField(label="Zone d'activité", max_length=160)
 
 
+class NouveauPersonnelForm(forms.Form):
+    """Compte du personnel : l'administrateur choisit le mot de passe initial et le transmet par un canal sûr."""
+
+    full_name = forms.CharField(label="Nom complet", max_length=120)
+    email = forms.EmailField(label="Adresse e-mail")
+    role = forms.ChoiceField(
+        label="Rôle", choices=[("moderator", "Modérateur"), ("admin", "Administrateur")]
+    )
+    password = forms.CharField(label="Mot de passe initial", widget=forms.PasswordInput)
+    password2 = forms.CharField(label="Confirmation du mot de passe", widget=forms.PasswordInput)
+
+    def clean(self):
+        donnees = super().clean()
+        if donnees.get("password") != donnees.get("password2"):
+            self.add_error("password2", "Les deux mots de passe sont différents.")
+        return donnees
+
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ("full_name", "username", "role", "status", "email", "created_at")
@@ -89,12 +107,13 @@ class UserAdmin(admin.ModelAdmin):
     actions = ["suspendre", "reactiver", "bannir"]
 
     def has_add_permission(self, request):
-        return False  # les comptes se créent par l'API (locataires), « Nouveau gérant » ou la commande (personnel)
+        return False  # les comptes se créent par l'API (locataires), « Nouveau gérant » ou « Nouveau personnel »
 
     def get_urls(self):
         from django.urls import path
 
         return [path("nouveau-gerant/", self.admin_site.admin_view(self.nouveau_gerant), name="accounts_user_nouveau_gerant"),
+                path("nouveau-personnel/", self.admin_site.admin_view(self.nouveau_personnel), name="accounts_user_nouveau_personnel"),
                 path("<uuid:user_id>/lien/<str:objet>/", self.admin_site.admin_view(self.lien), name="accounts_user_lien"),
                 *super().get_urls()]  # fmt: skip
 
@@ -175,6 +194,44 @@ class UserAdmin(admin.ModelAdmin):
             "opts": self.model._meta,
         }
         return render(request, "admin/nouveau-gerant.html", contexte)
+
+    def nouveau_personnel(self, request):
+        """Crée un compte du personnel (modérateur ou administrateur), réservé aux administrateurs."""
+        from django.shortcuts import redirect, render
+
+        if not (request.user.is_active and request.user.role == "admin"):
+            raise PermissionDenied
+        formulaire = NouveauPersonnelForm(request.POST or None)
+        if request.method == "POST" and formulaire.is_valid():
+            d = formulaire.cleaned_data
+            try:
+                compte = administration.creer_personnel(
+                    acteur=request.user,
+                    email=d["email"],
+                    nom=d["full_name"],
+                    role=d["role"],
+                    mot_de_passe=d["password"],
+                )
+            except ErreurMetier as erreur:
+                for champ, messages_champ in erreur.champs.items():
+                    for m in messages_champ:
+                        formulaire.add_error(champ if champ in formulaire.fields else None, m)
+                if not erreur.champs:
+                    formulaire.add_error(None, erreur.message)
+            else:
+                self.message_user(
+                    request,
+                    f"Compte créé : {compte.email} ({compte.get_role_display()}). Transmets-lui son mot de passe "
+                    "par un canal sûr ; un code de connexion lui sera envoyé par courriel à chaque connexion.",
+                )
+                return redirect("admin:accounts_user_change", compte.pk)
+        contexte = {
+            **self.admin_site.each_context(request),
+            "title": "Nouveau membre du personnel",
+            "form": formulaire,
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/nouveau-personnel.html", contexte)
 
     def has_delete_permission(self, request, obj=None):
         return False  # un compte s'anonymise, il ne se supprime pas

@@ -19,6 +19,8 @@ from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
 
+MDP_PERSONNEL = "un-Mot-de-passe-solide-42"
+
 REGLAGES = {
     "ROOT_URLCONF": "config.urls_admin",
     "MIDDLEWARE": admin_base.MIDDLEWARE_ADMIN,
@@ -273,6 +275,67 @@ class TestActions:
             {"first_name": "X", "last_name": "Y", "zone": "Z"},
         )
         assert r.status_code in (302, 403) and not User.objects.filter(role="gerant").exists()
+
+    def test_un_administrateur_cree_un_moderateur_puis_un_administrateur(self):
+        c, admin_ = self.connecte()
+        for role in ("moderator", "admin"):
+            r = c.post(
+                reverse("admin:accounts_user_nouveau_personnel"),
+                {"full_name": "Awa Bio", "email": f"{role}@immoplus.test", "role": role,
+                 "password": MDP_PERSONNEL, "password2": MDP_PERSONNEL},
+            )  # fmt: skip
+            assert r.status_code == 302, r.content.decode()[:400]
+            u = User.objects.get(email=f"{role}@immoplus.test")
+            assert u.role == role and u.is_staff and u.check_password(MDP_PERSONNEL)
+        assert AuditLog.objects.filter(action="admin.personnel_cree", actor=admin_).count() == 2
+
+    def test_le_nouveau_personnel_peut_se_connecter(self):
+        c, _ = self.connecte()
+        c.post(
+            reverse("admin:accounts_user_nouveau_personnel"),
+            {"full_name": "Awa Bio", "email": "nouveau@immoplus.test", "role": "moderator",
+             "password": MDP_PERSONNEL, "password2": MDP_PERSONNEL},
+        )  # fmt: skip
+        nouveau = User.objects.get(email="nouveau@immoplus.test")
+        connecte, _ = se_connecter(nouveau, MDP_PERSONNEL)
+        assert connecte.get("/").status_code == 200
+
+    def test_un_moderateur_ne_cree_pas_de_personnel(self):
+        c, _ = self.connecte(PersonnelFactory)
+        r = c.post(
+            reverse("admin:accounts_user_nouveau_personnel"),
+            {"full_name": "X Y", "email": "intrus@immoplus.test", "role": "admin",
+             "password": MDP_PERSONNEL, "password2": MDP_PERSONNEL},
+        )  # fmt: skip
+        assert r.status_code in (302, 403)
+        assert not User.objects.filter(email="intrus@immoplus.test").exists()
+
+    @pytest.mark.parametrize(
+        "changement",
+        [
+            {"password2": "autre-Mot-de-passe-42"},  # confirmation différente
+            {"password": "12345678", "password2": "12345678"},  # mot de passe trop faible
+            {"role": "client"},  # rôle qui n'est pas du personnel
+        ],
+    )
+    def test_creation_de_personnel_refusee(self, changement):
+        c, _ = self.connecte()
+        champs = {"full_name": "Awa Bio", "email": "refuse@immoplus.test", "role": "moderator",
+                  "password": MDP_PERSONNEL, "password2": MDP_PERSONNEL}  # fmt: skip
+        r = c.post(reverse("admin:accounts_user_nouveau_personnel"), {**champs, **changement})
+        assert r.status_code == 200
+        assert not User.objects.filter(email="refuse@immoplus.test").exists()
+
+    def test_creation_de_personnel_avec_une_adresse_deja_prise(self):
+        c, admin_ = self.connecte()
+        avant = User.objects.count()
+        r = c.post(
+            reverse("admin:accounts_user_nouveau_personnel"),
+            {"full_name": "Doublon", "email": admin_.email.upper(), "role": "moderator",
+             "password": MDP_PERSONNEL, "password2": MDP_PERSONNEL},
+        )  # fmt: skip
+        assert r.status_code == 200 and "existe déjà" in r.content.decode()
+        assert User.objects.count() == avant
 
     def test_un_moderateur_ne_voit_pas_les_comptes_ni_le_journal(self):
         c, _ = self.connecte(PersonnelFactory)

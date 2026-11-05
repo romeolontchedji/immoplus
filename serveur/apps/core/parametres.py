@@ -116,7 +116,7 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "Où ranger les nouvelles photos et vidéos : disque du serveur ou Cloudinary.",
     ),
     "TEAM_PHONE": (
-        "+2290156201400",
+        "+2290160239288",
         "Numéro de l'équipe Immo+ (appel et WhatsApp), format international.",
     ),
     # Identité de l'éditeur dans les textes légaux : VALEURS FICTIVES PROVISOIRES (décision du 2026-10-17),
