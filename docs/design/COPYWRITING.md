@@ -61,10 +61,10 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 ### Hero
 - **Pastille** (ouverte à tous) : `Chambres à Parakou, près de l'UP et partout en ville`
 - **Titre (recommandé)** : **Vois ta chambre avant de te déplacer.**
-- **Sous-titre** : `Visite en vidéo, gérants vérifiés par notre équipe, alertes dès qu'une chambre se libère.`
+- **Sous-titre** : `Visite en vidéo, gérants vérifiés par notre équipe, alerte dès qu'une chambre se libère. Tu choisis en connaissance de cause.`
 - **CTA principal (jaune)** : `Voir les chambres`
 - **CTA secondaire (contour)** : `Créer une alerte`
-- **Lien discret** : `Tu loues des chambres ? Découvre comment publier`
+- **Lien discret** : `Tu loues des chambres ? Fais visiter sans bouger`
 - **Puces de confiance** : `Gérants vérifiés` · `Visite en vidéo` · `Contact direct`
 
 **Variantes A/B du titre** (à tester, une seule à la fois) :
@@ -78,22 +78,23 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 - Champs : `QUARTIER` (placeholder `Banikanni, Guéma…`), `BUDGET MAX` (placeholder `15 000 F / mois`)
 - Bouton : `Voir les chambres`
 
-### Section « Pourquoi Immo+ » (3 piliers : problème, puis réponse)
-1. **Titre** : `Tu ne paies pas pour une chambre que tu n'as pas vue.` — **Texte** : `Regarde la visite en vidéo, vérifie le gérant, puis seulement après, vas-y.`
-2. **Titre** : `Un gérant vérifié, pas un inconnu.` — **Texte** : `Avant de publier, chaque gérant fournit ses pièces et passe un entretien avec notre équipe.`
-3. **Titre** : `Tu n'as plus besoin d'être dans le bon groupe.` — **Texte** : `Toutes les chambres au même endroit. Crée une alerte : si une chambre correspond, tu le sais.`
+### Section « Louer sans mauvaise surprise » (3 piliers : problème, puis réponse)
+- **Titre** : `Louer à Parakou sans mauvaise surprise` — **Sous-titre** : `Ce que change Immo+ quand tu cherches une chambre.`
+1. **Titre** : `Tu ne paies pas pour une chambre que tu n'as pas vue.` — **Texte** : `Regarde la visite en vidéo, vérifie le gérant, puis seulement après, déplace-toi.`
+2. **Titre** : `Un gérant vérifié, pas un inconnu.` — **Texte** : `Chaque gérant fournit ses pièces et rencontre notre équipe avant de publier sa première annonce.`
+3. **Titre** : `Tu n'as plus besoin d'être dans le bon groupe.` — **Texte** : `Toutes les chambres au même endroit. Crée une alerte : dès qu'une chambre correspond, on te prévient.`
 
 ### Section « Comment ça marche »
-- **Titre** : `Trouver ou louer, en 3 étapes`
+- **Titre** : `Trouver ou louer, en 3 étapes` — **Sous-titre** : `Que tu cherches une chambre ou que tu en loues, tout tient en trois étapes.`
 - **Onglet / colonne Locataire** : titre `Je cherche une chambre`
-  1. `Filtre à ta façon` — `Quartier, budget, type. Tu gardes seulement ce qui t'intéresse.`
-  2. `Regarde la visite` — `Une vidéo de la chambre, avant de te déplacer.`
-  3. `Contacte le gérant` — `Discute dans l'app, fixe la visite, puis décide.`
+  1. `Trouve ce qui te convient` — `Quartier, budget, type : tu ne gardes que les chambres qui t'intéressent.`
+  2. `Regarde la visite` — `Parcours la chambre en vidéo, sans te déplacer.`
+  3. `Contacte le gérant` — `Écris-lui dans l'app, fixe la visite, puis décide.`
   - Bouton : `Voir les chambres`
 - **Colonne Gérant** : titre `Je loue des chambres`
-  1. `Contacte l'équipe Immo+` — `Par WhatsApp ou appel, avec tes pièces.`
+  1. `Contacte l'équipe Immo+` — `Écris-nous sur WhatsApp ou appelle-nous, pièces en main.`
   2. `On vérifie, puis on crée ton compte` — `Pièce d'identité, justificatif, court entretien.`
-  3. `Publie et reçois des demandes` — `Une vidéo, des photos, et tu vois qui regarde ta chambre.`
+  3. `Publie, puis reçois des demandes` — `Une vidéo, des photos, et tu vois qui regarde ta chambre.`
   - Bouton : `Contacter l'équipe · +229 01 60 23 92 88`
 
 ### Bloc de prévention (bande bleu clair, avant la FAQ)
@@ -104,7 +105,7 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 ### Bloc alerte
 - **Titre** : `Ne cours plus après les annonces.` — **Texte** : `Dis-nous ton quartier et ton budget. On te prévient dès qu'une chambre correspond.` — **Bouton** : `Créer mon alerte`
 
-### FAQ (réponses courtes, une peur par question)
+### FAQ (réponses courtes, une peur par question) — titre de la section : `Tes questions, nos réponses`
 1. **Immo+ est-il gratuit pour moi ?** — `Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.`
 2. **Je ne suis pas étudiant, puis-je l'utiliser ?** — `Oui. Immo+ est ouvert à tous ceux qui cherchent une chambre à Parakou : étudiants, stagiaires, travailleurs, familles.`
 3. **Comment savoir que la chambre existe vraiment ?** — `Regarde la visite en vidéo et le badge Vérifié du gérant. Ensuite, visite avant tout paiement.`
