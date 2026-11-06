@@ -18,9 +18,12 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE ROLE migrate LOGIN PASSWORD :'migrate_pw';
 CREATE ROLE app LOGIN PASSWORD :'app_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE;
 CREATE ROLE admin_app LOGIN PASSWORD :'admin_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE;
--- Rôle de rétention (purges d'audit_logs, CDC §9.18) : sans connexion, endossé par migrate via SET ROLE.
+-- Rôle de rétention (purges d'audit_logs, CDC §9.18) : sans connexion, endossé via SET ROLE par `migrate` et par
+-- `app` (la tâche planifiée tourne dans le worker, connecté en `app`). Un déclencheur borne ce rôle : il ne peut que
+-- vider ip/user_agent après 90 jours et supprimer après 24 mois.
 CREATE ROLE retention NOLOGIN;
 GRANT retention TO migrate;
+GRANT retention TO app;
 
 REVOKE ALL ON DATABASE :"base" FROM PUBLIC;
 GRANT CONNECT ON DATABASE :"base" TO migrate, app, admin_app;
