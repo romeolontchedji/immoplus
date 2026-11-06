@@ -58,7 +58,8 @@ rôles (`infra/postgres/init/01-roles.sh`) et vérifier qu'aucune requête nouve
 Points précis : (1) `gerants_publics` lit `gerant_profiles` par `.values()` sur des colonnes publiques seulement (voulu) ;
 (2) la tâche de nuit écrit `response_rate_30d` et `median_response_min` (colonnes autorisées en UPDATE) ;
 (3) `audit.services.purger_selon_retention` fait `SET LOCAL ROLE retention` : il faut que le rôle de connexion du worker
-en soit membre (ce n'est le cas que pour `migrate` dans `01-roles.sh`) — sinon la purge échoue ou ne fait rien ;
+en soit membre — `01-roles.sh` l'accorde à `migrate` et à `app` (sur une base créée avant ce correctif :
+`GRANT retention TO app;` en superutilisateur ; constaté sur le VPS le 2026-11-06, « permission denied to set role ») ;
 (4) les nouvelles tables héritent des droits par défaut `app` et `admin_app` (lecture/écriture complètes) : à resserrer
 si vous voulez que `app` ne puisse pas modifier `moderation_actions`, `reports` ou `audit`.
 
