@@ -2,6 +2,13 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-09 : passage sur un nouveau PC et correctif mobile.**
+- Mobile : zod 4.6.7 (faille d'épuisement mémoire). Une copie 3.25 reste embarquée par `@expo/cli` jusqu'à Expo 58.
+- Piège : `npm install` avec `--legacy-peer-deps` retire `@react-native/jest-preset` du verrou mobile ; utiliser `npm ci`.
+- Piège : `make seed DEMO=1` échoue, le conteneur `admin` monte `media_public` en lecture seule et n'a pas `media_tmp`.
+- Piège : le double envoi vers `Magloireaffokpe/immoplus` est un réglage local à refaire sur chaque poste
+  (voir `docs/flux-et-ci-cd.md`).
+
 **2026-11-05 : mise en ligne sur le VPS rmeolab et défi anti-robot désactivable.**
 - Immo+ déployé sur le VPS partagé (`~/apps/immoplus`, compte `romaeus`, clé de déploiement avec alias SSH
   `github-immoplus`, bloc ajouté au Caddy central) sous `imos-plus.com` (`www.`, `api.`, `pilotage.`). Courriels :
