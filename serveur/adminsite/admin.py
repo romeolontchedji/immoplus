@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
@@ -104,7 +105,7 @@ class UserAdmin(admin.ModelAdmin):
             )
         return format_html('<a class="button" href="{}">{}</a>', url, texte)
 
-    actions = ["suspendre", "reactiver", "bannir"]
+    actions = ["suspendre", "reactiver", "bannir", "supprimer_comptes"]
 
     def has_add_permission(self, request):
         return False  # les comptes se créent par l'API (locataires), « Nouveau gérant » ou « Nouveau personnel »
@@ -293,6 +294,35 @@ class UserAdmin(admin.ModelAdmin):
     @admin.action(description="Bannir")
     def bannir(self, request, queryset):
         self._appliquer(request, queryset, "banned")
+
+    @admin.action(description="Supprimer (anonymise le compte)")
+    def supprimer_comptes(self, request, queryset):
+        """Supprime des comptes confirmés ou non, après une page de confirmation. Les lignes restent (annonces,
+        messages, journal) mais plus rien n'identifie la personne et l'adresse e-mail redevient libre."""
+        from django.template.response import TemplateResponse
+
+        if request.POST.get("confirmer") != "oui":
+            return TemplateResponse(
+                request,
+                "admin/confirmer-suppression.html",
+                {
+                    **self.admin_site.each_context(request),
+                    "title": "Supprimer des comptes",
+                    "opts": self.model._meta,
+                    "comptes": list(queryset),
+                    "action": "supprimer_comptes",
+                    "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
+                },
+            )
+        faits = 0
+        for cible in queryset:
+            try:
+                administration.supprimer_compte(acteur=request.user, cible=cible)
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{cible} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} compte(s) supprimé(s).")
+        return None
 
 
 @admin.register(GerantProfile)

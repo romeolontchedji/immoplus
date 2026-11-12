@@ -2,6 +2,11 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-12 : liens d'activation des gérants invalides (clé de signature).** L'administration (`ADMIN_SECRET_KEY`)
+signait les liens, le site (`SITE_SECRET_KEY`) les lisait : signature toujours refusée. Nouvelle clé `LIENS_SIGNING_KEY`,
+commune aux deux (obligatoire en production). Sur un serveur existant : `python3 outils/creer_env.py --services`, puis
+`immoplus up -d --force-recreate web-api admin` ; les liens déjà envoyés sont à régénérer.
+
 **2026-11-09 : passage sur un nouveau PC et correctif mobile.**
 - Mobile : zod 4.6.7 (faille d'épuisement mémoire). Une copie 3.25 reste embarquée par `@expo/cli` jusqu'à Expo 58.
 - Piège : `npm install` avec `--legacy-peer-deps` retire `@react-native/jest-preset` du verrou mobile ; utiliser `npm ci`.

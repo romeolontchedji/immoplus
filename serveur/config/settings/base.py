@@ -203,6 +203,9 @@ PRODUCTION = False  # vrai dans les réglages public, admin et taches (garde-fou
 
 # --- Clés de sécurité : distinctes entre elles et de SECRET_KEY ; refusées en production si elles viennent d'ici ---
 JWT_SIGNING_KEY = env.texte("JWT_SIGNING_KEY", "dev-jwt-ne-jamais-utiliser-en-production")
+# Signature des liens à usage unique (activation d'un gérant, réinitialisation, confirmation d'e-mail). Partagée par
+# le site et l'administration, qui ont chacun leur SECRET_KEY : vide, la clé du processus est utilisée (dev, tests).
+LIENS_SIGNING_KEY = env.texte("LIENS_SIGNING_KEY")
 REDIS_QUEUE_FAKE = False
 
 # --- Drapeaux (valeur initiale ; `app_settings` fait foi une fois la phase 8 livrée) ---

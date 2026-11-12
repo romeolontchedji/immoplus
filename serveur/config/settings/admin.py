@@ -14,6 +14,9 @@ if env.booleen("DEBUG"):
     raise ImproperlyConfigured("DEBUG est interdit avec les réglages « admin ».")
 
 SECRET_KEY = env.texte("SECRET_KEY")
+# Les liens créés ici (activation d'un gérant…) sont lus par le site : même clé de liens des deux côtés.
+if not env.texte("LIENS_SIGNING_KEY") or env.texte("LIENS_SIGNING_KEY").startswith("dev-"):
+    raise ImproperlyConfigured("LIENS_SIGNING_KEY de production absente ou de développement.")
 # Seul l'hôte d'administration, plus l'adresse interne du contrôle de santé.
 _DOMAINE = env.texte("DOMAIN")
 if not _DOMAINE or _DOMAINE == "localhost":

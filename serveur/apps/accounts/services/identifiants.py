@@ -10,6 +10,7 @@ import re
 import secrets
 import unicodedata
 
+from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.core import signing
 from django.db.models.functions import Lower
@@ -119,11 +120,18 @@ def _empreinte(utilisateur: User, objet: str) -> str:
     return hashlib.sha256(brut.encode()).hexdigest()[:20]
 
 
+def _cle_des_liens() -> str:
+    """Clé commune au site et à l'administration : l'administration crée les liens (activation d'un gérant,
+    réinitialisation), le site les lit, et leurs `SECRET_KEY` sont volontairement différentes. Sans clé dédiée
+    (développement, tests), la clé du processus suffit."""
+    return settings.LIENS_SIGNING_KEY or settings.SECRET_KEY
+
+
 def creer_jeton(utilisateur: User, objet: str, **donnees) -> str:
     if objet not in DUREES_LIENS_S:
         raise ValueError(f"Objet de lien inconnu : {objet}")
     contenu = {"u": str(utilisateur.pk), "o": objet, "e": _empreinte(utilisateur, objet), **donnees}
-    return signing.dumps(contenu, salt=f"{_SEL}.{objet}", compress=True)
+    return signing.dumps(contenu, key=_cle_des_liens(), salt=f"{_SEL}.{objet}", compress=True)
 
 
 def lire_jeton(jeton: str, objet: str) -> tuple[User, dict]:
@@ -132,7 +140,9 @@ def lire_jeton(jeton: str, objet: str) -> tuple[User, dict]:
         "link_invalid", "Ce lien n'est plus valable. Demande-en un nouveau.", statut=400
     )
     try:
-        contenu = signing.loads(jeton, salt=f"{_SEL}.{objet}", max_age=DUREES_LIENS_S[objet])
+        contenu = signing.loads(
+            jeton, key=_cle_des_liens(), salt=f"{_SEL}.{objet}", max_age=DUREES_LIENS_S[objet]
+        )
     except signing.BadSignature as erreur:  # SignatureExpired en hérite
         raise invalide from erreur
     utilisateur = User.objects.filter(pk=contenu.get("u"), deleted_at__isnull=True).first()

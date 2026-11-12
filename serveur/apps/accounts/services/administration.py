@@ -80,6 +80,27 @@ def creer_personnel(*, acteur: User, email: str, nom: str, role: str, mot_de_pas
     return utilisateur
 
 
+def supprimer_compte(*, acteur: User, cible: User) -> None:
+    """Supprime (anonymise) un compte depuis l'administration, confirmé ou non : locataire, gérant ou modérateur.
+
+    Le compte d'un administrateur ne se supprime pas ici (retirer d'abord son rôle), ni le sien."""
+    from . import compte
+
+    if acteur.role != Role.ADMIN or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    if cible.pk == acteur.pk:
+        raise ErreurMetier("forbidden", "Tu ne peux pas supprimer ton propre compte.", statut=403)
+    if cible.role == Role.ADMIN:
+        raise ErreurMetier(
+            "forbidden",
+            "Un administrateur ne se supprime pas : change d'abord son rôle.",
+            statut=403,
+        )
+    if cible.deleted_at is not None:
+        raise ErreurMetier("already_deleted", "Ce compte est déjà supprimé.", statut=409)
+    compte.anonymiser(cible, acteur=acteur, par_equipe=True)
+
+
 def lien_activation(*, acteur: User, gerant: User) -> str:
     """Lien d'activation d'un gérant (72 h, usage unique), à transmettre par WhatsApp ou e-mail."""
     if gerant.role != Role.GERANT or gerant.has_usable_password():

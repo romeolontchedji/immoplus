@@ -20,13 +20,20 @@ def importer(module: str, **env) -> subprocess.CompletedProcess:
             "SECRET_KEY",
             "DEBUG",
             "JWT_SIGNING_KEY",
+            "LIENS_SIGNING_KEY",
             "DOMAIN",
         }
     }
     return subprocess.run(
         [sys.executable, "-c", f"import {module}"],
         cwd=SERVEUR,
-        env={**propre, "DOMAIN": "immoplus.exemple.bj", "CAPTCHA_PROVIDER": "turnstile", **env},
+        env={
+            **propre,
+            "DOMAIN": "immoplus.exemple.bj",
+            "CAPTCHA_PROVIDER": "turnstile",
+            "LIENS_SIGNING_KEY": "l" * 60,
+            **env,
+        },
         capture_output=True,
         text=True,
         check=False,
@@ -82,6 +89,7 @@ def test_cookies_distincts_site_et_administration():
             "CAPTCHA_PROVIDER": "turnstile",
             "SECRET_KEY": "a" * 60,
             "JWT_SIGNING_KEY": "b" * 60,
+            "LIENS_SIGNING_KEY": "l" * 60,
         },
         capture_output=True,
         text=True,
@@ -118,3 +126,10 @@ def test_l_anti_robot_factice_est_refuse_en_production():
         SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, CAPTCHA_PROVIDER="fake",
     )  # fmt: skip
     assert r.returncode != 0 and "CAPTCHA_PROVIDER" in r.stderr
+
+
+@pytest.mark.parametrize("module", ["config.settings.public", "config.settings.admin"])
+@pytest.mark.parametrize("valeur", ["", "dev-lien"])
+def test_cle_des_liens_obligatoire_en_production(module, valeur):
+    r = importer(module, SECRET_KEY="x" * 60, JWT_SIGNING_KEY="y" * 60, LIENS_SIGNING_KEY=valeur)
+    assert r.returncode != 0 and "LIENS_SIGNING_KEY" in r.stderr

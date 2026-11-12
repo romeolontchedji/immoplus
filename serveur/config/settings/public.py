@@ -33,6 +33,8 @@ if not JWT_SIGNING_KEY or JWT_SIGNING_KEY.startswith("dev-"):
     raise ImproperlyConfigured("JWT_SIGNING_KEY de production absente ou de développement.")
 if SECRET_KEY == JWT_SIGNING_KEY:
     raise ImproperlyConfigured("SECRET_KEY et JWT_SIGNING_KEY doivent être deux clés différentes.")
+if not env.texte("LIENS_SIGNING_KEY") or env.texte("LIENS_SIGNING_KEY").startswith("dev-"):
+    raise ImproperlyConfigured("LIENS_SIGNING_KEY de production absente ou de développement.")
 
 # Site : cookie `__Host-lgsid`, sessions en `cached_db`.
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
