@@ -45,6 +45,9 @@ class TestCreerEnv(unittest.TestCase):
             self.assertTrue(contient(f"{service}.env.example", "PRIVATE_FILES_KEY"))
         for service in ("web-api", "realtime", "worker", "worker-media", "beat", "caddy", "migrer"):
             self.assertFalse(contient(f"{service}.env.example", "PRIVATE_FILES_KEY"), service)
+        # Les processus qui chargent les réglages « public » ou « admin » exigent la clé des liens au démarrage.
+        for service in ("admin", "web-api", "realtime", "worker"):
+            self.assertTrue(contient(f"{service}.env.example", "LIENS_SIGNING_KEY"), service)
         self.assertFalse(contient("admin.env.example", "SITE_SECRET_KEY"))
         self.assertFalse(contient("web-api.env.example", "ADMIN_SECRET_KEY"))
 
