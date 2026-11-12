@@ -2,6 +2,11 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-13 : gérant créé par l'équipe vérifié d'emblée.** « Nouveau gérant » est utilisé après l'entretien : le profil est
+vérifié à la création (plan Gratuit attribué, ligne `gerant.verification` au journal) et le bandeau « pas encore
+vérifié » n'apparaît plus. Un gérant créé avant ce changement reste « en attente » : le passer à « vérifié » dans
+Comptes › Profils de gérants.
+
 **2026-11-12 : liens d'activation des gérants invalides (clé de signature).** L'administration (`ADMIN_SECRET_KEY`)
 signait les liens, le site (`SITE_SECRET_KEY`) les lisait : signature toujours refusée. Nouvelle clé `LIENS_SIGNING_KEY`,
 commune aux deux (obligatoire en production). Sur un serveur existant : `python3 outils/creer_env.py --services`, puis

@@ -28,6 +28,17 @@ class TestCreationGerant:
             "Idris Adam",
         )
         assert GerantProfile.complets.get(user=gerant).zone == "Banikanni"
+
+    def test_le_gerant_cree_par_l_equipe_est_verifie_d_emblee(self):
+        """Il n'est créé qu'après l'entretien : pas de second geste, ni de bandeau « pas encore vérifié »."""
+        acteur = AdminFactory()
+        gerant = administration.creer_gerant(
+            acteur=acteur, prenom="Idris", nom="Adam", zone="Zongo"
+        )
+        profil = GerantProfile.complets.get(user=gerant)
+        assert profil.verification_status == "verified"
+        assert profil.verified_at is not None and profil.verified_by_id == acteur.pk
+        assert AuditLog.objects.filter(action="gerant.verification", actor=acteur).exists()
         assert AuditLog.objects.filter(action="gerant.cree", target_id=gerant.pk).exists()
 
 

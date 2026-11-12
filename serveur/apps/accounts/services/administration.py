@@ -32,7 +32,10 @@ def creer_gerant(
     nom_affiche: str | None = None,
 ) -> User:
     """Crée un gérant sans mot de passe (ADR 0009) : il choisit nom d'utilisateur et mot de passe par le lien
-    d'activation (`lien_activation`) que l'équipe lui transmet."""
+    d'activation (`lien_activation`) que l'équipe lui transmet.
+
+    Le compte n'est créé par l'équipe qu'après l'entretien de validation : il est donc vérifié d'emblée (et reçoit
+    son plan Gratuit), sans second geste de l'administrateur."""
     from . import inscription
 
     prenom, nom = inscription.noms_valides(prenom, nom)
@@ -41,13 +44,14 @@ def creer_gerant(
         gerant.definir_noms(prenom, nom)
         gerant.set_unusable_password()
         gerant.save()
-        GerantProfile.complets.create(
+        profil = GerantProfile.complets.create(
             user=gerant,
             zone=zone.strip(),
             display_name=(nom_affiche or "").strip() or None,
             created_by=acteur,
         )
         audit.enregistrer("gerant.cree", acteur=acteur, cible=gerant)
+    definir_verification(acteur=acteur, profil=profil, statut=StatutVerification.VERIFIED)
     return gerant
 
 
