@@ -322,3 +322,7 @@ Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.
 | `SUBSCRIPTION_GRACE_DAYS` | `7` | Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son abonnement. |
 | `PLANS` | `[{"code": "free_v1", "label": "Gratuit V1", "price": 0, "period_months": 1, "max_active_listings": null, "active": true}, {"code": "standard", "label": "Standard", "price": null, "period_months": 1, "max_active_listings": null, "active": false}]` | Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé. |
 | `PAID_ALERTS_ENABLED` | décoché | Réservé à une alerte prioritaire payante pour les locataires, pas encore construite : à laisser décoché (aucun SMS n'est envoyé par Immo+). |
+
+## Supprimer des comptes
+
+Dans **Comptes**, cochez un ou plusieurs comptes (confirmés ou non), puis choisissez l'action **Supprimer (anonymise le compte)**. Une page de confirmation liste les comptes concernés. À la validation, chaque compte est anonymisé : nom, adresse e-mail, nom d'utilisateur et clé de secours effacés, appareils déconnectés, annonces en ligne retirées ; l'adresse e-mail redevient libre. Les messages et le journal restent, sans nom. L'action est inscrite au journal (`compte.supprime`, `par_equipe`). Un administrateur ne se supprime pas lui-même et ne supprime pas un autre administrateur (changer d'abord son rôle).

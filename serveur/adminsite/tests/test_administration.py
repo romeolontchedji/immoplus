@@ -389,6 +389,46 @@ class TestActions:
         assert "invalid_token" in str(getattr(e.value, "code", e.value))
         assert AuditLog.objects.filter(action="compte.statut", actor=admin_).exists()
 
+    def test_suppression_de_comptes_avec_confirmation(self):
+        c, admin_ = self.connecte()
+        from django.utils import timezone
+
+        confirme = ClientFactory(email="confirme@exemple.bj", email_verified_at=timezone.now())
+        non_confirme = ClientFactory(email="attente@exemple.bj", email_verified_at=None)
+        ids = [str(confirme.pk), str(non_confirme.pk)]
+        liste = reverse("admin:accounts_user_changelist")
+        # 1re étape : page de confirmation, rien n'est encore supprimé.
+        r = c.post(liste, {"action": "supprimer_comptes", "_selected_action": ids})
+        assert r.status_code == 200 and "Oui, supprimer" in r.content.decode()
+        confirme.refresh_from_db()
+        assert confirme.deleted_at is None
+        # 2e étape : confirmation.
+        r = c.post(
+            liste, {"action": "supprimer_comptes", "_selected_action": ids, "confirmer": "oui"}
+        )
+        assert r.status_code == 302
+        for compte in (confirme, non_confirme):
+            compte.refresh_from_db()
+            assert compte.deleted_at is not None and compte.email is None
+            assert compte.status == "deleted"
+        ligne = AuditLog.objects.filter(action="compte.supprime", actor=admin_).first()
+        assert ligne is not None and ligne.metadata["par_equipe"] is True
+
+    def test_on_ne_supprime_ni_un_administrateur_ni_soi_meme(self):
+        c, admin_ = self.connecte()
+        autre_admin = AdminFactory()
+        c.post(
+            reverse("admin:accounts_user_changelist"),
+            {
+                "action": "supprimer_comptes",
+                "_selected_action": [str(autre_admin.pk), str(admin_.pk)],
+                "confirmer": "oui",
+            },
+        )
+        for compte in (autre_admin, admin_):
+            compte.refresh_from_db()
+            assert compte.deleted_at is None
+
     def test_on_ne_se_banne_pas_soi_meme(self):
         c, admin_ = self.connecte()
         c.post(

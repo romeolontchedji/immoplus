@@ -188,6 +188,12 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
     if utilisateur.role not in (Role.CLIENT, Role.GERANT):
         raise ErreurMetier("forbidden", "Ce compte ne peut pas être supprimé ici.", statut=403)
     _exiger_mot_de_passe(utilisateur, mot_de_passe)
+    anonymiser(utilisateur, acteur=utilisateur)
+
+
+def anonymiser(utilisateur: User, *, acteur: User, par_equipe: bool = False) -> None:
+    """Anonymise le compte (aucune ligne n'est effacée : annonces, messages et journal gardent leurs liens).
+    Appelée par la personne elle-même ou, avec `par_equipe`, par un administrateur (aucun mot de passe demandé)."""
     role, uid = utilisateur.role, utilisateur.pk
     with transaction.atomic():
         # Le nom d'utilisateur est libéré pour un autre (format valide, unique, sans rien d'identifiant).
@@ -214,7 +220,10 @@ def supprimer(utilisateur: User, mot_de_passe: str) -> None:
             jetons.marquer_appareil_revoque(appareil.pk)
         utilisateur.devices.all().delete()
         audit.enregistrer(
-            "compte.supprime", acteur=utilisateur, cible=utilisateur, metadata={"role": role}
+            "compte.supprime",
+            acteur=acteur,
+            cible=utilisateur,
+            metadata={"role": role, **({"par_equipe": True} if par_equipe else {})},
         )
     jetons.invalider_utilisateur(uid)
     signals.compte_supprime.send(sender=User, utilisateur_id=uid, role=role)
