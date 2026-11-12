@@ -15,6 +15,11 @@
         </a>
       {% endif %}
     </div>
+    {% if abonnement_requis %}
+      <div class="alerte alerte--avertissement" role="status">
+        <p>Un abonnement est nécessaire pour publier de nouvelles chambres. <a href="/pro/abonnement">Choisir une formule</a></p>
+      </div>
+    {% endif %}
     {% if message %}
       <div class="alerte alerte--succes" role="status">
         <p>{{ message }}</p>

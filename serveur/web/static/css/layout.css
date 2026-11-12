@@ -314,6 +314,7 @@ details.nav-notif:not([open]) > .nav-notif__popover { display: none; }
 .nav-notif__texte { font-size: var(--fs-14); line-height: 1.4; }
 .nav-notif__titre { font-weight: 700; color: var(--night); display: block; margin-bottom: 2px; }
 .nav-notif__meta { font-size: var(--fs-12); color: var(--text-muted); }
+.nav-notif__action { display: inline-flex; margin-top: var(--sp-2); }
 .nav-notif__vide { padding: var(--sp-5) var(--sp-4); text-align: center; color: var(--text-muted); font-size: var(--fs-14); }
 .nav-notif__footer {
   display: block; text-align: center; padding: var(--sp-3);

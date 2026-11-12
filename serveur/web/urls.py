@@ -5,6 +5,7 @@ from django.urls import path
 
 from . import views
 from . import views_auth as a
+from . import views_paiement as paiement
 from . import views_pro as p
 from . import views_public as pub
 
@@ -47,6 +48,10 @@ urlpatterns = [
         a.revoquer_appareil,
         name="appareil-revoquer",
     ),
+    path("paiement/preparer", paiement.preparer, name="paiement-preparer"),
+    path("paiement/confirmer", paiement.confirmer, name="paiement-confirmer"),
+    path("paiement/webhook/kkiapay", paiement.webhook, name="paiement-webhook-kkiapay"),
+    path("pro/abonnement", paiement.abonnement, name="pro-abonnement"),
     path("pro/dashboard", p.tableau_de_bord, name="pro-dashboard"),
     path("pro/annonces", p.liste, name="pro-annonces"),
     path("pro/annonces/nouvelle", p.editeur, name="pro-annonce-nouvelle"),

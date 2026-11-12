@@ -1,0 +1,43 @@
+{% extends "web/espace.html" %}
+{% load immoplus static %}
+{% block titre %}Mon abonnement — Espace Gérant — Immo+{% endblock %}
+{% block espace %}
+  <div class="pro-principal pile pile--large">
+    <div class="pro-entete">
+      <div>
+        <h1 class="pro-entete__titre">Mon abonnement</h1>
+        <p class="texte-doux mb-0">Un abonnement actif te permet de publier de nouvelles chambres. Tes annonces déjà en ligne restent visibles.</p>
+      </div>
+    </div>
+    {% if peut_publier %}
+      <div class="alerte alerte--succes" role="status">
+        <p>Ton abonnement est actif{% if abonnement %} jusqu'au {{ abonnement.current_period_end|date:"d/m/Y" }}{% endif %}.</p>
+      </div>
+    {% else %}
+      <div class="alerte alerte--avertissement" role="status">
+        <p>Pour publier une chambre, choisis une formule et paie avec Mobile Money ou carte.</p>
+      </div>
+    {% endif %}
+    {% if not paiement_possible %}
+      <div class="alerte alerte--danger" role="status"><p>Le paiement n'est pas disponible pour le moment. Contacte l'équipe Immo+.</p></div>
+    {% endif %}
+    <div class="pile">
+      {% for f in formules %}
+        <div class="carte p-5 rangee">
+          <div>
+            <h2 class="fs-18 fw-bold mb-0">{{ f.label }}</h2>
+            <p class="texte-doux mb-0">{{ f.price }} F pour {{ f.period_months }} mois</p>
+          </div>
+          <button class="bouton bouton--primaire" type="button" data-payer data-objet="abonnement" data-plan="{{ f.code }}"{% if not paiement_possible %} disabled{% endif %}>
+            Payer {{ f.price }} F
+          </button>
+        </div>
+      {% empty %}
+        <p class="texte-doux">Aucune formule n'est proposée pour l'instant.</p>
+      {% endfor %}
+      <p id="paiement-etat" class="texte-doux" role="status"></p>
+    </div>
+    {% csrf_token %}
+  </div>
+  <script src="{% static 'js/paiement.js' %}" defer></script>
+{% endblock %}

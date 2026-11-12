@@ -110,7 +110,13 @@ def can_publish(gerant_id) -> bool:
     if not actif():
         return True
     courant = abonnement_courant(gerant_id)
-    return courant is not None and courant.status in STATUTS_PUBLIABLES
+    # Abonnement exigé : le plan Gratuit V1 ne suffit plus (le gérant doit payer une formule), mais ses annonces
+    # déjà en ligne restent visibles (cette règle ne touche que la création et la publication).
+    return (
+        courant is not None
+        and courant.status in STATUTS_PUBLIABLES
+        and courant.plan_code != PLAN_GRATUIT
+    )
 
 
 # --------------------------------------------------------------------------- paiement
@@ -214,6 +220,72 @@ def recevoir_webhook(nom_fournisseur: str, corps: bytes, entetes: dict) -> tuple
     return paiement, True
 
 
+def activer_formule(gerant_id, plan_code: str) -> Subscription:
+    """Paiement reçu : la formule devient active pour une période (renouvellement : la période s'ajoute)."""
+    choisi = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), {"period_months": 1})
+    courant = abonnement_courant(gerant_id, creer=False)
+    maintenant = timezone.now()
+    if courant is not None and courant.plan_code == plan_code and courant.status in STATUTS_PUBLIABLES:
+        debut = max(courant.current_period_end, maintenant)
+        courant.current_period_end = _fin_de_periode(debut, choisi["period_months"])
+        courant.save(update_fields=["current_period_end", "updated_at"])
+        if courant.status != StatutAbonnement.ACTIVE:
+            changer_statut(courant, StatutAbonnement.ACTIVE, motif="paiement")
+        return courant
+    if courant is not None:
+        Subscription.objects.filter(pk=courant.pk).update(
+            status=StatutAbonnement.EXPIRED, updated_at=maintenant
+        )
+    return Subscription.objects.create(
+        gerant_id=gerant_id, plan_code=plan_code, status=StatutAbonnement.ACTIVE,
+        current_period_start=maintenant, current_period_end=_fin_de_periode(maintenant, choisi["period_months"]),
+    )  # fmt: skip
+
+
+@transaction.atomic
+def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) -> Subscription:
+    """Un administrateur active la formule d'un gérant qui a payé en espèces (n périodes, notées comme une transaction)."""
+    from apps.accounts.models import GerantProfile
+
+    from .models import Transaction
+
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    choisie = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), None)
+    if choisie is None or plan_code == PLAN_GRATUIT or not choisie.get("price"):
+        raise ErreurMetier(
+            "validation_error",
+            "Formule payante inconnue.",
+            champs={"plan_code": ["Formule inconnue"]},
+        )
+    if not 1 <= int(periodes) <= 24:
+        raise ErreurMetier(
+            "validation_error", "Entre 1 et 24 périodes.", champs={"periodes": ["Entre 1 et 24"]}
+        )
+    profil = GerantProfile.objects.filter(pk=gerant_id).first()
+    if profil is None:
+        raise ErreurMetier("not_found", "Gérant introuvable.", statut=404)
+    montant = int(choisie["price"]) * int(periodes)
+    ligne = Transaction.objects.create(
+        user=profil.user,
+        objet=Transaction.Objet.ABONNEMENT,
+        plan_code=plan_code,
+        amount=montant,
+        status=StatutPaiement.SUCCEEDED,
+        paid_at=timezone.now(),
+    )
+    Transaction.objects.filter(pk=ligne.pk).update(provider_ref=f"especes-{ligne.pk}")
+    for _ in range(int(periodes)):
+        courant = activer_formule(profil.pk, plan_code)
+    audit.enregistrer(
+        "abonnement.especes",
+        acteur=acteur,
+        cible=profil.user,
+        metadata={"formule": plan_code, "periodes": int(periodes), "montant": montant},
+    )
+    return courant
+
+
 @transaction.atomic
 def appliquer_evenement(paiement_id, statut: str) -> Payment:
     """Tâche : paiement réussi → abonnement actif pour une nouvelle période ; échec → statut d'échec."""
@@ -223,34 +295,7 @@ def appliquer_evenement(paiement_id, statut: str) -> Payment:
     paiement.status = statut
     if statut == StatutPaiement.SUCCEEDED:
         paiement.paid_at = timezone.now()
-        choisi = next(
-            (p for p in parametres.lire("PLANS") if p["code"] == paiement.plan_code),
-            {"period_months": 1},
-        )
-        courant = abonnement_courant(paiement.gerant_id, creer=False)
-        maintenant = timezone.now()
-        if (
-            courant is not None
-            and courant.plan_code == paiement.plan_code
-            and courant.status in STATUTS_PUBLIABLES
-        ):
-            debut = max(
-                courant.current_period_end, maintenant
-            )  # renouvellement : la période s'ajoute
-            courant.current_period_end = _fin_de_periode(debut, choisi["period_months"])
-            courant.save(update_fields=["current_period_end", "updated_at"])
-            if courant.status != StatutAbonnement.ACTIVE:
-                changer_statut(courant, StatutAbonnement.ACTIVE, motif="paiement")
-        else:
-            if courant is not None:
-                Subscription.objects.filter(pk=courant.pk).update(
-                    status=StatutAbonnement.EXPIRED, updated_at=maintenant
-                )
-            courant = Subscription.objects.create(
-                gerant_id=paiement.gerant_id, plan_code=paiement.plan_code, status=StatutAbonnement.ACTIVE,
-                current_period_start=maintenant, current_period_end=_fin_de_periode(maintenant, choisi["period_months"]),
-            )  # fmt: skip
-        paiement.subscription = courant
+        paiement.subscription = activer_formule(paiement.gerant_id, paiement.plan_code)
     paiement.save(update_fields=["status", "paid_at", "subscription"])
     audit.enregistrer("paiement.statut", metadata={"paiement": str(paiement.pk), "statut": statut})
     return paiement

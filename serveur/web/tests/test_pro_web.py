@@ -374,3 +374,13 @@ def test_la_cloche_liste_les_notifications_recentes(session_gerant):
     Notification.objects.create(user=g.user, kind="alert.match", title="Nouvelle chambre à Zongo", body="25 000 F")
     page = c.get("/pro/annonces").content.decode()
     assert "Nouvelle chambre à Zongo" in page and "Aucune notification pour l" not in page
+
+
+def test_la_cloche_propose_consulter(session_gerant):
+    from apps.notifications.models import Notification
+
+    c, g = session_gerant
+    Notification.objects.create(
+        user=g.user, kind="alert.match", title="Nouvelle", body="x", data={"slug": "chambre-zongo"}
+    )
+    assert 'href="/annonces/chambre-zongo"' in c.get("/pro/annonces").content.decode()

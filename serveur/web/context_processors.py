@@ -17,6 +17,16 @@ SANS_BARRE = (
 )
 
 
+def _recentes(utilisateur_id) -> list:
+    """Les 5 dernières notifications, chacune avec son lien profond (bouton « Consulter » de la cloche)."""
+    from web.views_public import _lien_notification
+
+    lignes = notifications.liste(utilisateur_id, limite=5)[0]
+    for n in lignes:
+        n.lien = _lien_notification({"data": n.data})
+    return lignes
+
+
 def navigation(request):
     utilisateur = getattr(request, "user", None)
     if (
@@ -26,13 +36,19 @@ def navigation(request):
     ):
         return {}
     chemin = getattr(request, "path", "/")
+    abonnement_requis = False
+    if utilisateur.role == "gerant":
+        from apps.accounts import selectors as comptes
+        from apps.billing import services as abonnements
+
+        if abonnements.actif():  # paiements éteints : aucune requête de plus
+            abonnement_requis = not abonnements.can_publish(comptes.profil_gerant(utilisateur).pk)
     return {
+        "abonnement_requis": abonnement_requis,
         "non_lus_messages": chat_selectors.total_non_lus(utilisateur.pk, utilisateur.role),
         "non_lues_notifications": notifications.non_lues(utilisateur.pk),
         # Les 5 dernières, pour la fenêtre de la cloche (lues seulement si elle est affichée).
-        "notifications_recentes": SimpleLazyObject(
-            lambda: notifications.liste(utilisateur.pk, limite=5)[0]
-        ),
+        "notifications_recentes": SimpleLazyObject(lambda: _recentes(utilisateur.pk)),
         # Barre latérale fixe sur toutes les pages des comptes connectés, sauf l'accueil (plan v3, E2).
         "barre_laterale": chemin != "/" and not chemin.startswith(SANS_BARRE),
     }
