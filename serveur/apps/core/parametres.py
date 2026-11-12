@@ -32,6 +32,10 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "Inactivité maximale d'une session d'administration, en minutes.",
     ),
     "ADMIN_SESSION_MAX_H": (8, "Durée maximale d'une session d'administration, en heures."),
+    "EMAIL_NOUVELLES_ANNONCES": (
+        True,
+        "Courriel aux administrateurs à chaque nouvelle annonce mise en ligne par un gérant.",
+    ),
     "TURNSTILE_ENABLED": (False, "Défi anti-robot du site (désactivé au lancement)."),
     "TERMS_VERSION": ("1", "Version courante des CGU et de la politique de confidentialité."),
     "CAMPUS_REFERENCE": (

@@ -14,6 +14,19 @@ def utilisateur_par_id(identifiant) -> User:
         ) from erreur
 
 
+def courriels_administrateurs() -> list[str]:
+    """Adresses confirmées des administrateurs actifs (courriels d'information à l'équipe)."""
+    return list(
+        User.objects.filter(
+            role="admin",
+            status="active",
+            deleted_at__isnull=True,
+            email__isnull=False,
+            email_verified_at__isnull=False,
+        ).values_list("email", flat=True)
+    )
+
+
 def contact_courriel(utilisateur_id) -> tuple[str, str] | None:
     """(adresse confirmée, prénom) d'un compte actif, sinon None : rien n'est envoyé à une adresse non confirmée."""
     ligne = (

@@ -398,12 +398,48 @@ def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     return annonce
 
 
+def _prevenir_l_equipe(annonce: Listing) -> None:
+    """Courriel d'information aux administrateurs : le gérant vérifié publie sans validation préalable, l'équipe
+    est prévenue après coup et peut masquer l'annonce depuis l'administration."""
+    from django.conf import settings
+
+    from apps.accounts import selectors as comptes
+    from apps.core.tasks import envoyer_courriel
+
+    if not parametres.lire("EMAIL_NOUVELLES_ANNONCES"):
+        return
+    destinataires = comptes.courriels_administrateurs()
+    if not destinataires:
+        return
+    gerant = annonce.gerant.user
+    lignes = [
+        "Une nouvelle annonce vient d'être mise en ligne.",
+        "",
+        f"Titre : {annonce.title}",
+        f"Quartier : {annonce.district.name} · loyer : {annonce.rent_amount} F/mois",
+        f"Gérant : {gerant.full_name or gerant.username}",
+        "",
+        f"Voir l'annonce : {settings.SITE_URL}/annonces/{annonce.slug}",
+        f"Modérer : https://pilotage.{settings.DOMAIN}/listings/listing/{annonce.pk}/change/",
+    ]
+    for adresse in destinataires:
+        try:
+            envoyer_courriel.delay(
+                [adresse], f"Immo+ · nouvelle annonce : {annonce.title}", "\n".join(lignes)
+            )
+        except Exception:  # noqa: BLE001 - un courriel manquant ne doit jamais bloquer la publication
+            journal.exception("Courriel de nouvelle annonce impossible pour %s", annonce.pk)
+
+
 def mettre_en_ligne(annonce: Listing, *, acteur) -> None:
     maintenant = timezone.now()
+    premiere_fois = annonce.published_at is None
     annonce.published_at = annonce.published_at or maintenant
     annonce.last_confirmed_at = maintenant
     annonce.reminder_stage = 0
     changer_statut(annonce, StatutAnnonce.PUBLISHED, acteur=acteur)
+    if premiere_fois:
+        transaction.on_commit(lambda: _prevenir_l_equipe(annonce))
 
 
 @transaction.atomic
