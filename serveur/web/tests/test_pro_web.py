@@ -67,9 +67,11 @@ def test_publication_signale_ce_qui_manque(session_gerant):
     assert "au moins 5 photos" in r.content.decode()
     medias_prets(a)
     ListingFactory(gerant=g)
-    c.post(f"/pro/annonces/{a.pk}", {"action": "publier"})
+    r = c.post(f"/pro/annonces/{a.pk}", {"action": "publier"})
     a.refresh_from_db()
     assert a.status == "published"
+    # Publiée : retour à « Mes annonces », pas sur l'étape des médias.
+    assert r.status_code == 302 and r["Location"] == "/pro/annonces?ok=publiee"
 
 
 def test_un_locataire_n_a_pas_d_espace_gerant():

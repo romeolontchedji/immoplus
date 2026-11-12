@@ -2,6 +2,14 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-15 : publication directe, courriels habillés.**
+- Un gérant vérifié publie en direct, y compris sa première annonce (plus de relecture préalable) ; administrateurs et
+  modérateurs reçoivent un courriel à chaque première mise en ligne. Les annonces déjà « en relecture » restent
+  approuvables depuis l'administration.
+- Après « Publier », retour sur « Mes annonces » avec un message, plus sur l'étape des médias.
+- Tous les courriels partent aussi en HTML (bandeau bleu Immo+, boutons), le texte brut est conservé.
+- Correctif : un commentaire de gabarit sur plusieurs lignes s'affichait sous le champ « Disponible à partir du ».
+
 **2026-11-14 : retours du premier jour de production (annonces, médias, notifications).**
 - Caution du loyer retirée du formulaire et de la fiche du site (reste en base et dans l'API, à 0 par défaut) ; l'application
   mobile la demande encore (`AnnonceModifierScreen`, `InfosStep`) : à retirer avec une nouvelle version de l'application.

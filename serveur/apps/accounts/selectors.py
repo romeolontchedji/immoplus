@@ -14,11 +14,11 @@ def utilisateur_par_id(identifiant) -> User:
         ) from erreur
 
 
-def courriels_administrateurs() -> list[str]:
-    """Adresses confirmées des administrateurs actifs (courriels d'information à l'équipe)."""
+def courriels_equipe() -> list[str]:
+    """Adresses confirmées des administrateurs et modérateurs actifs (courriels d'information à l'équipe)."""
     return list(
         User.objects.filter(
-            role="admin",
+            role__in=("admin", "moderator"),
             status="active",
             deleted_at__isnull=True,
             email__isnull=False,

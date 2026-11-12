@@ -295,8 +295,7 @@ def _suite_de_publication(annonce_id, *, echec: bool = False) -> None:
     en_cours = ListingMedia.objects.filter(
         listing=annonce, status__in=[StatutMedia.UPLOADED, StatutMedia.PROCESSING]
     ).exists()
-    deja_publie = Listing.objects.filter(gerant=annonce.gerant, published_at__isnull=False).exists()
-    if not en_cours and deja_publie and not annonces.manques_a_la_publication(annonce):
+    if not en_cours and not annonces.manques_a_la_publication(annonce):
         annonces.mettre_en_ligne(annonce, acteur=annonce.gerant.user)
 
 

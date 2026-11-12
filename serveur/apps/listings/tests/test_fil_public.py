@@ -474,9 +474,10 @@ class TestAlertes:
         from django.core import mail
         from django.utils import timezone
 
-        from apps.accounts.tests.fabriques import AdminFactory
+        from apps.accounts.tests.fabriques import AdminFactory, PersonnelFactory
 
         admin = AdminFactory(email="equipe@exemple.bj", email_verified_at=timezone.now())
+        moderateur = PersonnelFactory(email="modo@exemple.bj", email_verified_at=timezone.now())
         AdminFactory(
             email="inconnu@exemple.bj", email_verified_at=None
         )  # adresse non confirmée : rien
@@ -486,7 +487,7 @@ class TestAlertes:
         with django_capture_on_commit_callbacks(execute=True):
             annonces.mettre_en_ligne(a, acteur=p.user)
         envoyes = [m for m in mail.outbox if "nouvelle annonce" in m.subject]
-        assert [m.to for m in envoyes] == [[admin.email]]
+        assert sorted(m.to[0] for m in envoyes) == sorted([admin.email, moderateur.email])
         assert "Chambre Zongo" in envoyes[0].subject and f"/annonces/{a.slug}" in envoyes[0].body
         # Remise en ligne d'une annonce déjà publiée une fois : pas de second courriel.
         a.refresh_from_db()
