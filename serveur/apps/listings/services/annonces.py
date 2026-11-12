@@ -34,8 +34,10 @@ CHAMPS_MODIFIABLES = (
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
 # partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
+# La caution du loyer n'est plus demandée (les cautions eau et électricité et l'avance suffisent) : elle reste en base
+# et dans l'API, à 0 par défaut, pour ne rien casser.
 OBLIGATOIRES = (
-    "title", "room_type", "district", "landmark_text", "rent_amount", "deposit_months",
+    "title", "room_type", "district", "landmark_text", "rent_amount",
     "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter",
 )  # fmt: skip
 LIMITES_BENIN = {"latitude": (6.0, 12.6), "longitude": (0.7, 3.9)}
@@ -191,6 +193,7 @@ def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
         gerant=gerant,
         slug=_slug(donnees["title"]),
         agent_fee_amount=donnees.get("agent_fee_amount", 0),
+        deposit_months=donnees.get("deposit_months", 0),
     )
     _appliquer(annonce, donnees)
     annonce.save()

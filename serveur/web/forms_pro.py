@@ -31,7 +31,6 @@ class AnnonceForm(_Base):
         label="Prix à débattre", required=False,
         help_text="Coche si tu acceptes de discuter du loyer : la fiche affichera « à débattre ».",
     )  # fmt: skip
-    deposit_months = forms.IntegerField(label="Caution du loyer (mois)", min_value=0, max_value=12)
     advance_months = forms.IntegerField(label="Avance (mois)", min_value=0, max_value=12)
     agent_fee_amount = forms.IntegerField(
         label="Frais de démarcheur (FCFA)", min_value=0, required=False, initial=0

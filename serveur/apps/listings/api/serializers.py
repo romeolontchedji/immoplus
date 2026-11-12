@@ -33,7 +33,12 @@ class AnnonceIn(serializers.Serializer):
         max_digits=9, decimal_places=6, required=False, allow_null=True
     )
     rent_amount = serializers.IntegerField(min_value=1)
-    deposit_months = serializers.IntegerField(min_value=0, max_value=12)
+    deposit_months = serializers.IntegerField(
+        min_value=0,
+        max_value=12,
+        required=False,
+        help_text="Obsolète : la caution du loyer n'est plus demandée.",
+    )
     advance_months = serializers.IntegerField(min_value=0, max_value=12)
     agent_fee_amount = serializers.IntegerField(min_value=0, required=False)
     water_deposit_amount = serializers.IntegerField(
