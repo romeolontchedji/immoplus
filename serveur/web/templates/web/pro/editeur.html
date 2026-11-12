@@ -270,7 +270,9 @@
                 </div>
                 <div class="media-carte__corps">
                   <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
-                    {% if m.en_cours %}
+                    {% if m.interrompu %}
+                      Envoi interrompu : supprime-le puis renvoie le fichier
+                    {% elif m.en_cours %}
                       Traitement en cours…
                     {% else %}
                       {{ m.status_display }}

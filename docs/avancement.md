@@ -10,6 +10,9 @@
 - Vidéos : copie du flux si déjà en H.264 720p, sinon `superfast`, 30 images/s, débit plafonné, 2 fils ffmpeg
   (`FFMPEG_THREADS`) ; `worker-media` traite 2 fichiers à la fois (`MEDIA_CONCURRENCY`) ; un traitement bloqué depuis
   20 minutes passe en échec. Les erreurs ffmpeg sont journalisées (`immoplus logs worker-media`).
+- Cause de la vidéo perdue (diagnostic du 2026-11-12) : la page se rechargeait toutes les 8 s pendant le traitement et
+  interrompait l'envoi de la vidéo suivante (ligne restée « uploading ») ; l'annonce partait sans vidéo. Un envoi sans
+  nouveau morceau depuis 5 minutes est désormais « interrompu » : il ne bloque plus « Suivant » et se supprime.
 - Courriel aux administrateurs à la première mise en ligne d'une annonce (`EMAIL_NOUVELLES_ANNONCES`).
 - Messagerie : une notification non lue par conversation (se met à jour, remonte, sonne à chaque message).
 - Aperçu WhatsApp : balises Open Graph et image `/annonces/<slug>/apercu.jpg` vérifiées en ligne (réponse 200, 52 Ko) ; si

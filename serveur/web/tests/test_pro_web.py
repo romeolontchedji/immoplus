@@ -322,3 +322,44 @@ def test_une_annonce_en_ligne_se_supprime_depuis_le_site(session_gerant):
     a.refresh_from_db()
     assert a.deleted_at is not None and a.status == "archived"
     assert "Annonce supprimée." in c.get(r["Location"]).content.decode()
+
+
+def _bouton_suivant_etape_medias(page: str) -> str:
+    """La balise du bouton « Suivant » qui mène de l'étape des médias (6) à la publication (7)."""
+    debut = page.index('id="medias"')
+    reste = page[debut:]
+    return reste[reste.index('data-aller="7"') - 120 : reste.index('data-aller="7"') + 120]
+
+
+def test_suivant_reste_grise_sans_assez_de_photos_puis_s_active(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft", published_at=None)
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "disabled" in _bouton_suivant_etape_medias(page) and "Ajoute encore" in page
+    medias_prets(a)
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "disabled" not in _bouton_suivant_etape_medias(page)
+
+
+def test_suivant_grise_pendant_le_traitement_et_un_envoi_interrompu_ne_bloque_pas(session_gerant):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.listings.models import ListingMedia
+
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft", published_at=None)
+    medias_prets(a)
+    video = ListingMedia.objects.create(
+        listing=a, kind="video", declared_size_bytes=10, status="processing"
+    )
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "disabled" in _bouton_suivant_etape_medias(page) and 'data-en-cours="1"' in page
+    # Un envoi sans nouveau morceau depuis 10 minutes est interrompu : il ne bloque plus.
+    ListingMedia.objects.filter(pk=video.pk).update(
+        status="uploading", updated_at=timezone.now() - timedelta(minutes=10)
+    )
+    page = c.get(f"/pro/annonces/{a.pk}").content.decode()
+    assert "disabled" not in _bouton_suivant_etape_medias(page)
+    assert "Envoi interrompu" in page and 'data-en-cours="0"' in page

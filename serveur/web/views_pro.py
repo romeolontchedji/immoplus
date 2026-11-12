@@ -1,9 +1,11 @@
 """Espace gérant du site : tableau de bord, liste et éditeur d'annonces (adaptateurs minces)."""
 
+from datetime import timedelta
 from functools import wraps
 
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from apps.accounts import selectors as comptes
 from apps.chat import selectors as chat_selectors
@@ -175,10 +177,18 @@ ACTIONS = {
 ACTIONS_MEDIAS = {"couvrir", "monter", "descendre", "media-supprimer"}
 
 
+ENVOI_INTERROMPU_APRES = timedelta(minutes=5)
+
+
 def _medias_vue(liste) -> list[dict]:
-    """Prépare les médias pour l'éditeur : aperçu, couverture et commandes disponibles."""
+    """Prépare les médias pour l'éditeur : aperçu, couverture et commandes disponibles.
+
+    Un envoi resté « en cours » sans nouveau morceau depuis 5 minutes est interrompu (page fermée, réseau coupé) :
+    il ne bloque plus la suite, et le gérant est invité à le supprimer puis à renvoyer le fichier."""
     vue = []
+    limite = timezone.now() - ENVOI_INTERROMPU_APRES
     for m in liste:
+        interrompu = m.status == StatutMedia.UPLOADING and m.updated_at < limite
         apercu = None
         if m.status == StatutMedia.READY:
             # Vidéo : l'affiche (le flux HLS n'est pas une image) ; photo : la variante publiée.
@@ -200,7 +210,9 @@ def _medias_vue(liste) -> list[dict]:
                 "est_photo": m.kind == "photo",
                 "pret": m.status == StatutMedia.READY,
                 "erreur": m.status == StatutMedia.FAILED,
-                "en_cours": m.status
+                "interrompu": interrompu,
+                "en_cours": not interrompu
+                and m.status
                 in (StatutMedia.UPLOADING, StatutMedia.UPLOADED, StatutMedia.PROCESSING),
             }
         )

@@ -26,7 +26,7 @@
   }
 
   // Traitement en cours : on interroge l'API sans recharger la page, et on la recharge une seule fois à la fin.
-  var ATTENTE = ["uploading", "uploaded", "processing"];
+  var ATTENTE = ["uploaded", "processing"]; // un envoi « uploading » vu depuis une page neuve est interrompu
   function surveiller() {
     var essais = 0;
     var minuteur = setInterval(async function () {
