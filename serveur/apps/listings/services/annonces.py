@@ -34,8 +34,10 @@ CHAMPS_MODIFIABLES = (
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
 # partage. Elle sert seulement à la distance à l'UP ; la carte publique l'arrondit déjà (`geo.arrondir_position`).
+# La caution du loyer n'est plus demandée (les cautions eau et électricité et l'avance suffisent) : elle reste en base
+# et dans l'API, à 0 par défaut, pour ne rien casser.
 OBLIGATOIRES = (
-    "title", "room_type", "district", "landmark_text", "rent_amount", "deposit_months",
+    "title", "room_type", "district", "landmark_text", "rent_amount",
     "advance_months", "available_from", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter",
 )  # fmt: skip
 LIMITES_BENIN = {"latitude": (6.0, 12.6), "longitude": (0.7, 3.9)}
@@ -191,6 +193,7 @@ def creer_brouillon(gerant: "GerantProfile", donnees: dict) -> Listing:
         gerant=gerant,
         slug=_slug(donnees["title"]),
         agent_fee_amount=donnees.get("agent_fee_amount", 0),
+        deposit_months=donnees.get("deposit_months", 0),
     )
     _appliquer(annonce, donnees)
     annonce.save()
@@ -395,12 +398,48 @@ def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     return annonce
 
 
+def _prevenir_l_equipe(annonce: Listing) -> None:
+    """Courriel d'information aux administrateurs : le gérant vérifié publie sans validation préalable, l'équipe
+    est prévenue après coup et peut masquer l'annonce depuis l'administration."""
+    from django.conf import settings
+
+    from apps.accounts import selectors as comptes
+    from apps.core.tasks import envoyer_courriel
+
+    if not parametres.lire("EMAIL_NOUVELLES_ANNONCES"):
+        return
+    destinataires = comptes.courriels_administrateurs()
+    if not destinataires:
+        return
+    gerant = annonce.gerant.user
+    lignes = [
+        "Une nouvelle annonce vient d'être mise en ligne.",
+        "",
+        f"Titre : {annonce.title}",
+        f"Quartier : {annonce.district.name} · loyer : {annonce.rent_amount} F/mois",
+        f"Gérant : {gerant.full_name or gerant.username}",
+        "",
+        f"Voir l'annonce : {settings.SITE_URL}/annonces/{annonce.slug}",
+        f"Modérer : https://pilotage.{settings.DOMAIN}/listings/listing/{annonce.pk}/change/",
+    ]
+    for adresse in destinataires:
+        try:
+            envoyer_courriel.delay(
+                [adresse], f"Immo+ · nouvelle annonce : {annonce.title}", "\n".join(lignes)
+            )
+        except Exception:  # noqa: BLE001 - un courriel manquant ne doit jamais bloquer la publication
+            journal.exception("Courriel de nouvelle annonce impossible pour %s", annonce.pk)
+
+
 def mettre_en_ligne(annonce: Listing, *, acteur) -> None:
     maintenant = timezone.now()
+    premiere_fois = annonce.published_at is None
     annonce.published_at = annonce.published_at or maintenant
     annonce.last_confirmed_at = maintenant
     annonce.reminder_stage = 0
     changer_statut(annonce, StatutAnnonce.PUBLISHED, acteur=acteur)
+    if premiere_fois:
+        transaction.on_commit(lambda: _prevenir_l_equipe(annonce))
 
 
 @transaction.atomic

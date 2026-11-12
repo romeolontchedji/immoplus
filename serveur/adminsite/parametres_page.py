@@ -19,7 +19,8 @@ SECTIONS = [
       "LEGAL_UPDATED_AT", "TERMS_VERSION"]),
     ("annonces", "Annonces", "Publication, fraîcheur et cycle de vie des chambres.",
      ["LISTING_PREMODERATION", "STALE_REMINDER_DAYS", "STALE_HIDE_DAYS", "RENTED_REPORTS_THRESHOLD",
-      "RENTED_VIDEO_DELETE_DAYS", "READONLY_AFTER_RENT_DAYS", "ARCHIVE_AFTER_RENT_DAYS", "CAMPUS_REFERENCE"]),
+      "RENTED_VIDEO_DELETE_DAYS", "READONLY_AFTER_RENT_DAYS", "ARCHIVE_AFTER_RENT_DAYS", "CAMPUS_REFERENCE",
+      "EMAIL_NOUVELLES_ANNONCES"]),
     ("messagerie", "Messagerie, alertes et notifications", "Limites d'envoi et protection des coordonnées.",
      ["CONTACT_LEAK_MODE", "MESSAGE_PER_MINUTE", "NEW_CONVERSATIONS_PER_DAY", "ALERTS_MAX_PER_USER",
       "UNANSWERED_REMINDER_H"]),
@@ -101,6 +102,8 @@ NOTES = {
     "AUTH_RATE_PER_MIN_IP": "Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une "
     "même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après "
     "des mots de passe faux.",
+    "EMAIL_NOUVELLES_ANNONCES": "Coché : chaque administrateur (adresse confirmée) reçoit un courriel quand un gérant "
+    "met une nouvelle annonce en ligne, avec le lien pour la voir ou la masquer. Les remises en ligne ne comptent pas.",
     "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
     "oublié sur le site. Décoché (réglage au lancement) : aucun défi, et le widget n'est pas chargé ; seules les "
     "limites de débit freinent les robots. À cocher quand les vraies clés Cloudflare sont dans le serveur.",

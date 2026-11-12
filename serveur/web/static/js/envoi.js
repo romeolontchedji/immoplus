@@ -17,6 +17,34 @@
 
   function dire(texte) { etat.textContent = texte; }
 
+  // « Suivant » (étape 7) reste grisé tant que des fichiers partent ou sont traités.
+  function suite(actif) {
+    var bouton = document.querySelector("#medias [data-aller=\"7\"]");
+    if (!bouton) { return; }
+    bouton.disabled = !actif;
+    if (actif) { bouton.removeAttribute("aria-disabled"); } else { bouton.setAttribute("aria-disabled", "true"); }
+  }
+
+  // Traitement en cours : on interroge l'API sans recharger la page, et on la recharge une seule fois à la fin.
+  var ATTENTE = ["uploading", "uploaded", "processing"];
+  function surveiller() {
+    var essais = 0;
+    var minuteur = setInterval(async function () {
+      essais += 1;
+      if (essais > 150) { clearInterval(minuteur); return; } // 10 minutes : on laisse l'utilisateur recharger
+      try {
+        var r = await fetch("/v1/pro/listings/" + annonce + "/media", { credentials: "same-origin", headers: { "Accept": "application/json" } });
+        if (!r.ok) { return; }
+        var medias = await r.json();
+        if (!medias.some(function (m) { return ATTENTE.indexOf(m.status) !== -1; })) {
+          clearInterval(minuteur);
+          window.location.reload();
+        }
+      } catch (e) { /* réseau coupé : on réessaie au prochain passage */ }
+    }, 4000);
+  }
+  if (zone.dataset.enCours === "1") { surveiller(); }
+
   function ligne(fichier) {
     var li = document.createElement("li");
     li.className = "depot__envoi";
@@ -86,6 +114,7 @@
 
   async function traiter(fichiers) {
     var envoyes = 0;
+    suite(false);
     dire("");
     for (var i = 0; i < fichiers.length; i++) {
       var suivi = ligne(fichiers[i]);
@@ -96,6 +125,8 @@
     if (envoyes) {
       dire("Envoi terminé. Le traitement prend une minute environ ; la page va se mettre à jour.");
       setTimeout(function () { window.location.reload(); }, 1500);
+    } else {
+      suite(true); // rien n'est parti (fichiers refusés) : le serveur dira si on peut continuer
     }
   }
 

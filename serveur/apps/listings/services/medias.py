@@ -363,8 +363,32 @@ def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
     )
 
 
+TRAITEMENT_BLOQUE_APRES = timedelta(minutes=20)
+
+
+def echouer_traitements_bloques() -> int:
+    """Un traitement « en cours » depuis plus de 20 minutes est un traitement perdu (processus tué faute de mémoire,
+    redémarrage) : le média passe en échec, le gérant est prévenu, sans rester indéfiniment « en traitement »."""
+    bloques = ListingMedia.objects.select_related("listing").filter(
+        status=StatutMedia.PROCESSING, updated_at__lt=timezone.now() - TRAITEMENT_BLOQUE_APRES
+    )
+    n = 0
+    for media in bloques:
+        message = "Le traitement a pris trop de temps. Renvoie le fichier."
+        ListingMedia.objects.filter(pk=media.pk).update(
+            status=StatutMedia.FAILED, error_code="delai_depasse", error_detail=message,
+            updated_at=timezone.now(),
+        )  # fmt: skip
+        journal.error("Traitement du média %s bloqué depuis plus de 20 minutes", media.pk)
+        _notifier_echec(media, message)
+        _suite_de_publication(media.listing_id, echec=True)
+        n += 1
+    return n
+
+
 def nettoyer_envois_expires() -> int:
-    """Abandonne les envois inactifs depuis 24 h (tâche planifiée)."""
+    """Abandonne les envois inactifs depuis 24 h et clôt les traitements bloqués (tâche planifiée)."""
+    echouer_traitements_bloques()
     expires = ListingMedia.objects.filter(
         status=StatutMedia.UPLOADING, upload_expires_at__lt=timezone.now()
     )

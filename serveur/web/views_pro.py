@@ -248,6 +248,22 @@ ETAPES = ["La chambre", "Localisation", "Loyer", "Équipements", "Autres détail
           "Publication"]  # fmt: skip
 
 
+def _suite_des_medias(en_cours: bool, photos_pretes: int) -> tuple[bool, str]:
+    """« Suivant » reste grisé tant que des fichiers sont en route ou en traitement, ou que les photos manquent."""
+    if en_cours:
+        return (
+            True,
+            "Envoi et traitement en cours : « Suivant » s'activera dès que tout est prêt. Un envoi interrompu ? Supprime-le puis renvoie le fichier.",
+        )
+    if photos_pretes < PHOTOS_MIN:
+        reste = PHOTOS_MIN - photos_pretes
+        return (
+            True,
+            f"Ajoute encore {reste} photo{'s' if reste > 1 else ''} pour continuer ({PHOTOS_MIN} au minimum).",
+        )
+    return False, ""
+
+
 def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, photos_pretes) -> int:
     """Étape ouverte à l'affichage : celle de l'action qu'on vient de faire, sinon la prochaine chose à faire."""
     demandee = request.GET.get("etape", "")
@@ -314,12 +330,13 @@ def editeur(request, profil, annonce_id=None):
     apercu = selectors.carte_apercu(annonce) if annonce else None
     photos_pretes = sum(1 for m in liste_medias if m["est_photo"] and m["pret"])
     video_prete = any(not m["est_photo"] and m["pret"] for m in liste_medias)
+    suite_bloquee, raison_blocage = _suite_des_medias(en_cours, photos_pretes)
     etape = _etape_initiale(request, annonce, action, manques, en_cours, video_prete, photos_pretes)
     contexte = {"form": form, "annonce": annonce, "message": message, "manques": manques,
                 "etapes": ETAPES, "etape_initiale": etape,
                 "statut": STATUT_LIGNE.get(annonce.status, (annonce.status, "")) if annonce else None,
                 "erreur_media": erreur_media, "apercu": apercu, "titre": "Modifier l'annonce" if annonce else "Nouvelle annonce", "medias": liste_medias, "medias_en_cours": en_cours,
                 "photos_pretes": sum(1 for m in liste_medias if m["est_photo"] and m["pret"]),
-                "photos_min": PHOTOS_MIN,
+                "photos_min": PHOTOS_MIN, "suite_bloquee": suite_bloquee, "raison_blocage": raison_blocage,
                 "video_prete": any(not m["est_photo"] and m["pret"] for m in liste_medias), "commandes": commandes_autorisees(annonce) if annonce else []}  # fmt: skip
     return render(request, "web/pro/editeur.html", contexte)

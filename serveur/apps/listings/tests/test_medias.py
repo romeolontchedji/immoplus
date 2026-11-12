@@ -448,6 +448,23 @@ class TestGestion:
         m.refresh_from_db()
         assert m.status == "deleted"
 
+    def test_un_traitement_bloque_passe_en_echec(self, annonce):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        bloque = ListingMedia.objects.create(listing=annonce, kind="video", declared_size_bytes=10)
+        recent = ListingMedia.objects.create(listing=annonce, kind="video", declared_size_bytes=10)
+        ListingMedia.objects.filter(pk__in=[bloque.pk, recent.pk]).update(status="processing")
+        ListingMedia.objects.filter(pk=bloque.pk).update(
+            updated_at=timezone.now() - timedelta(minutes=30)
+        )
+        assert medias.echouer_traitements_bloques() == 1
+        bloque.refresh_from_db()
+        recent.refresh_from_db()
+        assert bloque.status == "failed" and bloque.error_code == "delai_depasse"
+        assert recent.status == "processing"
+
 
 @pytest.mark.ffmpeg
 @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg absent")

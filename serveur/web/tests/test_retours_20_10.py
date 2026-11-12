@@ -111,9 +111,9 @@ class TestFicheEtPublication:
             deposit_months=2, water_deposit_amount=5000, electricity_deposit_amount=10000
         )
         page = Client().get(f"/annonces/{a.slug}").content.decode()
-        assert (
-            "Caution du loyer" in page and "Caution eau" in page and "Caution électricité" in page
-        )
+        # La caution du loyer n'est plus affichée : les cautions des compteurs et l'avance suffisent.
+        assert "Caution du loyer" not in page
+        assert "Caution eau" in page and "Caution électricité" in page
         assert re.search(r"5\W000 F", page) and re.search(r"10\W000 F", page)
         assert "fiche-gerant-entete" not in page and "Contacter le gérant" in page
 

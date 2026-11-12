@@ -23,7 +23,9 @@ case "$cmd" in
   worker)
     exec celery -A config.celery worker -Q default,notifications -c "${CELERY_CONCURRENCY:-4}" -l info ;;
   worker-media)
-    exec celery -A config.celery worker -Q media -c 1 --max-tasks-per-child 20 -l info ;;
+    # 2 traitements à la fois (une photo ne reste plus bloquée derrière une vidéo) ; un seul message réservé par
+    # processus, pour qu'une vidéo longue n'en retienne pas d'autres.
+    exec celery -A config.celery worker -Q media -c "${MEDIA_CONCURRENCY:-2}" --prefetch-multiplier 1       --max-tasks-per-child 20 -l info ;;
   beat)
     exec python -m config.beat_unique ;;
   migrer)
