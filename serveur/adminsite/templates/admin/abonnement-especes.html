@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>Activer un abonnement (paiement en espèces)</h1>
+    <div class="module">
+      <h2>{{ gerants|length }} gérant{{ gerants|length|pluralize }}</h2>
+      <div class="lg-section">
+        <ul>
+          {% for g in gerants %}<li>{{ g.user.full_name|default:"(sans nom)" }}{% if g.zone %} — {{ g.zone }}{% endif %}</li>{% endfor %}
+        </ul>
+        {% if formules %}
+          <form method="post">
+            {% csrf_token %}
+            {% for id in ids %}<input type="hidden" name="_selected_action" value="{{ id }}">{% endfor %}
+            <input type="hidden" name="action" value="{{ action }}">
+            <input type="hidden" name="confirmer" value="oui">
+            <p>
+              <label for="plan_code">Formule payée :</label>
+              <select name="plan_code" id="plan_code">
+                {% for f in formules %}<option value="{{ f.code }}">{{ f.label }} — {{ f.price }} F pour {{ f.period_months }} mois</option>{% endfor %}
+              </select>
+            </p>
+            <p>
+              <label for="periodes">Nombre de périodes payées :</label>
+              <input type="number" name="periodes" id="periodes" value="1" min="1" max="24">
+            </p>
+            <p>La période s'ajoute à celle en cours. L'opération est notée dans les transactions et dans le journal.</p>
+            <div class="lg-section__actions">
+              <input type="submit" value="Oui, activer" class="default">
+              <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Annuler</a>
+            </div>
+          </form>
+        {% else %}
+          <p>Aucune formule payante n'est définie : fixez d'abord un prix dans le paramètre <strong>PLANS</strong>.</p>
+          <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Retour</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

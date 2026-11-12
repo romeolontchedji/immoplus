@@ -200,7 +200,7 @@ def recevoir_webhook(corps: bytes, entetes: dict) -> str:
 
     Retourne un mot pour le journal. Lève `invalid_signature` (403) si le secret est faux, `payment_unverified` (502)
     si KKiaPay ne répond pas : KKiaPay réessaie alors lui-même (5 fois), ce qui rattrape une panne passagère."""
-    if not configure():
+    if not configure() or not settings.KKIAPAY_WEBHOOK_SECRET:
         raise ErreurMetier("payment_unavailable", "Paiement non configuré.", statut=503)
     if not fournisseurs.PaiementKkiapay().signature_valide(corps, entetes):
         audit.enregistrer("paiement.webhook_refuse", metadata={"fournisseur": "kkiapay"})

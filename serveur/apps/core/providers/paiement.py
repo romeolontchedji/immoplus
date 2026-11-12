@@ -153,7 +153,7 @@ class PaiementKkiapay(PaymentProvider):
 
     def signature_valide(self, corps: bytes, entetes: dict) -> bool:
         recue = entetes.get("x-kkiapay-secret") or entetes.get("X-Kkiapay-Secret") or ""
-        attendue = getattr(settings, "KKIAPAY_SECRET", "")
+        attendue = getattr(settings, "KKIAPAY_WEBHOOK_SECRET", "")
         return bool(attendue) and hmac.compare_digest(recue, attendue)
 
     def lire_evenement(self, corps: bytes) -> Evenement:

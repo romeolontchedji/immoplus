@@ -16,11 +16,12 @@ from apps.listings.tests.fabriques import DistrictFactory, gerant_verifie
 pytestmark = [pytest.mark.pg, pytest.mark.django_db]
 
 PUBLIQUE = secrets.token_urlsafe(16)
-SECRET = secrets.token_urlsafe(16)
+SECRET = secrets.token_urlsafe(16)  # hash secret du webhook
 CLES = {
+    "KKIAPAY_WEBHOOK_SECRET": SECRET,
+    "KKIAPAY_SECRET": secrets.token_urlsafe(16),
     "KKIAPAY_PUBLIC_KEY": PUBLIQUE,
     "KKIAPAY_PRIVATE_KEY": secrets.token_urlsafe(16),
-    "KKIAPAY_SECRET": SECRET,
 }
 
 
@@ -232,3 +233,35 @@ class TestWebhook:
         self._envoyer({"transactionId": "w-5", "event": "transaction.failed", "stateData": str(attente.pk)})
         attente.refresh_from_db()
         assert attente.status == "failed"
+
+
+class TestEspeces:
+    def test_l_administrateur_active_l_abonnement_en_especes(self, abonnement_exige):
+        from apps.accounts.tests.fabriques import AdminFactory
+
+        g = gerant_verifie()
+        assert services.can_publish(g.pk) is False
+        services.activer_en_especes(
+            acteur=AdminFactory(), gerant_id=g.pk, plan_code="standard", periodes=2
+        )
+        assert services.can_publish(g.pk) is True
+        ligne = Transaction.objects.get(user=g.user, objet="abonnement")
+        assert ligne.amount == 4000 and ligne.provider_ref.startswith("especes-")
+
+    def test_reserve_aux_administrateurs(self, abonnement_exige):
+        from apps.accounts.tests.fabriques import PersonnelFactory
+
+        g = gerant_verifie()
+        with pytest.raises(ErreurMetier) as e:
+            services.activer_en_especes(
+                acteur=PersonnelFactory(), gerant_id=g.pk, plan_code="standard"
+            )
+        assert e.value.statut == 403
+
+    def test_formule_gratuite_refusee(self, abonnement_exige):
+        from apps.accounts.tests.fabriques import AdminFactory
+
+        with pytest.raises(ErreurMetier):
+            services.activer_en_especes(
+                acteur=AdminFactory(), gerant_id=gerant_verifie().pk, plan_code="free_v1"
+            )

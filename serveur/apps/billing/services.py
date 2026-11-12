@@ -243,6 +243,50 @@ def activer_formule(gerant_id, plan_code: str) -> Subscription:
 
 
 @transaction.atomic
+def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) -> Subscription:
+    """Un administrateur active la formule d'un gérant qui a payé en espèces (n périodes, notées comme une transaction)."""
+    from apps.accounts.models import GerantProfile
+
+    from .models import Transaction
+
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    choisie = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), None)
+    if choisie is None or plan_code == PLAN_GRATUIT or not choisie.get("price"):
+        raise ErreurMetier(
+            "validation_error",
+            "Formule payante inconnue.",
+            champs={"plan_code": ["Formule inconnue"]},
+        )
+    if not 1 <= int(periodes) <= 24:
+        raise ErreurMetier(
+            "validation_error", "Entre 1 et 24 périodes.", champs={"periodes": ["Entre 1 et 24"]}
+        )
+    profil = GerantProfile.objects.filter(pk=gerant_id).first()
+    if profil is None:
+        raise ErreurMetier("not_found", "Gérant introuvable.", statut=404)
+    montant = int(choisie["price"]) * int(periodes)
+    ligne = Transaction.objects.create(
+        user=profil.user,
+        objet=Transaction.Objet.ABONNEMENT,
+        plan_code=plan_code,
+        amount=montant,
+        status=StatutPaiement.SUCCEEDED,
+        paid_at=timezone.now(),
+    )
+    Transaction.objects.filter(pk=ligne.pk).update(provider_ref=f"especes-{ligne.pk}")
+    for _ in range(int(periodes)):
+        courant = activer_formule(profil.pk, plan_code)
+    audit.enregistrer(
+        "abonnement.especes",
+        acteur=acteur,
+        cible=profil.user,
+        metadata={"formule": plan_code, "periodes": int(periodes), "montant": montant},
+    )
+    return courant
+
+
+@transaction.atomic
 def appliquer_evenement(paiement_id, statut: str) -> Payment:
     """Tâche : paiement réussi → abonnement actif pour une nouvelle période ; échec → statut d'échec."""
     paiement = Payment.objects.select_for_update().get(pk=paiement_id)

@@ -9,8 +9,8 @@
   (formules de `PLANS`). Les annonces déjà en ligne restent visibles.
 - Locataires : `PAID_ALERTS_ENABLED` coché → chaque nouvelle alerte se paie une fois (`ALERT_PRICE`, réglable). Un paiement
   = un crédit ; supprimer l'alerte ne le rend pas. L'API mobile répond 402 `payment_required` (paiement sur le site).
-- Variables `.env` : `KKIAPAY_PUBLIC_KEY`, `KKIAPAY_PRIVATE_KEY`, `KKIAPAY_SECRET`, `KKIAPAY_SANDBOX` ; la CSP autorise `*.kkiapay.me`.
-- Webhook KKiaPay : `POST /paiement/webhook/kkiapay`, authentifié par l'en-tête `x-kkiapay-secret` (= `KKIAPAY_SECRET`,
+- Variables `.env` : `KKIAPAY_PUBLIC_KEY`, `KKIAPAY_PRIVATE_KEY`, `KKIAPAY_SECRET` (clé secrète API), `KKIAPAY_WEBHOOK_SECRET` (hash secret inventé), `KKIAPAY_SANDBOX` ; la CSP autorise `*.kkiapay.me`.
+- Webhook KKiaPay : `POST /paiement/webhook/kkiapay`, authentifié par l'en-tête `x-kkiapay-secret` (= `KKIAPAY_WEBHOOK_SECRET`,
   aussi saisi comme « hash secret » dans le tableau de bord KKiaPay). Le corps n'est pas cru : le serveur revérifie la
   transaction auprès de KKiaPay. Il rattrape un paiement dont le navigateur s'est fermé, et KKiaPay réessaie 5 fois si le
   serveur répond autre chose que 2xx. L'association se fait par `stateData` (notre référence) : forme à confirmer en sandbox.

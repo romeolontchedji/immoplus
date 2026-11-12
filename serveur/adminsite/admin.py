@@ -370,8 +370,54 @@ class GerantProfileAdmin(admin.ModelAdmin):
             ]
         return champs
 
+    actions = ["activer_abonnement_especes"]
+
     def has_change_permission(self, request, obj=None):
         return request.user.is_active and request.user.role == "admin"
+
+    @admin.action(description="Activer un abonnement (paiement en espèces)")
+    def activer_abonnement_especes(self, request, queryset):
+        """Le gérant a payé en espèces : choisir la formule et le nombre de périodes, puis confirmer."""
+        from django.template.response import TemplateResponse
+
+        from apps.billing import services as abonnements
+
+        if not (request.user.is_active and request.user.role == "admin"):
+            raise PermissionDenied
+        formules = [
+            p
+            for p in parametres.lire("PLANS")
+            if p.get("price") and p["code"] != abonnements.PLAN_GRATUIT
+        ]
+        if request.POST.get("confirmer") != "oui":
+            return TemplateResponse(
+                request,
+                "admin/abonnement-especes.html",
+                {
+                    **self.admin_site.each_context(request),
+                    "title": "Activer un abonnement",
+                    "opts": self.model._meta,
+                    "gerants": list(queryset),
+                    "formules": formules,
+                    "action": "activer_abonnement_especes",
+                    "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
+                },
+            )
+        faits = 0
+        for profil in queryset:
+            try:
+                abonnements.activer_en_especes(
+                    acteur=request.user,
+                    gerant_id=profil.pk,
+                    plan_code=request.POST.get("plan_code", ""),
+                    periodes=int(request.POST.get("periodes") or 1),
+                )
+                faits += 1
+            except (ErreurMetier, ValueError) as erreur:
+                texte = getattr(erreur, "message", "Nombre de périodes invalide.")
+                self.message_user(request, f"{profil.user} : {texte}", messages.ERROR)
+        self.message_user(request, f"Abonnement activé pour {faits} gérant(s).")
+        return None
 
     def save_model(self, request, obj, form, change):
         if "verification_status" in form.changed_data:
