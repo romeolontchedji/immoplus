@@ -29,6 +29,10 @@ def navigation(request):
     return {
         "non_lus_messages": chat_selectors.total_non_lus(utilisateur.pk, utilisateur.role),
         "non_lues_notifications": notifications.non_lues(utilisateur.pk),
+        # Les 5 dernières, pour la fenêtre de la cloche (lues seulement si elle est affichée).
+        "notifications_recentes": SimpleLazyObject(
+            lambda: notifications.liste(utilisateur.pk, limite=5)[0]
+        ),
         # Barre latérale fixe sur toutes les pages des comptes connectés, sauf l'accueil (plan v3, E2).
         "barre_laterale": chemin != "/" and not chemin.startswith(SANS_BARRE),
     }

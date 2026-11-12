@@ -236,10 +236,10 @@ class TestPublication:
             r.status_code == 409 and "gerant_non_verifie" in r.json()["error"]["fields"]["manques"]
         )
 
-    def test_premiere_annonce_attend_la_relecture(self, pro, quartier):
+    def test_premiere_annonce_publiee_directement(self, pro, quartier):
         a = creer(pro, quartier)
         medias_prets(Listing.objects.get(pk=a["id"]))
-        assert pro.post(f"/v1/pro/listings/{a['id']}/publish").json()["status"] == "processing"
+        assert pro.post(f"/v1/pro/listings/{a['id']}/publish").json()["status"] == "published"
 
     def test_annonce_suivante_publiee_directement(self, gerant, pro, quartier):
         ListingFactory(gerant=gerant)  # une première annonce déjà publiée

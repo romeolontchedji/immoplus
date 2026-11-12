@@ -506,7 +506,6 @@ class TestVideo:
     def test_publication_automatique_quand_les_medias_sont_prets(
         self, pro, gerant, tmp_path, django_capture_on_commit_callbacks
     ):
-        ListingFactory(gerant=gerant)  # le gérant a déjà une annonce publiée : pas de relecture
         a = ListingFactory(gerant=gerant, status="processing", published_at=None)
         for _ in range(PHOTOS_MIN):
             envoyer(pro, a.pk, jpeg(taille=(640, 480)), "photo", django_capture_on_commit_callbacks)

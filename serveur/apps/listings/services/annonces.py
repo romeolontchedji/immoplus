@@ -390,16 +390,14 @@ def publier(gerant: "GerantProfile", annonce_id) -> Listing:
     if manques:  # médias encore en traitement : l'annonce attend, invisible du public
         changer_statut(annonce, StatutAnnonce.PROCESSING, acteur=gerant.user)
         return annonce
-    premiere = not Listing.objects.filter(gerant=gerant, published_at__isnull=False).exists()
-    if premiere:  # première annonce : la vidéo est relue par la modération avant la mise en ligne
-        changer_statut(annonce, StatutAnnonce.PROCESSING, acteur=gerant.user)
-        return annonce
+    # Le gérant est vérifié (entretien fait avant la création du compte) : l'annonce est en ligne aussitôt, l'équipe
+    # est prévenue par courriel et peut la masquer après coup.
     mettre_en_ligne(annonce, acteur=gerant.user)
     return annonce
 
 
 def _prevenir_l_equipe(annonce: Listing) -> None:
-    """Courriel d'information aux administrateurs : le gérant vérifié publie sans validation préalable, l'équipe
+    """Courriel d'information aux administrateurs et modérateurs : le gérant vérifié publie sans validation préalable, l'équipe
     est prévenue après coup et peut masquer l'annonce depuis l'administration."""
     from django.conf import settings
 
@@ -408,7 +406,7 @@ def _prevenir_l_equipe(annonce: Listing) -> None:
 
     if not parametres.lire("EMAIL_NOUVELLES_ANNONCES"):
         return
-    destinataires = comptes.courriels_administrateurs()
+    destinataires = comptes.courriels_equipe()
     if not destinataires:
         return
     gerant = annonce.gerant.user

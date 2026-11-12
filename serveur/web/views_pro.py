@@ -140,7 +140,11 @@ def liste(request, profil):
     """Mes annonces : les brouillons à part, en tête, pour ne jamais les confondre avec une annonce en ligne (C5)."""
     toutes = list(selectors.annonces_du_gerant(profil))
     stats_annonces = selectors.stats_par_annonce([a.pk for a in toutes])
-    message = {"supprimee": "Annonce supprimée."}.get(request.GET.get("ok", ""))
+    message = {
+        "supprimee": "Annonce supprimée.",
+        "publiee": "Annonce publiée : elle est en ligne.",
+        "attente": "Annonce enregistrée : elle sera en ligne dès que ses médias seront prêts.",
+    }.get(request.GET.get("ok", ""))
     lignes = [
         {
             "annonce": a,
@@ -325,6 +329,9 @@ def editeur(request, profil, annonce_id=None):
                 return redirect("/pro/annonces?ok=supprimee")
             elif action in ACTIONS and annonce:
                 annonce = ACTIONS[action](profil, annonce.pk)
+                if action == "publier":  # fini avec l'éditeur : retour à la liste, pas sur l'étape des médias
+                    attente = annonce.status != StatutAnnonce.PUBLISHED
+                    return redirect(f"/pro/annonces?ok={'attente' if attente else 'publiee'}")
                 message = "Statut mis à jour."
             elif action in ACTIONS_MEDIAS and annonce:
                 message = _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
