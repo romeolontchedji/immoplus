@@ -13,7 +13,7 @@
           {% else %}
             Locataire
           {% endif %}
-          · @{{ u.username }}
+          · {{ u.username }}
         </p>
       </div>
       {% if u.role == "gerant" %}
@@ -35,7 +35,7 @@
           {% include "web/composants/icone.html" with nom="user-round" taille=18 %}
           Informations personnelles
         </h2>
-        <p class="texte-doux mb-0">Nom d'utilisateur : <strong>@{{ u.username }}</strong> (il sert à te connecter).</p>
+        <p class="texte-doux mb-0">Nom d'utilisateur : <strong>{{ u.username }}</strong> (il sert à te connecter).</p>
         {% include "web/auth/section-formulaire.html" with action="nom" f=nom bouton="Enregistrer" variante="primaire" %}
       </section>
       <section class="compte-section-carte"

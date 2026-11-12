@@ -365,3 +365,12 @@ def test_suivant_grise_pendant_le_traitement_et_un_envoi_interrompu_ne_bloque_pa
     page = c.get(f"/pro/annonces/{a.pk}").content.decode()
     assert "disabled" not in _bouton_suivant_etape_medias(page)
     assert "Envoi interrompu" in page and 'data-en-cours="0"' in page
+
+
+def test_la_cloche_liste_les_notifications_recentes(session_gerant):
+    from apps.notifications.models import Notification
+
+    c, g = session_gerant
+    Notification.objects.create(user=g.user, kind="alert.match", title="Nouvelle chambre à Zongo", body="25 000 F")
+    page = c.get("/pro/annonces").content.decode()
+    assert "Nouvelle chambre à Zongo" in page and "Aucune notification pour l" not in page

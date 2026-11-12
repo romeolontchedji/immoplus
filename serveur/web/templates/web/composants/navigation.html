@@ -205,7 +205,7 @@
         <ul class="navigation__liste" role="menu">
           <li class="navigation__menu-identite">
             <strong>{{ request.user.full_name|default:request.user.username }}</strong>
-            <span class="navigation__menu-role">Locataire · @{{ request.user.username }}</span>
+            <span class="navigation__menu-role">Locataire · {{ request.user.username }}</span>
           </li>
           <li role="none"><a class="navigation__lien" href="/compte/favoris" role="menuitem">Mes favoris</a></li>
           <li role="none"><a class="navigation__lien"
