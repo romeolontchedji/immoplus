@@ -4,6 +4,7 @@ import json
 
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from apps.billing import services as abonnements
@@ -89,3 +90,14 @@ def abonnement(request, profil):
             "derniers": derniers,
         },
     )
+
+
+@csrf_exempt
+@require_POST
+def webhook(request):
+    """Appelé par KKiaPay (authentifié par son secret, pas par une session). 2xx = reçu ; sinon KKiaPay réessaie."""
+    try:
+        resultat = transactions.recevoir_webhook(request.body, dict(request.headers))
+    except ErreurMetier as erreur:
+        return _erreur(erreur)
+    return JsonResponse({"received": True, "result": resultat})

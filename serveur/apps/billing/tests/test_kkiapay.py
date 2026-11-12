@@ -16,7 +16,12 @@ from apps.listings.tests.fabriques import DistrictFactory, gerant_verifie
 pytestmark = [pytest.mark.pg, pytest.mark.django_db]
 
 PUBLIQUE = secrets.token_urlsafe(16)
-CLES = {"KKIAPAY_PUBLIC_KEY": PUBLIQUE, "KKIAPAY_PRIVATE_KEY": secrets.token_urlsafe(16)}
+SECRET = secrets.token_urlsafe(16)
+CLES = {
+    "KKIAPAY_PUBLIC_KEY": PUBLIQUE,
+    "KKIAPAY_PRIVATE_KEY": secrets.token_urlsafe(16),
+    "KKIAPAY_SECRET": SECRET,
+}
 
 
 @pytest.fixture(autouse=True)
@@ -125,7 +130,7 @@ class TestConfirmation:
         assert e.value.statut == 404
 
     def test_sans_cles_pas_de_paiement(self, alertes_payantes):
-        with override_settings(KKIAPAY_PRIVATE_KEY="", KKIAPAY_PUBLIC_KEY=""):
+        with override_settings(KKIAPAY_PRIVATE_KEY="", KKIAPAY_PUBLIC_KEY="", KKIAPAY_SECRET=""):
             with pytest.raises(ErreurMetier) as e:
                 transactions.preparer(ClientFactory(), "alerte")
         assert e.value.statut == 503
@@ -179,3 +184,51 @@ class TestPagesWeb:
         c = Client()
         c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
         assert c.get("/pro/abonnement").status_code == 404
+
+
+class TestWebhook:
+    def _envoyer(self, donnees, secret=SECRET):
+        import json
+
+        entetes = {"HTTP_X_KKIAPAY_SECRET": secret} if secret else {}
+        return Client().post(
+            "/paiement/webhook/kkiapay", json.dumps(donnees), content_type="application/json", **entetes
+        )
+
+    def test_secret_faux_refuse(self, alertes_payantes):
+        r = self._envoyer({"transactionId": "w-1", "event": "transaction.success"}, secret="faux")
+        assert r.status_code == 403
+        assert self._envoyer({"transactionId": "w-1"}, secret="").status_code == 403
+
+    def test_le_webhook_valide_un_paiement_dont_le_navigateur_s_est_ferme(self, alertes_payantes):
+        u = ClientFactory()
+        attente, _ = transactions.preparer(u, "alerte")
+        r = self._envoyer(
+            {"transactionId": "w-2", "event": "transaction.success", "stateData": str(attente.pk)}
+        )
+        assert r.status_code == 200 and r.json()["result"] == "applique"
+        assert transactions.credits_alerte(u) == 1
+        # Rejeu (KKiaPay réessaie) puis retour tardif de la fenêtre : toujours un seul crédit.
+        self._envoyer({"transactionId": "w-2", "event": "transaction.success"})
+        transactions.confirmer(u, str(attente.pk), "w-2")
+        assert transactions.credits_alerte(u) == 1
+
+    def test_le_webhook_ne_croit_pas_son_corps(self, alertes_payantes, kkiapay):
+        u = ClientFactory()
+        attente, _ = transactions.preparer(u, "alerte")
+        kkiapay["status"] = "FAILED"  # KKiaPay dit autre chose que le corps reçu
+        r = self._envoyer(
+            {"transactionId": "w-3", "event": "transaction.success", "stateData": {"data": str(attente.pk)}}
+        )
+        assert r.json()["result"] == "refuse" and transactions.credits_alerte(u) == 0
+
+    def test_transaction_inconnue_acquittee(self, alertes_payantes):
+        r = self._envoyer({"transactionId": "w-4", "event": "transaction.success"})
+        assert r.status_code == 200 and r.json()["result"] == "inconnu"
+
+    def test_echec_marque_la_transaction(self, alertes_payantes):
+        u = ClientFactory()
+        attente, _ = transactions.preparer(u, "alerte")
+        self._envoyer({"transactionId": "w-5", "event": "transaction.failed", "stateData": str(attente.pk)})
+        attente.refresh_from_db()
+        assert attente.status == "failed"

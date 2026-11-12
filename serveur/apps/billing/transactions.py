@@ -5,6 +5,9 @@ règle chez KKiaPay ; le navigateur renvoie l'identifiant KKiaPay ; `confirmer` 
 ne valide qu'un paiement réussi, du bon montant, jamais utilisé deux fois. Le navigateur n'est jamais cru sur parole.
 """
 
+import json
+import uuid
+
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -20,7 +23,7 @@ from .models import Transaction
 
 
 def configure() -> bool:
-    return bool(settings.KKIAPAY_PRIVATE_KEY and settings.KKIAPAY_PUBLIC_KEY)
+    return bool(settings.KKIAPAY_PRIVATE_KEY and settings.KKIAPAY_PUBLIC_KEY and settings.KKIAPAY_SECRET)
 
 
 def alertes_payantes() -> bool:
@@ -92,6 +95,12 @@ def confirmer(utilisateur, reference: str, id_kkiapay: str) -> Transaction:
         attente = None
     if attente is None or not id_kkiapay:
         raise ErreurMetier("not_found", "Paiement introuvable.", statut=404)
+    return _appliquer(attente, id_kkiapay)
+
+
+def _appliquer(attente: Transaction, id_kkiapay: str) -> Transaction:
+    """Vérifie chez KKiaPay puis applique l'effet du paiement ; commun au retour de la fenêtre et au webhook."""
+    utilisateur = attente.user
     if attente.status == StatutPaiement.SUCCEEDED:
         return attente
     try:
@@ -172,3 +181,54 @@ def consommer_credit(utilisateur, alerte) -> None:
         )
     credit.used_at, credit.alert = timezone.now(), alerte
     credit.save(update_fields=["used_at", "alert"])
+
+
+# --------------------------------------------------------------------------- webhook
+def _reference_dans(etat) -> str | None:
+    """Notre référence (identifiant de transaction) renvoyée par KKiaPay dans `stateData` (texte ou objet)."""
+    valeurs = list(etat.values()) if isinstance(etat, dict) else [etat]
+    for valeur in valeurs:
+        try:
+            return str(uuid.UUID(str(valeur)))
+        except ValueError:
+            continue
+    return None
+
+
+def recevoir_webhook(corps: bytes, entetes: dict) -> str:
+    """Webhook KKiaPay : secret vérifié, puis le paiement est revérifié auprès de KKiaPay (le corps n'est pas cru).
+
+    Retourne un mot pour le journal. Lève `invalid_signature` (403) si le secret est faux, `payment_unverified` (502)
+    si KKiaPay ne répond pas : KKiaPay réessaie alors lui-même (5 fois), ce qui rattrape une panne passagère."""
+    if not configure():
+        raise ErreurMetier("payment_unavailable", "Paiement non configuré.", statut=503)
+    if not fournisseurs.PaiementKkiapay().signature_valide(corps, entetes):
+        audit.enregistrer("paiement.webhook_refuse", metadata={"fournisseur": "kkiapay"})
+        raise ErreurMetier("invalid_signature", "Signature invalide.", statut=403)
+    try:
+        donnees = json.loads(corps)
+    except ValueError:
+        return "ignore"
+    if not isinstance(donnees, dict):
+        return "ignore"
+    id_kkiapay = str(donnees.get("transactionId") or "")[:120]
+    attente = Transaction.objects.filter(provider_ref=id_kkiapay).first() if id_kkiapay else None
+    if attente is None:
+        reference = _reference_dans(donnees.get("stateData"))
+        attente = Transaction.objects.filter(pk=reference).first() if reference else None
+    if attente is None or not id_kkiapay:
+        return "inconnu"
+    if donnees.get("event") == "transaction.failed":
+        Transaction.objects.filter(pk=attente.pk, status=StatutPaiement.PENDING).update(
+            status=StatutPaiement.FAILED
+        )
+        return "echec"
+    if donnees.get("event") != "transaction.success":
+        return "ignore"
+    try:
+        _appliquer(attente, id_kkiapay)
+    except ErreurMetier as erreur:
+        if erreur.code == "payment_unverified":
+            raise
+        return "refuse"  # montant ou statut incohérent : déjà journalisé, inutile que KKiaPay réessaie
+    return "applique"

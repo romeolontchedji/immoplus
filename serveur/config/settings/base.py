@@ -189,6 +189,7 @@ PAYMENT_WEBHOOK_SECRET = env.texte(
     "PAYMENT_WEBHOOK_SECRET"
 )  # signature des webhooks (factice et réels)
 KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # vérification des transactions côté serveur
+KKIAPAY_SECRET = env.texte("KKIAPAY_SECRET")  # clé secrète (API) et « hash secret » du webhook du tableau de bord
 KKIAPAY_PUBLIC_KEY = env.texte("KKIAPAY_PUBLIC_KEY")  # ouverture de la fenêtre de paiement (peut être publique)
 KKIAPAY_SANDBOX = env.booleen("KKIAPAY_SANDBOX", False)  # vrai : clés et argent de test
 # Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).

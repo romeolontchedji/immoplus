@@ -110,10 +110,13 @@ class PaiementKkiapay(PaymentProvider):
     URL_TEST = "https://api-sandbox.kkiapay.me/api/v1/transactions/status"
 
     def __init__(self):
-        if not getattr(settings, "KKIAPAY_PRIVATE_KEY", "") or not getattr(
-            settings, "KKIAPAY_PUBLIC_KEY", ""
+        if not all(
+            getattr(settings, cle, "")
+            for cle in ("KKIAPAY_PUBLIC_KEY", "KKIAPAY_PRIVATE_KEY", "KKIAPAY_SECRET")
         ):
-            raise ImproperlyConfigured("Clés KKiaPay absentes (KKIAPAY_PUBLIC_KEY, KKIAPAY_PRIVATE_KEY).")
+            raise ImproperlyConfigured(
+                "Clés KKiaPay absentes (KKIAPAY_PUBLIC_KEY, KKIAPAY_PRIVATE_KEY, KKIAPAY_SECRET)."
+            )
 
     def transaction(self, reference: str) -> dict:
         """Transaction vue par KKiaPay : {"status": "SUCCESS"|"FAILED"|…, "amount": int, …}."""
@@ -128,6 +131,7 @@ class PaiementKkiapay(PaymentProvider):
                 "Content-Type": "application/json",
                 "x-api-key": settings.KKIAPAY_PUBLIC_KEY,
                 "x-private-key": settings.KKIAPAY_PRIVATE_KEY,
+                "x-secret-key": settings.KKIAPAY_SECRET,
             },
             method="POST",
         )
@@ -148,7 +152,9 @@ class PaiementKkiapay(PaymentProvider):
         raise NotImplementedError("Remboursement : depuis le tableau de bord KKiaPay.")
 
     def signature_valide(self, corps: bytes, entetes: dict) -> bool:
-        return False  # pas de webhook : chaque paiement est vérifié par le serveur après la fenêtre
+        recue = entetes.get("x-kkiapay-secret") or entetes.get("X-Kkiapay-Secret") or ""
+        attendue = getattr(settings, "KKIAPAY_SECRET", "")
+        return bool(attendue) and hmac.compare_digest(recue, attendue)
 
     def lire_evenement(self, corps: bytes) -> Evenement:
         raise NotImplementedError
