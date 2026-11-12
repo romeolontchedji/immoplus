@@ -65,6 +65,12 @@ def preparer(utilisateur, objet: str, plan_code: str = "") -> tuple[Transaction,
             raise ErreurMetier(
                 "feature_disabled", "Cette fonctionnalité n'est pas disponible.", statut=404
             )
+        if not (utilisateur.email and utilisateur.email_verified_at):
+            raise ErreurMetier(
+                "email_required",
+                "Confirme d'abord ton adresse e-mail : c'est là que tes alertes arrivent.",
+                statut=409,
+            )
         montant, plan_code = prix_alerte(), ""
     else:
         raise ErreurMetier("validation_error", "Objet de paiement inconnu.")

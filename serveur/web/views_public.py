@@ -570,6 +570,16 @@ def _lien_alerte(alerte, slugs_quartiers: dict) -> str:
     return "/annonces" + (f"?{urlencode(params)}" if params else "")
 
 
+def _exiger_email_pour_alerte(sans_email: bool) -> None:
+    """Une alerte arrive par e-mail et sur le site : sans adresse confirmée, on n'en active pas."""
+    if sans_email:
+        raise ErreurMetier(
+            "email_required",
+            "Ajoute et confirme d'abord ton adresse e-mail (formulaire ci-dessous) : c'est là que tes alertes arrivent.",
+            statut=409,
+        )
+
+
 def _contexte_paiement_alertes(utilisateur) -> dict:
     from .views_paiement import contexte_alertes  # import tardif : views_paiement importe ce module
 
@@ -603,6 +613,7 @@ def mes_alertes(request):
                 alertes.modifier(request.user, request.POST.get("alerte_id"), {"is_active": False})
                 message = "Alerte mise en pause."
             elif action == "reactiver":
+                _exiger_email_pour_alerte(sans_email)
                 alertes.modifier(request.user, request.POST.get("alerte_id"), {"is_active": True})
                 message = "Alerte réactivée."
             elif action == "modifier":
@@ -611,12 +622,9 @@ def mes_alertes(request):
                 )
                 message = "Alerte modifiée."
             else:
+                _exiger_email_pour_alerte(sans_email)
                 alertes.creer(request.user, _donnees_alerte(request.POST))
-                message = (
-                    "Alerte créée : ajoute ton e-mail ci-dessous pour être prévenu des chambres qui correspondent."
-                    if sans_email
-                    else "Alerte créée : tu seras prévenu par e-mail des chambres qui correspondent."
-                )
+                message = "Alerte créée : tu seras prévenu par e-mail et sur le site des chambres qui correspondent."
         except ErreurMetier as e:
             message, niveau = _message(e), "danger"
     proposition = _criteres_proposes(request.GET)

@@ -298,9 +298,21 @@ def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, ph
     return 6 if en_cours else 1
 
 
+LIEN_ABONNEMENT = "/compte/abonnement?raison=publier"
+
+
+def _abonnement_manquant(profil) -> bool:
+    """Paiement des gérants activé et pas d'abonnement qui permette de publier."""
+    from apps.billing import services as abonnements
+
+    return abonnements.actif() and not abonnements.can_publish(profil.pk)
+
+
 @gerant_obligatoire
 def editeur(request, profil, annonce_id=None):
     annonce = None
+    if annonce_id is None and request.method == "GET" and _abonnement_manquant(profil):
+        return redirect(LIEN_ABONNEMENT)  # nouvelle chambre sans abonnement : page des formules, avec un mot aimable
     if annonce_id is not None:
         annonce = selectors.annonce_du_gerant(profil, annonce_id)
         if annonce is None:
@@ -336,6 +348,8 @@ def editeur(request, profil, annonce_id=None):
             elif action in ACTIONS_MEDIAS and annonce:
                 message = _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
         except ErreurMetier as erreur:
+            if erreur.code == "subscription_required":
+                return redirect(LIEN_ABONNEMENT)
             if action in ACTIONS_MEDIAS:
                 erreur_media = erreur.message
             elif erreur.code == "listing_not_publishable":

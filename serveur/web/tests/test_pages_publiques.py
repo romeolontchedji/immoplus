@@ -180,7 +180,10 @@ class TestEspaceLocataire:
         assert "Ma favorite" in html(connecte(u).get("/compte/favoris"))
 
     def test_alertes_creation_proposee_depuis_une_recherche_et_suppression(self):
-        q, u = DistrictFactory(slug="zongo"), ClientFactory()
+        from django.utils import timezone
+
+        q = DistrictFactory(slug="zongo")
+        u = ClientFactory(email="locataire@exemple.bj", email_verified_at=timezone.now())
         c = connecte(u)
         formulaire = html(c.get("/compte/alertes?district=zongo&rent_max=20000"))
         assert re.search(r'value="20000"', formulaire)

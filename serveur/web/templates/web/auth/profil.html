@@ -38,6 +38,16 @@
         <p class="texte-doux mb-0">Nom d'utilisateur : <strong>{{ u.username }}</strong> (il sert à te connecter).</p>
         {% include "web/auth/section-formulaire.html" with action="nom" f=nom bouton="Enregistrer" variante="primaire" %}
       </section>
+      <section class="compte-section-carte" aria-labelledby="titre-abonnement">
+        <h2 class="compte-section-carte__titre" id="titre-abonnement">
+          {% include "web/composants/icone.html" with nom="banknote" taille=18 %}
+          Abonnement
+        </h2>
+        <p class="texte-doux mb-0">
+          {% if u.role == "gerant" %}Ta formule, sa date de fin et l'historique de tes paiements.{% else %}Le prix des alertes et l'historique de tes paiements.{% endif %}
+        </p>
+        <div><a class="bouton bouton--primaire" href="/compte/abonnement">Voir mon abonnement</a></div>
+      </section>
       <section class="compte-section-carte"
                id="securite"
                aria-labelledby="titre-securite">

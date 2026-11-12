@@ -5,7 +5,8 @@ import secrets
 import pytest
 from django.test import Client, override_settings
 
-from apps.accounts.tests.fabriques import MOT_DE_PASSE, ClientFactory
+from apps.accounts.tests.fabriques import MOT_DE_PASSE
+from apps.accounts.tests.fabriques import ClientFactory as _ClientFactory
 from apps.billing import services, transactions
 from apps.billing.models import Subscription, Transaction
 from apps.core import parametres
@@ -14,6 +15,16 @@ from apps.listings.services import alertes
 from apps.listings.tests.fabriques import DistrictFactory, gerant_verifie
 
 pytestmark = [pytest.mark.pg, pytest.mark.django_db]
+
+
+def ClientFactory(**champs):  # noqa: N802 - locataire avec e-mail confirmé (exigé pour une alerte)
+    import uuid
+
+    from django.utils import timezone
+
+    champs.setdefault("email", f"{uuid.uuid4().hex[:10]}@exemple.bj")
+    champs.setdefault("email_verified_at", timezone.now())
+    return _ClientFactory(**champs)
 
 PUBLIQUE = secrets.token_urlsafe(16)
 SECRET = secrets.token_urlsafe(16)  # hash secret du webhook
@@ -180,11 +191,12 @@ class TestPagesWeb:
         r = Client().post("/paiement/preparer", {}, content_type="application/json")
         assert r.status_code == 302
 
-    def test_page_abonnement_cachee_quand_le_paiement_est_eteint(self):
+    def test_page_abonnement_quand_le_paiement_est_eteint(self):
         g = gerant_verifie()
         c = Client()
         c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
-        assert c.get("/pro/abonnement").status_code == 404
+        r = c.get("/compte/abonnement")
+        assert r.status_code == 200 and "publier est gratuit" in r.content.decode()
 
 
 class TestWebhook:
@@ -265,3 +277,40 @@ class TestEspeces:
             services.activer_en_especes(
                 acteur=AdminFactory(), gerant_id=gerant_verifie().pk, plan_code="free_v1"
             )
+
+
+class TestParcoursGerantEtEmail:
+    def test_sans_e_mail_confirme_pas_de_paiement_d_alerte(self, alertes_payantes):
+        sans = _ClientFactory()
+        with pytest.raises(ErreurMetier) as e:
+            transactions.preparer(sans, "alerte")
+        assert e.value.code == "email_required"
+
+    def test_sans_e_mail_confirme_pas_d_alerte_sur_le_site(self):
+        u = _ClientFactory(username="sans.mail")
+        c = Client()
+        c.post("/connexion", {"username": "sans.mail", "password": MOT_DE_PASSE})
+        q = DistrictFactory()
+        r = c.post("/compte/alertes", {"action": "creer", "district_ids": str(q.pk)})
+        from apps.listings.models import Alert
+
+        assert "adresse e-mail" in r.content.decode()
+        assert not Alert.objects.filter(user=u).exists()
+
+    def test_gerant_sans_abonnement_redirige_vers_les_formules(self, abonnement_exige):
+        g = gerant_verifie()
+        c = Client()
+        c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
+        r = c.get("/pro/annonces/nouvelle")
+        assert r.status_code == 302 and r["Location"] == "/compte/abonnement?raison=publier"
+        page = c.get("/compte/abonnement?raison=publier").content.decode()
+        assert "abonnement actif" in page and "Standard" in page
+
+    def test_gerant_abonne_accede_a_l_editeur(self, abonnement_exige):
+        from apps.accounts.tests.fabriques import AdminFactory
+
+        g = gerant_verifie()
+        services.activer_en_especes(acteur=AdminFactory(), gerant_id=g.pk, plan_code="standard")
+        c = Client()
+        c.post("/connexion", {"username": g.user.username, "password": MOT_DE_PASSE})
+        assert c.get("/pro/annonces/nouvelle").status_code == 200

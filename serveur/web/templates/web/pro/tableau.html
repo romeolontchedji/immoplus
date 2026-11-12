@@ -26,6 +26,12 @@
         </a>
       {% endif %}
     </div>
+    {% if abonnement_requis %}
+      <div class="alerte alerte--avertissement" role="status">
+        <p>Un abonnement est nécessaire pour publier de nouvelles chambres. Tes annonces en ligne restent visibles.</p>
+        <p><a class="bouton bouton--primaire" href="/compte/abonnement?raison=publier">Voir les formules d'abonnement</a></p>
+      </div>
+    {% endif %}
     {% if profil.verification_status != "verified" %}
       <div class="alerte alerte--avertissement" role="status">
         <p>Ton profil n'est pas encore vérifié : la publication s'ouvrira après l'entretien avec l'équipe Immo+.</p>

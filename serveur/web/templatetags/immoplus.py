@@ -59,6 +59,7 @@ MENU_LOCATAIRE = (
     ("Mes alertes", "/compte/alertes", "bell-ring", None, False),
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
+    ("Abonnement", "/compte/abonnement", "banknote", None, False),
     ("Mon profil", "/compte/profil", "user", None, False),
 )
 MENU_GERANT = (
