@@ -395,24 +395,37 @@ def boite():
 
 
 class TestNotificationsDeMessage:
-    def test_une_notification_par_message_et_notified_at_apres_le_push(
+    def test_une_notification_par_conversation_et_notified_at_apres_le_push(
         self, decor, django_capture_on_commit_callbacks
     ):
+        """Une seule ligne dans le centre de notifications par personne et par chambre ; chaque message sonne."""
         DeviceFactory(user=decor.gerant.user, push_provider="expo", push_token="jeton-gerant")
         with django_capture_on_commit_callbacks(execute=True):
             conversation, m1, *_ = ouvrir(decor)
             m2, *_ = services.envoyer(decor.locataire, conversation.pk, "Et la caution ?", mid())
         notifs = Notification.objects.filter(user=decor.gerant.user, kind="message.received")
-        assert notifs.count() == 2 and len(boite()) == 2
-        assert {n.collapse_key for n in notifs} == {
-            f"conv:{conversation.pk}"
-        }  # groupées à l'affichage seulement
+        assert notifs.count() == 1 and len(boite()) == 2
+        n = notifs.get()
+        assert n.collapse_key == f"conv:{conversation.pk}"
+        assert n.body.startswith("2 nouveaux messages") and n.data["seq"] == 2
         assert boite()[0]["titre"].startswith(
             f"{decor.locataire.full_name} · "
         )  # qui · quelle chambre
         for m in (m1, m2):
             m.refresh_from_db()
             assert m.notified_at is not None
+
+    def test_apres_lecture_une_nouvelle_notification_repart_a_un(
+        self, decor, django_capture_on_commit_callbacks
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            conversation, *_ = ouvrir(decor)
+        Notification.objects.filter(user=decor.gerant.user).update(read_at=timezone.now())
+        with django_capture_on_commit_callbacks(execute=True):
+            services.envoyer(decor.locataire, conversation.pk, "Toujours là ?", mid())
+        notifs = Notification.objects.filter(user=decor.gerant.user, kind="message.received")
+        assert notifs.count() == 2  # la lue reste, la nouvelle commence un nouveau groupe
+        assert "Toujours là ?" in notifs.filter(read_at__isnull=True).get().body
 
     def test_la_notification_compte_les_messages_en_attente_et_porte_les_actions(
         self, decor, django_capture_on_commit_callbacks

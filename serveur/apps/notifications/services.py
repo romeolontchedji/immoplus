@@ -125,6 +125,44 @@ def creer(
     return notification
 
 
+def regrouper(
+    utilisateur_id,
+    kind: str,
+    collapse_key: str,
+    titre: str,
+    corps: str,
+    *,
+    data: dict,
+    silence: bool = False,
+) -> Notification | None:
+    """Messagerie : une seule notification non lue par conversation. Si elle existe, elle est réécrite (nouveau
+    compte, dernier aperçu), remontée en tête et renvoyée (temps réel et push) ; sinon `None` et l'appelant en crée
+    une. Un message déjà compté (`seq` égal ou inférieur) ne change rien : les reprises de tâche sont sans effet."""
+    existante = (
+        Notification.objects.filter(
+            user_id=utilisateur_id, kind=kind, collapse_key=collapse_key, read_at__isnull=True
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if existante is None:
+        return None
+    if int(existante.data.get("seq") or 0) >= int(data.get("seq") or 0):
+        return existante
+    motif = "silence" if silence else _motif_de_saut(utilisateur_id, kind, data)
+    existante.title, existante.body, existante.data = titre[:120], corps[:255], data
+    existante.created_at = timezone.now()
+    existante.delivery_status = "skipped" if motif else "pending"
+    existante.delivery_attempts, existante.last_error = 0, motif
+    existante.save(
+        update_fields=[
+            "title", "body", "data", "created_at", "delivery_status", "delivery_attempts", "last_error",
+        ]
+    )  # fmt: skip
+    transaction.on_commit(lambda: _apres_creation(existante.pk, motif))
+    return existante
+
+
 def mettre_a_jour_en_silence(dedupe_key: str, titre: str, corps: str, data: dict) -> bool:
     """Réécrit une notification existante sans nouveau push (récapitulatif qui grossit) ; faux si elle n'existe pas."""
     n = Notification.objects.filter(dedupe_key=dedupe_key).first()

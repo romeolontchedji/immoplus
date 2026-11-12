@@ -461,17 +461,30 @@ def notifier(message_id) -> str:
     # Compté jusqu'à ce message.
     en_attente = message.seq - selectors.position_de_lecture(conversation, destinataire)
     corps = f"{en_attente} nouveaux messages · {apercu}" if en_attente > 1 else apercu
+    titre = f"{nom} · {chambre}" if chambre else nom  # comme une messagerie : qui, à propos de quoi
+    data = {"conversation_id": str(conversation.pk), "message_id": str(message.pk), "seq": message.seq,
+            "listing_id": str(conversation.listing_id), "_sous_titre": chambre, "_nombre": en_attente}  # fmt: skip
+    # Une seule notification non lue par personne et par chambre (conversation) : elle se met à jour.
+    if notifications.regrouper(
+        destinataire,
+        "message.received",
+        f"conv:{conversation.pk}",
+        titre,
+        corps,
+        data=data,
+        silence=silence,
+    ):
+        return "regroupe"
     notifications.creer(
         destinataire,
         "message.received",
-        f"{nom} · {chambre}" if chambre else nom,  # comme une messagerie : qui, à propos de quoi
+        titre,
         corps,
-        data={"conversation_id": str(conversation.pk), "message_id": str(message.pk), "seq": message.seq,
-              "listing_id": str(conversation.listing_id), "_sous_titre": chambre, "_nombre": en_attente},
+        data=data,
         dedupe_key=f"message:{message.pk}",
         collapse_key=f"conv:{conversation.pk}",
         silence=silence,
-    )  # fmt: skip
+    )
     return "cree"
 
 
