@@ -2,7 +2,6 @@
 {% load static immoplus %}
 {% block titre %}{{ titre }} — Espace Gérant — Immo+{% endblock %}
 {% block tete %}
-  {% if medias_en_cours %}<meta http-equiv="refresh" content="8">{% endif %}
 {% endblock %}
 {% block espace %}
   {% comment %}
@@ -136,10 +135,7 @@
           {% with champ=form.rent_negotiable %}
             {% include "web/composants/champ.html" %}
           {% endwith %}
-          <div class="grille grille--3">
-            {% with champ=form.deposit_months %}
-              {% include "web/composants/champ.html" %}
-            {% endwith %}
+          <div class="grille grille--2">
             {% with champ=form.advance_months %}
               {% include "web/composants/champ.html" %}
             {% endwith %}
@@ -236,7 +232,10 @@
             Photos : {{ photos_pretes }}/10 prêtes ({{ photos_min }} au minimum)
           </li>
         </ul>
-        <div id="envoi-medias" data-annonce="{{ annonce.pk }}" class="depot">
+        <div id="envoi-medias"
+             data-annonce="{{ annonce.pk }}"
+             data-en-cours="{% if medias_en_cours %}1{% else %}0{% endif %}"
+             class="depot">
           <label class="depot__zone" for="envoi-fichiers" id="depot-zone">
             <span class="depot__icone">{% include "web/composants/icone.html" with nom="upload" taille=28 %}</span>
             <span class="depot__titre">Glisse ta vidéo et tes photos ici</span>
@@ -315,7 +314,10 @@
             {% endfor %}
           </ul>
         {% endif %}
-        {% include "web/pro/etape-navigation.html" with precedent=5 suivant=7 %}
+        {% if suite_bloquee %}
+          <p class="texte-doux texte-petit" id="medias-attente" role="status">{{ raison_blocage }}</p>
+        {% endif %}
+        {% include "web/pro/etape-navigation.html" with precedent=5 suivant=7 desactive=suite_bloquee %}
       </section>
       <section class="pro-section-carte etape"
                data-etape="7"

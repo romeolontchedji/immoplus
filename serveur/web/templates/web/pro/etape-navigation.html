@@ -1,4 +1,5 @@
-{# Boutons « Précédent » / « Suivant » d'une étape de l'éditeur (js/etapes-annonce.js). Paramètres : precedent, suivant. #}
+{# Boutons « Précédent » / « Suivant » d'une étape de l'éditeur (js/etapes-annonce.js). Paramètres : precedent, suivant,
+   desactive (« Suivant » grisé tant que l'étape n'est pas complète). #}
 <div class="etape__navigation">
   {% if precedent %}
     <button class="bouton bouton--secondaire"
@@ -11,7 +12,7 @@
     <button class="bouton bouton--primaire"
             type="button"
             data-aller="{{ suivant }}"
-            data-verifier>
+            data-verifier{% if desactive %} disabled aria-disabled="true"{% endif %}>
       Suivant
       {% include "web/composants/icone.html" with nom="arrow-right" taille=18 %}
     </button>
