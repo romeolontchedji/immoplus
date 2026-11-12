@@ -1,7 +1,8 @@
 """Fournisseurs de paiement Mobile Money (CDC §7.11, EF-ABO-04) : interface, factice (local et tests), KKiaPay.
 
-Décision V10 (2026-10-17) : KKiaPay sera le fournisseur réel ; seul son squelette est livré, branché au lancement
-payant. Tant que `SUBSCRIPTION_ENABLED` est faux, aucun de ces fournisseurs n'est appelé hors des tests.
+Décision V10 (2026-10-17) : KKiaPay est le fournisseur réel. Le payeur règle dans la fenêtre KKiaPay du site ;
+le serveur vérifie la transaction (`apps/billing/transactions.py`). Tant que les paiements sont éteints dans
+l'administration (`SUBSCRIPTION_ENABLED`, `PAID_ALERTS_ENABLED`), rien n'est appelé.
 """
 
 import hashlib
@@ -101,29 +102,53 @@ class PaiementFactice(PaymentProvider):
 
 
 class PaiementKkiapay(PaymentProvider):
-    """Squelette KKiaPay (décision V10) : à compléter avec la documentation et les clés du contrat au lancement payant."""
+    """KKiaPay : le payeur règle dans la fenêtre KKiaPay ouverte par le site (aucun appel serveur pour initier) ;
+    le serveur vérifie ensuite la transaction avec la clé privée (`transaction`)."""
 
     nom = "kkiapay"
+    URL_REELLE = "https://api.kkiapay.me/api/v1/transactions/status"
+    URL_TEST = "https://api-sandbox.kkiapay.me/api/v1/transactions/status"
 
     def __init__(self):
-        if not getattr(settings, "KKIAPAY_PRIVATE_KEY", ""):
-            raise ImproperlyConfigured(
-                "KKIAPAY_PRIVATE_KEY manquante : KKiaPay n'est pas encore branché."
-            )
+        if not getattr(settings, "KKIAPAY_PRIVATE_KEY", "") or not getattr(
+            settings, "KKIAPAY_PUBLIC_KEY", ""
+        ):
+            raise ImproperlyConfigured("Clés KKiaPay absentes (KKIAPAY_PUBLIC_KEY, KKIAPAY_PRIVATE_KEY).")
+
+    def transaction(self, reference: str) -> dict:
+        """Transaction vue par KKiaPay : {"status": "SUCCESS"|"FAILED"|…, "amount": int, …}."""
+        import urllib.error
+        import urllib.request
+
+        url = self.URL_TEST if settings.KKIAPAY_SANDBOX else self.URL_REELLE
+        requete = urllib.request.Request(
+            url,
+            data=json.dumps({"transactionId": reference}).encode(),
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": settings.KKIAPAY_PUBLIC_KEY,
+                "x-private-key": settings.KKIAPAY_PRIVATE_KEY,
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(requete, timeout=15) as reponse:  # noqa: S310 - URL fixe ci-dessus
+                return json.loads(reponse.read() or b"{}")
+        except (urllib.error.URLError, TimeoutError, ValueError) as erreur:
+            raise ErreurPaiement("KKiaPay ne répond pas.") from erreur
 
     def initier(self, *, montant: int, methode: str, telephone: str, cle: str) -> Initiation:
-        raise NotImplementedError(
-            "KKiaPay : à brancher au lancement payant (docs/plan-actions-v2.md §7 bis)."
-        )
+        raise NotImplementedError("KKiaPay : le paiement se fait dans la fenêtre du site.")
 
     def verifier(self, reference: str) -> str:
-        raise NotImplementedError
+        etat = str(self.transaction(reference).get("status", "")).upper()
+        return {"SUCCESS": "succeeded", "FAILED": "failed"}.get(etat, "pending")
 
     def rembourser(self, reference: str) -> None:
-        raise NotImplementedError
+        raise NotImplementedError("Remboursement : depuis le tableau de bord KKiaPay.")
 
     def signature_valide(self, corps: bytes, entetes: dict) -> bool:
-        return False  # refuse tout tant que la vérification réelle n'est pas écrite
+        return False  # pas de webhook : chaque paiement est vérifié par le serveur après la fenêtre
 
     def lire_evenement(self, corps: bytes) -> Evenement:
         raise NotImplementedError

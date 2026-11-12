@@ -71,8 +71,9 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "SUBSCRIPTION_GRACE_DAYS": (7, "Jours de grâce d'un abonnement impayé avant expiration."),
     "PAID_ALERTS_ENABLED": (
         False,
-        "Alerte prioritaire payante des locataires (prévue, pas encore construite) : désactivée.",
+        "Alertes payantes des locataires : chaque nouvelle alerte se paie une fois (KKiaPay).",
     ),
+    "ALERT_PRICE": (500, "Prix d'une alerte pour un locataire, en FCFA (si les alertes payantes sont activées)."),
     "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
     "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),
     "NEW_CONVERSATIONS_PER_DAY": (20, "Nouvelles conversations par jour et par locataire."),

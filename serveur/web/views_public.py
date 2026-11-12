@@ -570,6 +570,12 @@ def _lien_alerte(alerte, slugs_quartiers: dict) -> str:
     return "/annonces" + (f"?{urlencode(params)}" if params else "")
 
 
+def _contexte_paiement_alertes(utilisateur) -> dict:
+    from .views_paiement import contexte_alertes  # import tardif : views_paiement importe ce module
+
+    return contexte_alertes(utilisateur)
+
+
 @connecte_obligatoire
 def mes_alertes(request):
     if request.user.role != "client":
@@ -691,7 +697,8 @@ def mes_alertes(request):
          "cuisines": [c for c in Cuisine.choices if c[0] != Cuisine.NONE],
          "indispensables": (("douche", "Douche et WC internes"), ("cloture", "Cour clôturée")),
          "message": message, "niveau": niveau, "proposition": proposition, "edition": edition, "ouvrir": ouvrir,
-         "sans_email": sans_email, "form_email": form_email},
+         "sans_email": sans_email, "form_email": form_email,
+         **_contexte_paiement_alertes(request.user)},
     )  # fmt: skip
 
 

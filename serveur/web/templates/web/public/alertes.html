@@ -13,6 +13,21 @@
           <p>{{ message }}</p>
         </div>
       {% endif %}
+      {% if alertes_payantes %}
+        <div class="carte p-5 pile">
+          <h2 class="fs-18 fw-bold mb-0">Alertes payantes</h2>
+          <p class="texte-doux mb-0">
+            Chaque nouvelle alerte coûte {{ prix_alerte }} F, payés une seule fois (Mobile Money ou carte).
+            {% if credits_alerte %}Tu as {{ credits_alerte }} alerte{{ credits_alerte|pluralize }} payée{{ credits_alerte|pluralize }} à créer.{% else %}Paie d'abord, puis crée ton alerte.{% endif %}
+          </p>
+          <div>
+            <button class="bouton bouton--primaire" type="button" data-payer data-objet="alerte"{% if not paiement_possible %} disabled{% endif %}>
+              Payer une alerte ({{ prix_alerte }} F)
+            </button>
+          </div>
+          <p id="paiement-etat" class="texte-doux mb-0" role="status"></p>
+        </div>
+      {% endif %}
       {% if sans_email %}
         <div class="carte p-5 pile" data-email-alertes>
           <h2 class="fs-18 fw-bold mb-0">Reçois tes alertes par e-mail</h2>
@@ -324,4 +339,5 @@
     </div>
   </section>
   <script src="{% static 'js/listes-multiples.js' %}" defer></script>
+  {% if alertes_payantes %}<script src="{% static 'js/paiement.js' %}" defer></script>{% endif %}
 {% endblock %}

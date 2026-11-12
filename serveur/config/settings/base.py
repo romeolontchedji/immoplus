@@ -188,7 +188,9 @@ PAYMENT_PROVIDER = env.texte("PAYMENT_PROVIDER", "fake")
 PAYMENT_WEBHOOK_SECRET = env.texte(
     "PAYMENT_WEBHOOK_SECRET"
 )  # signature des webhooks (factice et réels)
-KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # décision V10 : branché au lancement payant
+KKIAPAY_PRIVATE_KEY = env.texte("KKIAPAY_PRIVATE_KEY")  # vérification des transactions côté serveur
+KKIAPAY_PUBLIC_KEY = env.texte("KKIAPAY_PUBLIC_KEY")  # ouverture de la fenêtre de paiement (peut être publique)
+KKIAPAY_SANDBOX = env.booleen("KKIAPAY_SANDBOX", False)  # vrai : clés et argent de test
 # Anti-robot du site : `turnstile` (Cloudflare, gratuit) ou `fake` (tests ; refusé en production, settings/public.py).
 CAPTCHA_PROVIDER = env.texte("CAPTCHA_PROVIDER") or "fake"
 TURNSTILE_SECRET = env.texte(
@@ -246,7 +248,10 @@ LOGGING = {
 ERREURS_DESTINATAIRES = env.liste("ERREURS_DESTINATAIRES")
 
 # --- En-têtes de sécurité (la CSP est posée par EnTetesSecuriteMiddleware) ---
-CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com"]
+CSP_SCRIPT_SOURCES = ["'self'", "https://challenges.cloudflare.com", "https://cdn.kkiapay.me"]
+# Fenêtre de paiement KKiaPay (script, cadre et appels réseau).
+CSP_CONNECT_SOURCES = ["'self'", "https://*.kkiapay.me"]
+CSP_FRAME_SOURCES = ["https://challenges.cloudflare.com", "https://*.kkiapay.me"]
 USE_X_FORWARDED_FOR = False  # vrai derrière Caddy (réglages public et admin)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"

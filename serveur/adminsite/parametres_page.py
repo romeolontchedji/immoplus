@@ -31,8 +31,8 @@ SECTIONS = [
     ("medias", "Photos et vidéos", "Où sont rangés les médias des annonces.", ["MEDIA_STORAGE"]),
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
-    ("abonnement", "Abonnement (désactivé en V1)", "Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.",
-     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "PLANS", "PAID_ALERTS_ENABLED"]),
+    ("abonnement", "Paiements (KKiaPay)", "Éteints par défaut. Cochez pour faire payer les gérants (abonnement) et les locataires (alertes).",
+     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "PLANS", "PAID_ALERTS_ENABLED", "ALERT_PRICE"]),
 ]  # fmt: skip
 
 CHOIX = {
@@ -117,13 +117,15 @@ NOTES = {
     "journée, une alerte est levée (protection de la vie privée).",
     "MODERATOR_MAX_SUSPENSION_DAYS": "Durée maximale d'une suspension décidée par un modérateur ; au-delà, il faut un "
     "administrateur.",
-    "SUBSCRIPTION_ENABLED": "Coché : les gérants doivent avoir un abonnement actif pour publier. Désactivé en V1 : "
-    "tout est gratuit.",
+    "SUBSCRIPTION_ENABLED": "Coché : les gérants doivent payer un abonnement pour publier (leurs annonces déjà en ligne "
+    "restent visibles). Décoché : tout est gratuit.",
     "SUBSCRIPTION_GRACE_DAYS": "Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son "
     "abonnement.",
-    "PLANS": "Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé.",
-    "PAID_ALERTS_ENABLED": "Réservé à une alerte prioritaire payante pour les locataires, pas encore construite : à laisser "
-    "décoché (aucun SMS n'est envoyé par Immo+).",
+    "PLANS": "Formules d'abonnement des gérants (code, nom, prix en FCFA, durée). Pour vendre la formule « standard » : "
+    "fixez son prix et mettez \"active\": true.",
+    "PAID_ALERTS_ENABLED": "Coché : un locataire paie une fois chaque nouvelle alerte (prix ci-dessous). Les alertes déjà "
+    "créées continuent de fonctionner. Décoché : alertes gratuites.",
+    "ALERT_PRICE": "Prix d'une alerte en FCFA (par exemple 500).",
 }
 
 LONGS = {"MAINTENANCE_MESSAGE", "APP_NOTICE", "LEGAL_ADDRESS"}

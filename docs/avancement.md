@@ -2,6 +2,17 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-16 : paiements KKiaPay (éteints par défaut).**
+- Fenêtre de paiement KKiaPay sur le site ; le serveur vérifie chaque transaction avec la clé privée (statut réussi, montant,
+  identifiant jamais réutilisé) : `apps/billing/transactions.py`, table `transactions`, visible dans l'administration.
+- Gérants : `SUBSCRIPTION_ENABLED` coché → le plan Gratuit ne suffit plus pour créer ou publier ; page `/pro/abonnement`
+  (formules de `PLANS`). Les annonces déjà en ligne restent visibles.
+- Locataires : `PAID_ALERTS_ENABLED` coché → chaque nouvelle alerte se paie une fois (`ALERT_PRICE`, réglable). Un paiement
+  = un crédit ; supprimer l'alerte ne le rend pas. L'API mobile répond 402 `payment_required` (paiement sur le site).
+- Variables `.env` : `KKIAPAY_PUBLIC_KEY`, `KKIAPAY_PRIVATE_KEY`, `KKIAPAY_SANDBOX` ; la CSP autorise `*.kkiapay.me`.
+- Pas de webhook : un paiement n'est validé que par le retour de la fenêtre. À ajouter si des paiements sont débités sans
+  être validés (navigateur fermé trop tôt).
+
 **2026-11-15 : publication directe, courriels habillés.**
 - Un gérant vérifié publie en direct, y compris sa première annonce (plus de relecture préalable) ; administrateurs et
   modérateurs reçoivent un courriel à chaque première mise en ligne. Les annonces déjà « en relecture » restent

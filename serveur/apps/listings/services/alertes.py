@@ -2,6 +2,7 @@
 
 import uuid
 
+from django.db import transaction
 from django.db.models import Count
 
 from apps.core import parametres
@@ -167,7 +168,13 @@ def creer(utilisateur, donnees: dict) -> Alert:
     propre = _valider(donnees)
     _exiger_un_critere(propre)
     _verifier_plafond(utilisateur)
-    alerte = Alert.objects.create(user=utilisateur, **propre)
+    from apps.billing import transactions
+
+    with transaction.atomic():
+        alerte = Alert.objects.create(user=utilisateur, **propre)
+        if transactions.alertes_payantes() and utilisateur.role == "client":
+            # Sans paiement réussi non utilisé : 402 et l'alerte n'est pas créée (la transaction est annulée).
+            transactions.consommer_credit(utilisateur, alerte)
     if alerte.is_active:
         signaler_existantes(alerte)
     return alerte

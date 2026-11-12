@@ -110,7 +110,13 @@ def can_publish(gerant_id) -> bool:
     if not actif():
         return True
     courant = abonnement_courant(gerant_id)
-    return courant is not None and courant.status in STATUTS_PUBLIABLES
+    # Abonnement exigé : le plan Gratuit V1 ne suffit plus (le gérant doit payer une formule), mais ses annonces
+    # déjà en ligne restent visibles (cette règle ne touche que la création et la publication).
+    return (
+        courant is not None
+        and courant.status in STATUTS_PUBLIABLES
+        and courant.plan_code != PLAN_GRATUIT
+    )
 
 
 # --------------------------------------------------------------------------- paiement
@@ -214,6 +220,28 @@ def recevoir_webhook(nom_fournisseur: str, corps: bytes, entetes: dict) -> tuple
     return paiement, True
 
 
+def activer_formule(gerant_id, plan_code: str) -> Subscription:
+    """Paiement reçu : la formule devient active pour une période (renouvellement : la période s'ajoute)."""
+    choisi = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), {"period_months": 1})
+    courant = abonnement_courant(gerant_id, creer=False)
+    maintenant = timezone.now()
+    if courant is not None and courant.plan_code == plan_code and courant.status in STATUTS_PUBLIABLES:
+        debut = max(courant.current_period_end, maintenant)
+        courant.current_period_end = _fin_de_periode(debut, choisi["period_months"])
+        courant.save(update_fields=["current_period_end", "updated_at"])
+        if courant.status != StatutAbonnement.ACTIVE:
+            changer_statut(courant, StatutAbonnement.ACTIVE, motif="paiement")
+        return courant
+    if courant is not None:
+        Subscription.objects.filter(pk=courant.pk).update(
+            status=StatutAbonnement.EXPIRED, updated_at=maintenant
+        )
+    return Subscription.objects.create(
+        gerant_id=gerant_id, plan_code=plan_code, status=StatutAbonnement.ACTIVE,
+        current_period_start=maintenant, current_period_end=_fin_de_periode(maintenant, choisi["period_months"]),
+    )  # fmt: skip
+
+
 @transaction.atomic
 def appliquer_evenement(paiement_id, statut: str) -> Payment:
     """Tâche : paiement réussi → abonnement actif pour une nouvelle période ; échec → statut d'échec."""
@@ -223,34 +251,7 @@ def appliquer_evenement(paiement_id, statut: str) -> Payment:
     paiement.status = statut
     if statut == StatutPaiement.SUCCEEDED:
         paiement.paid_at = timezone.now()
-        choisi = next(
-            (p for p in parametres.lire("PLANS") if p["code"] == paiement.plan_code),
-            {"period_months": 1},
-        )
-        courant = abonnement_courant(paiement.gerant_id, creer=False)
-        maintenant = timezone.now()
-        if (
-            courant is not None
-            and courant.plan_code == paiement.plan_code
-            and courant.status in STATUTS_PUBLIABLES
-        ):
-            debut = max(
-                courant.current_period_end, maintenant
-            )  # renouvellement : la période s'ajoute
-            courant.current_period_end = _fin_de_periode(debut, choisi["period_months"])
-            courant.save(update_fields=["current_period_end", "updated_at"])
-            if courant.status != StatutAbonnement.ACTIVE:
-                changer_statut(courant, StatutAbonnement.ACTIVE, motif="paiement")
-        else:
-            if courant is not None:
-                Subscription.objects.filter(pk=courant.pk).update(
-                    status=StatutAbonnement.EXPIRED, updated_at=maintenant
-                )
-            courant = Subscription.objects.create(
-                gerant_id=paiement.gerant_id, plan_code=paiement.plan_code, status=StatutAbonnement.ACTIVE,
-                current_period_start=maintenant, current_period_end=_fin_de_periode(maintenant, choisi["period_months"]),
-            )  # fmt: skip
-        paiement.subscription = courant
+        paiement.subscription = activer_formule(paiement.gerant_id, paiement.plan_code)
     paiement.save(update_fields=["status", "paid_at", "subscription"])
     audit.enregistrer("paiement.statut", metadata={"paiement": str(paiement.pk), "statut": statut})
     return paiement

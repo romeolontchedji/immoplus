@@ -462,7 +462,7 @@ class AppSettingAdmin(admin.ModelAdmin):
         )
 
 
-from apps.billing.models import Payment, Subscription  # noqa: E402
+from apps.billing.models import Payment, Subscription, Transaction  # noqa: E402
 
 
 @admin.register(Subscription)
@@ -478,6 +478,15 @@ class PaymentAdmin(LectureSeule):
     list_display = ("created_at", "gerant", "plan_code", "amount", "provider", "status")
     list_filter = ("status", "provider")
     exclude = ("payer_phone_e164",)  # numéro du payeur jamais affiché en liste ni en détail
+
+
+@admin.register(Transaction)
+class TransactionAdmin(LectureSeule):
+    """Paiements KKiaPay du site (abonnements des gérants, alertes des locataires)."""
+
+    list_display = ("created_at", "user", "objet", "plan_code", "amount", "status", "paid_at")
+    list_filter = ("status", "objet")
+    search_fields = ("provider_ref",)
 
 
 from . import admin_moderation, admin_referentiels  # noqa: E402,F401  (modération, quartiers)

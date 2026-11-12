@@ -118,3 +118,52 @@ class Payment(models.Model):
 
     def __str__(self) -> str:
         return f"{self.amount} F · {self.get_status_display()}"
+
+
+class Transaction(models.Model):
+    """Paiement par la fenêtre KKiaPay du site : abonnement d'un gérant ou alerte d'un locataire.
+
+    La ligne naît « en attente » quand le payeur ouvre la fenêtre ; elle devient « réussie » seulement après la
+    vérification de la transaction auprès de KKiaPay par le serveur (jamais sur la foi du navigateur)."""
+
+    class Objet(models.TextChoices):
+        ABONNEMENT = "abonnement", "Abonnement de gérant"
+        ALERTE = "alerte", "Alerte de locataire"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        "accounts.User", on_delete=models.PROTECT, related_name="+", verbose_name="payeur"
+    )
+    objet = models.CharField(max_length=12, choices=Objet.choices, verbose_name="objet")
+    plan_code = models.CharField(max_length=32, blank=True, default="", verbose_name="formule")
+    amount = models.IntegerField(verbose_name="montant (F)")
+    status = models.CharField(
+        max_length=10,
+        choices=StatutPaiement.choices,
+        default=StatutPaiement.PENDING,
+        verbose_name="statut",
+    )
+    provider_ref = models.CharField(
+        max_length=120, unique=True, null=True, blank=True, verbose_name="référence KKiaPay"
+    )
+    alert = models.ForeignKey(
+        "listings.Alert",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="alerte créée",
+    )
+    used_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="utilisée le"
+    )  # alerte payée, pas encore créée : crédit disponible (used_at vide)
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="créé le")
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name="payé le")
+
+    class Meta:
+        db_table = "transactions"
+        verbose_name = "transaction KKiaPay"
+        verbose_name_plural = "transactions KKiaPay"
+
+    def __str__(self) -> str:
+        return f"{self.amount} F · {self.get_objet_display()} · {self.get_status_display()}"

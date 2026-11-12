@@ -36,7 +36,15 @@ def navigation(request):
     ):
         return {}
     chemin = getattr(request, "path", "/")
+    abonnement_requis = False
+    if utilisateur.role == "gerant":
+        from apps.accounts import selectors as comptes
+        from apps.billing import services as abonnements
+
+        if abonnements.actif():  # paiements éteints : aucune requête de plus
+            abonnement_requis = not abonnements.can_publish(comptes.profil_gerant(utilisateur).pk)
     return {
+        "abonnement_requis": abonnement_requis,
         "non_lus_messages": chat_selectors.total_non_lus(utilisateur.pk, utilisateur.role),
         "non_lues_notifications": notifications.non_lues(utilisateur.pk),
         # Les 5 dernières, pour la fenêtre de la cloche (lues seulement si elle est affichée).
