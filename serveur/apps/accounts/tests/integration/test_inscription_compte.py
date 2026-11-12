@@ -1,5 +1,7 @@
 """Inscription, mot de passe oublié, gestion du compte et activation des gérants, sans code SMS (ADR 0009)."""
 
+import secrets
+
 import pytest
 from django.core import mail
 
@@ -215,13 +217,13 @@ class TestGerant:
     def test_lien_cree_par_l_administration_est_lu_par_le_site(self, settings):
         """En production l'administration et le site n'ont pas la même SECRET_KEY : seule la clé des liens,
         commune aux deux, permet au site de lire un lien créé par l'administration."""
-        settings.LIENS_SIGNING_KEY = "k" * 50
-        settings.SECRET_KEY = "administration-" + "a" * 40
+        settings.LIENS_SIGNING_KEY = secrets.token_urlsafe(40)
+        settings.SECRET_KEY = secrets.token_urlsafe(40)  # celle de l'administration
         gerant = administration.creer_gerant(
             acteur=AdminFactory(), prenom="Kofi", nom="Gérant", zone="Zongo"
         )
         url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
-        settings.SECRET_KEY = "site-" + "b" * 40
+        settings.SECRET_KEY = secrets.token_urlsafe(40)  # celle du site
         g, _ = administration.activer_gerant(
             jeton_du_lien(url), nom_utilisateur="kofi.gerant", mot_de_passe=FORT
         )

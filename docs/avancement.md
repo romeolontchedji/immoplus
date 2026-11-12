@@ -2,6 +2,21 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-14 : retours du premier jour de production (annonces, médias, notifications).**
+- Caution du loyer retirée du formulaire et de la fiche du site (reste en base et dans l'API, à 0 par défaut) ; l'application
+  mobile la demande encore (`AnnonceModifierScreen`, `InfosStep`) : à retirer avec une nouvelle version de l'application.
+- Étape « Vidéo et photos » : « Suivant » grisé pendant l'envoi et le traitement, ou s'il manque des photos ; plus de
+  rechargement toutes les 8 s (suivi par l'API, un seul rechargement à la fin).
+- Vidéos : copie du flux si déjà en H.264 720p, sinon `superfast`, 30 images/s, débit plafonné, 2 fils ffmpeg
+  (`FFMPEG_THREADS`) ; `worker-media` traite 2 fichiers à la fois (`MEDIA_CONCURRENCY`) ; un traitement bloqué depuis
+  20 minutes passe en échec. Les erreurs ffmpeg sont journalisées (`immoplus logs worker-media`).
+- Courriel aux administrateurs à la première mise en ligne d'une annonce (`EMAIL_NOUVELLES_ANNONCES`).
+- Messagerie : une notification non lue par conversation (se met à jour, remonte, sonne à chaque message).
+- Aperçu WhatsApp : balises Open Graph et image `/annonces/<slug>/apercu.jpg` vérifiées en ligne (réponse 200, 52 Ko) ; si
+  l'aperçu manque encore, c'est le cache de WhatsApp (liens déjà partagés) : tester avec le débogueur de partage de Facebook.
+- Piège : `worker` et `realtime` chargent les réglages « public » : toute nouvelle variable exigée au démarrage doit aussi
+  figurer dans leurs modèles `infra/compose/env/*.env.example`.
+
 **2026-11-13 : gérant créé par l'équipe vérifié d'emblée.** « Nouveau gérant » est utilisé après l'entretien : le profil est
 vérifié à la création (plan Gratuit attribué, ligne `gerant.verification` au journal) et le bandeau « pas encore
 vérifié » n'apparaît plus. Un gérant créé avant ce changement reste « en attente » : le passer à « vérifié » dans
