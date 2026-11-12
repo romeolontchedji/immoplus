@@ -212,6 +212,21 @@ class TestGerant:
             == "already_active"
         )
 
+    def test_lien_cree_par_l_administration_est_lu_par_le_site(self, settings):
+        """En production l'administration et le site n'ont pas la même SECRET_KEY : seule la clé des liens,
+        commune aux deux, permet au site de lire un lien créé par l'administration."""
+        settings.LIENS_SIGNING_KEY = "k" * 50
+        settings.SECRET_KEY = "administration-" + "a" * 40
+        gerant = administration.creer_gerant(
+            acteur=AdminFactory(), prenom="Kofi", nom="Gérant", zone="Zongo"
+        )
+        url = administration.lien_activation(acteur=AdminFactory(), gerant=gerant)
+        settings.SECRET_KEY = "site-" + "b" * 40
+        g, _ = administration.activer_gerant(
+            jeton_du_lien(url), nom_utilisateur="kofi.gerant", mot_de_passe=FORT
+        )
+        assert g.username == "kofi.gerant"
+
 
 class TestCompte:
     def test_changer_mot_de_passe_garde_l_appareil_courant(self):

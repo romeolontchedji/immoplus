@@ -2,6 +2,11 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-12 : liens d'activation des gérants invalides (clé de signature).** L'administration (`ADMIN_SECRET_KEY`)
+signait les liens, le site (`SITE_SECRET_KEY`) les lisait : signature toujours refusée. Nouvelle clé `LIENS_SIGNING_KEY`,
+commune aux deux (obligatoire en production). Sur un serveur existant : `python3 outils/creer_env.py --services`, puis
+`immoplus up -d --force-recreate web-api admin` ; les liens déjà envoyés sont à régénérer.
+
 **2026-11-05 : mise en ligne sur le VPS rmeolab et défi anti-robot désactivable.**
 - Immo+ déployé sur le VPS partagé (`~/apps/immoplus`, compte `romaeus`, clé de déploiement avec alias SSH
   `github-immoplus`, bloc ajouté au Caddy central) sous `imos-plus.com` (`www.`, `api.`, `pilotage.`). Courriels :
