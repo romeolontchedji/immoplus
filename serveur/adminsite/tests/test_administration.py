@@ -455,6 +455,57 @@ class TestActions:
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
 
 
+class TestMasquerOuRetirerUneAnnonce:
+    """Administrateurs et modérateurs masquent ou retirent une annonce déjà en ligne, avec un motif vu du gérant."""
+
+    @staticmethod
+    def _poster(client, action, annonce, motif="Photos qui ne correspondent pas à la chambre"):
+        return client.post(
+            reverse("admin:listings_listing_changelist"),
+            {
+                "action": action,
+                "_selected_action": [str(annonce.pk)],
+                "confirmer": "oui",
+                "motif": motif,
+            },
+        )
+
+    @pytest.mark.parametrize("fabrique", ["moderateur", "admin"])
+    def test_masquer_puis_remettre_en_ligne(self, fabrique):
+        from apps.listings.models import Listing
+        from apps.notifications.models import Notification
+
+        annonce = ListingFactory()
+        c, _ = se_connecter(personnel(PersonnelFactory if fabrique == "moderateur" else AdminFactory))
+        self._poster(c, "masquer_annonces", annonce)
+        annonce = Listing.objects.get(pk=annonce.pk)
+        assert annonce.status == "hidden" and annonce.hidden_reason == "moderation"
+        assert Notification.objects.filter(kind="account.sanction", user=annonce.gerant.user).exists()
+        self._poster(c, "remettre_en_ligne", annonce)
+        assert Listing.objects.get(pk=annonce.pk).status == "published"
+
+    def test_retirer_est_definitif_pour_le_gerant(self):
+        from apps.listings.models import Listing
+
+        annonce = ListingFactory()
+        c, _ = se_connecter(personnel(AdminFactory))
+        self._poster(c, "retirer_annonces", annonce)
+        assert Listing.objects.get(pk=annonce.pk).status == "removed"
+
+    def test_la_page_de_confirmation_demande_un_motif(self):
+        from apps.listings.models import Listing
+
+        annonce = ListingFactory()
+        c, _ = se_connecter(personnel(AdminFactory))
+        page = c.post(
+            reverse("admin:listings_listing_changelist"),
+            {"action": "masquer_annonces", "_selected_action": [str(annonce.pk)]},
+        )
+        assert page.status_code == 200 and "Motif" in page.content.decode()
+        self._poster(c, "masquer_annonces", annonce, motif="court")  # trop court : refusé
+        assert Listing.objects.get(pk=annonce.pk).status == "published"
+
+
 class TestCarteNouvellesAnnonces:
     def test_la_carte_compte_les_annonces_des_sept_derniers_jours_et_mene_a_la_liste(self):
         from apps.listings.tests.fabriques import ListingFactory

@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 from django.shortcuts import redirect, render
@@ -82,7 +83,7 @@ class ListingAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "gerant__full_name")
     # Les dernières mises en ligne d'abord (les brouillons, sans date, à la fin).
     ordering = (F("published_at").desc(nulls_last=True), "-created_at")
-    actions = ["approuver", "refuser"]
+    actions = ["masquer_annonces", "retirer_annonces", "remettre_en_ligne", "approuver", "refuser"]
 
     def has_add_permission(self, request):
         return False
@@ -109,6 +110,91 @@ class ListingAdmin(admin.ModelAdmin):
     @admin.display(description="Type de logement")
     def type_de_logement(self, obj):
         return types_chambre.libelle(obj.room_type)
+
+    def _decider(self, request, queryset, *, action, titre, explication, etats, defaut):
+        """Page de confirmation avec le motif (obligatoire, vu par le gérant), puis une décision par annonce."""
+        from django.template.response import TemplateResponse
+
+        _exiger_personnel(request)
+        if request.POST.get("confirmer") != "oui":
+            return TemplateResponse(
+                request,
+                "admin/decision-annonce.html",
+                {
+                    **self.admin_site.each_context(request),
+                    "title": titre,
+                    "opts": self.model._meta,
+                    "annonces": list(queryset),
+                    "action": action,
+                    "explication": explication,
+                    "motif_min": services.MOTIF_MIN,
+                    "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
+                    "motif": "",
+                },
+            )
+        motif = request.POST.get("motif", "")
+        faites = 0
+        for annonce in queryset:
+            if annonce.status not in etats:
+                self.message_user(
+                    request,
+                    f"« {annonce.title} » : état « {annonce.get_status_display()} », action impossible.",
+                    level=messages.WARNING,
+                )
+                continue
+            try:
+                services.appliquer(request.user, defaut, motif=motif, annonce_id=annonce.pk)
+                faites += 1
+            except ErreurMetier as erreur:
+                self.message_user(
+                    request, f"« {annonce.title} » : {erreur.message}", level=messages.ERROR
+                )
+                if erreur.code == "validation_error":  # motif trop court : inutile d'insister annonce par annonce
+                    break
+        if faites:
+            self.message_user(request, f"{faites} annonce(s) traitée(s) ; le gérant est prévenu avec le motif.")
+        return None
+
+    @admin.action(description="Masquer (modération) : l'annonce quitte le site, le gérant peut la corriger")
+    def masquer_annonces(self, request, queryset):
+        return self._decider(
+            request,
+            queryset,
+            action="masquer_annonces",
+            titre="Masquer des annonces",
+            explication="Les annonces disparaissent du site. Le gérant est prévenu avec votre motif et peut les corriger ; "
+            "vous pouvez les remettre en ligne ensuite.",
+            etats=("published", "processing"),
+            defaut="listing_hidden",
+        )
+
+    @admin.action(description="Retirer (modération) : définitif, le gérant ne peut pas la remettre en ligne")
+    def retirer_annonces(self, request, queryset):
+        return self._decider(
+            request,
+            queryset,
+            action="retirer_annonces",
+            titre="Retirer des annonces",
+            explication="Retrait définitif (fausse annonce, arnaque, contenu interdit) : l'annonce disparaît et le gérant ne "
+            "peut ni la modifier ni la remettre en ligne. Le gérant est prévenu avec votre motif.",
+            etats=("published", "processing", "hidden"),
+            defaut="listing_removed",
+        )
+
+    @admin.action(description="Remettre en ligne (annonce masquée par la modération)")
+    def remettre_en_ligne(self, request, queryset):
+        _exiger_personnel(request)
+        faites = 0
+        for annonce in queryset:
+            try:
+                annonces.remettre_en_ligne_apres_moderation(annonce, acteur=request.user)
+                faites += 1
+            except ErreurMetier as erreur:
+                self.message_user(
+                    request, f"« {annonce.title} » : {erreur.message}", level=messages.WARNING
+                )
+        if faites:
+            self.message_user(request, f"{faites} annonce(s) remise(s) en ligne.")
 
     @admin.action(description="Approuver et publier (première annonce)")
     def approuver(self, request, queryset):

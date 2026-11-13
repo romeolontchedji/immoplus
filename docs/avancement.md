@@ -2,6 +2,11 @@
 
 > **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
 
+**2026-11-22 : masquer ou retirer une annonce depuis la liste.**
+- Administrateurs et modérateurs : actions « Masquer », « Retirer » (définitif) et « Remettre en ligne » (masquage de modération)
+  sur la liste des annonces, avec motif obligatoire, notification au gérant et journal (`adminsite/admin_moderation.py`).
+- Accueil de l'administration : carte « Nouvelles annonces » (7 derniers jours), liste triée par mise en ligne.
+
 **2026-11-21 : documentation remise à jour.**
 - Mis à jour pour refléter l'état réel : `administration.md` (publication directe, page Statistiques, paiements et mise en service de
   KKiaPay, paramètres), `cahier-des-charges.md` (EF-ANN-11 et 13, EF-ABO-02 à 07, table `transactions`, cycle de vie, annexes),
