@@ -27,10 +27,12 @@ def abonne(fin_dans_jours, *, annule=False):
     g = gerant_verifie()
     Subscription.objects.filter(gerant_id=g.pk).update(status="expired")
     maintenant = timezone.now()
+    # Fin à midi (heure locale) : le nombre de jours restants ne dépend pas de l'heure à laquelle le test s'exécute.
+    midi = timezone.localtime(maintenant).replace(hour=12, minute=0, second=0, microsecond=0)
     Subscription.objects.create(
         gerant_id=g.pk, plan_code="standard", status="active", cancel_at_period_end=annule,
         current_period_start=maintenant - datetime.timedelta(days=20),
-        current_period_end=maintenant + datetime.timedelta(days=fin_dans_jours, hours=1),
+        current_period_end=midi + datetime.timedelta(days=fin_dans_jours),
     )  # fmt: skip
     return g
 
