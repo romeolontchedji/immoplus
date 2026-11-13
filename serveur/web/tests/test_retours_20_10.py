@@ -53,7 +53,10 @@ class TestAlertes:
         )
 
     def test_plusieurs_choix_et_equipements(self):
-        u, a, b = ClientFactory(), DistrictFactory(), DistrictFactory()
+        from django.utils import timezone
+
+        u = ClientFactory(email="awa@exemple.test", email_verified_at=timezone.now())
+        a, b = DistrictFactory(), DistrictFactory()
         connecte(u).post(
             "/compte/alertes",
             {"action": "creer", "district_ids": [str(a.pk), str(b.pk)], "water_sources": ["borehole", "well"],

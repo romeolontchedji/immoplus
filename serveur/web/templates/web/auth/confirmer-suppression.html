@@ -2,8 +2,10 @@
 {% block titre %}Supprimer mon compte — Immo+{% endblock %}
 {% block espace %}
   <div class="profil">
-    <section class="compte-section-carte compte-section-carte--danger" aria-labelledby="titre-confirmation">
-      <h1 class="compte-section-carte__titre color-danger" id="titre-confirmation">
+    <section class="compte-section-carte compte-section-carte--danger"
+             aria-labelledby="titre-confirmation">
+      <h1 class="compte-section-carte__titre color-danger"
+          id="titre-confirmation">
         {% include "web/composants/icone.html" with nom="circle-alert" taille=20 %}
         Dernière étape : confirmer la suppression
       </h1>
@@ -50,7 +52,10 @@
         {% endif %}
         <div class="rangee">
           <button class="bouton bouton--danger" type="submit">Oui, supprimer définitivement mon compte</button>
-          <button class="bouton bouton--secondaire" type="submit" name="annuler" value="1">Non, garder mon compte</button>
+          <button class="bouton bouton--secondaire"
+                  type="submit"
+                  name="annuler"
+                  value="1">Non, garder mon compte</button>
         </div>
       </form>
     </section>

@@ -31,9 +31,7 @@ def construire(maintenant: datetime.datetime | None = None) -> tuple[str, str]:
     lignes = [f"Résumé d'Immo+ du {du:%d/%m} au {au:%d/%m/%Y}.", ""]
 
     lignes.append(f"Nouvelles annonces : {total}")
-    lignes += [
-        f"- {a['title']} · {a['district']} · {a['rent_amount']} F/mois" for a in liste
-    ]
+    lignes += [f"- {a['title']} · {a['district']} · {a['rent_amount']} F/mois" for a in liste]
     if total > len(liste):
         lignes.append(f"- … et {total - len(liste)} autre(s)")
     lignes += [
@@ -59,7 +57,9 @@ def construire(maintenant: datetime.datetime | None = None) -> tuple[str, str]:
         f"Voir les paiements : {pilotage}/billing/transaction/",
         f"Voir les statistiques : {pilotage}/statistiques/",
     ]
-    return f"Immo+ · résumé de la semaine ({total} nouvelle(s) annonce(s))", "\n".join(lignes) + "\n"
+    return f"Immo+ · résumé de la semaine ({total} nouvelle(s) annonce(s))", "\n".join(
+        lignes
+    ) + "\n"
 
 
 def envoyer(maintenant: datetime.datetime | None = None) -> dict:

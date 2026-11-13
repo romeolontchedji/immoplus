@@ -81,7 +81,10 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         False,
         "Alertes payantes des locataires : chaque nouvelle alerte se paie une fois (KKiaPay).",
     ),
-    "ALERT_PRICE": (500, "Prix d'une alerte pour un locataire, en FCFA (si les alertes payantes sont activées)."),
+    "ALERT_PRICE": (
+        500,
+        "Prix d'une alerte pour un locataire, en FCFA (si les alertes payantes sont activées).",
+    ),
     "ALERTS_MAX_PER_USER": (5, "Alertes actives par locataire."),
     "MESSAGE_PER_MINUTE": (30, "Messages par minute et par utilisateur."),
     "NEW_CONVERSATIONS_PER_DAY": (20, "Nouvelles conversations par jour et par locataire."),
@@ -89,8 +92,14 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         30,
         "Jours après la location avant la lecture seule des conversations.",
     ),
-    "ARCHIVE_AFTER_RENT_DAYS": (90, "Annonces anciennement « louées » : jours avant archivage (désormais immédiat à la location)."),
-    "RENTED_VIDEO_DELETE_DAYS": (7, "Inutilisé : photos et vidéo sont supprimées dès que la chambre est marquée louée."),
+    "ARCHIVE_AFTER_RENT_DAYS": (
+        90,
+        "Annonces anciennement « louées » : jours avant archivage (désormais immédiat à la location).",
+    ),
+    "RENTED_VIDEO_DELETE_DAYS": (
+        7,
+        "Inutilisé : photos et vidéo sont supprimées dès que la chambre est marquée louée.",
+    ),
     "UNANSWERED_REMINDER_H": (2, "Heures avant le rappel au gérant pour un message non lu."),
     "LISTING_PREMODERATION": (
         False,

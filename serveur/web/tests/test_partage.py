@@ -104,7 +104,8 @@ class TestApercuDuLien:
 
     def test_les_autres_pages_ont_un_aperçu_par_defaut(self):
         page = html(Client().get("/annonces"))
-        assert meta(page, "og:image").endswith(".jpg") and "/static/" in meta(page, "og:image")
+        image = meta(page, "og:image").split("?")[0]
+        assert image.endswith(".jpg") and "/static/" in image
         assert meta(page, "og:site_name") == "Immo+"
 
     def test_le_robot_de_whatsapp_ne_compte_pas_de_vue(self):
@@ -151,7 +152,7 @@ class TestImageApercu:
     def test_sans_photo_image_par_defaut(self):
         a = ListingFactory()
         r = Client().get(f"/annonces/{a.slug}/apercu.jpg")
-        assert r.status_code == 302 and r["Location"].endswith(".jpg")
+        assert r.status_code == 302 and r["Location"].split("?")[0].endswith(".jpg")
 
     def test_annonce_masquee_jamais_exposee(self, settings, tmp_path):
         settings.MEDIA_ROOT = tmp_path

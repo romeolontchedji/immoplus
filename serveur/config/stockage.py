@@ -5,13 +5,14 @@ chargé un script ne voit jamais sa mise à jour. L'empreinte (contenu du fichie
 l'adresse aussi ; le fichier lui-même n'est pas renommé (rien à régénérer, les URL internes des CSS restent valables)."""
 
 import hashlib
-from functools import lru_cache
+import re
+from functools import cache
 
 from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.storage import StaticFilesStorage
 
 
-@lru_cache(maxsize=None)
+@cache
 def _empreinte(nom: str) -> str:
     chemin = finders.find(nom)
     if not chemin or not isinstance(chemin, str):
@@ -26,5 +27,7 @@ def _empreinte(nom: str) -> str:
 class StatiquesVersionnes(StaticFilesStorage):
     def url(self, name):
         adresse = super().url(name)
+        if re.search(r"\.[0-9a-f]{10}\.", name):
+            return adresse  # déjà versionné par son nom (CSS assemblé) : rien à ajouter
         empreinte = _empreinte(name)
         return f"{adresse}?v={empreinte}" if empreinte else adresse

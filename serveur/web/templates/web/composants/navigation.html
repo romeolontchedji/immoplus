@@ -69,7 +69,8 @@
                 <div class="nav-notif__texte">
                   <span class="nav-notif__titre">{{ n.title }}</span>
                   <span class="nav-notif__meta">{{ n.body|truncatechars:60 }}</span>
-                  {% if n.lien %}<a class="bouton bouton--petit bouton--primaire nav-notif__action" href="/compte/notifications/{{ n.pk }}/ouvrir">Consulter</a>{% endif %}
+                  {% if n.lien %}<a class="bouton bouton--petit bouton--primaire nav-notif__action"
+   href="/compte/notifications/{{ n.pk }}/ouvrir">Consulter</a>{% endif %}
                 </div>
               </div>
             {% endfor %}
@@ -177,7 +178,8 @@
                 <div class="nav-notif__texte">
                   <span class="nav-notif__titre">{{ n.title }}</span>
                   <span class="nav-notif__meta">{{ n.body|truncatechars:60 }}</span>
-                  {% if n.lien %}<a class="bouton bouton--petit bouton--primaire nav-notif__action" href="/compte/notifications/{{ n.pk }}/ouvrir">Consulter</a>{% endif %}
+                  {% if n.lien %}<a class="bouton bouton--petit bouton--primaire nav-notif__action"
+   href="/compte/notifications/{{ n.pk }}/ouvrir">Consulter</a>{% endif %}
                 </div>
               </div>
             {% endfor %}

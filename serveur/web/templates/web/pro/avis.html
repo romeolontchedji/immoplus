@@ -12,7 +12,9 @@
       </div>
     </div>
     {% if message %}
-      <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status"><p>{{ message }}</p></div>
+      <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status">
+        <p>{{ message }}</p>
+      </div>
     {% endif %}
     {% for a in avis %}
       <article class="carte p-5 pile">
@@ -24,9 +26,13 @@
           {% csrf_token %}
           <input type="hidden" name="avis_id" value="{{ a.id }}">
           <label for="reply-{{ a.id }}"><strong>{% if a.owner_reply %}Ta réponse{% else %}Répondre{% endif %}</strong> ({{ reponse_max }} caractères au plus, sans numéro ni lien)</label>
-          <textarea id="reply-{{ a.id }}" name="reply" rows="3" maxlength="{{ reponse_max }}">{{ a.owner_reply }}</textarea>
+          <textarea id="reply-{{ a.id }}"
+                    name="reply"
+                    rows="3"
+                    maxlength="{{ reponse_max }}">{{ a.owner_reply }}</textarea>
           <div class="rangee">
-            <button class="bouton bouton--primaire bouton--petit" type="submit">{% if a.owner_reply %}Modifier ma réponse{% else %}Publier ma réponse{% endif %}</button>
+            <button class="bouton bouton--primaire bouton--petit"
+                    type="submit">{% if a.owner_reply %}Modifier ma réponse{% else %}Publier ma réponse{% endif %}</button>
             {% if a.owner_reply %}<span class="texte-doux">Pour la retirer, vide le champ puis envoie.</span>{% endif %}
           </div>
         </form>

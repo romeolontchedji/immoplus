@@ -48,7 +48,12 @@ CANAUX = {
     "listing.reported_rented": "rappels",
     "subscription.reminder": "rappels",
 }
-PRIORITAIRES = {"message.received", "message.unanswered_reminder", "account.sanction", "team.message"}
+PRIORITAIRES = {
+    "message.received",
+    "message.unanswered_reminder",
+    "account.sanction",
+    "team.message",
+}
 
 
 def options_push(n: Notification) -> push.OptionsPush:
@@ -209,17 +214,20 @@ def _texte_courriel(n: Notification, prenom: str) -> str:
     site = settings.SITE_URL
     lignes = [f"Bonjour {prenom}," if prenom else "Bonjour,", "", n.body, ""]
     if n.kind == "team.message":
-        return "\n".join(
-            [
-                f"Bonjour {prenom}," if prenom else "Bonjour,",
-                "",
-                "L'équipe Immo+ t'a écrit :",
-                "",
-                n.data.get("_corps") or n.body,
-                "",
-                f"Lire et répondre : {site}/compte/equipe",
-            ]
-        ) + "\n"
+        return (
+            "\n".join(
+                [
+                    f"Bonjour {prenom}," if prenom else "Bonjour,",
+                    "",
+                    "L'équipe Immo+ t'a écrit :",
+                    "",
+                    n.data.get("_corps") or n.body,
+                    "",
+                    f"Lire et répondre : {site}/compte/equipe",
+                ]
+            )
+            + "\n"
+        )
     if n.kind == "subscription.reminder":
         lignes += [
             f"Renouveler mon abonnement : {site}/compte/abonnement",
@@ -376,7 +384,12 @@ def ouvrir(utilisateur_id, notification_id) -> dict:
     if n is None:
         raise ErreurMetier("not_found", "Notification introuvable.", statut=404)
     Notification.objects.filter(
-        user_id=utilisateur_id, kind=n.kind, title=n.title, body=n.body, data=n.data, read_at__isnull=True
+        user_id=utilisateur_id,
+        kind=n.kind,
+        title=n.title,
+        body=n.body,
+        data=n.data,
+        read_at__isnull=True,
     ).update(read_at=timezone.now())
     return resume(n)
 

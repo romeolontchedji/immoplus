@@ -69,8 +69,6 @@ def courriel_html(sujet: str, texte: str) -> str:
 )
 def envoyer_courriel(destinataires: list[str], sujet: str, texte: str) -> int:
     """Envoie un courriel (texte + version HTML habillée). Reprises en cas de panne réseau ou SMTP (4 essais)."""
-    message = EmailMultiAlternatives(
-        sujet, texte, settings.DEFAULT_FROM_EMAIL, destinataires
-    )
+    message = EmailMultiAlternatives(sujet, texte, settings.DEFAULT_FROM_EMAIL, destinataires)
     message.attach_alternative(courriel_html(sujet, texte), "text/html")
     return message.send(fail_silently=False)

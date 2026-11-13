@@ -29,7 +29,8 @@
     {% if abonnement_requis %}
       <div class="alerte alerte--avertissement" role="status">
         <p>Un abonnement est nécessaire pour publier de nouvelles chambres. Tes annonces en ligne restent visibles.</p>
-        <p><a class="bouton bouton--primaire" href="/compte/abonnement?raison=publier">Voir les formules d'abonnement</a></p>
+        <p><a class="bouton bouton--primaire"
+   href="/compte/abonnement?raison=publier">Voir les formules d'abonnement</a></p>
       </div>
     {% endif %}
     {% if profil.verification_status != "verified" %}
@@ -130,7 +131,10 @@
                               {% csrf_token %}
                               <input type="hidden" name="action" value="disponible">
                               <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
-                              <button class="bouton bouton--danger bouton--petit" type="submit" name="disponible" value="0">Oui, elle est louée</button>
+                              <button class="bouton bouton--danger bouton--petit"
+                                      type="submit"
+                                      name="disponible"
+                                      value="0">Oui, elle est louée</button>
                             </form>
                           </div>
                         </details>

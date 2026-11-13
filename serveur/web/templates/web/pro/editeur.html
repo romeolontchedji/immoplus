@@ -1,8 +1,7 @@
 {% extends "web/espace.html" %}
 {% load static immoplus %}
 {% block titre %}{{ titre }} — Espace Gérant — Immo+{% endblock %}
-{% block tete %}
-{% endblock %}
+{% block tete %}{% endblock %}
 {% block espace %}
   {% comment %}
     Publication en étapes (plan v3, C4) : une étape à l'écran, « Suivant » vérifie les champs obligatoires de l'étape
@@ -210,29 +209,29 @@
           Ajoute au moins {{ photos_min }} photos (10 au plus) et, si tu peux, une courte vidéo (10 à 60 s) : elle est facultative, mais les chambres avec vidéo reçoivent plus de contacts.
         </p>
         <div id="medias-haut">
-        <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
-          <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
-            {% if video_prete %}
-              {% include "web/composants/icone.html" with nom="check" taille=16 %}
-            {% else %}
-              {% include "web/composants/icone.html" with nom="x" taille=16 %}
-            {% endif %}
-            Vidéo
-            {% if video_prete %}
-              prête
-            {% else %}
-              facultative
-            {% endif %}
-          </li>
-          <li class="depot-recap__item{% if photos_pretes >= photos_min %} depot-recap__item--ok{% endif %}">
-            {% if photos_pretes >= photos_min %}
-              {% include "web/composants/icone.html" with nom="check" taille=16 %}
-            {% else %}
-              {% include "web/composants/icone.html" with nom="x" taille=16 %}
-            {% endif %}
-            Photos : {{ photos_pretes }}/10 prêtes ({{ photos_min }} au minimum)
-          </li>
-        </ul>
+          <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
+            <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
+              {% if video_prete %}
+                {% include "web/composants/icone.html" with nom="check" taille=16 %}
+              {% else %}
+                {% include "web/composants/icone.html" with nom="x" taille=16 %}
+              {% endif %}
+              Vidéo
+              {% if video_prete %}
+                prête
+              {% else %}
+                facultative
+              {% endif %}
+            </li>
+            <li class="depot-recap__item{% if photos_pretes >= photos_min %} depot-recap__item--ok{% endif %}">
+              {% if photos_pretes >= photos_min %}
+                {% include "web/composants/icone.html" with nom="check" taille=16 %}
+              {% else %}
+                {% include "web/composants/icone.html" with nom="x" taille=16 %}
+              {% endif %}
+              Photos : {{ photos_pretes }}/10 prêtes ({{ photos_min }} au minimum)
+            </li>
+          </ul>
         </div>
         <div id="envoi-medias"
              data-annonce="{{ annonce.pk }}"
@@ -254,75 +253,75 @@
         </div>
         <script src="{% static 'js/envoi.js' %}" defer></script>
         <div id="medias-bas">
-        {% if medias %}
-          <ul class="medias-grille">
-            {% for m in medias %}
-              <li class="media-carte{% if m.erreur %} media-carte--erreur{% endif %}">
-                <div class="media-carte__vignette">
-                  {% if m.apercu %}
-                    <img src="{{ m.apercu }}"
-                         alt="Aperçu : {{ m.kind_display }}"
-                         loading="lazy"
-                         width="240"
-                         height="160">
-                  {% else %}
-                    <span class="media-carte__vide">{% include "web/composants/icone.html" with nom="eye" taille=24 %}</span>
-                  {% endif %}
-                  <span class="media-carte__genre">{{ m.kind_display }}</span>
-                  {% if m.is_cover %}<span class="media-carte__couverture">Couverture</span>{% endif %}
-                </div>
-                <div class="media-carte__corps">
-                  <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
-                    {% if m.interrompu %}
-                      Envoi interrompu : supprime-le puis renvoie le fichier
-                    {% elif m.en_cours %}
-                      Traitement en cours…
+          {% if medias %}
+            <ul class="medias-grille">
+              {% for m in medias %}
+                <li class="media-carte{% if m.erreur %} media-carte--erreur{% endif %}">
+                  <div class="media-carte__vignette">
+                    {% if m.apercu %}
+                      <img src="{{ m.apercu }}"
+                           alt="Aperçu : {{ m.kind_display }}"
+                           loading="lazy"
+                           width="240"
+                           height="160">
                     {% else %}
-                      {{ m.status_display }}
+                      <span class="media-carte__vide">{% include "web/composants/icone.html" with nom="eye" taille=24 %}</span>
                     {% endif %}
-                  </span>
-                  {% if m.error_detail %}<p class="media-carte__erreur">{{ m.error_detail }}</p>{% endif %}
-                  <div class="media-carte__actions">
-                    {% if m.est_photo and not m.is_cover and m.pret %}
+                    <span class="media-carte__genre">{{ m.kind_display }}</span>
+                    {% if m.is_cover %}<span class="media-carte__couverture">Couverture</span>{% endif %}
+                  </div>
+                  <div class="media-carte__corps">
+                    <span class="media-carte__statut{% if m.pret %} media-carte__statut--pret{% elif m.en_cours %} media-carte__statut--cours{% endif %}">
+                      {% if m.interrompu %}
+                        Envoi interrompu : supprime-le puis renvoie le fichier
+                      {% elif m.en_cours %}
+                        Traitement en cours…
+                      {% else %}
+                        {{ m.status_display }}
+                      {% endif %}
+                    </span>
+                    {% if m.error_detail %}<p class="media-carte__erreur">{{ m.error_detail }}</p>{% endif %}
+                    <div class="media-carte__actions">
+                      {% if m.est_photo and not m.is_cover and m.pret %}
+                        <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="couvrir">
+                          <input type="hidden" name="media_id" value="{{ m.id }}">
+                          <button class="bouton bouton--contour bouton--petit"
+                                  type="submit">Définir en couverture</button>
+                        </form>
+                      {% endif %}
                       <form method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="action" value="couvrir">
+                        <input type="hidden" name="action" value="monter">
                         <input type="hidden" name="media_id" value="{{ m.id }}">
                         <button class="bouton bouton--contour bouton--petit"
-                                type="submit">Définir en couverture</button>
+                                type="submit"
+                                aria-label="Monter">
+                          {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
+                        </button>
                       </form>
-                    {% endif %}
-                    <form method="post">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="monter">
-                      <input type="hidden" name="media_id" value="{{ m.id }}">
-                      <button class="bouton bouton--contour bouton--petit"
-                              type="submit"
-                              aria-label="Monter">
-                        {% include "web/composants/icone.html" with nom="chevron-up" taille=16 %}
-                      </button>
-                    </form>
-                    <form method="post">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="descendre">
-                      <input type="hidden" name="media_id" value="{{ m.id }}">
-                      <button class="bouton bouton--contour bouton--petit"
-                              type="submit"
-                              aria-label="Descendre">
-                        {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
-                      </button>
-                    </form>
-                    {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="descendre">
+                        <input type="hidden" name="media_id" value="{{ m.id }}">
+                        <button class="bouton bouton--contour bouton--petit"
+                                type="submit"
+                                aria-label="Descendre">
+                          {% include "web/composants/icone.html" with nom="chevron-down" taille=16 %}
+                        </button>
+                      </form>
+                      {% include "web/composants/confirmation.html" with action="media-supprimer" question="Supprimer définitivement ce média ?" media_id=m.id %}
+                    </div>
                   </div>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-        {% if suite_bloquee %}
-          <p class="texte-doux texte-petit" id="medias-attente" role="status">{{ raison_blocage }}</p>
-        {% endif %}
-        {% include "web/pro/etape-navigation.html" with precedent=5 suivant=7 desactive=suite_bloquee %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if suite_bloquee %}
+            <p class="texte-doux texte-petit" id="medias-attente" role="status">{{ raison_blocage }}</p>
+          {% endif %}
+          {% include "web/pro/etape-navigation.html" with precedent=5 suivant=7 desactive=suite_bloquee %}
         </div>
       </section>
       <section class="pro-section-carte etape"

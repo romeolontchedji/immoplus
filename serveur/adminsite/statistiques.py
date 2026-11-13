@@ -41,7 +41,12 @@ def _gerant(utilisateur) -> list[tuple[str, list[tuple[str, object]]]]:
         tableau = annonces.tableau_de_bord_gerant(profil)
     except Exception:  # noqa: BLE001 - compteurs de vues indisponibles : le reste s'affiche
         journal.exception("statistiques_vues_indisponibles")
-        tableau = {"views_30d": "—", "views_total": "—", "favorites_30d": "—", "conversations_30d": "—"}
+        tableau = {
+            "views_30d": "—",
+            "views_total": "—",
+            "favorites_30d": "—",
+            "conversations_30d": "—",
+        }
     avis = annonces.resume_avis_gerant(profil.pk)
     conversations = Conversation.objects.filter(gerant_id=utilisateur.pk)
     courant = Subscription.objects.filter(gerant_id=profil.pk).exclude(status="expired").first()
@@ -68,7 +73,9 @@ def _gerant(utilisateur) -> list[tuple[str, list[tuple[str, object]]]]:
                 ("Conversations (au total)", conversations.count()),
                 (
                     "Taux de réponse (30 jours)",
-                    f"{profil.response_rate_30d} %" if profil.response_rate_30d is not None else "—",
+                    f"{profil.response_rate_30d} %"
+                    if profil.response_rate_30d is not None
+                    else "—",
                 ),
                 (
                     "Délai de réponse médian",
@@ -178,12 +185,18 @@ def vue_ensemble() -> dict:
         ),
         ("Locataires actifs", comptes_actifs.filter(role="client").count()),
         ("Nouveaux comptes (30 jours)", User.objects.filter(created_at__gte=il_y_a_30j).count()),
-        ("Annonces en ligne", Listing.objects.filter(status="published", deleted_at__isnull=True).count()),
+        (
+            "Annonces en ligne",
+            Listing.objects.filter(status="published", deleted_at__isnull=True).count(),
+        ),
         (
             "Chambres louées",
             Listing.objects.filter(rented_at__isnull=False).count(),
         ),
-        ("Conversations (30 jours)", Conversation.objects.filter(created_at__gte=il_y_a_30j).count()),
+        (
+            "Conversations (30 jours)",
+            Conversation.objects.filter(created_at__gte=il_y_a_30j).count(),
+        ),
         ("Alertes actives", Alert.objects.filter(is_active=True).count()),
         ("Abonnements payants en cours", payants.count()),
         ("Paiements réussis", ventes.count()),
@@ -211,7 +224,9 @@ def vue_ensemble() -> dict:
         .values_list("gerant_id", "n")
     )
     echanges = dict(
-        Conversation.objects.values_list("gerant_id").annotate(n=Count("id")).values_list("gerant_id", "n")
+        Conversation.objects.values_list("gerant_id")
+        .annotate(n=Count("id"))
+        .values_list("gerant_id", "n")
     )
     notes = {
         ligne["gerant_id"]: (ligne["moyenne"], ligne["n"])
@@ -247,20 +262,34 @@ def vue_ensemble() -> dict:
 
     # --- par locataire
     clients = list(
-        User.objects.filter(role="client", deleted_at__isnull=True).order_by("-last_seen_at", "-created_at")[:100]
+        User.objects.filter(role="client", deleted_at__isnull=True).order_by(
+            "-last_seen_at", "-created_at"
+        )[:100]
     )
     ids = [c.pk for c in clients]
     conv = dict(
-        Conversation.objects.filter(client_id__in=ids).values_list("client_id").annotate(n=Count("id")).values_list("client_id", "n")
+        Conversation.objects.filter(client_id__in=ids)
+        .values_list("client_id")
+        .annotate(n=Count("id"))
+        .values_list("client_id", "n")
     )
     favs = dict(
-        Favorite.objects.filter(user_id__in=ids).values_list("user_id").annotate(n=Count("id")).values_list("user_id", "n")
+        Favorite.objects.filter(user_id__in=ids)
+        .values_list("user_id")
+        .annotate(n=Count("id"))
+        .values_list("user_id", "n")
     )
     alertes = dict(
-        Alert.objects.filter(user_id__in=ids, is_active=True).values_list("user_id").annotate(n=Count("id")).values_list("user_id", "n")
+        Alert.objects.filter(user_id__in=ids, is_active=True)
+        .values_list("user_id")
+        .annotate(n=Count("id"))
+        .values_list("user_id", "n")
     )
     payes = dict(
-        ventes.filter(user_id__in=ids).values_list("user_id").annotate(t=Sum("amount")).values_list("user_id", "t")
+        ventes.filter(user_id__in=ids)
+        .values_list("user_id")
+        .annotate(t=Sum("amount"))
+        .values_list("user_id", "t")
     )
     locataires = [
         {

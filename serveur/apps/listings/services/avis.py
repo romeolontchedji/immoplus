@@ -15,7 +15,6 @@ from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
 
-
 from ..enums import StatutAnnonce
 from ..models import Listing, Review
 from . import contenu
@@ -67,7 +66,9 @@ def donner(utilisateur, annonce_id, note, commentaire: str = "") -> Review:
         )
     contenu.refuser_si_coordonnees(comment=texte)
     avis, cree = Review.objects.update_or_create(
-        listing=annonce, author_id=utilisateur.pk, defaults={"rating": note, "comment": texte, "gerant_id": annonce.gerant_id}
+        listing=annonce,
+        author_id=utilisateur.pk,
+        defaults={"rating": note, "comment": texte, "gerant_id": annonce.gerant_id},
     )
     audit.enregistrer(
         "listing.avis_donne" if cree else "listing.avis_modifie",
@@ -95,14 +96,19 @@ REPONSE_MAX = 600
 def repondre(gerant, avis_id, texte: str) -> Review:
     """Le gérant répond publiquement à un avis sur l'une de ses chambres (un texte, modifiable ; vide : la réponse est
     retirée). L'auteur de l'avis est prévenu à la première réponse seulement."""
-    avis = Review.objects.select_for_update().select_related("listing").filter(
-        pk=avis_id, gerant_id=gerant.pk
-    ).first()
+    avis = (
+        Review.objects.select_for_update()
+        .select_related("listing")
+        .filter(pk=avis_id, gerant_id=gerant.pk)
+        .first()
+    )
     if avis is None:
         raise ErreurMetier("not_found", "Avis introuvable.", statut=404)
     if avis.is_hidden:
         raise ErreurMetier(
-            "review_hidden", "Cet avis est masqué par la modération : on ne peut pas y répondre.", statut=409
+            "review_hidden",
+            "Cet avis est masqué par la modération : on ne peut pas y répondre.",
+            statut=409,
         )
     texte = " ".join((texte or "").split())
     if len(texte) > REPONSE_MAX:

@@ -25,7 +25,10 @@ def test_l_equipe_ecrit_a_un_locataire(django_capture_on_commit_callbacks):
     modo = PersonnelFactory()
     with django_capture_on_commit_callbacks(execute=True):
         m = equipe.ecrire_a(
-            modo, locataire, "Ton avis a été relu : il est conforme.\nMerci !", objet="À propos de ton avis"
+            modo,
+            locataire,
+            "Ton avis a été relu : il est conforme.\nMerci !",
+            objet="À propos de ton avis",
         )
     assert m.vers_utilisateur and m.auteur_id == modo.pk and m.utilisateur_id == locataire.pk
     n = Notification.objects.get(user=locataire, kind="team.message")
@@ -41,10 +44,14 @@ def test_l_equipe_ecrit_a_un_locataire(django_capture_on_commit_callbacks):
 def test_seul_le_personnel_ecrit_et_seulement_aux_utilisateurs():
     locataire = ClientFactory()
     with pytest.raises(ErreurMetier) as e:
-        equipe.ecrire_a(ClientFactory(), locataire, "Bonjour")  # un locataire n'écrit pas « au nom de l'équipe »
+        equipe.ecrire_a(
+            ClientFactory(), locataire, "Bonjour"
+        )  # un locataire n'écrit pas « au nom de l'équipe »
     assert e.value.statut == 403
     with pytest.raises(ErreurMetier) as e:
-        equipe.ecrire_a(AdminFactory(), PersonnelFactory(), "Bonjour")  # le personnel n'est pas un destinataire
+        equipe.ecrire_a(
+            AdminFactory(), PersonnelFactory(), "Bonjour"
+        )  # le personnel n'est pas un destinataire
     assert e.value.statut == 404
     with pytest.raises(ErreurMetier):
         equipe.ecrire_a(AdminFactory(), locataire, " ")  # message vide
@@ -86,10 +93,10 @@ def test_la_page_equipe_du_site():
     page = c.get("/compte/equipe").content.decode()
     assert "Bienvenue sur Immo+." in page and "L'équipe Immo+" in page
     assert equipe.non_lus(u.pk) == 0  # affiché : lu
-    r = c.post("/compte/equipe", {"subject": "Aide", "body": "Je n'arrive pas à publier."})
+    r = c.post("/compte/equipe", {"subject": "Aide", "body": "Je n arrive pas a publier."})
     assert r.status_code == 302 and r["Location"] == "/compte/equipe?ok=envoye"
     assert MessageEquipe.objects.filter(utilisateur=u, vers_utilisateur=False).count() == 1
-    assert "Je n'arrive pas à publier." in c.get("/compte/equipe").content.decode()
+    assert "Je n arrive pas a publier." in c.get("/compte/equipe").content.decode()
 
 
 def test_consulter_une_notification_la_marque_lue_puis_redirige():

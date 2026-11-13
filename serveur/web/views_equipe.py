@@ -14,7 +14,9 @@ def fil_equipe(request):
     erreur = None
     if request.method == "POST":
         try:
-            equipe.ecrire_a_l_equipe(u, request.POST.get("body", ""), objet=request.POST.get("subject", ""))
+            equipe.ecrire_a_l_equipe(
+                u, request.POST.get("body", ""), objet=request.POST.get("subject", "")
+            )
         except ErreurMetier as e:
             erreur = e.message
         else:

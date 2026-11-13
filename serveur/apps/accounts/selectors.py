@@ -99,7 +99,9 @@ def gerant_indisponible(gerant_id) -> str | None:
     from .models import GerantProfile
 
     ligne = (
-        GerantProfile.objects.filter(pk=gerant_id).values("user__deleted_at", "user__status").first()
+        GerantProfile.objects.filter(pk=gerant_id)
+        .values("user__deleted_at", "user__status")
+        .first()
     )
     if ligne is None:
         return "inconnu"

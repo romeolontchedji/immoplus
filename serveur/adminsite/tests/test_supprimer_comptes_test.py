@@ -3,6 +3,7 @@
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connection
 
 from apps.accounts.models import User
 from apps.accounts.tests.fabriques import AdminFactory, ClientFactory
@@ -13,10 +14,14 @@ from apps.chat.models import Conversation
 from apps.listings.models import Favorite, Listing
 from apps.listings.tests.fabriques import ListingFactory, gerant_verifie
 
-pytestmark = [pytest.mark.pg, pytest.mark.django_db(transaction=True)]
+pytestmark = [pytest.mark.pg, pytest.mark.django_db]
 
 
 def lancer(*args):
+    # Les vérifications différées des clés étrangères de la préparation du test sont faites avant que la commande
+    # suspende le déclencheur du journal (sinon PostgreSQL refuse de modifier la table : « événements en attente »).
+    with connection.cursor() as c:
+        c.execute("SET CONSTRAINTS ALL IMMEDIATE")
     call_command("supprimer_comptes_test", *args, verbosity=0)
 
 

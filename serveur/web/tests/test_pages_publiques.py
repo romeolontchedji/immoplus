@@ -206,7 +206,9 @@ class TestEspaceLocataire:
         assert not Alert.objects.filter(user=u).exists()
 
     def test_pause_et_reactive_une_alerte(self):
-        u = ClientFactory()
+        from django.utils import timezone
+
+        u = ClientFactory(email="awa@exemple.test", email_verified_at=timezone.now())
         alerte = Alert.objects.create(user=u, label="Pas cher")
         c = connecte(u)
         assert "Mettre en pause" in html(c.get("/compte/alertes"))
@@ -252,7 +254,9 @@ class TestEspaceLocataire:
         )
 
     def test_limite_d_alertes_expliquee(self):
-        u = ClientFactory()
+        from django.utils import timezone
+
+        u = ClientFactory(email="awa@exemple.test", email_verified_at=timezone.now())
         for _ in range(5):
             Alert.objects.create(user=u)
         r = connecte(u).post("/compte/alertes", {"action": "creer", "max_rent": "10000"})
@@ -421,7 +425,9 @@ class TestNotificationsEtReferencement:
         )
         c = connecte(u)
         page = html(c.get("/compte/notifications"))
-        assert f'href="/annonces/{a.slug}"' in page
+        assert (
+            f'href="/compte/notifications/{n.pk}/ouvrir"' in page
+        )  # « Consulter » marque lue puis redirige
         assert "Marquer lue" in page
         assert (
             c.post(

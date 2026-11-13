@@ -12,12 +12,15 @@
       </div>
     </div>
     {% if envoye %}
-      <div class="alerte alerte--succes" role="status"><p>Message envoyé. L'équipe te répond dès que possible.</p></div>
+      <div class="alerte alerte--succes" role="status">
+        <p>Message envoyé. L'équipe te répond dès que possible.</p>
+      </div>
     {% endif %}
     {% if erreur %}
-      <div class="alerte alerte--danger" role="alert"><p>{{ erreur }}</p></div>
+      <div class="alerte alerte--danger" role="alert">
+        <p>{{ erreur }}</p>
+      </div>
     {% endif %}
-
     <section class="pile" aria-label="Messages">
       {% for m in messages_equipe %}
         <article class="carte p-5 pile">
@@ -32,7 +35,6 @@
         <p class="texte-doux">Aucun message pour l'instant.</p>
       {% endfor %}
     </section>
-
     <section class="carte p-5 pile" aria-labelledby="titre-ecrire">
       <h2 class="fs-18 fw-bold mb-0" id="titre-ecrire">Écrire à l'équipe</h2>
       <form method="post" class="pile">
@@ -40,8 +42,14 @@
         <label for="equipe-objet">Objet (facultatif)</label>
         <input id="equipe-objet" name="subject" type="text" maxlength="120">
         <label for="equipe-corps">Ton message</label>
-        <textarea id="equipe-corps" name="body" rows="5" maxlength="{{ corps_max }}" required></textarea>
-        <div><button class="bouton bouton--primaire" type="submit">Envoyer</button></div>
+        <textarea id="equipe-corps"
+                  name="body"
+                  rows="5"
+                  maxlength="{{ corps_max }}"
+                  required></textarea>
+        <div>
+          <button class="bouton bouton--primaire" type="submit">Envoyer</button>
+        </div>
       </form>
     </section>
   </div>

@@ -32,7 +32,11 @@ def lien_ecriture(utilisateur, *, objet: str = "", contexte: str = "") -> str:
 def rediriger_vers_ecriture(modeladmin, request, utilisateur, *, objet="", contexte=""):
     """Action de liste : ouvre la page d'écriture pour la première personne concernée."""
     _exiger_personnel(request)
-    if utilisateur is None or utilisateur.role not in ("client", "gerant") or utilisateur.deleted_at:
+    if (
+        utilisateur is None
+        or utilisateur.role not in ("client", "gerant")
+        or utilisateur.deleted_at
+    ):
         modeladmin.message_user(request, "Cette personne n'est pas joignable.", messages.WARNING)
         return None
     return HttpResponseRedirect(lien_ecriture(utilisateur, objet=objet, contexte=contexte))
@@ -123,7 +127,9 @@ class MessageEquipeAdmin(admin.ModelAdmin):
                 erreur = e.message
             else:
                 self.message_user(request, "Message envoyé : la personne est prévenue.")
-                return HttpResponseRedirect(reverse("admin:moderation_messageequipe_ecrire", args=[personne.pk]))
+                return HttpResponseRedirect(
+                    reverse("admin:moderation_messageequipe_ecrire", args=[personne.pk])
+                )
         contexte_page = {
             **self.admin_site.each_context(request),
             "title": f"Écrire à {personne.full_name or personne.username}",

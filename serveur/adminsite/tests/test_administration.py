@@ -17,7 +17,7 @@ from apps.accounts.tests.fabriques import (
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
-from apps.listings.tests.fabriques import ListingFactory
+from apps.listings.tests.fabriques import ListingFactory, gerant_verifie, medias_prets
 from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
@@ -53,7 +53,9 @@ def dernier_code(adresse: str) -> str | None:
 
     for message in reversed(mail.outbox):
         if adresse in message.to:
-            trouve = re.search(r"\b(\d{6})\b", message.subject)
+            trouve = re.search(
+                r"\b(\d{6})\b", message.body
+            )  # le code est dans le corps, jamais dans l'objet
             return trouve.group(1) if trouve else None
     return None
 
@@ -475,12 +477,19 @@ class TestMasquerOuRetirerUneAnnonce:
         from apps.listings.models import Listing
         from apps.notifications.models import Notification
 
-        annonce = ListingFactory()
-        c, _ = se_connecter(personnel(PersonnelFactory if fabrique == "moderateur" else AdminFactory))
+        annonce = ListingFactory(
+            gerant=gerant_verifie()
+        )  # gérant vérifié et photos : l'annonce est publiable
+        medias_prets(annonce)
+        c, _ = se_connecter(
+            personnel(PersonnelFactory if fabrique == "moderateur" else AdminFactory)
+        )
         self._poster(c, "masquer_annonces", annonce)
         annonce = Listing.objects.get(pk=annonce.pk)
         assert annonce.status == "hidden" and annonce.hidden_reason == "moderation"
-        assert Notification.objects.filter(kind="account.sanction", user=annonce.gerant.user).exists()
+        assert Notification.objects.filter(
+            kind="account.sanction", user=annonce.gerant.user
+        ).exists()
         self._poster(c, "remettre_en_ligne", annonce)
         assert Listing.objects.get(pk=annonce.pk).status == "published"
 
@@ -513,20 +522,34 @@ class TestPouvoirsDeLAdministrateur:
     def _action(client, modele, action, objets, **extra):
         return client.post(
             reverse(f"admin:{modele}_changelist"),
-            {"action": action, "_selected_action": [str(o.pk) for o in objets], "confirmer": "oui", **extra},
+            {
+                "action": action,
+                "_selected_action": [str(o.pk) for o in objets],
+                "confirmer": "oui",
+                **extra,
+            },
         )
 
     def test_ajouter_un_type_de_logement(self):
         from apps.listings.models import RoomType
 
         c, _ = se_connecter(personnel(AdminFactory))
-        r = c.post(reverse("admin:listings_roomtype_add"), {"label": "Studio meublé", "sort_order": 50})
+        r = c.post(
+            reverse("admin:listings_roomtype_add"),
+            {"label": "Colocation étudiante", "sort_order": 50},
+        )
         assert r.status_code == 302
-        t = RoomType.objects.get(label="Studio meublé")
-        assert t.status == "approved" and t.slug == "studio_meuble" and t.sort_order == 50
+        t = RoomType.objects.get(label="Colocation étudiante")
+        assert t.status == "approved" and t.slug == "colocation_etudiante" and t.sort_order == 50
         # un nom déjà pris (même sans accents ni majuscules) est refusé
-        r = c.post(reverse("admin:listings_roomtype_add"), {"label": "STUDIO MEUBLE", "sort_order": 1})
-        assert r.status_code == 200 and RoomType.objects.filter(label__icontains="studio").count() == 1
+        r = c.post(
+            reverse("admin:listings_roomtype_add"),
+            {"label": "COLOCATION ETUDIANTE", "sort_order": 1},
+        )
+        assert (
+            r.status_code == 200
+            and RoomType.objects.filter(slug__startswith="colocation_etudiante").count() == 1
+        )
 
     def test_un_moderateur_n_ajoute_pas_de_type(self):
         c, _ = se_connecter(personnel(PersonnelFactory))
@@ -536,14 +559,17 @@ class TestPouvoirsDeLAdministrateur:
         from apps.listings.models import RoomType
         from apps.listings.services import types as types_chambre
 
-        c, admin_ = se_connecter(personnel(AdminFactory))
+        admin_ = personnel(AdminFactory)
+        c, _ = se_connecter(admin_)
         libre = types_chambre.creer_officiel("Type libre", acteur=admin_)
         utilise = types_chambre.creer_officiel("Type utilise", acteur=admin_)
         ListingFactory(room_type=utilise.slug)
         c.post(reverse("admin:listings_roomtype_delete", args=[libre.pk]), {"post": "yes"})
         c.post(reverse("admin:listings_roomtype_delete", args=[utilise.pk]), {"post": "yes"})
         assert not RoomType.objects.filter(pk=libre.pk).exists()
-        assert RoomType.objects.filter(pk=utilise.pk).exists()  # des annonces l'utilisent : à rattacher
+        assert RoomType.objects.filter(
+            pk=utilise.pk
+        ).exists()  # des annonces l'utilisent : à rattacher
 
     def test_corriger_une_annonce_est_reserve_aux_administrateurs(self):
         from apps.listings.models import Listing
@@ -559,8 +585,12 @@ class TestPouvoirsDeLAdministrateur:
         c, _ = se_connecter(personnel(AdminFactory))
         c.post(url, champs)
         assert Listing.objects.get(pk=annonce.pk).title == "Nouveau titre"
-        refus = c.post(url, {**champs, "title": "Appelle 97 12 34 56 vite"})  # coordonnées : refusées
-        assert refus.status_code == 200 and Listing.objects.get(pk=annonce.pk).title == "Nouveau titre"
+        refus = c.post(
+            url, {**champs, "title": "Appelle 97 12 34 56 vite"}
+        )  # coordonnées : refusées
+        assert (
+            refus.status_code == 200 and Listing.objects.get(pk=annonce.pk).title == "Nouveau titre"
+        )
 
     def test_retablir_une_annonce_retiree_et_la_supprimer(self):
         from apps.listings.models import Listing
@@ -616,7 +646,9 @@ class TestPouvoirsDeLAdministrateur:
         from apps.listings.models import Review
 
         annonce = ListingFactory()
-        avis = Review.objects.create(listing=annonce, author=ClientFactory(), rating=1, comment="Nul")
+        avis = Review.objects.create(
+            listing=annonce, author=ClientFactory(), rating=1, comment="Nul"
+        )
         c, _ = se_connecter(personnel(AdminFactory))
         c.post(reverse("admin:listings_review_delete", args=[avis.pk]), {"post": "yes"})
         assert not Review.objects.filter(pk=avis.pk).exists()
@@ -630,7 +662,14 @@ class TestMessagesEquipe:
         c, _ = se_connecter(personnel(PersonnelFactory))
         url = reverse("admin:moderation_messageequipe_ecrire", args=[locataire.pk])
         assert c.get(url).status_code == 200
-        r = c.post(url, {"corps": "Bonjour Awa, voici notre réponse.", "objet": "Ta question", "contexte": "question"})
+        r = c.post(
+            url,
+            {
+                "corps": "Bonjour Awa, voici notre réponse.",
+                "objet": "Ta question",
+                "contexte": "question",
+            },
+        )
         assert r.status_code == 302
         m = MessageEquipe.objects.get(utilisateur=locataire)
         assert m.vers_utilisateur and m.objet == "Ta question" and m.contexte_type == "question"
@@ -638,7 +677,10 @@ class TestMessagesEquipe:
     def test_on_n_ecrit_pas_a_un_membre_du_personnel(self):
         c, _ = se_connecter(personnel(PersonnelFactory))
         autre = personnel(AdminFactory)
-        assert c.get(reverse("admin:moderation_messageequipe_ecrire", args=[autre.pk])).status_code == 404
+        assert (
+            c.get(reverse("admin:moderation_messageequipe_ecrire", args=[autre.pk])).status_code
+            == 404
+        )
 
     def test_depuis_un_avis_on_ecrit_a_son_auteur_avec_l_objet_pre_rempli(self):
         from apps.listings.models import Review
@@ -652,7 +694,11 @@ class TestMessagesEquipe:
             {"action": "ecrire_a_l_auteur", "_selected_action": [str(avis.pk)]},
         )
         assert r.status_code == 302
-        assert str(auteur.pk) in r["Location"] and "avis%3A" in r["Location"] and "Chambre+Zongo" in r["Location"]
+        assert (
+            str(auteur.pk) in r["Location"]
+            and "avis%3A" in r["Location"]
+            and "Chambre+Zongo" in r["Location"]
+        )
 
     def test_la_tuile_compte_les_messages_a_traiter(self):
         from apps.moderation import messages_equipe as equipe

@@ -420,7 +420,9 @@ class Review(models.Model):
         return f"{self.rating}/5"
 
     def save(self, *args, **kwargs):
-        if self.gerant_id is None and self.listing_id:  # l'avis porte toujours le gérant de sa chambre
+        if (
+            self.gerant_id is None and self.listing_id
+        ):  # l'avis porte toujours le gérant de sa chambre
             self.gerant_id = Listing.objects.values_list("gerant_id", flat=True).get(
                 pk=self.listing_id
             )
