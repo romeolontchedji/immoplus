@@ -69,6 +69,56 @@ def se_connecter(u, mdp=MOT_DE_PASSE, client=None, *, double_auth=True):
     return c, r
 
 
+class TestTextesLegaux:
+    TEXTE = "# Conditions de test\n\nRésumé.\n\n## 1. Point\n\nUn texte **important**.\n"
+
+    def test_l_administrateur_modifie_un_texte_avec_apercu(self):
+        c, _ = se_connecter(personnel(AdminFactory))
+        assert (
+            "Conditions d'utilisation"
+            in c.get(reverse("admin:core_legaldocument_changelist")).content.decode()
+        )
+        page = c.get(
+            reverse("admin:core_legaldocument_modifier", args=["conditions"])
+        ).content.decode()
+        assert 'id="legal-texte"' in page and 'data-legal-action="gras"' in page
+        apercu = c.post(
+            reverse("admin:core_legaldocument_apercu", args=["conditions"]), {"texte": self.TEXTE}
+        )
+        assert (
+            apercu.status_code == 200
+            and "<strong>important</strong>" in apercu.json()["sections"][0]
+        )
+        r = c.post(
+            reverse("admin:core_legaldocument_modifier", args=["conditions"]),
+            {"texte": self.TEXTE, "nouvelle_acceptation": "on"},
+        )
+        assert r.status_code == 302
+        with override_settings(ROOT_URLCONF="config.urls_public"):
+            assert "Conditions de test" in Client().get("/conditions").content.decode()
+
+    def test_un_texte_invalide_reste_dans_le_formulaire_avec_l_erreur(self):
+        c, _ = se_connecter(personnel(AdminFactory))
+        r = c.post(
+            reverse("admin:core_legaldocument_modifier", args=["conditions"]),
+            {"texte": "pas de titre"},
+        )
+        page = r.content.decode()
+        assert r.status_code == 200 and "titre du document" in page and "pas de titre" in page
+        erreur = c.post(
+            reverse("admin:core_legaldocument_apercu", args=["conditions"]), {"texte": "x"}
+        )
+        assert erreur.status_code == 400 and "erreur" in erreur.json()
+
+    def test_un_moderateur_ne_modifie_pas_les_textes(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get(reverse("admin:core_legaldocument_changelist")).status_code == 403
+        assert (
+            c.get(reverse("admin:core_legaldocument_modifier", args=["conditions"])).status_code
+            == 403
+        )
+
+
 class TestVoirLeSite:
     def test_le_lien_mene_au_site_public_et_non_a_l_accueil_de_l_administration(self):
         from django.conf import settings

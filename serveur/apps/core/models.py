@@ -31,6 +31,34 @@ class AppSetting(models.Model):
         verbose_name_plural = "paramètres"
 
 
+class LegalDocument(models.Model):
+    """Texte d'un document légal modifié depuis l'administration (Markdown). Sans ligne, le texte d'origine fourni avec
+    l'application (`apps/core/textes_legaux/`) est utilisé."""
+
+    slug = models.CharField(max_length=20, primary_key=True, verbose_name="document")
+    body_md = models.TextField(verbose_name="texte")
+    updated_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        db_column="updated_by",
+        verbose_name="modifié par",
+    )
+    updated_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="modifié le"
+    )
+
+    def __str__(self) -> str:
+        return self.slug
+
+    class Meta:
+        db_table = "legal_documents"
+        verbose_name = "texte légal"
+        verbose_name_plural = "textes légaux"
+
+
 class DailyStat(models.Model):
     """Compteurs agrégés par jour (CDC §9.10). Les compteurs par annonce viennent de Redis (UPSERT toutes les 5 min)."""
 
