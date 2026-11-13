@@ -67,5 +67,13 @@
     "api:generer": "npx --yes openapi-typescript@7.4.4 ../docs/api/openapi.json -o src/api/genere/api.d.ts",
     "verifier": "npm run typecheck && npm run lint && npm run test:ci"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.8"
+    },
+    "@expo/fingerprint": {
+      "minimatch": "11.0.8"
+    }
+  }
 }
