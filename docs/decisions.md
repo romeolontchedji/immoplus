@@ -56,4 +56,6 @@ Une ligne par décision ; le détail de la phase 0 est dans `docs/adr/`.
   avec un motif obligatoire inscrit au journal ; la liste ne montre aucun contenu.
 - **Textes légaux** : éditeur **NEXIX**, sans RCCM ni IFU affichés ; textes modifiables depuis l'administration (Markdown, barre
   d'outils, aperçu) ; « Demander d'accepter de nouveau » est une case à cocher à chaque modification de fond.
+- **Maintenance** : le site web et l'application mobile se coupent séparément (`SITE_MAINTENANCE_ENABLED`,
+  `MAINTENANCE_ENABLED`) ; l'administration n'est jamais coupée.
 - **Accueil** : titre « Trouve ta chambre à Parakou, en deux clics. », accroche « Visite en vidéo, zéro paiement avant la visite. ».

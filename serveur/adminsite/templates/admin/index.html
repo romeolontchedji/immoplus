@@ -17,10 +17,17 @@
              href="{% url 'admin:accounts_user_nouveau_gerant' %}">{% include "admin/includes_icone.html" with nom="plus" %} Créer un gérant</a>
         {% endif %}
       </header>
-      {% if v.maintenance %}
+      {% if v.maintenance_site or v.maintenance_app %}
         <p class="lg-bandeau lg-bandeau--alerte">
           {% include "admin/includes_icone.html" with nom="alert" %}
-          Le site et les applications sont en <strong>maintenance</strong>. <a href="{% url 'admin:core_appsetting_changelist' %}#application">Désactiver</a>
+          {% if v.maintenance_site and v.maintenance_app %}
+            Le site web et l'application mobile sont en <strong>maintenance</strong>.
+          {% elif v.maintenance_site %}
+            Le site web est en <strong>maintenance</strong>.
+          {% else %}
+            L'application mobile est en <strong>maintenance</strong>.
+          {% endif %}
+          <a href="{% url 'admin:core_appsetting_changelist' %}#application">Désactiver</a>
         </p>
       {% endif %}
       {% if v.parametres_provisoires and v.role == "admin" %}

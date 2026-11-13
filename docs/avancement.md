@@ -16,6 +16,9 @@
   sur les signalements, titre non dupliqué, « Voir le site » mène au site public, code de connexion retiré de l'objet du
   courriel.
 - **Accueil** : nouveaux textes (titre « Trouve ta chambre à Parakou, en deux clics. »), sous-titre centré.
+- **Maintenance** : deux interrupteurs indépendants, `SITE_MAINTENANCE_ENABLED` (site web) et `MAINTENANCE_ENABLED`
+  (application mobile) ; le webhook KKiaPay reste joignable ; bandeau sur l'accueil de l'administration.
+- **Administration** : l'icône de succès ne chevauche plus le texte des messages.
 - **Notifications** : « Consulter » marque la notification lue avant d'ouvrir la page.
 - **Sécurité** (audit du 2026-11-13, voir `docs/audit-tests-securite.md` §9) : le plafond horaire de connexion ne bloque
   plus le titulaire, 3 courriels de réinitialisation par heure et par compte, paramètre `next` encodé ; DRF 3.18.3,

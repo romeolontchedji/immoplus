@@ -1,7 +1,9 @@
 """Mise à jour obligatoire (426) et maintenance (503) pour l'API et le site public (CDC §10, `GET /v1/app-config`).
 
-L'application lit `app-config` au démarrage ; ces réponses couvrent les requêtes faites entre deux lectures.
-L'administration n'est jamais concernée (elle n'utilise pas cet intergiciel) : on peut couper le site et travailler.
+Deux interrupteurs indépendants : `MAINTENANCE_ENABLED` coupe l'application mobile (l'API), `SITE_MAINTENANCE_ENABLED`
+coupe le site web. L'application lit `app-config` au démarrage ; ces réponses couvrent les requêtes faites entre deux
+lectures. L'administration n'est jamais concernée (elle n'utilise pas cet intergiciel) : on peut couper le site et
+travailler.
 """
 
 from django.http import HttpResponse, JsonResponse
@@ -15,6 +17,7 @@ TOUJOURS_OUVERTS = (
     "/v1/app-config",
     "/v1/legal/",
     "/v1/webhooks/",
+    "/paiement/webhook/",  # KKiaPay : un paiement validé pendant la maintenance doit quand même être reçu
     "/healthz",
     "/readyz",
     "/static/",
@@ -50,7 +53,9 @@ class AccesApplicationMiddleware:
             return self.get_response(request)
         api = chemin.startswith("/v1/")
         try:
-            maintenance = bool(parametres.lire("MAINTENANCE_ENABLED"))
+            maintenance = bool(
+                parametres.lire("MAINTENANCE_ENABLED" if api else "SITE_MAINTENANCE_ENABLED")
+            )
             minimale = str(parametres.lire("MIN_SUPPORTED_VERSION"))
         except Exception:  # noqa: BLE001 - paramètres illisibles (base indisponible) : on laisse passer
             return self.get_response(request)

@@ -869,6 +869,7 @@ class TestParametresParTheme:
         c, _ = se_connecter(personnel())
         page = c.get(reverse("admin:core_appsetting_changelist")).content.decode()
         assert "Application et maintenance" in page and "Contact et identité légale" in page
+        assert "revient tout de suite" in page  # la note du réglage de maintenance du site web
         r = c.post(
             reverse("admin:core_appsetting_changelist"),
             {"section": "application", "application-MAINTENANCE_ENABLED": "on", "application-MAINTENANCE_MESSAGE": "Travaux",

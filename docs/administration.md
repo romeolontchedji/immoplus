@@ -233,11 +233,19 @@ ni l'un ni l'autre et t'écrit :
 Signalements › **Prendre** › ouvre la fiche › consulte annonce, compte ou conversation (motif demandé) ›
 Décisions de modération › **Ajouter** la sanction adaptée, ou **Classer** sans suite.
 
-### 5.5 Mettre l'application en maintenance
+### 5.5 Mettre le site ou l'application en maintenance
 
-Paramètres › Application et maintenance › coche `MAINTENANCE_ENABLED`, écris `MAINTENANCE_MESSAGE` (« Retour vers
-14 h ») › Enregistrer. L'application affiche l'écran de maintenance ; le site reste ouvert. Décoche après la mise à
-jour.
+Paramètres › Application et maintenance. Deux interrupteurs **indépendants** :
+
+- **`SITE_MAINTENANCE_ENABLED`** : le **site web** affiche « Immo+ revient tout de suite » (réponse 503). L'application
+  mobile continue de marcher.
+- **`MAINTENANCE_ENABLED`** : l'**application mobile** affiche son écran de maintenance. Le site web reste ouvert.
+
+Pour une mise à jour complète du serveur, coche les deux. Écris `MAINTENANCE_MESSAGE` (« Retour vers 14 h ») : il s'affiche
+sur le site et dans l'application. › Enregistrer. Un bandeau rouge sur l'accueil de l'administration rappelle ce qui est
+coupé. **L'administration reste toujours accessible**, ainsi que la santé du serveur, les fichiers, les textes légaux de
+l'API et le webhook de paiement KKiaPay (un paiement validé pendant la maintenance est bien reçu). Décoche après la mise
+à jour.
 
 ### 5.6 Obliger les utilisateurs à mettre l'application à jour
 
@@ -310,8 +318,9 @@ Ce que voient les applications au démarrage.
 
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
-| `MAINTENANCE_ENABLED` | décoché | Coché : l'application mobile affiche un écran de maintenance au lieu de fonctionner. Le site reste ouvert. À utiliser pendant une mise à jour du serveur. |
-| `MAINTENANCE_MESSAGE` | vide | Texte de l'écran de maintenance (ex. « Retour vers 14 h »). Vide : message standard. |
+| `SITE_MAINTENANCE_ENABLED` | décoché | Coché : le **site web** affiche « Immo+ revient tout de suite » au lieu de fonctionner. L'application mobile et l'administration restent ouvertes. |
+| `MAINTENANCE_ENABLED` | décoché | Coché : l'**application mobile** affiche un écran de maintenance au lieu de fonctionner. Le site web reste ouvert. |
+| `MAINTENANCE_MESSAGE` | vide | Texte affiché pendant la maintenance, sur le site et dans l'application (ex. « Retour vers 14 h »). Vide : message standard. |
 | `APP_NOTICE` | vide | Petit message affiché en haut de l'application pour tous (ex. une nouveauté). Vide : rien n'est affiché. |
 | `MIN_SUPPORTED_VERSION` | `1.0.0` | Les applications plus anciennes que cette version doivent se mettre à jour avant de continuer. Format 1.2.0. À monter seulement après publication de la nouvelle version sur les magasins. |
 
