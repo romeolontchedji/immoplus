@@ -70,11 +70,13 @@ def se_connecter(u, mdp=MOT_DE_PASSE, client=None, *, double_auth=True):
 
 
 class TestVoirLeSite:
-    def test_le_lien_mene_au_site_public_et_non_a_l_accueil_de_l_administration(self, settings):
-        settings.SITE_URL = "https://www.exemple.test"
+    def test_le_lien_mene_au_site_public_et_non_a_l_accueil_de_l_administration(self):
+        from django.conf import settings
+
         c, _ = se_connecter(personnel(AdminFactory))
         page = c.get("/").content.decode()
-        assert 'href="https://www.exemple.test">Voir le site</a>' in page
+        assert f'href="{settings.SITE_URL}">Voir le site</a>' in page
+        assert settings.SITE_URL.startswith("http")
 
 
 class TestConnexion:

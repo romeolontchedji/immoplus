@@ -55,11 +55,17 @@ def test_aucun_chemin_d_administration_sur_le_site_public():
 @pytest.mark.pg
 @pytest.mark.django_db
 def test_accueil_annonce_le_prix_forfaitaire_des_alertes_quand_elles_sont_payantes():
+    from django.core.cache import cache
+
     from apps.core import parametres
 
-    page = Client().get("/").content.decode()
-    assert "créer des alertes ne coûte rien" in page  # alertes gratuites par défaut
-    parametres.definir("PAID_ALERTS_ENABLED", True)
-    parametres.definir("ALERT_PRICE", 1500)
-    page = Client().get("/").content.decode()
+    cache.clear()
+    try:
+        page = Client().get("/").content.decode()
+        assert "créer des alertes ne coûte rien" in page  # alertes gratuites par défaut
+        parametres.definir("PAID_ALERTS_ENABLED", True)
+        parametres.definir("ALERT_PRICE", 1500)
+        page = Client().get("/").content.decode()
+    finally:
+        cache.clear()  # le réglage lu reste en cache après l'annulation de la base du test
     assert "prix forfaitaire de 1 500&nbsp;F" in page
