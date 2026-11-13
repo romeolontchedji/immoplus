@@ -81,8 +81,8 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         30,
         "Jours après la location avant la lecture seule des conversations.",
     ),
-    "ARCHIVE_AFTER_RENT_DAYS": (90, "Jours après la location avant l'archivage de l'annonce."),
-    "RENTED_VIDEO_DELETE_DAYS": (7, "Jours après la location avant la suppression de la vidéo."),
+    "ARCHIVE_AFTER_RENT_DAYS": (90, "Annonces anciennement « louées » : jours avant archivage (désormais immédiat à la location)."),
+    "RENTED_VIDEO_DELETE_DAYS": (7, "Inutilisé : photos et vidéo sont supprimées dès que la chambre est marquée louée."),
     "UNANSWERED_REMINDER_H": (2, "Heures avant le rappel au gérant pour un message non lu."),
     "LISTING_PREMODERATION": (
         False,

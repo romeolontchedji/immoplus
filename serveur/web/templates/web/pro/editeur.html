@@ -343,6 +343,8 @@
           {% for c in commandes %}
             {% if c.danger %}
               {% include "web/composants/confirmation.html" with action=c.action question="Supprimer définitivement cette annonce ? Elle disparaîtra pour tout le monde." libelle=c.libelle %}
+            {% elif c.confirmation %}
+              {% include "web/composants/confirmation.html" with action=c.action question=c.confirmation libelle=c.libelle libelle_confirmer="Oui, elle est louée" %}
             {% else %}
               <form method="post">
                 {% csrf_token %}

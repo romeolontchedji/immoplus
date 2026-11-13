@@ -99,13 +99,23 @@ class TestFraicheur:
 
 
 class TestMedias:
-    def test_video_d_une_annonce_louee_supprimee_apres_sept_jours(self):
+    def test_annonce_louee_perd_aussitot_toutes_ses_ressources(self):
         p = gerant_verifie()
         a = ListingFactory(gerant=p)
         medias_prets(a, photos=2, video=True)
         annonces.marquer_louee(p, a.pk)
+        a.refresh_from_db()
+        assert a.status == "archived" and a.rented_at is not None
+        assert not ListingMedia.objects.filter(listing=a).exclude(status="deleted").exists()
+
+    def test_video_programmee_pour_suppression_est_purgee(self):
+        p = gerant_verifie()
+        a = ListingFactory(gerant=p)
+        medias_prets(a, photos=2, video=True)
         video = ListingMedia.objects.get(listing=a, kind="video")
-        assert video.delete_after is not None
+        ListingMedia.objects.filter(pk=video.pk).update(
+            delete_after=timezone.now() + datetime.timedelta(days=7)
+        )
         assert entretien.purger_medias()["videos"] == 0
         ListingMedia.objects.filter(pk=video.pk).update(
             delete_after=timezone.now() - datetime.timedelta(minutes=1)

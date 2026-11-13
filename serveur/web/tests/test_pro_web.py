@@ -293,16 +293,16 @@ def test_interrupteur_encore_disponible(session_gerant):
     a = ListingFactory(gerant=g, status="published")
     medias_prets(a)  # sans vidéo prête, une annonce remise en ligne repasse en brouillon
     page = c.get("/pro/dashboard").content.decode()
-    assert 'role="switch"' in page and 'aria-checked="true"' in page and a.title in page
+    assert "Marquer louée" in page and a.title in page
     r = c.post(
         "/pro/dashboard", {"action": "disponible", "annonce_id": str(a.pk), "disponible": "0"}
     )
     assert r.status_code == 302
     a.refresh_from_db()
-    assert a.status == "rented"
+    assert a.status == "archived" and a.rented_at is not None  # louée : médias supprimés, archivée aussitôt
     c.post("/pro/dashboard", {"action": "disponible", "annonce_id": str(a.pk), "disponible": "1"})
     a.refresh_from_db()
-    assert a.status == "published"
+    assert a.status == "draft"  # plus de médias : on repart d'un brouillon
 
 
 def test_interrupteur_refuse_l_annonce_d_un_autre(session_gerant):

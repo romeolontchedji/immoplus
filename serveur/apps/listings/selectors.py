@@ -456,8 +456,11 @@ def fil(filtres: dict) -> dict:
 
 
 def _trouver_visible(ident) -> Listing | None:
+    # Une chambre louée est archivée aussitôt : sa fiche reste ouverte (lien partagé) pour dire « louée » et renvoyer
+    # vers les chambres libres, mais sans photos ni vidéo.
     requete = Listing.objects.filter(
-        status__in=STATUTS_VISIBLES, deleted_at__isnull=True
+        Q(status__in=STATUTS_VISIBLES) | Q(status=StatutAnnonce.ARCHIVED, rented_at__isnull=False),
+        deleted_at__isnull=True,
     ).select_related("district")
     try:
         return requete.filter(pk=uuid.UUID(str(ident))).first()
@@ -471,7 +474,7 @@ def fiche_publique(ident) -> dict | None:
     if annonce is None:
         return None
     medias = _medias_prets([annonce.pk]).get(annonce.pk, [])
-    louee = annonce.status == StatutAnnonce.RENTED
+    louee = annonce.status != StatutAnnonce.PUBLISHED
     sortie_medias = []
     for m in medias:
         if m.kind == TypeMedia.VIDEO:
@@ -630,7 +633,7 @@ def ids_favoris(utilisateur_id, annonce_ids) -> set:
 
 
 def favoris_de(utilisateur_id) -> list[dict]:
-    """Annonces favorites, plus récemment ajoutées d'abord ; les annonces louées restent affichées."""
+    """Annonces favorites, plus récemment ajoutées d'abord ; les chambres libres passent avant les louées."""
     liens = list(Favorite.objects.filter(user_id=utilisateur_id).order_by("-created_at")[:200])
     annonces = {
         a.pk: a
@@ -639,6 +642,8 @@ def favoris_de(utilisateur_id) -> list[dict]:
         ).select_related("district")
     }
     ordonnees = [annonces[f.listing_id] for f in liens if f.listing_id in annonces]
+    # Les chambres libres d'abord ; les louées suivent (le tri est stable : récentes d'abord dans chaque groupe).
+    ordonnees.sort(key=lambda a: a.status != StatutAnnonce.PUBLISHED)
     return _cartes(ordonnees)
 
 
@@ -653,7 +658,7 @@ def cartes_visibles(annonce_ids) -> list[dict]:
     annonces = {
         a.pk: a
         for a in Listing.objects.filter(
-            pk__in=ordre, status__in=STATUTS_VISIBLES, deleted_at__isnull=True
+            pk__in=ordre, status=StatutAnnonce.PUBLISHED, deleted_at__isnull=True
         ).select_related("district")
     }
     return _cartes([annonces[i] for i in ordre if i in annonces])
@@ -802,8 +807,8 @@ def resume_avis(annonce_ids) -> dict:
 
 
 def resume_avis_gerant(gerant_id) -> dict:
-    """Moyenne et nombre d'avis visibles sur toutes les chambres d'un gérant."""
-    agr = Review.objects.filter(listing__gerant_id=gerant_id, is_hidden=False).aggregate(
+    """Moyenne et nombre d'avis visibles d'un gérant : ils lui sont liés, même quand ses chambres sont archivées."""
+    agr = Review.objects.filter(gerant_id=gerant_id, is_hidden=False).aggregate(
         moyenne=Avg("rating"), nombre=Count("id")
     )
     return {
@@ -818,7 +823,7 @@ def avis(*, annonce_id=None, gerant_id=None, limite: int = 20) -> list[dict]:
     if annonce_id is not None:
         requete = requete.filter(listing_id=annonce_id)
     if gerant_id is not None:
-        requete = requete.filter(listing__gerant_id=gerant_id)
+        requete = requete.filter(gerant_id=gerant_id)
     lignes = list(requete.order_by("-created_at")[:limite])
     noms = comptes.noms_utilisateurs({a.author_id for a in lignes})
     return [
@@ -829,6 +834,8 @@ def avis(*, annonce_id=None, gerant_id=None, limite: int = 20) -> list[dict]:
             "author_name": _nom_court(noms.get(a.author_id)),
             "listing_title": a.listing.title,
             "listing_slug": a.listing.slug,
+            # Chambre louée (archivée) : l'avis reste, mais il n'y a plus de fiche à consulter.
+            "listing_libre": a.listing.status == StatutAnnonce.PUBLISHED,
             "created_at": a.created_at,
         }
         for a in lignes

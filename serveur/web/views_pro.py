@@ -65,7 +65,13 @@ def commandes_autorisees(annonce) -> list[dict]:
         return [{"action": "publier", "libelle": "Publier", "primaire": True}, SUPPRIMER]
     if statut == StatutAnnonce.PUBLISHED:
         return [
-            {"action": "louee", "libelle": "Marquer louée", "primaire": True},
+            {
+                "action": "louee",
+                "libelle": "Marquer louée",
+                "primaire": True,
+                "confirmation": "Marquer cette chambre louée ? Ses photos et sa vidéo seront supprimées et l'annonce archivée. "
+                "Pour la reproposer, il faudra ajouter de nouvelles photos.",
+            },
             {"action": "masquer", "libelle": "Masquer"},
             SUPPRIMER,
         ]
@@ -74,6 +80,11 @@ def commandes_autorisees(annonce) -> list[dict]:
     if statut == StatutAnnonce.RENTED:
         return [
             {"action": "annuler-louee", "libelle": "Remettre en ligne", "primaire": True},
+            SUPPRIMER,
+        ]
+    if statut == StatutAnnonce.ARCHIVED and annonce.rented_at is not None:
+        return [  # louée puis archivée : ses médias sont supprimés, la reproposer repart d'un brouillon
+            {"action": "annuler-louee", "libelle": "Reproposer (nouveau brouillon)", "primaire": True},
             SUPPRIMER,
         ]
     if statut in (StatutAnnonce.PROCESSING, StatutAnnonce.ARCHIVED):

@@ -12,6 +12,7 @@ from apps.chat import services as chat
 from apps.core.errors import ErreurMetier
 from apps.notifications.models import Notification
 
+from .. import selectors
 from ..models import Listing, Review
 from ..services import annonces, avis, fil
 from .fabriques import DistrictFactory, ListingFactory, donnees_annonce, gerant_verifie
@@ -130,6 +131,19 @@ class TestAvis:
         assert reponse["summary"] == {"average": 5.0, "count": 1}
         assert reponse["items"][0]["author_name"] == "Awa B."
         assert Notification.objects.filter(user=a.gerant.user, kind="listing.review").count() == 1
+
+    def test_l_avis_suit_le_gerant_meme_quand_la_chambre_est_louee_puis_archivee(self):
+        a = ListingFactory()
+        loc = ClientFactory(full_name="Awa Bio")
+        echanger(loc, a)
+        avis.donner(loc, a.pk, 4, "Très bien.")
+        assert Review.objects.get(listing=a).gerant_id == a.gerant_id
+        annonces.marquer_louee(a.gerant, a.pk)  # chambre louée : médias supprimés, archivée aussitôt
+        a.refresh_from_db()
+        assert a.status == "archived"
+        assert selectors.resume_avis_gerant(a.gerant_id) == {"average": 4.0, "count": 1}
+        avis.donner(loc, a.pk, 5, "Après la location aussi.")  # on peut encore noter une chambre louée
+        assert selectors.resume_avis_gerant(a.gerant_id) == {"average": 5.0, "count": 1}
 
     def test_coordonnees_refusees_et_note_bornee(self):
         a = ListingFactory()

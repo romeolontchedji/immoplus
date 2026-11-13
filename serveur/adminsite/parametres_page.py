@@ -75,12 +75,12 @@ NOTES = {
     "(recommandé : le gérant marque lui-même une chambre louée).",
     "RENTED_REPORTS_THRESHOLD": "Nombre de locataires différents qui signalent « déjà louée » avant qu'un dossier "
     "s'ouvre dans la modération.",
-    "RENTED_VIDEO_DELETE_DAYS": "Après « louée », la vidéo est supprimée au bout de ce nombre de jours (le gérant peut "
-    "annuler « louée » d'ici là).",
+    "RENTED_VIDEO_DELETE_DAYS": "Inutilisé : dès qu'une chambre est marquée louée, ses photos et sa vidéo sont supprimées "
+    "et l'annonce archivée.",
     "READONLY_AFTER_RENT_DAYS": "Après « louée », les conversations de la chambre passent en lecture seule au bout de "
     "ce nombre de jours.",
-    "ARCHIVE_AFTER_RENT_DAYS": "Après « louée », l'annonce est archivée (retirée de l'espace du gérant) au bout de ce "
-    "nombre de jours.",
+    "ARCHIVE_AFTER_RENT_DAYS": "Ne concerne plus que les annonces marquées louées avant la mise à jour : une annonce "
+    "marquée louée est désormais archivée aussitôt, photos et vidéo supprimées.",
     "CAMPUS_REFERENCE": "Position de l'Université de Parakou qui sert à calculer « à 450 m de l'UP ». Format "
     '{"latitude": 9.337, "longitude": 2.630}.',
     "CONTACT_LEAK_MODE": "Que faire d'un numéro ou d'un lien écrit dans la messagerie : laisser passer, le masquer, "

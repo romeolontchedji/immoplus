@@ -8,10 +8,12 @@ Règles :
 """
 
 from django.db import transaction
+from django.db.models import Q
 
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
 from apps.notifications import services as notifications
+
 
 from ..enums import StatutAnnonce
 from ..models import Listing, Review
@@ -23,7 +25,12 @@ STATUTS_AVIS = (StatutAnnonce.PUBLISHED, StatutAnnonce.RENTED, StatutAnnonce.HID
 
 def _annonce(annonce_id) -> Listing:
     try:
-        return Listing.objects.get(pk=annonce_id, status__in=STATUTS_AVIS, deleted_at__isnull=True)
+        # Une chambre louée est archivée aussitôt : le locataire peut encore la noter (rented_at renseigné).
+        return Listing.objects.get(
+            Q(status__in=STATUTS_AVIS) | Q(status=StatutAnnonce.ARCHIVED, rented_at__isnull=False),
+            pk=annonce_id,
+            deleted_at__isnull=True,
+        )
     except (Listing.DoesNotExist, ValueError, TypeError, Exception) as erreur:
         raise ErreurMetier("not_found", "Annonce introuvable.", statut=404) from erreur
 
@@ -59,7 +66,7 @@ def donner(utilisateur, annonce_id, note, commentaire: str = "") -> Review:
         )
     contenu.refuser_si_coordonnees(comment=texte)
     avis, cree = Review.objects.update_or_create(
-        listing=annonce, author_id=utilisateur.pk, defaults={"rating": note, "comment": texte}
+        listing=annonce, author_id=utilisateur.pk, defaults={"rating": note, "comment": texte, "gerant_id": annonce.gerant_id}
     )
     audit.enregistrer(
         "listing.avis_donne" if cree else "listing.avis_modifie",

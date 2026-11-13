@@ -120,33 +120,20 @@
                       <span class="fw-700 color-blue">{{ r.stats.contacts|default:0 }}</span>
                     </td>
                     <td data-libelle="Encore disponible">
-                      {% if r.annonce.status == "published" or r.annonce.status == "rented" %}
-                        <form method="post" class="interrupteur-form">
-                          {% csrf_token %}
-                          <input type="hidden" name="action" value="disponible">
-                          <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
-                          {% if r.annonce.status == "published" %}
-                            <button class="interrupteur interrupteur--actif"
-                                    type="submit"
-                                    name="disponible"
-                                    value="0"
-                                    role="switch"
-                                    aria-checked="true"
-                                    aria-label="« {{ r.annonce.title }} » est disponible. Décoche si elle est louée.">
-                              <span class="interrupteur__curseur"></span>
-                            </button>
-                          {% else %}
-                            <button class="interrupteur"
-                                    type="submit"
-                                    name="disponible"
-                                    value="1"
-                                    role="switch"
-                                    aria-checked="false"
-                                    aria-label="« {{ r.annonce.title }} » est louée. Coche pour la remettre en ligne.">
-                              <span class="interrupteur__curseur"></span>
-                            </button>
-                          {% endif %}
-                        </form>
+                      {% if r.annonce.status == "published" %}
+                        {# Louée = photos et vidéo supprimées, annonce archivée : on confirme avant. #}
+                        <details class="confirmation">
+                          <summary class="bouton bouton--petit bouton--secondaire">Marquer louée</summary>
+                          <div class="confirmation__corps">
+                            <p class="confirmation__question">Cette chambre est louée ? Ses photos et sa vidéo seront supprimées et l'annonce archivée.</p>
+                            <form method="post">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="disponible">
+                              <input type="hidden" name="annonce_id" value="{{ r.annonce.pk }}">
+                              <button class="bouton bouton--danger bouton--petit" type="submit" name="disponible" value="0">Oui, elle est louée</button>
+                            </form>
+                          </div>
+                        </details>
                       {% else %}
                         <span class="texte-doux">—</span>
                       {% endif %}

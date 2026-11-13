@@ -77,9 +77,12 @@ def purger_medias() -> dict:
 def annonces_louees_depuis(jours: int) -> list:
     limite = timezone.now() - timedelta(days=jours)
     return list(
-        Listing.objects.filter(status=StatutAnnonce.RENTED, rented_at__lte=limite).values_list(
-            "pk", flat=True
-        )
+        # Louée puis archivée aussitôt (rented_at renseigné) : ses conversations suivent le même délai.
+        Listing.objects.filter(
+            status__in=[StatutAnnonce.RENTED, StatutAnnonce.ARCHIVED],
+            rented_at__isnull=False,
+            rented_at__lte=limite,
+        ).values_list("pk", flat=True)
     )
 
 

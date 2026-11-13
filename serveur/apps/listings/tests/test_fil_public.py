@@ -341,6 +341,13 @@ class TestFavoris:
         Listing.objects.filter(pk=a.pk).update(status="rented")
         assert selectors.favoris_de(u.pk)[0]["status"] == "rented"
 
+    def test_les_chambres_libres_passent_avant_les_louees_dans_les_favoris(self):
+        louee, libre, u = ListingFactory(), ListingFactory(), ClientFactory()
+        favoris.ajouter(u, libre.pk)
+        favoris.ajouter(u, louee.pk)  # ajoutée en dernier : d'ordinaire la première
+        Listing.objects.filter(pk=louee.pk).update(status="rented")
+        assert [c["id"] for c in selectors.favoris_de(u.pk)] == [libre.pk, louee.pk]
+
     def test_plafond(self, monkeypatch):
         monkeypatch.setattr(favoris, "LIMITE", 2)
         u = ClientFactory()
