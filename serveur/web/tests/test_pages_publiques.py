@@ -508,16 +508,20 @@ class TestQuartiersDeLAccueil:
 
 
 class TestCartesEtFiche:
-    def test_la_carte_du_catalogue_affiche_le_type_de_chambre(self):
-        ListingFactory(room_type="studio", title="Studio témoin")
+    def test_la_carte_du_catalogue_met_le_type_et_le_quartier_sur_deux_lignes(self):
+        q = DistrictFactory(name="Zongo")
+        ListingFactory(room_type="studio", title="Studio témoin", district=q)
         page = html(Client().get("/annonces"))
-        assert "Studio ·" in page and "> · " not in page
+        assert re.search(r'annonce__type-quartier">\s*Studio\s*</span>', page)
+        assert re.search(r'annonce__proximite">\s*Zongo\s*</p>', page)
+        assert "m de l&#x27;UP" not in page and "m de l'UP" not in page
 
     def test_la_fiche_localise_sans_inventer_de_repere(self):
         a = ListingFactory(landmark_text="")
         page = html(Client().get(f"/annonces/{a.slug}"))
         assert "pharmacie du carrefour" not in page
         assert "openstreetmap.org" not in page and "Voir le quartier sur la carte" not in page
+        assert "m de l&#x27;Université" not in page and "fiche-localisation" not in page
 
 
 def test_delai_de_reponse_lisible():

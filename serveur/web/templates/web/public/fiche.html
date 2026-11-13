@@ -58,7 +58,6 @@
           <h1 class="fiche-titre">{{ f.title }}</h1>
           <p class="fiche-tete__meta">
             {{ f.type_label }}
-            {% if f.distance_m is not None %}· À {{ f.distance_m }} m de l'Université de Parakou{% endif %}
             · {% if f.status == "published" %}Disponible{% else %}Déjà louée{% endif %}
           </p>
           <a class="fiche-note" href="#avis">
@@ -363,14 +362,6 @@
             {% if not est_proprietaire %}
               <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Créer une alerte semblable</a>
             {% endif %}
-            <section class="fiche-localisation" aria-labelledby="titre-localisation">
-              <h2 class="fiche-localisation__titre" id="titre-localisation">
-                {% include "web/composants/icone.html" with nom="map-pin" taille=18 %}
-                {{ f.district.name }}
-              </h2>
-              {% if f.distance_m is not None %}<p class="fiche-localisation__ligne">À {{ f.distance_m }} m de l'Université de Parakou</p>{% endif %}
-              {% if f.landmark_text %}<p class="fiche-localisation__ligne">{{ f.landmark_text }}</p>{% endif %}
-            </section>
             <div class="fiche-securite-encart" role="note">
               <strong class="fiche-securite-encart__titre">Avant de payer</strong>
               <ol class="fiche-securite-encart__liste">
@@ -423,8 +414,8 @@
                           aria-hidden="true"></span>
                   {% endif %}
                   <span class="fiche-similaire-carte__corps">
-                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }} · {{ s.district.name }}</strong>
-                    <span class="fiche-similaire-carte__distance">À {{ s.distance_m }} m de l'UP</span>
+                    <strong class="fiche-similaire-carte__titre">{{ s.type_label }}</strong>
+                    <span class="fiche-similaire-carte__distance">{{ s.district.name }}</span>
                     <span class="fiche-similaire-carte__prix">{{ s.rent_amount|fcfa }} F</span>
                   </span>
                 </a>
