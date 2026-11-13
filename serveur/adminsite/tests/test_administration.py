@@ -532,17 +532,17 @@ class TestPouvoirsDeLAdministrateur:
 
         c, _ = se_connecter(personnel(AdminFactory))
         r = c.post(
-            reverse("admin:listings_roomtype_add"), {"label": "Studio meublé", "sort_order": 50}
+            reverse("admin:listings_roomtype_add"), {"label": "Colocation étudiante", "sort_order": 50}
         )
         assert r.status_code == 302
-        t = RoomType.objects.get(label="Studio meublé")
-        assert t.status == "approved" and t.slug == "studio_meuble" and t.sort_order == 50
+        t = RoomType.objects.get(label="Colocation étudiante")
+        assert t.status == "approved" and t.slug == "colocation_etudiante" and t.sort_order == 50
         # un nom déjà pris (même sans accents ni majuscules) est refusé
         r = c.post(
-            reverse("admin:listings_roomtype_add"), {"label": "STUDIO MEUBLE", "sort_order": 1}
+            reverse("admin:listings_roomtype_add"), {"label": "COLOCATION ETUDIANTE", "sort_order": 1}
         )
         assert (
-            r.status_code == 200 and RoomType.objects.filter(label__icontains="studio").count() == 1
+            r.status_code == 200 and RoomType.objects.filter(label__icontains="colocation").count() == 1
         )
 
     def test_un_moderateur_n_ajoute_pas_de_type(self):
