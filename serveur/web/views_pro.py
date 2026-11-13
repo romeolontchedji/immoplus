@@ -310,6 +310,11 @@ def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, ph
 
 
 LIEN_ABONNEMENT = "/compte/abonnement?raison=publier"
+MESSAGES_OK = {
+    "enregistree": "Annonce enregistrée.",
+    "statut": "Statut mis à jour.",
+    "media": "Médias mis à jour.",
+}
 
 
 def _abonnement_manquant(profil) -> bool:
@@ -346,7 +351,8 @@ def editeur(request, profil, annonce_id=None):
                     annonce = annonces.creer_brouillon(profil, donnees)
                     return redirect(f"/pro/annonces/{annonce.pk}?etape=6")
                 annonce = annonces.modifier(profil, annonce.pk, donnees)
-                message = "Annonce enregistrée."
+                etape = 6 if annonce.status == StatutAnnonce.DRAFT else 1
+                return redirect(f"/pro/annonces/{annonce.pk}?etape={etape}&ok=enregistree")
             elif action == "supprimer" and annonce:
                 annonces.supprimer(profil, annonce.pk)
                 return redirect("/pro/annonces?ok=supprimee")
@@ -355,9 +361,10 @@ def editeur(request, profil, annonce_id=None):
                 if action == "publier":  # fini avec l'éditeur : retour à la liste, pas sur l'étape des médias
                     attente = annonce.status != StatutAnnonce.PUBLISHED
                     return redirect(f"/pro/annonces?ok={'attente' if attente else 'publiee'}")
-                message = "Statut mis à jour."
+                return redirect(f"/pro/annonces/{annonce.pk}?etape=7&ok=statut")
             elif action in ACTIONS_MEDIAS and annonce:
-                message = _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
+                _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
+                return redirect(f"/pro/annonces/{annonce.pk}?etape=6&ok=media")
         except ErreurMetier as erreur:
             if erreur.code == "subscription_required":
                 return redirect(LIEN_ABONNEMENT)
@@ -369,6 +376,8 @@ def editeur(request, profil, annonce_id=None):
                 _signaler(form, erreur)
     if annonce is not None:
         annonce.refresh_from_db()
+    if request.method == "GET":  # après une action : on revient ici par une redirection (pas de « renvoyer les données »)
+        message = MESSAGES_OK.get(request.GET.get("ok", ""))
     liste_medias = _medias_vue(medias.lister(profil, annonce.pk)) if annonce else []
     en_cours = any(m["en_cours"] for m in liste_medias)
     apercu = selectors.carte_apercu(annonce) if annonce else None

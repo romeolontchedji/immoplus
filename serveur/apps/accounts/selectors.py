@@ -15,15 +15,19 @@ def utilisateur_par_id(identifiant) -> User:
 
 
 def courriels_equipe() -> list[str]:
-    """Adresses confirmées des administrateurs et modérateurs actifs (courriels d'information à l'équipe)."""
+    """Adresses des administrateurs et modérateurs actifs (courriels d'information à l'équipe).
+
+    L'adresse d'un compte du personnel est saisie par l'équipe elle-même (commande ou administration) et n'est jamais
+    « confirmée » par un lien : on n'exige donc pas `email_verified_at`, sinon personne ne recevrait rien."""
     return list(
         User.objects.filter(
             role__in=("admin", "moderator"),
             status="active",
             deleted_at__isnull=True,
             email__isnull=False,
-            email_verified_at__isnull=False,
-        ).values_list("email", flat=True)
+        )
+        .exclude(email="")
+        .values_list("email", flat=True)
     )
 
 

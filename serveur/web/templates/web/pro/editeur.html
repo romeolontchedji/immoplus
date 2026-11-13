@@ -209,6 +209,7 @@
         <p class="texte-doux texte-petit mb-0">
           Ajoute au moins {{ photos_min }} photos (10 au plus) et, si tu peux, une courte vidéo (10 à 60 s) : elle est facultative, mais les chambres avec vidéo reçoivent plus de contacts.
         </p>
+        <div id="medias-haut">
         <ul class="depot-recap" aria-label="Ce qu'il faut pour publier">
           <li class="depot-recap__item{% if video_prete %} depot-recap__item--ok{% endif %}">
             {% if video_prete %}
@@ -232,6 +233,7 @@
             Photos : {{ photos_pretes }}/10 prêtes ({{ photos_min }} au minimum)
           </li>
         </ul>
+        </div>
         <div id="envoi-medias"
              data-annonce="{{ annonce.pk }}"
              data-en-cours="{% if medias_en_cours %}1{% else %}0{% endif %}"
@@ -251,6 +253,7 @@
           <p class="depot__etat" id="envoi-etat" role="status"></p>
         </div>
         <script src="{% static 'js/envoi.js' %}" defer></script>
+        <div id="medias-bas">
         {% if medias %}
           <ul class="medias-grille">
             {% for m in medias %}
@@ -320,9 +323,11 @@
           <p class="texte-doux texte-petit" id="medias-attente" role="status">{{ raison_blocage }}</p>
         {% endif %}
         {% include "web/pro/etape-navigation.html" with precedent=5 suivant=7 desactive=suite_bloquee %}
+        </div>
       </section>
       <section class="pro-section-carte etape"
                data-etape="7"
+               id="publication"
                aria-labelledby="etape-7">
         <h2 class="pro-section-titre" id="etape-7">7. Publication</h2>
         {% if manques %}
