@@ -83,7 +83,7 @@ django-migration-linter==6.0.0
     # via
     #   -r serveur/requirements/base.in
     #   -r serveur/requirements/dev.in
-djangorestframework==3.18.2
+djangorestframework==3.18.3
     # via
     #   -r serveur/requirements/base.in
     #   drf-spectacular
@@ -101,7 +101,7 @@ faker==40.41.0
     # via factory-boy
 fakeredis==2.39.0
     # via -r serveur/requirements/dev.in
-filelock==4.0.12
+filelock==4.2.1
     # via cachecontrol
 grimp==3.17
     # via import-linter
