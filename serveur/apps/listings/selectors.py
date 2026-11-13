@@ -207,12 +207,18 @@ def _appliquer_criteres(requete, f: dict):
                         " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4"
                     )
                     params += [mot, mot]
-        elif len(f["q"]) >= 4:
-            sql += (
-                " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
-                " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4"
-            )
-            params += [f["q"], f["q"]]
+        else:
+            # Tolérance aux fautes, mot par mot et tous les mots à la fois : « studio banikani » trouve « Studio …
+            # Banikanni », mais « pharmacie marché » ne ramène pas une annonce qui n'a que l'un des deux mots.
+            longs = [m for m in mots if len(m) >= 4]
+            if longs:
+                un_mot = (
+                    "(word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
+                    " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4)"
+                )
+                sql += f" OR ({' AND '.join([un_mot] * len(longs))})"
+                for mot in longs:
+                    params += [mot, mot]
         requete = requete.annotate(
             _recherche=RawSQL(  # noqa: S611  # nosec B611
                 f"({sql})", params, output_field=BooleanField()
