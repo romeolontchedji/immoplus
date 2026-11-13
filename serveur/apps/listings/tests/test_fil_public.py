@@ -479,15 +479,14 @@ class TestAlertes:
         self, django_capture_on_commit_callbacks
     ):
         from django.core import mail
-        from django.utils import timezone
 
         from apps.accounts.tests.fabriques import AdminFactory, PersonnelFactory
 
-        admin = AdminFactory(email="equipe@exemple.bj", email_verified_at=timezone.now())
-        moderateur = PersonnelFactory(email="modo@exemple.bj", email_verified_at=timezone.now())
-        AdminFactory(
-            email="inconnu@exemple.bj", email_verified_at=None
-        )  # adresse non confirmée : rien
+        # Le personnel n'a pas d'adresse « confirmée » par lien : celle saisie par l'équipe suffit.
+        admin = AdminFactory(email="equipe@exemple.bj", email_verified_at=None)
+        moderateur = PersonnelFactory(email="modo@exemple.bj")
+        AdminFactory(email=None)  # pas d'adresse : rien
+        AdminFactory(email="suspendu@exemple.bj", status="suspended")  # compte non actif : rien
         p = gerant_verifie()
         a = ListingFactory(gerant=p, status="draft", published_at=None, title="Chambre Zongo")
         medias_prets(a)
