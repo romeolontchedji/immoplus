@@ -7,6 +7,7 @@ d'envoi ne remonte jamais à l'appelant : il est consigné dans la ligne et repr
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -366,6 +367,20 @@ def trouver_par_cle(dedupe_key: str) -> Notification | None:
 
 
 # --------------------------------------------------------------- centre de notifications
+def ouvrir(utilisateur_id, notification_id) -> dict:
+    """Marque lue la notification ouverte (et ses identiques, regroupées à l'écran) et la renvoie."""
+    try:
+        n = Notification.objects.filter(pk=notification_id, user_id=utilisateur_id).first()
+    except (ValueError, TypeError, ValidationError) as erreur:
+        raise ErreurMetier("not_found", "Notification introuvable.", statut=404) from erreur
+    if n is None:
+        raise ErreurMetier("not_found", "Notification introuvable.", statut=404)
+    Notification.objects.filter(
+        user_id=utilisateur_id, kind=n.kind, title=n.title, body=n.body, data=n.data, read_at__isnull=True
+    ).update(read_at=timezone.now())
+    return resume(n)
+
+
 def marquer_lue(utilisateur_id, notification_id) -> None:
     try:
         faites = Notification.objects.filter(
