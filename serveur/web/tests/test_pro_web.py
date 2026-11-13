@@ -41,7 +41,8 @@ def test_creation_puis_edition(session_gerant):
         a.gerant == g and r["Location"] == f"/pro/annonces/{a.pk}?etape=6"
     )  # direction les photos
     r = c.post(f"/pro/annonces/{a.pk}", formulaire(q, rent_amount="30000"))
-    assert r.status_code == 200 and "enregistrée" in r.content.decode()
+    # Réponse par redirection : recharger la page ne redemande jamais « renvoyer les données ».
+    assert r.status_code == 302 and "enregistrée" in c.get(r["Location"]).content.decode()
     a.refresh_from_db()
     assert a.rent_amount == 30000
     assert "Mes annonces" in c.get("/pro/annonces").content.decode()
@@ -384,3 +385,23 @@ def test_la_cloche_propose_consulter(session_gerant):
         user=g.user, kind="alert.match", title="Nouvelle", body="x", data={"slug": "chambre-zongo"}
     )
     assert 'href="/annonces/chambre-zongo"' in c.get("/pro/annonces").content.decode()
+
+
+def test_les_adresses_statiques_portent_une_empreinte():
+    """Caddy met /static/ en cache un an : sans empreinte, un script corrigé n'arriverait jamais au navigateur."""
+    from config.stockage import StatiquesVersionnes
+
+    adresse = StatiquesVersionnes().url("js/envoi.js")
+    assert adresse.startswith("/static/js/envoi.js?v=") and len(adresse.split("?v=")[1]) == 10
+
+
+def test_une_action_sur_les_medias_redirige(session_gerant):
+    c, g = session_gerant
+    a = ListingFactory(gerant=g, status="draft")
+    medias_prets(a)
+    from apps.listings.models import ListingMedia
+
+    media = ListingMedia.objects.filter(listing=a, kind="photo").first()
+    r = c.post(f"/pro/annonces/{a.pk}", {"action": "couvrir", "media_id": str(media.pk)})
+    assert r.status_code == 302 and r["Location"].endswith("?etape=6&ok=media")
+    assert "Médias mis à jour" in c.get(r["Location"]).content.decode()

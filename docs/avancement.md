@@ -2,6 +2,15 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-18 : scripts à jour chez tous, médias sans rechargement.**
+- Cause racine : Caddy sert `/static/` avec `Cache-Control: immutable` pendant un an et les fichiers n'avaient pas de version :
+  un navigateur qui avait déjà chargé `paiement.js` ou `envoi.js` gardait l'ancienne copie (le paiement de l'alerte ne s'ouvrait
+  pas, l'ancien rechargement automatique des médias persistait). Les adresses portent maintenant `?v=<empreinte>`
+  (`config/stockage.py`) : toute modification d'un script ou d'une feuille de style atteint les navigateurs au déploiement.
+- Étape médias : plus de rechargement de page. Le navigateur relit la page (GET) et remplace seulement le récapitulatif, les
+  vignettes, « Suivant » et l'étape Publication ; la zone d'envoi n'est jamais touchée. Les actions de l'éditeur (enregistrer,
+  médias, statut) répondent par une redirection : plus de « renvoyer les données ».
+
 **2026-11-17 : chambre louée, avis liés au gérant.**
 - Chambre marquée louée : photos et vidéo supprimées aussitôt (fichiers compris) et annonce archivée (plus d'attente de 7 ou
   90 jours). La fiche reste ouverte pour dire « louée » et renvoyer vers les chambres libres ; « Reproposer » repart d'un

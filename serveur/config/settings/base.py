@@ -149,6 +149,11 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 
 # --- Fichiers statiques et médias ---
 STATIC_URL = "/static/"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Adresses versionnées (?v=empreinte) : Caddy met /static/ en cache un an (voir config/stockage.py).
+    "staticfiles": {"BACKEND": "config.stockage.StatiquesVersionnes"},
+}
 STATIC_ROOT = Path(env.texte("STATIC_ROOT", str(BASE_DIR / "var" / "static")))
 STATICFILES_DIRS = [BASE_DIR / "web" / "static"]
 MEDIA_URL = "/media/"

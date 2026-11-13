@@ -25,20 +25,41 @@
     if (actif) { bouton.removeAttribute("aria-disabled"); } else { bouton.setAttribute("aria-disabled", "true"); }
   }
 
-  // Traitement en cours : on interroge l'API sans recharger la page, et on la recharge une seule fois à la fin.
+  // Mise à jour sans rechargement : on relit la page (requête GET) et on remplace seulement ce qui change (récapitulatif,
+  // vignettes, bouton « Suivant », étape Publication). La zone d'envoi n'est jamais touchée : rien n'est interrompu,
+  // et aucune demande « renvoyer les données » du navigateur.
+  async function rafraichir() {
+    try {
+      var r = await fetch(window.location.pathname + "?etape=6", { credentials: "same-origin", headers: { "Accept": "text/html" } });
+      if (!r.ok) { return false; }
+      var doc = new DOMParser().parseFromString(await r.text(), "text/html");
+      ["medias-haut", "medias-bas", "publication"].forEach(function (id) {
+        var actuel = document.getElementById(id), neuf = doc.getElementById(id);
+        if (actuel && neuf) { actuel.innerHTML = neuf.innerHTML; }
+      });
+      var z = doc.getElementById("envoi-medias");
+      zone.dataset.enCours = z && z.dataset.enCours === "1" ? "1" : "0";
+      liste.querySelectorAll(".depot__envoi--ok").forEach(function (li) { li.remove(); }); // désormais dans les vignettes
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Traitement en cours : on interroge l'API toutes les 4 s, puis on met la page à jour une fois tout prêt.
   var ATTENTE = ["uploaded", "processing"]; // un envoi « uploading » vu depuis une page neuve est interrompu
+  var minuteur = null;
   function surveiller() {
+    if (minuteur) { return; }
     var essais = 0;
-    var minuteur = setInterval(async function () {
+    minuteur = setInterval(async function () {
       essais += 1;
-      if (essais > 150) { clearInterval(minuteur); return; } // 10 minutes : on laisse l'utilisateur recharger
+      if (essais > 150) { clearInterval(minuteur); minuteur = null; return; } // 10 minutes : on laisse l'utilisateur agir
       try {
         var r = await fetch("/v1/pro/listings/" + annonce + "/media", { credentials: "same-origin", headers: { "Accept": "application/json" } });
         if (!r.ok) { return; }
         var medias = await r.json();
         if (!medias.some(function (m) { return ATTENTE.indexOf(m.status) !== -1; })) {
-          clearInterval(minuteur);
-          window.location.reload();
+          clearInterval(minuteur); minuteur = null;
+          await rafraichir();
         }
       } catch (e) { /* réseau coupé : on réessaie au prochain passage */ }
     }, 4000);
@@ -123,8 +144,13 @@
       if (await envoyer(fichiers[i], suivi)) { envoyes += 1; }
     }
     if (envoyes) {
-      dire("Envoi terminé. Le traitement prend une minute environ ; la page va se mettre à jour.");
-      setTimeout(function () { window.location.reload(); }, 1500);
+      dire("Envoi terminé. Traitement en cours : « Suivant » s'activera tout seul dès que tout est prêt.");
+      if (await rafraichir()) {
+        if (zone.dataset.enCours === "1") { surveiller(); } else { dire(""); }
+      } else {
+        dire("Envoi terminé. Actualise la page pour continuer.");
+        suite(true);
+      }
     } else {
       suite(true); // rien n'est parti (fichiers refusés) : le serveur dira si on peut continuer
     }
