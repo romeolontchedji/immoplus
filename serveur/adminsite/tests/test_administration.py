@@ -919,6 +919,22 @@ def test_quartiers_geres_sans_suppression():
     assert c.get(reverse("admin:listings_district_delete", args=[d.pk])).status_code == 403
 
 
+def test_un_quartier_sans_coordonnees_est_accepte_et_place_sur_le_campus():
+    from apps.core import parametres
+    from apps.listings.models import District
+
+    c, _ = se_connecter(personnel())
+    r = c.post(
+        reverse("admin:listings_district_add"),
+        {"name": "Baka", "slug": "baka", "latitude": "", "longitude": "", "sort_order": "50", "is_active": "on"},
+    )  # fmt: skip
+    assert r.status_code == 302
+    d = District.objects.get(slug="baka")
+    ref = parametres.lire("CAMPUS_REFERENCE")
+    assert float(d.latitude) == pytest.approx(ref["latitude"], abs=1e-5)
+    assert float(d.longitude) == pytest.approx(ref["longitude"], abs=1e-5)
+
+
 class TestAudienceEtMenu:
     def test_audience_sans_file_des_gerants_et_menu_ordonne(self):
         from apps.core import stats
