@@ -175,8 +175,6 @@ def enregistrer(slug: str, texte: str, *, acteur, nouvelle_acceptation: bool = F
 
     from django.db import transaction
 
-    from apps.audit import services as audit
-
     if slug not in DOCUMENTS:
         raise ErreurMetier("not_found", "Document introuvable.", statut=404)
     if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
@@ -193,17 +191,10 @@ def enregistrer(slug: str, texte: str, *, acteur, nouvelle_acceptation: bool = F
             courante = str(parametres.lire("TERMS_VERSION"))
             suivante = str(int(courante) + 1) if courante.isdigit() else "2"
             parametres.definir("TERMS_VERSION", suivante, par=acteur)
-        audit.enregistrer(
-            "legal.modifie",
-            acteur=acteur,
-            metadata={"document": slug, "nouvelle_acceptation": nouvelle_acceptation},
-        )
 
 
 def retablir(slug: str, *, acteur) -> None:
     """Revient au texte d'origine fourni avec l'application."""
-    from apps.audit import services as audit
-
     from .models import LegalDocument
 
     if slug not in DOCUMENTS:
@@ -211,4 +202,3 @@ def retablir(slug: str, *, acteur) -> None:
     if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
         raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
     LegalDocument.objects.filter(pk=slug).delete()
-    audit.enregistrer("legal.retabli", acteur=acteur, metadata={"document": slug})

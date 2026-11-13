@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
+from apps.audit import services as audit
 from apps.core import legal, parametres
 from apps.core.errors import ErreurMetier
 from apps.core.models import LegalDocument
@@ -89,13 +90,19 @@ class LegalDocumentAdmin(admin.ModelAdmin):
             try:
                 if "retablir" in request.POST:
                     legal.retablir(slug, acteur=request.user)
+                    audit.enregistrer(
+                        "legal.retabli", acteur=request.user, metadata={"document": slug}
+                    )
                     self.message_user(request, "Texte d'origine rétabli.")
                 else:
+                    nouvelle = bool(request.POST.get("nouvelle_acceptation"))
                     legal.enregistrer(
-                        slug,
-                        texte,
+                        slug, texte, acteur=request.user, nouvelle_acceptation=nouvelle
+                    )
+                    audit.enregistrer(
+                        "legal.modifie",
                         acteur=request.user,
-                        nouvelle_acceptation=bool(request.POST.get("nouvelle_acceptation")),
+                        metadata={"document": slug, "nouvelle_acceptation": nouvelle},
                     )
                     self.message_user(request, "Texte enregistré. Il est en ligne tout de suite.")
                 return HttpResponseRedirect(request.path)

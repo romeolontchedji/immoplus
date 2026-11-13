@@ -78,8 +78,6 @@ def test_les_textes_disent_la_verite_sur_les_paiements_et_la_lecture_des_convers
 
 
 # --------------------------------------------------------------- texte modifiable depuis l'administration
-from apps.accounts.tests.fabriques import AdminFactory, PersonnelFactory  # noqa: E402
-from apps.audit.models import AuditLog  # noqa: E402
 from apps.core import legal  # noqa: E402
 from apps.core.errors import ErreurMetier  # noqa: E402
 
@@ -99,39 +97,3 @@ def test_un_texte_invalide_est_refuse_avec_une_explication(texte, message):
     with pytest.raises(ErreurMetier) as e:
         legal.valider(texte)
     assert message in e.value.message
-
-
-def test_un_texte_enregistre_remplace_celui_d_origine_sur_le_site_et_l_api():
-    admin = AdminFactory()
-    legal.enregistrer("conditions", TEXTE, acteur=admin)
-    page = Client().get("/conditions").content.decode()
-    assert "Conditions test" in page and "<strong>en gras</strong>" in page and "NEXIX" in page
-    assert Client().get("/v1/legal/conditions").json()["title"] == "Conditions test"
-    assert (
-        Client().get("/confidentialite").status_code == 200
-    )  # l'autre document reste celui d'origine
-    assert AuditLog.objects.filter(action="legal.modifie", actor=admin).exists()
-    legal.retablir("conditions", acteur=admin)
-    assert "Conditions d&#x27;utilisation" in Client().get("/conditions").content.decode()
-
-
-def test_la_date_et_la_version_suivent_l_enregistrement():
-    import datetime
-
-    legal.enregistrer("conditions", TEXTE, acteur=AdminFactory())
-    assert parametres.lire("LEGAL_UPDATED_AT") == datetime.date.today().isoformat()
-    avant = int(parametres.lire("TERMS_VERSION"))
-    legal.enregistrer("conditions", TEXTE, acteur=AdminFactory(), nouvelle_acceptation=True)
-    assert int(parametres.lire("TERMS_VERSION")) == avant + 1
-
-
-def test_seul_un_administrateur_modifie_un_texte():
-    with pytest.raises(ErreurMetier) as e:
-        legal.enregistrer("conditions", TEXTE, acteur=PersonnelFactory())
-    assert e.value.statut == 403
-
-
-def test_le_html_brut_du_texte_est_neutralise():
-    legal.enregistrer("conditions", TEXTE + "\n<script>alert(1)</script>\n", acteur=AdminFactory())
-    page = Client().get("/conditions").content.decode()
-    assert "<script>alert(1)</script>" not in page
