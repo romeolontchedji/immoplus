@@ -5,6 +5,7 @@ e-mail, par clé de secours ou par l'équipe, activation des gérants par lien.
 """
 
 from functools import wraps
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import login, logout, update_session_auth_hash
@@ -55,7 +56,7 @@ def connecte_obligatoire(vue):
     @wraps(vue)
     def enveloppe(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"/connexion?next={request.path}")
+            return redirect("/connexion?" + urlencode({"next": request.path}))
         return vue(request, *args, **kwargs)
 
     return enveloppe

@@ -224,6 +224,13 @@ class TestVerrouillage:
         assert e.code == "invalid_credentials"
         assert 3500 <= int(e.entetes["Retry-After"]) <= 3600
 
+    def test_le_plafond_horaire_ne_bloque_pas_l_appareil_deja_connu_du_titulaire(self, client_inscrit):
+        assert connexion(client="mon-telephone")  # connu après une connexion réussie
+        for n in range(30):
+            echec(client=f"attaquant-{n}")
+        assert connexion(client="mon-telephone")  # le titulaire entre malgré l'attaque
+        assert echec(mdp=MOT_DE_PASSE, client="appareil-neuf").code == "invalid_credentials"
+
     def test_le_plafond_horaire_ne_touche_pas_les_autres_comptes(self, client_inscrit):
         ClientFactory(username="autre.compte")
         for n in range(30):

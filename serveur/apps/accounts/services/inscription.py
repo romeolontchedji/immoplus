@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from apps.accounts.models import ROLES_CLIENTELE, Occupation, Role, User
 from apps.audit import services as audit
-from apps.core import parametres
+from apps.core import parametres, redis_file
 from apps.core.errors import ErreurMetier
 
 from . import appareils, identifiants, jetons, mots_de_passe, verrouillage
@@ -131,6 +131,9 @@ def _compte_par_nom(nom_utilisateur: str) -> User | None:
     ).first()  # fmt: skip
 
 
+COURRIELS_REINIT_PAR_HEURE = 3
+
+
 def reinitialiser_par_cle(
     nom_utilisateur: str, cle: str, nouveau: str, *, client: str,
     ip: str | None = None, user_agent: str | None = None,
@@ -175,6 +178,13 @@ def demander_lien_par_email(identifiant: str, *, ip: str | None = None) -> None:
     )
     if utilisateur is None or not utilisateur.email:
         return
+    compteur = f"reinit:courriels:{utilisateur.pk}"
+    r = redis_file.client()
+    envoyes = r.incr(compteur)
+    if envoyes == 1:
+        r.expire(compteur, 3600)
+    if envoyes > COURRIELS_REINIT_PAR_HEURE:
+        return  # même réponse qu'ailleurs : on n'inonde pas la boîte de quelqu'un
     lien = f"{settings.SITE_URL}/mot-de-passe/nouveau/{identifiants.creer_jeton(utilisateur, 'reinitialisation')}"
     envoyer_courriel.delay(
         [utilisateur.email],
