@@ -57,7 +57,7 @@ def _envoyer(request, utilisateur, etat: dict) -> None:
     heure = timezone.localtime().strftime("%H:%M")
     envoyer_courriel.delay(
         [utilisateur.email],
-        f"Immo+ · ton code de connexion : {code}",
+        "Immo+ · ton code de connexion",
         f"Bonjour {utilisateur.full_name or ''},\n\n"
         f"Ton code de connexion à l'administration Immo+ : {code}\n"
         f"Il est valable 10 minutes.\n\n"

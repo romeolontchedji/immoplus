@@ -8,8 +8,8 @@ from . import views_auth as a
 from . import views_equipe as equipe_vue
 from . import views_paiement as paiement
 from . import views_pro as p
-from . import views_suppression as suppression
 from . import views_public as pub
+from . import views_suppression as suppression
 
 urlpatterns = [
     path("", views.accueil, name="accueil"),

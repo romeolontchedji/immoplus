@@ -3,7 +3,8 @@
 Les compteurs vivent dans `redis-queue` (jamais le cache à éviction). Le verrou porte sur le couple
 (identifiant saisi, appareil ou adresse IP), y compris pour un identifiant inconnu : il ne révèle donc rien et personne
 ne peut bloquer le compte d'autrui à distance. Un plafond horaire par identifiant, tous appareils confondus,
-ralentit les attaques réparties.
+ralentit les attaques réparties ; il ne s'applique pas aux appareils ou adresses déjà connectés avec succès à ce
+compte (30 jours) : l'attaquant, qui vient d'ailleurs, ne peut donc pas empêcher le titulaire de se connecter.
 """
 
 import hashlib
@@ -14,6 +15,7 @@ from apps.core.errors import ErreurMetier
 
 JOUR_S = 86400
 SEMAINE_S = 7 * JOUR_S
+CONNU_S = 30 * JOUR_S
 DUREE_MAX_S = JOUR_S
 
 
@@ -28,6 +30,7 @@ def _cles(identifiant: str, client: str) -> dict[str, str]:
         "niveau": f"login:niveau:{couple}",
         "verrou": f"login:verrou:{couple}",
         "heure": f"login:heure:{_h(identifiant)}",
+        "connu": f"login:connu:{couple}",
     }
 
 
@@ -49,7 +52,7 @@ def controler(identifiant: str, client: str) -> None:
     if attente and attente > 0:
         raise refus_uniforme(attente)
     plafond = int(parametres.lire("LOGIN_FAILS_PER_HOUR_PER_PHONE"))
-    if int(r.get(cles["heure"]) or 0) >= plafond:
+    if int(r.get(cles["heure"]) or 0) >= plafond and not r.exists(cles["connu"]):
         raise refus_uniforme(max(1, r.ttl(cles["heure"])))
 
 
@@ -76,6 +79,9 @@ def enregistrer_echec(identifiant: str, client: str) -> bool:
 
 
 def enregistrer_succes(identifiant: str, client: str) -> None:
-    """Efface le compteur et le niveau de récidive du couple ; le plafond horaire de l'identifiant reste."""
+    """Efface le compteur et le niveau de récidive du couple ; le plafond horaire de l'identifiant reste.
+    Le couple devient « connu » : le plafond horaire ne lui est plus opposé."""
     cles = _cles(identifiant, client)
-    redis_file.client().delete(cles["echecs"], cles["niveau"], cles["verrou"])
+    r = redis_file.client()
+    r.delete(cles["echecs"], cles["niveau"], cles["verrou"])
+    r.set(cles["connu"], 1, ex=CONNU_S)

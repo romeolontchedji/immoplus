@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from functools import wraps
+from urllib.parse import urlencode
 
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -23,7 +24,7 @@ def gerant_obligatoire(vue):
     @wraps(vue)
     def enveloppe(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"/connexion?next={request.path}")
+            return redirect("/connexion?" + urlencode({"next": request.path}))
         if request.user.role != "gerant":
             raise Http404
         return vue(request, comptes.profil_gerant(request.user), *args, **kwargs)
