@@ -15,16 +15,14 @@
       {% endif %}
       {% if alertes_payantes %}
         <div class="carte p-5 pile">
-          <h2 class="fs-18 fw-bold mb-0">Alertes payantes</h2>
+          <h2 class="fs-18 fw-bold mb-0">Alertes : sois le premier prévenu</h2>
           <p class="texte-doux mb-0">
-            Chaque nouvelle alerte coûte {{ prix_alerte }} F, payés une seule fois (Mobile Money ou carte).
-            {% if credits_alerte %}Tu as {{ credits_alerte }} alerte{{ credits_alerte|pluralize }} payée{{ credits_alerte|pluralize }} à créer.{% else %}Paie d'abord, puis crée ton alerte.{% endif %}
+            Choisis tes options, puis clique sur « Créer l'alerte » : tu seras invité à payer
+            <strong>{{ prix_alerte }} F</strong>, une seule fois (Mobile Money ou carte). Tu seras parmi les premiers
+            prévenus des chambres qui correspondent, <strong>par e-mail et sur le site</strong>.
+            {% if credits_alerte %}Tu as déjà {{ credits_alerte }} alerte{{ credits_alerte|pluralize }} payée{{ credits_alerte|pluralize }} à créer.{% endif %}
           </p>
-          <div>
-            <button class="bouton bouton--primaire" type="button" data-payer data-objet="alerte"{% if not paiement_possible %} disabled{% endif %}>
-              Payer une alerte ({{ prix_alerte }} F)
-            </button>
-          </div>
+          <div><a class="bouton bouton--secondaire" href="/compte/abonnement">Voir les tarifs et mes paiements</a></div>
           <p id="paiement-etat" class="texte-doux mb-0" role="status"></p>
         </div>
       {% endif %}
@@ -46,7 +44,7 @@
           </summary>
           {# ── Formulaire : visible seulement après « Créer une nouvelle alerte » ── #}
           <div class="carte p-6 alertes-nouvelle__carte">
-            <form method="post" class="pile" novalidate data-alerte-formulaire>
+            <form method="post" class="pile" novalidate data-alerte-formulaire{% if alertes_payantes and not credits_alerte and not sans_email and not edition %} data-paiement="1"{% endif %}>
               {% csrf_token %}
               {% if edition %}
                 <input type="hidden" name="action" value="modifier">

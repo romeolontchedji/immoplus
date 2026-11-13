@@ -319,7 +319,7 @@ def _prevenir_gerant(annonce_id, ancien: str, nouveau: str, raison: str | None) 
         elif nouveau == StatutAnnonce.RENTED:
             notifications.creer(
                 annonce.gerant_id, "listing.rented_video_scheduled", "Annonce marquée louée",
-                "La vidéo sera supprimée dans 7 jours. Tu peux annuler « louée » d'ici là.", data=data,
+                "Ses photos et sa vidéo ont été supprimées et l'annonce est archivée. Pour la reproposer, remets-la en brouillon et ajoute de nouvelles photos.", data=data,
             )  # fmt: skip
     except Exception:  # noqa: BLE001
         journal.exception("notification_gerant_echouee")
@@ -485,18 +485,24 @@ def marquer_louee(gerant: "GerantProfile", annonce_id) -> Listing:
         raise ErreurMetier(
             "listing_locked", "Seule une annonce publiée peut être marquée louée.", statut=409
         )
+    from . import medias
+
     annonce.rented_at = timezone.now()
-    ListingMedia.objects.filter(listing=annonce, kind=TypeMedia.VIDEO).exclude(
-        status__in=[StatutMedia.DELETED, StatutMedia.FAILED]
-    ).update(delete_after=annonce.rented_at + timezone.timedelta(days=7))  # vidéo supprimée à J+7
+    # « Louée » d'abord (alertes, favoris et messagerie sont prévenus comme avant), puis la chambre est vidée de ses
+    # photos et de sa vidéo et archivée : plus rien n'occupe le stockage ni le fil.
     changer_statut(annonce, StatutAnnonce.RENTED, acteur=gerant.user)
+    medias.supprimer_tous(annonce)
+    changer_statut(annonce, StatutAnnonce.ARCHIVED, acteur=gerant.user)
     return annonce
 
 
 @transaction.atomic
 def annuler_louee(gerant: "GerantProfile", annonce_id) -> Listing:
     annonce = _annonce_du_gerant(gerant, annonce_id, verrou=True)
-    if annonce.status != StatutAnnonce.RENTED:
+    louee = annonce.status == StatutAnnonce.RENTED or (
+        annonce.status == StatutAnnonce.ARCHIVED and annonce.rented_at is not None
+    )
+    if not louee:
         raise ErreurMetier("listing_locked", "Cette annonce n'est pas marquée louée.", statut=409)
     video_encore_la = ListingMedia.objects.filter(
         listing=annonce, kind=TypeMedia.VIDEO, status=StatutMedia.READY, deleted_at__isnull=True

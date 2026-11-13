@@ -388,6 +388,14 @@ class Review(models.Model):
     listing = models.ForeignKey(
         Listing, on_delete=models.CASCADE, related_name="reviews", verbose_name="annonce"
     )
+    gerant = models.ForeignKey(
+        "accounts.GerantProfile",
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="+",
+        db_column="gerant_id",
+        verbose_name="gérant",
+    )  # la réputation suit le gérant : elle ne dépend pas de la vie de chaque annonce
     author = models.ForeignKey(
         "accounts.User", on_delete=models.CASCADE, related_name="+", verbose_name="auteur"
     )
@@ -405,6 +413,15 @@ class Review(models.Model):
     def __str__(self) -> str:
         return f"{self.rating}/5"
 
+    def save(self, *args, **kwargs):
+        if self.gerant_id is None and self.listing_id:  # l'avis porte toujours le gérant de sa chambre
+            self.gerant_id = Listing.objects.values_list("gerant_id", flat=True).get(
+                pk=self.listing_id
+            )
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = {*kwargs["update_fields"], "gerant"}
+        super().save(*args, **kwargs)
+
     class Meta:
         db_table = "listing_reviews"
         verbose_name = "avis"
@@ -417,4 +434,5 @@ class Review(models.Model):
         ]
         indexes = [
             models.Index(fields=["listing", "is_hidden", "-created_at"], name="avis_annonce_idx"),
+            models.Index(fields=["gerant", "is_hidden", "-created_at"], name="avis_gerant_idx"),
         ]

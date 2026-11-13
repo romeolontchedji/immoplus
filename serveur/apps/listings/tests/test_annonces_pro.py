@@ -288,25 +288,23 @@ class TestCycleDeVie:
         Listing.objects.filter(pk=publiee.pk).update(status="hidden", hidden_reason="moderation")
         assert pro.post(f"/v1/pro/listings/{publiee.pk}/confirm").status_code == 409
 
-    def test_marquer_louee_programme_la_suppression_de_la_video(self, pro, publiee):
+    def test_marquer_louee_supprime_aussitot_photos_et_video_et_archive(self, pro, publiee):
         r = pro.post(f"/v1/pro/listings/{publiee.pk}/mark-rented").json()
-        assert r["status"] == "rented"
-        video = ListingMedia.objects.get(listing=publiee, kind="video")
-        assert 6 <= (video.delete_after - timezone.now()).days <= 7
+        assert r["status"] == "archived"
+        publiee.refresh_from_db()
+        assert publiee.rented_at is not None
+        medias = ListingMedia.objects.filter(listing=publiee)
+        assert medias.exists() and not medias.exclude(status="deleted").exists()
 
-    def test_annuler_louee_tant_que_la_video_existe(self, pro, publiee):
+    def test_annuler_louee_exige_un_nouveau_brouillon(self, pro, publiee):
         pro.post(f"/v1/pro/listings/{publiee.pk}/mark-rented")
+        assert pro.post(f"/v1/pro/listings/{publiee.pk}/undo-rented").json()["status"] == "draft"
+
+    def test_annuler_louee_d_une_ancienne_annonce_dont_la_video_existe_encore(self, pro, publiee):
+        Listing.objects.filter(pk=publiee.pk).update(status="rented", rented_at=timezone.now())
         assert (
             pro.post(f"/v1/pro/listings/{publiee.pk}/undo-rented").json()["status"] == "published"
         )
-        assert ListingMedia.objects.get(listing=publiee, kind="video").delete_after is None
-
-    def test_annuler_louee_apres_suppression_de_la_video_exige_un_nouveau_brouillon(
-        self, pro, publiee
-    ):
-        pro.post(f"/v1/pro/listings/{publiee.pk}/mark-rented")
-        ListingMedia.objects.filter(listing=publiee, kind="video").update(status="deleted")
-        assert pro.post(f"/v1/pro/listings/{publiee.pk}/undo-rented").json()["status"] == "draft"
 
     def test_transitions_interdites(self, pro, gerant):
         brouillon = ListingFactory(gerant=gerant, status="draft")

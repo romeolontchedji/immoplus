@@ -1,0 +1,110 @@
+{% extends "web/espace.html" %}
+{% load immoplus static %}
+{% block titre %}Abonnement — Immo+{% endblock %}
+{% block espace %}
+  <div class="pro-principal pile pile--large">
+    <div class="pro-entete">
+      <div>
+        <h1 class="pro-entete__titre">Abonnement</h1>
+        <p class="texte-doux mb-0">
+          {% if gerant %}Ta formule, ses dates et l'historique de tes paiements.{% else %}Le prix des alertes et l'historique de tes paiements.{% endif %}
+        </p>
+      </div>
+    </div>
+    {% if raison %}
+      <div class="alerte alerte--avertissement" role="status"><p>{{ raison }}</p></div>
+    {% endif %}
+    {% if not actif %}
+      <div class="alerte alerte--succes" role="status">
+        <p>
+          {% if gerant %}Pour l'instant, publier est gratuit : aucun abonnement n'est demandé.{% else %}Pour l'instant, les alertes sont gratuites.{% endif %}
+        </p>
+      </div>
+    {% endif %}
+    {% if actif and not paiement_possible %}
+      <div class="alerte alerte--danger" role="status"><p>Le paiement n'est pas disponible pour le moment. Contacte l'équipe Immo+.</p></div>
+    {% endif %}
+
+    {% if gerant %}
+      <section class="carte p-5 pile" aria-labelledby="titre-etat">
+        <h2 class="fs-18 fw-bold mb-0" id="titre-etat">Mon abonnement</h2>
+        {% if abonnement %}
+          <p class="mb-0">
+            Formule : <strong>{{ formule_actuelle }}</strong> · {{ abonnement.get_status_display }} · valable jusqu'au
+            <strong>{{ abonnement.current_period_end|date:"d/m/Y" }}</strong>
+          </p>
+        {% else %}
+          <p class="mb-0">Aucun abonnement pour l'instant.</p>
+        {% endif %}
+        {% if actif %}
+          {% if peut_publier %}
+            <p class="texte-doux mb-0">Tu peux publier de nouvelles chambres.</p>
+          {% else %}
+            <p class="mb-0"><strong>Il te faut un abonnement actif pour publier de nouvelles chambres.</strong> Tes annonces déjà en ligne restent visibles.</p>
+          {% endif %}
+        {% endif %}
+      </section>
+      {% if actif %}
+        <section class="pile" aria-labelledby="titre-formules">
+          <h2 class="fs-18 fw-bold mb-0" id="titre-formules">Les formules</h2>
+          {% for f in formules %}
+            <div class="carte p-5 rangee">
+              <div>
+                <h3 class="fs-16 fw-bold mb-0">{{ f.label }}</h3>
+                <p class="texte-doux mb-0">{{ f.price }} F pour {{ f.period_months }} mois · Mobile Money ou carte</p>
+              </div>
+              <button class="bouton bouton--primaire" type="button" data-payer data-objet="abonnement" data-plan="{{ f.code }}"{% if not paiement_possible %} disabled{% endif %}>
+                Payer {{ f.price }} F
+              </button>
+            </div>
+          {% empty %}
+            <p class="texte-doux">Aucune formule n'est proposée pour l'instant.</p>
+          {% endfor %}
+          <p class="texte-doux mb-0">Tu as payé en espèces ? L'équipe Immo+ active ton abonnement.</p>
+        </section>
+      {% endif %}
+    {% else %}
+      <section class="carte p-5 pile" aria-labelledby="titre-alertes">
+        <h2 class="fs-18 fw-bold mb-0" id="titre-alertes">Mes alertes</h2>
+        {% if actif %}
+          <p class="mb-0">
+            Une alerte coûte <strong>{{ prix_alerte }} F</strong>, payés une seule fois. Tu seras parmi les premiers prévenus,
+            <strong>par e-mail et sur le site</strong>, dès qu'une chambre correspond.
+          </p>
+          <p class="texte-doux mb-0">
+            Alertes payées à créer : <strong>{{ credits_alerte }}</strong>.
+            Tu choisis tes options, puis tu paies au moment de cliquer sur « Créer l'alerte ».
+          </p>
+          {% if not email_confirme %}
+            <p class="mb-0"><strong>Il faut d'abord une adresse e-mail confirmée</strong> (à ajouter dans <a href="/compte/profil">ton profil</a>) : c'est là que tes alertes arrivent.</p>
+          {% endif %}
+          <div><a class="bouton bouton--primaire" href="/compte/alertes?nouvelle=1">Créer une alerte</a></div>
+        {% else %}
+          <p class="mb-0">Les alertes sont gratuites pour l'instant.</p>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    <section class="pile" aria-labelledby="titre-historique">
+      <h2 class="fs-18 fw-bold mb-0" id="titre-historique">Historique des paiements</h2>
+      {% if historique %}
+        <div class="carte p-5 pile">
+          {% for h in historique %}
+            <div class="rangee">
+              <span>
+                {{ h.t.created_at|date:"d/m/Y" }} ·
+                {% if h.t.objet == "alerte" %}Alerte{% else %}{{ h.formule|default:"Abonnement" }}{% endif %}
+              </span>
+              <span><strong>{{ h.t.amount }} F</strong> · {{ h.t.get_status_display }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="texte-doux">Aucun paiement pour l'instant.</p>
+      {% endif %}
+    </section>
+    <p id="paiement-etat" class="texte-doux" role="status"></p>
+    {% csrf_token %}
+  </div>
+  <script src="{% static 'js/paiement.js' %}" defer></script>
+{% endblock %}

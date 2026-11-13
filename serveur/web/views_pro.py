@@ -65,7 +65,13 @@ def commandes_autorisees(annonce) -> list[dict]:
         return [{"action": "publier", "libelle": "Publier", "primaire": True}, SUPPRIMER]
     if statut == StatutAnnonce.PUBLISHED:
         return [
-            {"action": "louee", "libelle": "Marquer louée", "primaire": True},
+            {
+                "action": "louee",
+                "libelle": "Marquer louée",
+                "primaire": True,
+                "confirmation": "Marquer cette chambre louée ? Ses photos et sa vidéo seront supprimées et l'annonce archivée. "
+                "Pour la reproposer, il faudra ajouter de nouvelles photos.",
+            },
             {"action": "masquer", "libelle": "Masquer"},
             SUPPRIMER,
         ]
@@ -74,6 +80,11 @@ def commandes_autorisees(annonce) -> list[dict]:
     if statut == StatutAnnonce.RENTED:
         return [
             {"action": "annuler-louee", "libelle": "Remettre en ligne", "primaire": True},
+            SUPPRIMER,
+        ]
+    if statut == StatutAnnonce.ARCHIVED and annonce.rented_at is not None:
+        return [  # louée puis archivée : ses médias sont supprimés, la reproposer repart d'un brouillon
+            {"action": "annuler-louee", "libelle": "Reproposer (nouveau brouillon)", "primaire": True},
             SUPPRIMER,
         ]
     if statut in (StatutAnnonce.PROCESSING, StatutAnnonce.ARCHIVED):
@@ -298,9 +309,21 @@ def _etape_initiale(request, annonce, action, manques, en_cours, video_prete, ph
     return 6 if en_cours else 1
 
 
+LIEN_ABONNEMENT = "/compte/abonnement?raison=publier"
+
+
+def _abonnement_manquant(profil) -> bool:
+    """Paiement des gérants activé et pas d'abonnement qui permette de publier."""
+    from apps.billing import services as abonnements
+
+    return abonnements.actif() and not abonnements.can_publish(profil.pk)
+
+
 @gerant_obligatoire
 def editeur(request, profil, annonce_id=None):
     annonce = None
+    if annonce_id is None and request.method == "GET" and _abonnement_manquant(profil):
+        return redirect(LIEN_ABONNEMENT)  # nouvelle chambre sans abonnement : page des formules, avec un mot aimable
     if annonce_id is not None:
         annonce = selectors.annonce_du_gerant(profil, annonce_id)
         if annonce is None:
@@ -336,6 +359,8 @@ def editeur(request, profil, annonce_id=None):
             elif action in ACTIONS_MEDIAS and annonce:
                 message = _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
         except ErreurMetier as erreur:
+            if erreur.code == "subscription_required":
+                return redirect(LIEN_ABONNEMENT)
             if action in ACTIONS_MEDIAS:
                 erreur_media = erreur.message
             elif erreur.code == "listing_not_publishable":

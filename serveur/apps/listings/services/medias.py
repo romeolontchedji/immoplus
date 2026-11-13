@@ -362,6 +362,23 @@ def supprimer(gerant: "GerantProfile", annonce_id, media_id) -> None:
     )
 
 
+def supprimer_tous(annonce) -> int:
+    """Chambre prise : photos et vidéo sont supprimées aussitôt, fichiers compris (stockage libéré)."""
+    maintenant = timezone.now()
+    total = 0
+    for media in ListingMedia.objects.filter(listing=annonce).exclude(status=StatutMedia.DELETED):
+        ancien_poster, ancien_lecture = media.poster_path, media.playback_path
+        ListingMedia.objects.filter(pk=media.pk).update(
+            status=StatutMedia.DELETED, deleted_at=maintenant, is_cover=False, updated_at=maintenant
+        )
+        stockage.supprimer_derives(
+            annonce.pk, media.pk, distant=stockage.est_distant(ancien_poster or ancien_lecture)
+        )
+        stockage.supprimer_original(media.pk)
+        total += 1
+    return total
+
+
 TRAITEMENT_BLOQUE_APRES = timedelta(minutes=20)
 
 

@@ -2,6 +2,14 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-17 : chambre louée, avis liés au gérant.**
+- Chambre marquée louée : photos et vidéo supprimées aussitôt (fichiers compris) et annonce archivée (plus d'attente de 7 ou
+  90 jours). La fiche reste ouverte pour dire « louée » et renvoyer vers les chambres libres ; « Reproposer » repart d'un
+  brouillon (il faut de nouvelles photos). Confirmation demandée avant de marquer louée (action irréversible pour les médias).
+- Avis : liés au gérant en plus de la chambre (`Review.gerant`, migration 0013, rattrapage des avis existants). La note du gérant ne
+  dépend plus de la vie de chaque annonce ; un locataire peut encore noter une chambre louée.
+- Les chambres libres passent avant les louées (favoris) ; « dernières chambres consultées » n'affiche que des chambres libres.
+
 **2026-11-16 : paiements KKiaPay (éteints par défaut).**
 - Fenêtre de paiement KKiaPay sur le site ; le serveur vérifie chaque transaction avec la clé privée (statut réussi, montant,
   identifiant jamais réutilisé) : `apps/billing/transactions.py`, table `transactions`, visible dans l'administration.
@@ -9,6 +17,10 @@
   (formules de `PLANS`). Les annonces déjà en ligne restent visibles.
 - Locataires : `PAID_ALERTS_ENABLED` coché → chaque nouvelle alerte se paie une fois (`ALERT_PRICE`, réglable). Un paiement
   = un crédit ; supprimer l'alerte ne le rend pas. L'API mobile répond 402 `payment_required` (paiement sur le site).
+- Parcours : locataire = options choisies, puis paiement au clic sur « Créer l'alerte » (le formulaire part après paiement) ;
+  pas d'alerte sans e-mail confirmé. Gérant sans abonnement (paiement actif) : « Publier une chambre » mène à la page des
+  formules avec un message aimable. Page `/compte/abonnement` (formule, dates, historique) pour les deux rôles, lien « Abonnement »
+  dans le menu et le profil, bandeaux avec bouton partout où l'abonnement est demandé.
 - Variables `.env` : `KKIAPAY_PUBLIC_KEY`, `KKIAPAY_PRIVATE_KEY`, `KKIAPAY_SECRET` (clé secrète API), `KKIAPAY_WEBHOOK_SECRET` (hash secret inventé), `KKIAPAY_SANDBOX` ; la CSP autorise `*.kkiapay.me`.
 - Webhook KKiaPay : `POST /paiement/webhook/kkiapay`, authentifié par l'en-tête `x-kkiapay-secret` (= `KKIAPAY_WEBHOOK_SECRET`,
   aussi saisi comme « hash secret » dans le tableau de bord KKiaPay). Le corps n'est pas cru : le serveur revérifie la

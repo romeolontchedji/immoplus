@@ -71,7 +71,7 @@
                       </span>
                     {% endfor %}
                   </span>
-                  <a class="avis-item__date" href="/annonces/{{ a.listing_slug }}">{{ a.listing_title }}</a>
+                  {% if a.listing_libre %}<a class="avis-item__date" href="/annonces/{{ a.listing_slug }}">{{ a.listing_title }}</a>{% else %}<span class="avis-item__date">{{ a.listing_title }} (chambre louée)</span>{% endif %}
                 </div>
                 {% if a.comment %}<p class="avis-item__texte">{{ a.comment }}</p>{% endif %}
               </li>
