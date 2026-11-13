@@ -28,8 +28,8 @@ if TYPE_CHECKING:
 CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "description_md")
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
-    "deposit_months", "advance_months", "agent_fee_amount", "water_deposit_amount", "electricity_deposit_amount",
-    "available_from", "has_private_bathroom", "is_fenced",
+    "deposit_months", "advance_months", "prepaid_months", "agent_fee_amount", "water_deposit_amount",
+    "electricity_deposit_amount", "available_from", "has_private_bathroom", "is_fenced",
     "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
 # La position n'est pas demandée au gérant (décision V7) : centre du quartier par défaut, GPS du téléphone s'il le
@@ -70,7 +70,7 @@ def _valider(d: dict) -> None:
         raise _champ("rent_negotiable", "Oui ou non attendu.")
     if "rent_amount" in d and not (isinstance(d["rent_amount"], int) and d["rent_amount"] > 0):
         raise _champ("rent_amount", "Le loyer doit être un entier positif en FCFA.")
-    for nom in ("deposit_months", "advance_months"):
+    for nom in ("deposit_months", "advance_months", "prepaid_months"):
         if nom in d and not (isinstance(d[nom], int) and 0 <= d[nom] <= 12):
             raise _champ(nom, "Entre 0 et 12 mois.")
     if "agent_fee_amount" in d and not (

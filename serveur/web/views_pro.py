@@ -303,6 +303,7 @@ def _initial(annonce) -> dict:
         "landmark_text": annonce.landmark_text, "address_private": annonce.address_private,
         "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months, "advance_months": annonce.advance_months,
+        "prepaid_months": annonce.prepaid_months,
         "agent_fee_amount": annonce.agent_fee_amount, "available_from": annonce.available_from,
         "water_deposit_amount": annonce.water_deposit_amount,
         "electricity_deposit_amount": annonce.electricity_deposit_amount,

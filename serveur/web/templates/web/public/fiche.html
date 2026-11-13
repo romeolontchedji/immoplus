@@ -222,6 +222,16 @@
                 </dd>
               </div>
               <div class="conditions__ligne">
+                <dt>Pré-payé</dt>
+                <dd>
+                  {% if f.prepaid_months %}
+                    {{ f.prepaid_months }} mois avant d'entrer
+                  {% else %}
+                    Aucun
+                  {% endif %}
+                </dd>
+              </div>
+              <div class="conditions__ligne">
                 <dt>Frais de démarcheur</dt>
                 <dd>
                   {% if f.agent_fee_amount %}

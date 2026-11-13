@@ -132,6 +132,10 @@ class Listing(models.Model):
         default=0, db_default=0, verbose_name="caution électricité (F)"
     )
     advance_months = models.SmallIntegerField(verbose_name="avance (mois)")
+    # Loyer à payer avant d'entrer dans la chambre : nombre de mois, 0 = aucun (demande du 2026-11-13).
+    prepaid_months = models.SmallIntegerField(
+        default=0, db_default=0, verbose_name="pré-payé (mois)"
+    )
     agent_fee_amount = models.IntegerField(
         default=0, db_default=0, verbose_name="frais de démarcheur (F)"
     )
@@ -199,6 +203,10 @@ class Listing(models.Model):
             models.CheckConstraint(
                 condition=models.Q(advance_months__gte=0, advance_months__lte=12),
                 name="listings_avance_bornee",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(prepaid_months__gte=0, prepaid_months__lte=12),
+                name="listings_prepaye_borne",
             ),
             models.CheckConstraint(
                 condition=models.Q(agent_fee_amount__gte=0), name="listings_frais_positifs"
