@@ -532,17 +532,15 @@ def mes_favoris(request):
     )
 
 
-DISTANCES_ALERTE = ((500, "500 m"), (1000, "1 km"), (2000, "2 km"), (5000, "5 km"))
-
-
 def _donnees_alerte(post) -> dict:
     """Formulaire d'alerte : chaque liste déroulante accepte plusieurs choix (demande du 2026-10-20)."""
     d: dict = {"label": post.get("label", "")}
     for nom in ("district_ids", "room_types", "water_sources", "electricity_meters", "kitchens"):
         d[nom] = [v for v in post.getlist(nom) if v]
-    for nom in ("max_rent", "max_distance_m"):
-        valeur = post.get(nom, "")
-        d[nom] = (int(valeur) if valeur.isdigit() else -1) if valeur else None
+    # Budget : un montant saisi à la main l'emporte sur la liste ; la distance à l'UP n'est plus proposée.
+    valeur = "".join(post.get("max_rent_libre", "").split()) or post.get("max_rent", "")
+    d["max_rent"] = (int(valeur) if valeur.isdigit() else -1) if valeur else None
+    d["max_distance_m"] = None
     indispensables = post.getlist("indispensables")
     d["private_bathroom_required"] = "douche" in indispensables
     d["fenced_required"] = "cloture" in indispensables
@@ -561,7 +559,6 @@ def _criteres_proposes(get) -> dict:
         "district_ids": [v for v in get.get("district", "").split(",") if v],
         "room_types": [v for v in get.get("type", "").split(",") if v],
         "max_rent": get.get("rent_max", ""),
-        "max_distance_m": "",
         "water_sources": [v for v in get.get("water", "").split(",") if v],
         "electricity_meters": [v for v in get.get("meter", "").split(",") if v],
         "kitchens": [v for v in get.get("kitchen", "").split(",") if v],
@@ -579,7 +576,9 @@ def _lien_alerte(alerte, slugs_quartiers: dict) -> str:
     if alerte.room_types:
         params["type"] = ",".join(alerte.room_types)
     if alerte.max_rent:
-        params["rent_max"] = alerte.max_rent
+        params["rent_max"] = (
+            alerte.max_rent + selectors.TOLERANCE_BUDGET_ALERTE
+        )  # même seuil que l'alerte
     if alerte.max_distance_m:
         params["max_distance_m"] = alerte.max_distance_m
     if alerte.private_bathroom_required:
@@ -670,6 +669,10 @@ def mes_alertes(request):
             },
             True,
         )
+    if request.method == "GET":
+        alertes.marquer_vues(
+            request.user.pk
+        )  # il s'occupe de ses alertes : le délai de 14 jours repart
     liste_alertes = selectors.alertes_de(request.user.pk)
     edition = None
     identifiant = request.GET.get("modifier")
@@ -682,7 +685,6 @@ def mes_alertes(request):
                 "district_ids": [str(i) for i in edition.district_ids or []],
                 "room_types": list(edition.room_types or []),
                 "max_rent": edition.max_rent or "",
-                "max_distance_m": edition.max_distance_m or "",
                 "water_sources": list(edition.water_sources or []),
                 "electricity_meters": list(edition.electricity_meters or []),
                 "kitchens": list(edition.kitchens or []),
@@ -731,7 +733,7 @@ def mes_alertes(request):
          "en_pause": [a for a in alertes_vue if not a["objet"].is_active],
          "quartiers": [(str(d["id"]), d["name"]) for d in options["districts"]],
          "budgets": budgets, "types": _types(),
-         "distances": DISTANCES_ALERTE, "eaux": Eau.choices, "compteurs": Compteur.choices,
+         "eaux": Eau.choices, "compteurs": Compteur.choices,
          "cuisines": [c for c in Cuisine.choices if c[0] != Cuisine.NONE],
          "indispensables": (("douche", "Douche et WC internes"), ("cloture", "Cour clôturée")),
          "message": message, "niveau": niveau, "proposition": proposition, "edition": edition, "ouvrir": ouvrir,
@@ -896,6 +898,8 @@ def ouvrir_notification(request, notification_id):
         n = notifications.ouvrir(request.user.pk, notification_id)
     except ErreurMetier:
         return redirect("/compte/notifications")
+    if (n.get("data") or {}).get("alert_id"):
+        alertes.marquer_vues(request.user.pk, n["data"]["alert_id"])
     return redirect(_lien_notification(n) or "/compte/notifications")
 
 

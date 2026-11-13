@@ -516,8 +516,8 @@ class TestCartesEtFiche:
     def test_la_fiche_localise_sans_inventer_de_repere(self):
         a = ListingFactory(landmark_text="")
         page = html(Client().get(f"/annonces/{a.slug}"))
-        assert "pharmacie du carrefour" not in page and "openstreetmap.org/?mlat=" in page
-        assert "Seul le quartier est indiqué" in page
+        assert "pharmacie du carrefour" not in page
+        assert "openstreetmap.org" not in page and "Voir le quartier sur la carte" not in page
 
 
 def test_delai_de_reponse_lisible():

@@ -29,12 +29,19 @@ CATEGORIES = {
     "listing.reminder": "rappels",
     "alert.match": "alertes",
     "alert.digest": "alertes",
+    "alert.expired": "alertes",
     "favorite.unavailable": "alertes",
     "subscription.reminder": "rappels",
 }
 NON_DESACTIVABLES = {"account.sanction", "team.message"}
 # Les alertes partent aussi par courriel (adresse confirmée) : un visiteur du site n'a pas toujours l'application.
-KINDS_COURRIEL = {"alert.match", "alert.digest", "subscription.reminder", "team.message"}
+KINDS_COURRIEL = {
+    "alert.match",
+    "alert.digest",
+    "alert.expired",
+    "subscription.reminder",
+    "team.message",
+}
 
 # Canaux Android créés par l'application (mobile/src/features/notifications/push.ts). Les messages sont prioritaires :
 # bannière immédiate, son et vibration, même téléphone en veille, comme une messagerie.
@@ -43,6 +50,7 @@ CANAUX = {
     "message.unanswered_reminder": "messages",
     "alert.match": "alertes",
     "alert.digest": "alertes",
+    "alert.expired": "alertes",
     "favorite.unavailable": "alertes",
     "listing.reminder": "rappels",
     "listing.reported_rented": "rappels",
@@ -234,6 +242,9 @@ def _texte_courriel(n: Notification, prenom: str) -> str:
             "",
             "Tes annonces déjà en ligne restent visibles ; il te faut un abonnement en cours pour en publier de nouvelles.",
         ]
+        return "\n".join(lignes) + "\n"
+    if n.kind == "alert.expired":
+        lignes += [f"Réactiver mon alerte : {site}/compte/alertes", ""]
         return "\n".join(lignes) + "\n"
     liste = n.data.get("_liste") or []
     if liste:

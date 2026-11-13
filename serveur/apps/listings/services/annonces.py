@@ -405,9 +405,14 @@ def _prevenir_l_equipe(annonce: Listing) -> None:
     from apps.core.tasks import envoyer_courriel
 
     if not parametres.lire("EMAIL_NOUVELLES_ANNONCES"):
+        journal.info("Courriel de nouvelle annonce %s non envoyé : réglage désactivé", annonce.pk)
         return
     destinataires = comptes.courriels_equipe()
     if not destinataires:
+        journal.warning(
+            "Courriel de nouvelle annonce %s non envoyé : aucun administrateur ni modérateur actif avec une adresse",
+            annonce.pk,
+        )
         return
     gerant = annonce.gerant.user
     lignes = [

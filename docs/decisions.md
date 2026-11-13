@@ -58,4 +58,9 @@ Une ligne par décision ; le détail de la phase 0 est dans `docs/adr/`.
   d'outils, aperçu) ; « Demander d'accepter de nouveau » est une case à cocher à chaque modification de fond.
 - **Maintenance** : le site web et l'application mobile se coupent séparément (`SITE_MAINTENANCE_ENABLED`,
   `MAINTENANCE_ENABLED`) ; l'administration n'est jamais coupée.
+- **Alertes** : strictes sur le quartier, le type, la cuisine, la douche et WC internes et la cour clôturée ; souples sur
+  l'eau et l'électricité (elles ne bloquent pas) et sur le budget (jusqu'à 5 000 F au-dessus du plafond). Plus de distance
+  à l'UP dans le formulaire. Budget : liste ou montant saisi. Une alerte sans activité du locataire depuis 14 jours est mise
+  en pause (notification et courriel), réactivable en un clic. Maximum 3 courriels par jour et par alerte, puis un récapitulatif.
+- **Fiche d'une chambre** : plus de lien vers une carte (seul le quartier, la distance et le repère sont affichés).
 - **Accueil** : titre « Trouve ta chambre à Parakou, en deux clics. », accroche « Visite en vidéo, zéro paiement avant la visite. ».

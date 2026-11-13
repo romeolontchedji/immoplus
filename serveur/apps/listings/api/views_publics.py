@@ -249,6 +249,9 @@ class OptionsAlerte(_Public):
 class Alertes(_Client):
     @extend_schema(tags=TAG_LOC, summary="Mes alertes", responses={200: s.AlerteOut(many=True)})
     def get(self, request):
+        alertes.marquer_vues(
+            request.user.pk
+        )  # il s'occupe de ses alertes : le délai de 14 jours repart
         return Response([_alerte_out(a) for a in selectors.alertes_de(request.user.pk)])
 
     @extend_schema(

@@ -67,14 +67,33 @@ class TestAlertes:
         assert alerte.water_sources == ["borehole", "well"] and alerte.fenced_required
 
     def test_correspondance_par_equipements(self):
+        """Stricts : cour clôturée, douche et WC, cuisine. Souples : l'eau et l'électricité ne bloquent pas."""
         u = ClientFactory()
-        alerte = alertes.creer(u, {"water_sources": ["borehole"], "fenced_required": True})
+        alerte = alertes.creer(
+            u,
+            {
+                "water_sources": ["borehole"],
+                "electricity_meters": ["individual"],
+                "fenced_required": True,
+            },
+        )
         bonne = ListingFactory(water_sources=["running", "borehole"], is_fenced=True)
-        sans_forage = ListingFactory(water_sources=["running"], is_fenced=True)
+        autre_eau = ListingFactory(
+            water_sources=["running"], electricity_meter="shared", is_fenced=True
+        )
         ouverte = ListingFactory(water_sources=["borehole"], is_fenced=False)
         assert (alerte.pk, u.pk) in selectors.alertes_correspondantes(bonne.pk)
-        for autre in (sans_forage, ouverte):
-            assert not selectors.alertes_correspondantes(autre.pk)
+        assert (alerte.pk, u.pk) in selectors.alertes_correspondantes(autre_eau.pk)
+        assert not selectors.alertes_correspondantes(ouverte.pk)
+        assert selectors.nombre_pour_alerte(alerte) == 2
+
+    def test_le_budget_de_l_alerte_accepte_5000_f_de_plus(self):
+        u = ClientFactory()
+        alerte = alertes.creer(u, {"max_rent": 20000})
+        limite = ListingFactory(rent_amount=25000)
+        trop_chere = ListingFactory(rent_amount=25500)
+        assert (alerte.pk, u.pk) in selectors.alertes_correspondantes(limite.pk)
+        assert not selectors.alertes_correspondantes(trop_chere.pk)
         assert selectors.nombre_pour_alerte(alerte) == 1
 
     def test_seules_les_alertes_actives_en_tete_et_formulaire_replie(self):

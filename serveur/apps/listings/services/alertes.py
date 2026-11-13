@@ -1,9 +1,11 @@
 """Alertes des locataires (CDC §7.5) : gestion et correspondance à la publication."""
 
+import datetime
 import uuid
 
 from django.db import transaction
 from django.db.models import Count
+from django.utils import timezone
 
 from apps.core import parametres
 from apps.core.errors import ErreurMetier
@@ -208,8 +210,48 @@ def modifier(utilisateur, alerte_id, donnees: dict) -> Alert:
         setattr(alerte, nom, valeur)
     if set(propre) & set(CRITERES):  # pause, reprise ou nom seul : pas de contrôle des critères
         _exiger_un_critere({c: getattr(alerte, c) for c in CRITERES})
+    if propre.get("is_active") is not False:  # modifier ou réactiver, c'est s'en occuper
+        alerte.last_engaged_at = timezone.now()
     alerte.save()
     return alerte
+
+
+INACTIVITE_JOURS = 14
+
+
+def marquer_vues(utilisateur_id, alerte_id=None) -> None:
+    """Le locataire s'occupe de ses alertes (il ouvre la page, ou une notification d'alerte) : le délai de
+    14 jours repart. Sans `alerte_id`, toutes ses alertes actives."""
+    alertes = Alert.objects.filter(user_id=utilisateur_id, is_active=True)
+    if alerte_id is not None:
+        if not _uuid_ok(alerte_id):
+            return
+        alertes = alertes.filter(pk=alerte_id)
+    alertes.update(last_engaged_at=timezone.now())
+
+
+def expirer_inactives() -> int:
+    """Met en pause les alertes sans activité depuis 14 jours et prévient le locataire (notification et courriel).
+    Rien n'est supprimé : « Réactiver » les remet en route. Tâche quotidienne."""
+    limite = timezone.now() - datetime.timedelta(days=INACTIVITE_JOURS)
+    nombre = 0
+    for alerte in Alert.objects.filter(is_active=True, last_engaged_at__lt=limite).select_related(
+        "user"
+    ):
+        trouve = Alert.objects.filter(pk=alerte.pk, is_active=True).update(is_active=False)
+        if not trouve:
+            continue
+        nombre += 1
+        nom = alerte.label or "Alerte logement"
+        notifications.creer(
+            alerte.user_id,
+            "alert.expired",
+            f"Ton alerte « {nom} » est en pause",
+            f"Tu ne l'as pas ouverte depuis {INACTIVITE_JOURS} jours. Tu cherches encore ? Réactive-la en un clic.",
+            data={"alert_id": str(alerte.pk)},
+            dedupe_key=f"alert-expired:{alerte.pk}:{alerte.last_engaged_at.isoformat()}",
+        )
+    return nombre
 
 
 def supprimer(utilisateur, alerte_id) -> None:
@@ -267,8 +309,6 @@ def signaler_existantes(alerte: Alert) -> int:
 
 def _recapitulatif(alerte_id, utilisateur_id, nom: str) -> int:
     """4e chambre du jour : un récapitulatif (« 4 nouvelles chambres… ») ; les suivantes l'incrémentent en silence."""
-    from django.utils import timezone
-
     cle = f"alert-digest:{alerte_id}:{timezone.localdate().isoformat()}"
     precedent = notif_selectors.donnees_par_cle(cle)
     compte = (

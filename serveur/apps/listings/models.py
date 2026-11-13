@@ -369,6 +369,11 @@ class Alert(models.Model):
         default=False, db_default=False, verbose_name="cour clôturée"
     )
     is_active = models.BooleanField(default=True, db_default=True)
+    # Dernière fois que le locataire s'est occupé de son alerte (création, modification, page des alertes, notification
+    # ouverte) : sans nouvelle depuis 14 jours, l'alerte est mise en pause.
+    last_engaged_at = models.DateTimeField(
+        default=timezone.now, db_default=Now(), verbose_name="dernière activité"
+    )
     created_at = models.DateTimeField(default=timezone.now, db_default=Now())
     updated_at = models.DateTimeField(auto_now=True, db_default=Now())
 
