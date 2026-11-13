@@ -3,6 +3,7 @@
 from django.contrib import admin
 from django.db.models import Count, Q
 
+from apps.core import parametres
 from apps.listings.models import District
 
 
@@ -40,16 +41,29 @@ class DistrictAdmin(admin.ModelAdmin):
         aides = {
             "name": "Nom affiché partout (recherche, alertes, publication), ex. « Albarika ».",
             "slug": "Forme pour les adresses web, remplie toute seule à partir du nom (ex. albarika).",
-            "latitude": "Centre du quartier. Sur openstreetmap.org : clic droit au centre du quartier › "
+            "latitude": "Facultatif. Centre du quartier : sur openstreetmap.org, clic droit au centre du quartier › "
             "« Afficher l'adresse » ; le premier nombre est la latitude (ex. 9.3372).",
-            "longitude": "Le second nombre (ex. 2.6303). Sert à la distance à l'université et aux quartiers voisins.",
+            "longitude": "Facultatif. Le second nombre (ex. 2.6303). Sert aux filtres « près de l'UP » et aux quartiers "
+            "voisins. Laissé vide, le quartier est placé sur le campus : renseigne-le pour des résultats justes.",
             "sort_order": "Position dans les listes : les plus petits nombres d'abord.",
             "is_active": "Décoché : le quartier disparaît des listes ; les annonces existantes restent.",
         }
         for nom, aide in aides.items():
             if nom in form.base_fields:
                 form.base_fields[nom].help_text = aide
+        for nom in ("latitude", "longitude"):
+            if nom in form.base_fields:
+                form.base_fields[nom].required = False
         return form
+
+    def save_model(self, request, obj, form, change):
+        # Sans coordonnées saisies, le quartier est placé sur le campus (point de référence des réglages).
+        ref = parametres.lire("CAMPUS_REFERENCE")
+        if obj.latitude is None:
+            obj.latitude = ref["latitude"]
+        if obj.longitude is None:
+            obj.longitude = ref["longitude"]
+        super().save_model(request, obj, form, change)
 
     def has_delete_permission(self, request, obj=None):
         return False

@@ -55,7 +55,7 @@ def courriel_html(sujet: str, texte: str) -> str:
         f'<tr><td style="padding:24px;color:{ENCRE};font-size:15px">'
         f'<h1 style="margin:0 0 14px;font-size:18px;color:{ENCRE}">{escape(sujet)}</h1>{corps}</td></tr>'
         f'<tr><td style="padding:14px 24px;background:#F6F8FD;color:{GRIS};font-size:12px">'
-        "Immo+ · trouver une chambre au Bénin, sans intermédiaire inutile.</td></tr>"
+        "Immo+ · trouver une chambre au Bénin, en deux clics.</td></tr>"
         "</table></td></tr></table></body></html>"
     )
 
