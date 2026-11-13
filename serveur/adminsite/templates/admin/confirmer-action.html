@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>{{ title }}</h1>
+    <div class="module">
+      <h2>{{ objets|length }} élément{{ objets|length|pluralize }}</h2>
+      <div class="lg-section">
+        <p>{{ explication }}</p>
+        <ul>{% for o in objets %}<li>{{ o }}</li>{% endfor %}</ul>
+        <form method="post">
+          {% csrf_token %}
+          {% for id in ids %}<input type="hidden" name="_selected_action" value="{{ id }}">{% endfor %}
+          <input type="hidden" name="action" value="{{ action }}">
+          <input type="hidden" name="confirmer" value="oui">
+          <div class="lg-section__actions">
+            <input type="submit" value="{{ bouton|default:'Confirmer' }}" class="default">
+            <a href="{{ retour }}">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -2,6 +2,14 @@
 
 > **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
 
+**2026-11-23 : l'administrateur a la main sur tout.**
+- Audit des pouvoirs de l'administrateur (tableau « Les deux rôles » de `docs/administration.md`) et ajout de ce qui manquait :
+  ajouter et supprimer des types de logement, corriger / rétablir / marquer louée / supprimer une annonce, supprimer un avis,
+  déconnecter un compte partout, passer le personnel modérateur ↔ administrateur, prolonger ou terminer un abonnement, marquer un
+  paiement remboursé. Page de confirmation commune (`admin/confirmer-action.html`). Restent impossibles volontairement : modifier
+  le journal, supprimer physiquement un compte, changer le rôle d'un gérant ou d'un locataire.
+- Corrigé : « Types de logement » n'avait pas de bouton « Ajouter » (réservé aux propositions des gérants).
+
 **2026-11-22 : masquer ou retirer une annonce depuis la liste.**
 - Administrateurs et modérateurs : actions « Masquer », « Retirer » (définitif) et « Remettre en ligne » (masquage de modération)
   sur la liste des annonces, avec motif obligatoire, notification au gérant et journal (`adminsite/admin_moderation.py`).

@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 from apps.accounts.models import GerantProfile, User
 from apps.accounts.services import administration
@@ -26,6 +27,64 @@ class LectureSeule(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+def _exiger_admin(request) -> None:
+    if not (request.user.is_active and request.user.role == "admin"):
+        raise PermissionDenied
+
+
+def confirmer_action(modeladmin, request, queryset, *, action, titre, explication, bouton="Confirmer"):
+    """Page de confirmation d'une action sensible ; retourne la page tant que `confirmer` n'est pas posté, sinon None."""
+    from django.template.response import TemplateResponse
+
+    if request.POST.get("confirmer") == "oui":
+        return None
+    opts = modeladmin.model._meta
+    return TemplateResponse(
+        request,
+        "admin/confirmer-action.html",
+        {
+            **modeladmin.admin_site.each_context(request),
+            "title": titre,
+            "opts": opts,
+            "objets": list(queryset),
+            "explication": explication,
+            "action": action,
+            "bouton": bouton,
+            "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
+            "retour": reverse(f"admin:{opts.app_label}_{opts.model_name}_changelist"),
+        },
+    )
+
+
+def _exiger_admin(request) -> None:
+    if not (request.user.is_active and request.user.role == "admin"):
+        raise PermissionDenied
+
+
+def confirmer_action(modeladmin, request, queryset, *, action, titre, explication, bouton="Confirmer"):
+    """Page de confirmation d'une action sensible ; retourne la page tant que `confirmer` n'est pas posté, sinon None."""
+    from django.template.response import TemplateResponse
+
+    if request.POST.get("confirmer") == "oui":
+        return None
+    opts = modeladmin.model._meta
+    return TemplateResponse(
+        request,
+        "admin/confirmer-action.html",
+        {
+            **modeladmin.admin_site.each_context(request),
+            "title": titre,
+            "opts": opts,
+            "objets": list(queryset),
+            "explication": explication,
+            "action": action,
+            "bouton": bouton,
+            "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
+            "retour": reverse(f"admin:{opts.app_label}_{opts.model_name}_changelist"),
+        },
+    )
 
 
 @admin.register(AuditLog)
@@ -111,7 +170,10 @@ class UserAdmin(admin.ModelAdmin):
             )
         return format_html('<a class="button" href="{}">{}</a>', url, texte)
 
-    actions = ["suspendre", "reactiver", "bannir", "supprimer_comptes"]
+    actions = [
+        "suspendre", "reactiver", "bannir", "deconnecter_comptes", "passer_moderateur",
+        "passer_administrateur", "supprimer_comptes",
+    ]  # fmt: skip
 
     def has_add_permission(self, request):
         return False  # les comptes se créent par l'API (locataires), « Nouveau gérant » ou « Nouveau personnel »
@@ -300,6 +362,62 @@ class UserAdmin(admin.ModelAdmin):
     @admin.action(description="Bannir")
     def bannir(self, request, queryset):
         self._appliquer(request, queryset, "banned")
+
+    @admin.action(description="Déconnecter partout (site et application)")
+    def deconnecter_comptes(self, request, queryset):
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action="deconnecter_comptes", titre="Déconnecter des comptes",
+            explication="Ces personnes sont déconnectées de tous leurs appareils et devront se reconnecter.",
+            bouton="Oui, déconnecter",
+        )  # fmt: skip
+        if reponse is not None:
+            return reponse
+        faits = 0
+        for cible in queryset:
+            try:
+                administration.deconnecter(acteur=request.user, cible=cible)
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{cible} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} compte(s) déconnecté(s).")
+        return None
+
+    def _changer_role(self, request, queryset, role, action, titre, explication):
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action=action, titre=titre, explication=explication
+        )
+        if reponse is not None:
+            return reponse
+        faits = 0
+        for cible in queryset:
+            if cible.role not in ("moderator", "admin"):
+                self.message_user(
+                    request, f"{cible} : seul le personnel change de rôle ici.", messages.WARNING
+                )
+                continue
+            try:
+                administration.changer_role(acteur=request.user, cible=cible, role=role)
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{cible} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} compte(s) du personnel mis à jour.")
+        return None
+
+    @admin.action(description="Personnel : passer en modérateur")
+    def passer_moderateur(self, request, queryset):
+        return self._changer_role(
+            request, queryset, "moderator", "passer_moderateur", "Passer en modérateur",
+            "Ces comptes du personnel perdent les droits d'administrateur (ils sont déconnectés).",
+        )  # fmt: skip
+
+    @admin.action(description="Personnel : passer en administrateur")
+    def passer_administrateur(self, request, queryset):
+        return self._changer_role(
+            request, queryset, "admin", "passer_administrateur", "Passer en administrateur",
+            "Ces comptes du personnel reçoivent TOUS les droits d'administrateur (ils sont déconnectés).",
+        )  # fmt: skip
 
     @admin.action(description="Supprimer (anonymise le compte)")
     def supprimer_comptes(self, request, queryset):
@@ -531,6 +649,53 @@ class SubscriptionAdmin(LectureSeule):
 
     list_display = ("gerant", "plan_code", "status", "current_period_end", "cancel_at_period_end")
     list_filter = ("status", "plan_code")
+    actions = ["prolonger", "mettre_fin"]
+
+    @admin.action(description="Prolonger d'une période (paiement en espèces)")
+    def prolonger(self, request, queryset):
+        from apps.billing import services as abonnements
+
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action="prolonger", titre="Prolonger des abonnements",
+            explication="Chaque abonnement payant sélectionné est prolongé d'une période, noté comme un paiement en espèces.",
+            bouton="Oui, prolonger",
+        )  # fmt: skip
+        if reponse is not None:
+            return reponse
+        faits = 0
+        for a in queryset:
+            try:
+                abonnements.activer_en_especes(
+                    acteur=request.user, gerant_id=a.gerant_id, plan_code=a.plan_code, periodes=1
+                )
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{a} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} abonnement(s) prolongé(s).")
+        return None
+
+    @admin.action(description="Mettre fin à l'abonnement maintenant")
+    def mettre_fin(self, request, queryset):
+        from apps.billing import services as abonnements
+
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action="mettre_fin", titre="Mettre fin à des abonnements",
+            explication="L'abonnement payant s'arrête aussitôt : le gérant ne peut plus publier (ses annonces en ligne restent visibles).",
+            bouton="Oui, mettre fin",
+        )  # fmt: skip
+        if reponse is not None:
+            return reponse
+        faits = 0
+        for a in queryset:
+            try:
+                abonnements.terminer_abonnement(acteur=request.user, abonnement=a)
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{a} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} abonnement(s) terminé(s).")
+        return None
 
 
 @admin.register(Payment)
@@ -547,6 +712,31 @@ class TransactionAdmin(LectureSeule):
     list_display = ("created_at", "user", "objet", "plan_code", "amount", "status", "paid_at")
     list_filter = ("status", "objet")
     search_fields = ("provider_ref",)
+    actions = ["marquer_rembourse"]
+
+    @admin.action(description="Marquer comme remboursé (le remboursement se fait chez KKiaPay)")
+    def marquer_rembourse(self, request, queryset):
+        from apps.billing import transactions
+
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action="marquer_rembourse",
+            titre="Marquer des paiements comme remboursés",
+            explication="Écriture seulement : rembourse d'abord le payeur depuis le tableau de bord KKiaPay. Une alerte "
+            "payée non créée n'est plus un crédit ; un abonnement n'est pas arrêté (« Mettre fin à l'abonnement »).",
+            bouton="Oui, c'est remboursé",
+        )  # fmt: skip
+        if reponse is not None:
+            return reponse
+        faits = 0
+        for ligne in queryset:
+            try:
+                transactions.marquer_rembourse(acteur=request.user, ligne=ligne)
+                faits += 1
+            except ErreurMetier as erreur:
+                self.message_user(request, f"{ligne} : {erreur.message}", messages.ERROR)
+        self.message_user(request, f"{faits} paiement(s) marqué(s) remboursé(s).")
+        return None
 
 
 from . import admin_moderation, admin_referentiels  # noqa: E402,F401  (modération, quartiers)

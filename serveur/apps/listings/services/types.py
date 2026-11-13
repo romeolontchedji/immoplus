@@ -141,6 +141,60 @@ def proposer(gerant, libelle_saisi: str) -> RoomType:
     return nouveau
 
 
+# --------------------------------------------------------------------------- administration
+def verifier_libelle_libre(libelle_saisi: str, *, ignorer=None) -> str:
+    """Libellé propre (3 à 40 caractères, sans coordonnées) et qui ne ressemble à aucun type existant."""
+    texte = " ".join(str(libelle_saisi or "").split())
+    if not 3 <= len(texte) <= 40:
+        raise _champ("Le nom du type fait entre 3 et 40 caractères.")
+    contenu.refuser_si_coordonnees(room_type=texte)
+    cle = _cle_comparaison(texte)
+    for existant in RoomType.objects.exclude(pk=getattr(ignorer, "pk", None)):
+        if _cle_comparaison(existant.label) == cle or existant.slug.replace("_", "") == cle:
+            raise _champ(f"Le type « {existant.label} » existe déjà.")
+    return texte[0].upper() + texte[1:]
+
+
+@transaction.atomic
+def creer_officiel(libelle_saisi: str, *, acteur, ordre: int = 100) -> RoomType:
+    """Un administrateur ajoute directement un type **validé** (visible aussitôt dans les filtres et les alertes)."""
+    texte = verifier_libelle_libre(libelle_saisi)
+    slug = slugify(texte).replace("-", "_")[:40].strip("_") or "type"
+    if RoomType.objects.filter(slug=slug).exists():
+        slug = f"{slug[:34]}_{timezone.now():%H%M%S}"
+    nouveau = RoomType.objects.create(
+        slug=slug, label=texte, sort_order=ordre, status=StatutTypeChambre.APPROVED,
+        reviewed_by=acteur, reviewed_at=timezone.now(),
+    )  # fmt: skip
+    vider_cache()
+    audit.enregistrer(
+        "room_type.cree", acteur=acteur, metadata={"slug": nouveau.slug, "label": texte}
+    )
+    return nouveau
+
+
+@transaction.atomic
+def supprimer(type_chambre: RoomType, *, acteur) -> None:
+    """Supprime un type que plus aucune annonce ni alerte n'utilise (sinon : le rattacher à un autre)."""
+    if Listing.objects.filter(room_type=type_chambre.slug).exists():
+        raise ErreurMetier(
+            "conflict", "Des annonces utilisent ce type : rattache-le d'abord à un autre.", statut=409
+        )
+    with connection.cursor() as c:
+        c.execute("SELECT 1 FROM alerts WHERE %s = ANY(room_types) LIMIT 1", [type_chambre.slug])
+        if c.fetchone():
+            raise ErreurMetier(
+                "conflict", "Des alertes utilisent ce type : rattache-le d'abord à un autre.", statut=409
+            )
+    audit.enregistrer(
+        "room_type.supprime",
+        acteur=acteur,
+        metadata={"slug": type_chambre.slug, "label": type_chambre.label},
+    )
+    type_chambre.delete()
+    vider_cache()
+
+
 # --------------------------------------------------------------------------- modération
 @transaction.atomic
 def valider(type_chambre: RoomType, *, acteur) -> RoomType:

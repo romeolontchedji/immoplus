@@ -32,20 +32,35 @@ Le mot de passe est demandé au clavier. `--role admin` pour un administrateur.
 
 ## 2. Les deux rôles
 
+L'**administrateur a la main sur tout ce qui peut s'écrire** ; le modérateur traite la modération au quotidien.
+
 | Ce qu'on peut faire | Administrateur | Modérateur |
 |---|---|---|
 | Signalements : lire, prendre, classer, sanctionner | ✔ | ✔ |
-| Annonces : relire, approuver, refuser, masquer | ✔ | ✔ |
+| Lire une conversation (motif obligatoire, journalisé) | ✔ | ✔ |
+| Annonces : masquer, retirer (avec motif), remettre en ligne ce qui a été masqué, approuver, refuser | ✔ | ✔ |
+| Annonces : rétablir une annonce **retirée**, marquer louée, supprimer, **corriger** titre, loyer, repère, date, quartier | ✔ | |
 | Avis : masquer, réafficher | ✔ | ✔ |
-| Types de logement proposés : valider, rattacher | ✔ | ✔ |
+| Avis : **supprimer** | ✔ | |
+| Types de logement : valider, rattacher, renommer | ✔ | ✔ |
+| Types de logement : **ajouter** (validé d'emblée), **supprimer** un type que plus rien n'utilise | ✔ | |
 | Gérants : consulter | ✔ | ✔ |
-| Comptes : statut, suspension, bannissement, liens d'accès | ✔ | |
-| Créer un gérant | ✔ | |
-| Paramètres, quartiers, abonnements, paiements | ✔ | |
-| Journal d'activité, erreurs, connexions échouées, sécurité | ✔ | |
+| Gérants : vérification, pièces et notes d'entretien, créer un gérant, activer un abonnement en espèces | ✔ | |
+| Comptes : statut, suspension, bannissement, liens d'accès, anonymiser, **déconnecter partout** | ✔ | |
+| Personnel : créer, passer **modérateur ↔ administrateur** | ✔ | |
+| Abonnements : **prolonger**, **mettre fin** ; paiements : **marquer remboursé** | ✔ | |
+| Paramètres (cases, prix, formules), quartiers | ✔ | |
+| Statistiques, journal d'activité, erreurs, connexions échouées, sécurité | ✔ | |
+
+**Ce que personne ne peut faire, volontairement** : modifier ou effacer le **journal d'activité** (il est protégé dans la
+base elle-même) ; **supprimer physiquement** un compte (il est anonymisé, car le journal et les messages gardent leurs liens) ;
+changer le rôle d'un gérant ou d'un locataire (le rôle fait partie de l'identité du compte) ; supprimer ou rétrograder son
+propre compte, ou anonymiser un autre administrateur (retire-lui d'abord son rôle) ; effacer physiquement une annonce (elle
+se retire ou se supprime, c'est-à-dire s'archive) ; ajouter un paramètre qui n'existe pas (leurs noms sont fixes).
 
 Un modérateur ne peut pas suspendre plus de `MODERATOR_MAX_SUSPENSION_DAYS` jours. Toute action est inscrite dans le
-**journal d'activité**, qui ne se modifie ni ne s'efface.
+**journal d'activité**, qui ne se modifie ni ne s'efface. Les actions sensibles demandent une **page de confirmation**
+(et un motif quand le gérant en est informé).
 
 ## 3. Le tableau de bord
 
@@ -85,7 +100,8 @@ journalise. Actions : message masqué, message supprimé, annonce masquée, anno
 
 - Recherche par nom d'utilisateur, prénom, nom ou e-mail. Immo+ ne conserve aucun numéro de téléphone (ADR 0009).
 - Statuts : *Actif*, *Suspendu* (jusqu'à une date), *Banni*, *Supprimé* (anonymisé). Actions de la liste :
-  suspendre, réactiver, bannir.
+  suspendre, réactiver, bannir, **déconnecter partout** (appareils révoqués, sessions invalidées), **passer en modérateur** ou
+  **en administrateur** (comptes du personnel seulement, avec confirmation), anonymiser.
 - **Nouveau gérant** (bouton en haut de la liste) : prénom, nom, nom affiché, zone. Aucun mot de passe : la page
   suivante affiche un **lien d'activation** (72 h, une seule fois) à copier, ou à envoyer avec le bouton **Envoyer par
   WhatsApp** (WhatsApp s'ouvre avec le message prêt, tu choisis le contact). Le gérant y choisit son nom d'utilisateur
@@ -97,7 +113,10 @@ journalise. Actions : message masqué, message supprimé, annonce masquée, anno
 
 ### 4.3 Annonces
 
-**Annonces.** Filtres : statut, raison du masquage (sans confirmation, modération, gérant, gérant suspendu),
+**Annonces.** Un **administrateur** peut aussi **corriger** le titre, le loyer, le repère, la date de disponibilité et le
+quartier d'une annonce (mêmes règles que pour un gérant : pas de coordonnées), **rétablir** une annonce retirée (elle
+repasse masquée), la **marquer louée** (photos et vidéo supprimées, annonce archivée) ou la **supprimer** (archivée et retirée
+de l'espace du gérant). Filtres : statut, raison du masquage (sans confirmation, modération, gérant, gérant suspendu),
 quartier. Un gérant **vérifié publie directement**, y compris sa première annonce : elle est en ligne aussitôt et
 l'équipe (administrateurs et modérateurs) reçoit un **courriel à la première mise en ligne** de chaque annonce
 (`EMAIL_NOUVELLES_ANNONCES`), avec les liens pour la voir et la modérer. La modération agit après coup : **Masquer**
@@ -119,9 +138,12 @@ Une chambre **marquée louée** est archivée aussitôt, photos et vidéo suppri
 **Avis.** Publiés tout de suite. Actions **Masquer** (l'avis disparaît du public, l'auteur le garde) et
 **Réafficher**.
 
-**Types de logement.** Les gérants peuvent proposer un type absent de la liste. Action **Valider** (le type rejoint
-la liste officielle) ou **rattacher** la proposition à un type existant depuis sa fiche : les annonces et alertes qui
-la portent sont réécrites.
+**Types de logement.** Un **administrateur ajoute** un type depuis **Types de logement › Ajouter** (libellé de 3 à 40
+caractères et ordre) : il est **validé d'emblée** et visible aussitôt dans les filtres, les alertes et l'éditeur. Un nom déjà
+pris (même sans accents ni majuscules) ou contenant des coordonnées est refusé. Les gérants peuvent aussi proposer un type
+absent de la liste : action **Valider** (il rejoint la liste officielle) ou **rattacher** la proposition à un type existant depuis
+sa fiche (les annonces et alertes qui la portent sont réécrites). Un administrateur **supprime** un type que plus aucune
+annonce ni alerte n'utilise, depuis la page du type ; sinon il le rattache d'abord à un autre.
 
 **Quartiers.** Nom, position, ordre d'affichage, actif ou non. Un quartier inactif disparaît des listes mais garde ses
 annonces.
@@ -144,6 +166,10 @@ débloque un membre du personnel.
   nouvelle valeur). Lecture seule.
 
 ### 4.6 Paiements (désactivés par défaut)
+
+Un administrateur peut, depuis **Abonnements**, **prolonger** un abonnement d'une période (noté comme un paiement en espèces) ou
+**y mettre fin** aussitôt ; depuis **Transactions KKiaPay**, **marquer un paiement comme remboursé** (écriture seulement : le
+remboursement se fait d'abord chez KKiaPay). Toutes ces actions demandent une confirmation et sont journalisées.
 
 **Abonnements** et **Paiements** (ancien circuit Mobile Money) en lecture seule, et **Transactions KKiaPay** : chaque
 paiement fait par la fenêtre KKiaPay du site (abonnement d'un gérant, alerte d'un locataire) ou noté à la main pour un
