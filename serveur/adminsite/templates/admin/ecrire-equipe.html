@@ -1,7 +1,6 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
   <div id="content-main">
-    <h1>Écrire à {{ personne.full_name|default:personne.username }}</h1>
     <p class="lg-bandeau">
       {% if personne.role == "gerant" %}Gérant{% else %}Locataire{% endif %}
       {% if personne.username %}· {{ personne.username }}{% endif %}.

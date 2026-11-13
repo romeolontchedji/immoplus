@@ -1,6 +1,12 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
   {% if messages_conversation is None %}
+    {% if conversation %}
+      <p class="lg-bandeau">
+        Annonce « {{ conversation.listing.title }} » · Locataire : {{ conversation.client.full_name|default:"sans nom" }}
+        · Gérant : {{ conversation.gerant.full_name|default:"sans nom" }}
+      </p>
+    {% endif %}
     <form method="post">
       {% csrf_token %}
       <p>La lecture d'une conversation est journalisée (qui, quand, motif). Saisis le motif avant l'ouverture.</p>
@@ -25,7 +31,7 @@
           <tr>
             <td>{{ m.seq }}</td>
             <td>{{ m.created_at|date:"d/m/Y H:i" }}</td>
-            <td>{{ m.sender_id|default:"système" }}</td>
+            <td>{{ m.expediteur|default:m.sender_id|default:"système" }}</td>
             <td>{{ m.body }}</td>
             <td>{{ m.moderation_status }}</td>
             <td>{{ m.flag_reason|default:"" }}</td>
