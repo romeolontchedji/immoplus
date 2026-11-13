@@ -72,7 +72,9 @@ class TestTypesEtEquipements:
     def test_un_equipement_mal_ecrit_est_reconnu(self):
         a = recherche_texte.analyser("foraje et puit", QUARTIERS, TYPES)
         assert a.filtres["water"] == ["borehole", "well"]
-        assert all(c["corrige"] for c in a.comprises)
+        assert (
+            a.comprises[0]["corrige"] is True
+        )  # « foraje » est une faute ; « puit » est un début de « puits »
 
     def test_le_compteur_d_eau_n_est_pas_celui_de_l_electricite(self):
         a = recherche_texte.analyser("compteur eau personnel", QUARTIERS, TYPES)
@@ -111,7 +113,9 @@ class TestAnalyse:
             "je cherche une chambre pas chère à zogo avec forage", QUARTIERS
         )
         assert a.districts == ["zongo"]
-        assert a.mots == ["forage"]
+        assert a.mots == [] and a.filtres == {
+            "water": ["borehole"]
+        }  # « forage » est un équipement, pas un mot libre
         assert {"je", "cherche", "une", "chambre", "pas", "chère", "à", "avec"} <= set(a.ignores)
 
     def test_un_budget_en_chiffres_est_ignore_dans_une_phrase(self):
@@ -119,16 +123,16 @@ class TestAnalyse:
         assert a.districts == ["banikanni"] and a.mots == [] and "30000" in a.ignores
 
     def test_un_seul_mot_est_garde_tel_quel(self):
-        for mot in ("a", "chambre", "forage"):
+        for mot in ("a", "chambre", "pharmacie"):
             assert recherche_texte.analyser(mot, QUARTIERS).mots == [mot]
 
     def test_un_mot_qui_ne_ressemble_a_aucun_quartier_n_en_devient_pas_un(self):
-        a = recherche_texte.analyser("studio cuisine douche", QUARTIERS)
-        assert a.districts == [] and a.mots == ["studio", "cuisine", "douche"]
+        a = recherche_texte.analyser("studio cuisine pharmacie", QUARTIERS)
+        assert a.districts == [] and a.mots == ["studio", "cuisine", "pharmacie"]
 
     def test_un_quartier_deja_choisi_dans_les_filtres_prime(self):
-        a = recherche_texte.analyser("zogo forage", QUARTIERS, chercher_quartiers=False)
-        assert a.districts == [] and a.mots == ["zogo", "forage"]
+        a = recherche_texte.analyser("zogo pharmacie", QUARTIERS, deja=frozenset({"districts"}))
+        assert a.districts == [] and a.mots == ["zogo", "pharmacie"]
 
     def test_la_saisie_est_bornee(self):
         longue = " ".join(f"mot{i}" for i in range(50))
@@ -171,23 +175,16 @@ class TestRechercheDansLeFil:
         assert r["interpretation"]["mode"] == "et"
 
     def test_ou_quand_aucune_annonce_ne_contient_tous_les_mots(self):
-        studio = self._indexee(
-            title="Studio moderne", landmark_text="Derrière la pharmacie", water_sources=["running"]
-        )
-        forage = self._indexee(
-            title="Chambre calme",
-            landmark_text="Près du forage communautaire",
-            water_sources=["running"],
-        )
-        r = fil.rechercher({"q": "studio forage"})
-        ids = {i["id"] for i in r["items"]}
-        assert ids == {studio.pk, forage.pk}
+        pharmacie = self._indexee(title="Chambre calme", landmark_text="Derrière la pharmacie")
+        marche = self._indexee(title="Chambre propre", landmark_text="Près du marché central")
+        r = fil.rechercher({"q": "pharmacie marché"})
+        assert {i["id"] for i in r["items"]} == {pharmacie.pk, marche.pk}
         assert r["interpretation"]["mode"] == "ou"
 
     def test_et_reste_prefere_quand_une_annonce_contient_tous_les_mots(self):
-        les_deux = self._indexee(title="Studio avec forage", water_sources=["borehole"])
-        self._indexee(title="Studio simple", water_sources=["running"])
-        r = fil.rechercher({"q": "studio forage"})
+        les_deux = self._indexee(title="Chambre calme", landmark_text="Pharmacie près du marché")
+        self._indexee(title="Chambre propre", landmark_text="Derrière la pharmacie")
+        r = fil.rechercher({"q": "pharmacie marché"})
         assert [i["id"] for i in r["items"]] == [les_deux.pk]
         assert r["interpretation"]["mode"] == "et"
 
@@ -203,9 +200,9 @@ class TestRechercheDansLeFil:
         )
 
     def test_la_page_chambres_dit_pourquoi_elle_montre_des_resultats_partiels(self):
-        self._indexee(title="Studio moderne", water_sources=["running"])
-        self._indexee(title="Chambre calme avec forage", water_sources=["borehole"])
-        page = Client().get("/annonces", {"q": "studio forage"}).content.decode()
+        self._indexee(title="Chambre calme", landmark_text="Derrière la pharmacie")
+        self._indexee(title="Chambre propre", landmark_text="Près du marché central")
+        page = Client().get("/annonces", {"q": "pharmacie marché"}).content.decode()
         assert "Aucune chambre ne contient tous tes mots" in page
 
     def test_sans_mot_precis_la_page_le_dit(self):
