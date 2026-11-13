@@ -127,7 +127,14 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         "1.0.0",
         "Version minimale de l'application mobile (en dessous : mise à jour).",
     ),
-    "MAINTENANCE_ENABLED": (False, "Maintenance annoncée à l'application mobile."),
+    "MAINTENANCE_ENABLED": (
+        False,
+        "Maintenance de l'application mobile (l'API répond « maintenance »).",
+    ),
+    "SITE_MAINTENANCE_ENABLED": (
+        False,
+        "Maintenance du site web (page « Immo+ revient tout de suite »).",
+    ),
     "MAINTENANCE_MESSAGE": (
         "",
         "Message affiché pendant la maintenance (vide : texte par défaut).",

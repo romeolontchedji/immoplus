@@ -48,4 +48,14 @@ Une ligne par décision ; le détail de la phase 0 est dans `docs/adr/`.
 - **Fichiers statiques** : adresses versionnées par empreinte (`?v=`), car Caddy les met en cache un an.
 - **Connexion d'un gérant** : arrivée sur le tableau de bord. **Mots de passe du profil** : jamais remplis par le navigateur.
 - **Administration** : accès par plages d'adresses ; page « Statistiques » dédiée.
-
+- **Recherche** : elle comprend les phrases (remplissage ignoré), reconnaît quartiers (avec fautes), types de chambre et
+  équipements, passe en « ou » quand aucune annonce ne contient tous les mots, et explique ce qu'elle a compris. Pas de
+  classement par pertinence (il casserait la pagination par curseur).
+- **Pré-payé** : nombre entier de mois de loyer à régler avant d'entrer (0 = aucun), à côté de l'avance ; site seulement, hors API.
+- **Lecture des conversations** : l'équipe (modérateurs et administrateurs) peut lire toute conversation pour la modération,
+  avec un motif obligatoire inscrit au journal ; la liste ne montre aucun contenu.
+- **Textes légaux** : éditeur **NEXIX**, sans RCCM ni IFU affichés ; textes modifiables depuis l'administration (Markdown, barre
+  d'outils, aperçu) ; « Demander d'accepter de nouveau » est une case à cocher à chaque modification de fond.
+- **Maintenance** : le site web et l'application mobile se coupent séparément (`SITE_MAINTENANCE_ENABLED`,
+  `MAINTENANCE_ENABLED`) ; l'administration n'est jamais coupée.
+- **Accueil** : titre « Trouve ta chambre à Parakou, en deux clics. », accroche « Visite en vidéo, zéro paiement avant la visite. ».

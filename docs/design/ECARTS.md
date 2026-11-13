@@ -54,3 +54,12 @@ Ce document consigne les éléments présents sur les maquettes de référence (
 | EF-ABO-04 squelettes FedaPay et KKiaPay | KKiaPay seul | Décision V10 du porteur |
 | EF-ABO-08 masquage des annonces 7 jours après expiration | Non appliqué | Le CDC le marque « à valider avant activation » |
 
+## Novembre 2026 : demandes du porteur hors CDC et hors API
+
+| Sujet | Écart | Raison |
+|---|---|---|
+| **Pré-payé** (`prepaid_months`, 0 à 12) | Champ ajouté à l'annonce, saisi dans l'éditeur du site et affiché sur la fiche ; **absent de l'API et de l'application mobile** (le contrat OpenAPI reste identique) | Demande du porteur ; l'application le laissera à 0 jusqu'à sa prochaine version |
+| **Recherche qui comprend les phrases** | Quartiers, types et équipements reconnus dans le texte saisi, passage en « ou » à défaut de « et » ; messages « Compris… » sur le site | Demande du porteur ; l'API en profite sans changer de forme |
+| **Lecture des conversations par l'équipe** | Possible depuis **Chat › Conversations**, pas seulement depuis un signalement ; motif obligatoire et journal conservés | Demande du porteur (modération) ; textes légaux mis à jour |
+| **Textes légaux modifiables** | Édités dans l'administration (Markdown, barre d'outils, aperçu) au lieu de fichiers du dépôt ; les fichiers restent le texte de secours | Demande du porteur |
+| **RCCM et IFU** | Non affichés (paramètres vides) | Demande du porteur |

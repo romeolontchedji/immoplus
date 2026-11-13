@@ -31,7 +31,7 @@ def test_version_trop_ancienne_426():
     )  # sans en-tête (site, outils) : pas de blocage
 
 
-def test_maintenance_503_api_et_site():
+def test_maintenance_de_l_application_coupe_l_api_et_pas_le_site():
     parametres.definir("MAINTENANCE_ENABLED", True)
     parametres.definir("MAINTENANCE_MESSAGE", "Mise à jour des serveurs jusqu'à 14 h.")
     try:
@@ -41,10 +41,29 @@ def test_maintenance_503_api_et_site():
             and r.json()["error"]["code"] == "maintenance"
             and r["Retry-After"] == "300"
         )
-        page = Client().get("/")
-        assert page.status_code == 503 and "jusqu&#x27;à 14 h" in page.content.decode()
         assert APIClient().get("/v1/app-config").json()["maintenance"]["active"] is True
-        assert Client().get("/conditions").status_code == 503  # page web : maintenance aussi
         assert APIClient().get("/v1/legal/conditions").status_code == 200
+        assert Client().get("/").status_code == 200  # le site web reste ouvert
     finally:
         parametres.definir("MAINTENANCE_ENABLED", False)
+
+
+def test_maintenance_du_site_coupe_le_site_et_pas_l_application():
+    parametres.definir("SITE_MAINTENANCE_ENABLED", True)
+    parametres.definir("MAINTENANCE_MESSAGE", "Mise à jour des serveurs jusqu'à 14 h.")
+    try:
+        page = Client().get("/")
+        assert page.status_code == 503 and "jusqu&#x27;à 14 h" in page.content.decode()
+        assert page["Retry-After"] == "300"
+        assert Client().get("/conditions").status_code == 503
+        assert Client().get("/annonces").status_code == 503
+        # toujours ouverts : santé, fichiers, paiement reçu de KKiaPay, textes légaux de l'API
+        assert Client().get("/healthz").status_code == 200
+        webhook = Client().post("/paiement/webhook/kkiapay")
+        assert "revient tout de suite" not in webhook.content.decode()  # pas la page de maintenance
+        assert APIClient().get("/v1/legal/conditions").status_code == 200
+        # l'application mobile continue de fonctionner
+        assert APIClient().get("/v1/listings").status_code == 200
+        assert APIClient().get("/v1/app-config").json()["maintenance"]["active"] is False
+    finally:
+        parametres.definir("SITE_MAINTENANCE_ENABLED", False)

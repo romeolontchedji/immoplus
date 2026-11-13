@@ -13,7 +13,8 @@ from apps.core import parametres
 
 SECTIONS = [
     ("application", "Application et maintenance", "Ce que voient les applications au démarrage.",
-     ["MAINTENANCE_ENABLED", "MAINTENANCE_MESSAGE", "APP_NOTICE", "MIN_SUPPORTED_VERSION"]),
+     ["SITE_MAINTENANCE_ENABLED", "MAINTENANCE_ENABLED", "MAINTENANCE_MESSAGE", "APP_NOTICE",
+      "MIN_SUPPORTED_VERSION"]),
     ("contact", "Contact et identité légale", "Affichés sur le site, dans l'app et dans les textes légaux.",
      ["TEAM_PHONE", "LEGAL_PROVISIONAL", "LEGAL_COMPANY", "LEGAL_RCCM", "LEGAL_IFU", "LEGAL_ADDRESS", "LEGAL_EMAIL",
       "LEGAL_UPDATED_AT", "TERMS_VERSION"]),
@@ -50,9 +51,12 @@ CHOIX = {
 
 # Note affichée sous chaque réglage (plan v3, J1) : à quoi il sert, ce que change une modification, l'unité.
 NOTES = {
+    "SITE_MAINTENANCE_ENABLED": "Coché : le site web affiche « Immo+ revient tout de suite » au lieu de fonctionner. "
+    "L'application mobile continue de marcher, et cette administration reste ouverte. À utiliser pendant une mise à jour.",
     "MAINTENANCE_ENABLED": "Coché : l'application mobile affiche un écran de maintenance au lieu de fonctionner. Le site "
-    "reste ouvert. À utiliser pendant une mise à jour du serveur.",
-    "MAINTENANCE_MESSAGE": "Texte de l'écran de maintenance (ex. « Retour vers 14 h »). Vide : message standard.",
+    "web reste ouvert. À utiliser pendant une mise à jour du serveur.",
+    "MAINTENANCE_MESSAGE": "Texte affiché pendant la maintenance, sur le site et dans l'application (ex. « Retour vers "
+    "14 h »). Vide : message standard.",
     "APP_NOTICE": "Petit message affiché en haut de l'application pour tous (ex. une nouveauté). Vide : rien n'est affiché.",
     "MIN_SUPPORTED_VERSION": "Les applications plus anciennes que cette version doivent se mettre à jour avant de "
     "continuer. Format 1.2.0. À monter seulement après publication de la nouvelle version sur les magasins.",

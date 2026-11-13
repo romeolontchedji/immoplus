@@ -270,7 +270,8 @@ def _a_traiter() -> dict:
             published_at__gte=timezone.now() - datetime.timedelta(days=7), deleted_at__isnull=True
         ).count(),
         "depuis_7_jours": (timezone.localdate() - datetime.timedelta(days=7)).isoformat(),
-        "maintenance": bool(parametres.lire("MAINTENANCE_ENABLED")),
+        "maintenance_site": bool(parametres.lire("SITE_MAINTENANCE_ENABLED")),
+        "maintenance_app": bool(parametres.lire("MAINTENANCE_ENABLED")),
         "parametres_provisoires": bool(parametres.lire("LEGAL_PROVISIONAL")),
     }
 

@@ -2,6 +2,29 @@
 
 > **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
 
+**2026-11-13 : recherche intelligente, pré-payé, textes légaux modifiables, audit de sécurité.**
+- **Recherche** : elle comprend les phrases (remplissage ignoré), reconnaît quartiers (même avec une faute : « zogo » → Zongo),
+  types de chambre (« chambre sanitaire ») et équipements (eau, électricité, cuisine, douche, clôture), passe en « ou » si
+  aucune annonce ne contient tous les mots, et explique ce qu'elle a compris (messages, page vide utile, alerte reprenant
+  ces critères). `services/recherche_texte.py`, `services/fil.py`, `selectors._appliquer_criteres`.
+- **Pré-payé** : nombre de mois de loyer à régler avant d'entrer (0 = aucun) ; éditeur du site et fiche ; migration
+  listings 0015 ; pas dans l'API.
+- **Textes légaux** : éditeur NEXIX sans RCCM ni IFU ; conditions et confidentialité réécrites (paiements, lecture des
+  conversations, avis, messages de l'équipe) et **modifiables depuis l'administration** (Core › Textes légaux : barre
+  d'outils, aperçu, version à faire accepter, rétablir l'origine, journal) ; table `legal_documents` (migration core 0012).
+- **Administration** : lecture des conversations (Chat › Conversations, motif obligatoire), action « Classer comme traité »
+  sur les signalements, titre non dupliqué, « Voir le site » mène au site public, code de connexion retiré de l'objet du
+  courriel.
+- **Accueil** : nouveaux textes (titre « Trouve ta chambre à Parakou, en deux clics. »), sous-titre centré.
+- **Maintenance** : deux interrupteurs indépendants, `SITE_MAINTENANCE_ENABLED` (site web) et `MAINTENANCE_ENABLED`
+  (application mobile) ; le webhook KKiaPay reste joignable ; bandeau sur l'accueil de l'administration.
+- **Administration** : l'icône de succès ne chevauche plus le texte des messages.
+- **Notifications** : « Consulter » marque la notification lue avant d'ouvrir la page.
+- **Sécurité** (audit du 2026-11-13, voir `docs/audit-tests-securite.md` §9) : le plafond horaire de connexion ne bloque
+  plus le titulaire, 3 courriels de réinitialisation par heure et par compte, paramètre `next` encodé ; DRF 3.18.3,
+  filelock 4.2.1, minimatch 11 (outils mobile) ; format ruff/djlint, import-linter et en-têtes de commit en règle.
+- **Intégration continue** : 1 250 tests serveur verts, tâches « mobile » et « image » vertes.
+
 **2026-11-25 : messages entre l'équipe et les utilisateurs.**
 - Administrateurs et modérateurs écrivent à un locataire ou à un gérant (réponse à une question, à un avis, suite à une décision de
   modération) et lisent leurs questions : boîte « Messages de l'équipe », tuile « Messages à traiter », actions depuis les avis, les

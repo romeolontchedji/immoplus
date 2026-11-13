@@ -264,6 +264,7 @@ a.lg-bouton--soleil:link, a.lg-bouton--soleil:visited { background: var(--sun); 
 ul.messagelist li {
   border-radius: var(--r-field); font-weight: 600; font-size: var(--fs-14); padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-10);
   margin: 0 0 var(--sp-3); background-color: var(--success-bg); color: var(--success);
+  background-position: var(--sp-4) 50%; background-size: 16px; background-repeat: no-repeat;
 }
 ul.messagelist li.warning { background-color: var(--warning-bg); color: var(--warning); }
 ul.messagelist li.error { background-color: var(--danger-bg); color: var(--danger); }
