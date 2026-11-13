@@ -1,8 +1,9 @@
-"""Administration : annonces (relecture), signalements, sanctions, lecture journalisée (CDC §7.9, EF-MOD)."""
+"""Administration : annonces (modération après coup), signalements, sanctions, lecture journalisée (CDC §7.9, EF-MOD)."""
 
 from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
+from django.db.models import F
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
 from django.utils.html import format_html, format_html_join
@@ -77,9 +78,10 @@ class ListingAdmin(admin.ModelAdmin):
         "district",
         "published_at",
     )
-    list_filter = ("status", "hidden_reason", "district")
+    list_filter = (("published_at", admin.DateFieldListFilter), "status", "hidden_reason", "district")
     search_fields = ("title", "slug", "gerant__full_name")
-    ordering = ("-created_at",)
+    # Les dernières mises en ligne d'abord (les brouillons, sans date, à la fin).
+    ordering = (F("published_at").desc(nulls_last=True), "-created_at")
     actions = ["approuver", "refuser"]
 
     def has_add_permission(self, request):
@@ -92,7 +94,6 @@ class ListingAdmin(admin.ModelAdmin):
         return False
 
     def get_queryset(self, request):
-        # Les annonces en attente de relecture sont les premières de la liste.
         return super().get_queryset(request).select_related("gerant", "district")
 
     def get_fields(self, request, obj=None):

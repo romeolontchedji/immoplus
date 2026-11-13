@@ -1,5 +1,7 @@
 """Site d'administration : connexion par e-mail et mot de passe, titres en français."""
 
+import datetime
+
 from django import forms
 from django.contrib.admin import AdminSite
 from django.contrib.auth.forms import AuthenticationForm
@@ -243,6 +245,11 @@ def _a_traiter() -> dict:
         "gerants_total": GerantProfile.complets.count(),
         "types_proposes": RoomType.objects.filter(status="pending").count(),
         "annonces_en_relecture": Listing.objects.filter(status="processing").count(),
+        # Nouvelles annonces : mises en ligne ces 7 jours, même si elles sont déjà visibles (coup d'œil de l'équipe).
+        "nouvelles_annonces": Listing.objects.filter(
+            published_at__gte=timezone.now() - datetime.timedelta(days=7), deleted_at__isnull=True
+        ).count(),
+        "depuis_7_jours": (timezone.localdate() - datetime.timedelta(days=7)).isoformat(),
         "maintenance": bool(parametres.lire("MAINTENANCE_ENABLED")),
         "parametres_provisoires": bool(parametres.lire("LEGAL_PROVISIONAL")),
     }

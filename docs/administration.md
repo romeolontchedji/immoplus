@@ -51,12 +51,13 @@ Un modérateur ne peut pas suspendre plus de `MODERATOR_MAX_SUSPENSION_DAYS` jou
 
 La page d'accueil réunit :
 
-- **À traiter** : signalements ouverts, annonces en attente de relecture, gérants en attente de vérification, types
+- **À traiter** : signalements ouverts, annonces en traitement, **nouvelles annonces** (mises en ligne ces 7 jours : un coup d'œil
+  même si elles sont déjà visibles ; la liste s'ouvre triée de la plus récente à la plus ancienne), gérants en attente de vérification, types
   de logement proposés. Chaque chiffre mène à la liste concernée.
 - **Activité** : inscriptions, annonces publiées, conversations, vues, et un graphe des 14 derniers jours.
 - **Téléphones actifs** sur 7 jours (Android, iOS).
-- **Gérer** : raccourcis vers les comptes, les annonces, la modération, la configuration, l'abonnement et le journal,
-  et le bouton **Créer un gérant**.
+- **Gérer** : raccourcis vers les comptes, les statistiques, les annonces, la modération, la configuration, les paiements
+  et le journal, et le bouton **Créer un gérant**.
 
 ## 4. Les rubriques
 
@@ -97,9 +98,12 @@ journalise. Actions : message masqué, message supprimé, annonce masquée, anno
 ### 4.3 Annonces
 
 **Annonces.** Filtres : statut, raison du masquage (sans confirmation, modération, gérant, gérant suspendu),
-quartier. La **première annonce** d'un gérant est relue avant sa mise en ligne (et toutes les annonces si
-`LISTING_PREMODERATION` est coché) : actions **Approuver** (mise en ligne) et **Refuser** (l'annonce passe masquée,
-raison « Modération » ; le gérant la voit masquée dans son espace).
+quartier. Un gérant **vérifié publie directement**, y compris sa première annonce : elle est en ligne aussitôt et
+l'équipe (administrateurs et modérateurs) reçoit un **courriel à la première mise en ligne** de chaque annonce
+(`EMAIL_NOUVELLES_ANNONCES`), avec les liens pour la voir et la modérer. La modération agit après coup : **Masquer**
+l'annonce, ou **Refuser** (l'annonce passe masquée, raison « Modération » ; le gérant la voit masquée dans son espace).
+Les annonces encore « en traitement » (médias en cours) sont publiées toutes seules quand leurs médias sont prêts.
+Une chambre **marquée louée** est archivée aussitôt, photos et vidéo supprimées.
 
 **Avis.** Publiés tout de suite. Actions **Masquer** (l'avis disparaît du public, l'auteur le garde) et
 **Réafficher**.
@@ -128,10 +132,26 @@ débloque un membre du personnel.
   réinitialisations avec la porte utilisée, liens générés, sanctions, paramètres modifiés avec l'ancienne et la
   nouvelle valeur). Lecture seule.
 
-### 4.6 Abonnement (désactivé en V1)
+### 4.6 Paiements (désactivés par défaut)
 
-**Abonnements** et **Paiements** (Mobile Money) en lecture seule. Rien n'est facturé tant que
-`SUBSCRIPTION_ENABLED` est décoché.
+**Abonnements** et **Paiements** (ancien circuit Mobile Money) en lecture seule, et **Transactions KKiaPay** : chaque
+paiement fait par la fenêtre KKiaPay du site (abonnement d'un gérant, alerte d'un locataire) ou noté à la main pour un
+paiement en espèces (référence `especes-…`). Rien n'est facturé tant que les cases de la section « Paiements (KKiaPay) »
+des paramètres sont décochées (section 8 et « Paiements : activer pour les locataires ou pour les gérants »).
+
+### 4.7 Statistiques
+
+La page **Statistiques** (`/statistiques/`, lien dans « Comptes » de l'accueil) donne :
+
+- les **chiffres clés** : gérants actifs et vérifiés, locataires actifs, nouveaux comptes (30 jours), annonces en ligne,
+  chambres louées, conversations (30 jours), alertes actives, abonnements payants en cours, paiements réussis, total
+  encaissé et encaissé sur 30 jours ;
+- un **tableau par gérant** (zone, vérifié, annonces en ligne et au total, conversations, note et avis, formule, date de
+  fin) et un **tableau par locataire** (inscription, dernière activité, conversations, favoris, alertes actives, total
+  payé), les 100 plus actifs ;
+- sur la **fiche d'un compte ou d'un gérant**, un bloc « Statistiques » détaillé (annonces par état, vues et favoris sur
+  30 jours, taux et délai de réponse, avis, abonnement et paiements ; pour un locataire : conversations, favoris, alertes,
+  avis donnés, paiements).
 
 ## 5. Gestes courants
 
@@ -140,13 +160,15 @@ débloque un membre du personnel.
 1. Entretien avec le gérant (identité, activité).
 2. Comptes › **Nouveau gérant** › prénom, nom, zone › **Créer**.
 3. Envoie le lien affiché (bouton WhatsApp ou copie). Préviens-le qu'il est valable 72 heures.
-4. Gérants › la fiche › statut **Vérifié** : il peut publier, sa première annonce sera relue.
+4. Le compte créé par l'équipe est **déjà vérifié** (l'entretien a eu lieu avant) : le gérant publie dès qu'il a activé
+   son compte, sans second geste de votre part. Il apparaît aussi dans la page **Statistiques**.
 
-### 5.2 Relire une première annonce
+### 5.2 Contrôler une annonce après sa mise en ligne
 
-Annonces › filtre « En traitement » › ouvre l'annonce, regarde la vidéo (si présente) et les photos (5 au moins) ›
-**Approuver**, ou **Refuser** puis explique la raison au gérant (WhatsApp ou téléphone de l'équipe) pour qu'il
-corrige et republie.
+Le courriel « Immo+ · nouvelle annonce » (envoyé à tous les administrateurs et modérateurs actifs qui ont une adresse)
+donne le lien public et le lien de modération. Ouvre l'annonce : si elle pose problème, **Masquer** ou **Refuser**, puis
+explique la raison au gérant (WhatsApp ou téléphone de l'équipe) pour qu'il corrige et republie. Les annonces
+« En traitement » sont des annonces dont les médias ne sont pas encore prêts ; elles se publient seules.
 
 ### 5.3 Un utilisateur a perdu l'accès à son compte
 
@@ -258,13 +280,14 @@ Publication, fraîcheur et cycle de vie des chambres.
 
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
-| `LISTING_PREMODERATION` | décoché | Coché : chaque annonce attend la validation de l'équipe avant d'être visible. Décoché : seule la première annonce d'un gérant est relue. |
+| `LISTING_PREMODERATION` | décoché | **Sans effet pour l'instant** (la relecture préalable a été retirée : un gérant vérifié publie directement et l'équipe est prévenue par courriel). Gardé pour une éventuelle réactivation. |
+| `EMAIL_NOUVELLES_ANNONCES` | coché | Coché : à la première mise en ligne d'une annonce, un courriel part à l'équipe (administrateurs et modérateurs). |
 | `STALE_REMINDER_DAYS` | `[7, 10]` | Liste de jours sans confirmation après lesquels le gérant reçoit un rappel, ex. [7, 10]. Utilisé seulement si le masquage automatique ci-dessous est actif. |
 | `STALE_HIDE_DAYS` | `0` | Nombre de jours sans confirmation avant que l'annonce soit masquée automatiquement. 0 = jamais (recommandé : le gérant marque lui-même une chambre louée). |
 | `RENTED_REPORTS_THRESHOLD` | `3` | Nombre de locataires différents qui signalent « déjà louée » avant qu'un dossier s'ouvre dans la modération. |
-| `RENTED_VIDEO_DELETE_DAYS` | `7` | Après « louée », la vidéo est supprimée au bout de ce nombre de jours (le gérant peut annuler « louée » d'ici là). |
+| `RENTED_VIDEO_DELETE_DAYS` | `7` | **Inutilisé** : dès qu'une chambre est marquée louée, photos et vidéo sont supprimées et l'annonce archivée. |
 | `READONLY_AFTER_RENT_DAYS` | `30` | Après « louée », les conversations de la chambre passent en lecture seule au bout de ce nombre de jours. |
-| `ARCHIVE_AFTER_RENT_DAYS` | `90` | Après « louée », l'annonce est archivée (retirée de l'espace du gérant) au bout de ce nombre de jours. |
+| `ARCHIVE_AFTER_RENT_DAYS` | `90` | Ne concerne plus que les annonces marquées louées avant la mise à jour : une annonce marquée louée est désormais archivée aussitôt. |
 | `CAMPUS_REFERENCE` | `{"latitude": 9.337, "longitude": 2.6303}` | Position de l'Université de Parakou qui sert à calculer « à 450 m de l'UP ». Format {"latitude": 9.337, "longitude": 2.630}. |
 
 ### Messagerie, alertes et notifications
@@ -312,9 +335,10 @@ Garde-fous du personnel.
 | `STAFF_READS_ALERT_THRESHOLD` | `20` | Si un membre du personnel ouvre plus de conversations que ce nombre dans la journée, une alerte est levée (protection de la vie privée). |
 | `MODERATOR_MAX_SUSPENSION_DAYS` | `30` | Durée maximale d'une suspension décidée par un modérateur ; au-delà, il faut un administrateur. |
 
-### Abonnement (désactivé en V1)
+### Paiements (KKiaPay, désactivés par défaut)
 
-Prêt côté serveur ; aucun écran de paiement tant que c'est désactivé.
+Éteints par défaut : cochez pour faire payer les gérants (abonnement) et/ou les locataires (alertes). Les deux cases sont
+indépendantes.
 
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
@@ -342,3 +366,35 @@ Vous pouvez donc commencer par les locataires seuls, puis cocher les gérants pl
 Dans **Gérants**, cochez le ou les gérants, choisissez l'action **Activer un abonnement (paiement en espèces)**, puis la formule et le
 nombre de périodes payées. La période s'ajoute à celle en cours ; l'opération apparaît dans **Transactions KKiaPay** (référence
 `especes-…`) et dans le journal. Réservé aux administrateurs. Fonctionne même si `SUBSCRIPTION_ENABLED` est encore décoché.
+
+### Ce que voit chaque personne quand un paiement est activé
+
+- **Locataire** : il choisit les options de son alerte puis clique sur « Créer l'alerte » ; la fenêtre KKiaPay s'ouvre, et
+  l'alerte se crée toute seule après le paiement. Il faut une **adresse e-mail confirmée** (sinon ni création, ni paiement).
+  Un paiement vaut une alerte ; supprimer l'alerte ne rend pas le paiement.
+- **Gérant** : sans abonnement payant en cours, « Publier une chambre » mène à la page des formules
+  (`/compte/abonnement`) avec un message aimable ; ses annonces déjà en ligne restent visibles. Le plan « Gratuit V1 » ne
+  suffit plus.
+- **Les deux** : la page **Abonnement** (menu et profil) montre la formule, la date de fin et l'historique des paiements.
+- **Suppression de compte** : une page de confirmation prévient que l'abonnement payé (ou les alertes payées non créées) est
+  perdu, sans remboursement ni récupération ; une case à cocher est obligatoire.
+
+### Mise en service de KKiaPay
+
+Variables du fichier `.env` du serveur (puis `python3 outils/creer_env.py --services` et un déploiement) :
+
+| Variable | Origine | Rôle |
+|---|---|---|
+| `KKIAPAY_PUBLIC_KEY` | clé publique du tableau de bord KKiaPay | ouvre la fenêtre de paiement |
+| `KKIAPAY_PRIVATE_KEY` | clé privée du tableau de bord | vérifie les transactions côté serveur |
+| `KKIAPAY_SECRET` | clé secrète du tableau de bord | envoyée avec chaque vérification |
+| `KKIAPAY_WEBHOOK_SECRET` | inventée (`python3 -c "import secrets; print(secrets.token_urlsafe(32))"`) | « hash secret » du webhook |
+| `KKIAPAY_SANDBOX` | `true` pour tester, `false` en réel | choisit l'adresse de test ou de production |
+
+Dans le tableau de bord KKiaPay, créer un **webhook** vers `https://www.<domaine>/paiement/webhook/kkiapay` avec le même
+« hash secret » et les événements `transaction.success` et `transaction.failed` (l'adresse ne doit pas rediriger : une
+redirection compte comme un échec). Le webhook rattrape un paiement dont le navigateur s'est fermé avant la confirmation ;
+le serveur revérifie toujours la transaction auprès de KKiaPay. Ensuite : fixer le prix de la formule « standard » dans
+`PLANS` (prix et `"active": true`, `free_v1` reste à `"price": 0`), puis cocher `PAID_ALERTS_ENABLED` et/ou
+`SUBSCRIPTION_ENABLED`. Tester d'abord en `KKIAPAY_SANDBOX=true`.
+

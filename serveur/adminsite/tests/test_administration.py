@@ -1,8 +1,11 @@
 """Administration : isolation, connexion par mot de passe, verrouillage, liste blanche, actions journalisées."""
 
+import datetime
+
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from adminsite import middleware as mw
 from apps.accounts.models import GerantProfile, User
@@ -450,6 +453,25 @@ class TestActions:
         assert r.status_code == 302
         assert parametres.lire("LOGIN_LOCK_THRESHOLD") == 5
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
+
+
+class TestCarteNouvellesAnnonces:
+    def test_la_carte_compte_les_annonces_des_sept_derniers_jours_et_mene_a_la_liste(self):
+        from apps.listings.tests.fabriques import ListingFactory
+
+        ListingFactory(title="Chambre toute neuve")  # publiée à l'instant
+        ListingFactory(
+            title="Chambre ancienne",
+            published_at=timezone.now() - datetime.timedelta(days=30),
+        )
+        c, _ = se_connecter(personnel(AdminFactory))
+        page = c.get(reverse("admin:index")).content.decode()
+        assert "Nouvelles annonces" in page and "mises en ligne ces 7 jours" in page
+        depuis = (timezone.localdate() - datetime.timedelta(days=7)).isoformat()
+        liste = c.get(reverse("admin:listings_listing_changelist") + f"?published_at__gte={depuis}")
+        corps = liste.content.decode()
+        assert liste.status_code == 200 and "Chambre toute neuve" in corps
+        assert "Chambre ancienne" not in corps
 
 
 class TestPageStatistiques:

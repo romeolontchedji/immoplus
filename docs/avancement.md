@@ -1,6 +1,23 @@
 # Avancement
 
-> **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
+> **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
+
+**2026-11-21 : documentation remise à jour.**
+- Mis à jour pour refléter l'état réel : `administration.md` (publication directe, page Statistiques, paiements et mise en service de
+  KKiaPay, paramètres), `cahier-des-charges.md` (EF-ANN-11 et 13, EF-ABO-02 à 07, table `transactions`, cycle de vie, annexes),
+  `comprendre-immoplus.md` (modèle économique, annonces, médias, paiements, notifications, statistiques, cache statique),
+  `reste-a-faire.md`, `a-verifier.md` (section D), `decisions.md`, `code-mort.md`, `tuto-compte-gerant.md`,
+  `web-parcours.md`, `deploiement-vps-pas-a-pas.md` (variables KKiaPay, plages d'adresses, pièges de `creer_env.py`).
+- Pièges rencontrés depuis le premier jour de production (à connaître) :
+  - `/static/` est en cache d'un an chez Caddy : sans empreinte dans l'adresse, un script corrigé n'arrivait pas aux navigateurs
+    (corrigé, `config/stockage.py`) ;
+  - `creer_env.py --services` ne complète pas `.env` (il lit `.env`) et réécrit `caddy.env` et `admin.env` : revérifier
+    `ADMIN_ALLOWED_IPS` ensuite ;
+  - toute variable **obligatoire** ajoutée aux réglages « public » doit figurer dans les gabarits de **tous** les services Python
+    (`web-api`, `realtime`, `worker`, `admin`), sinon un service redémarre en boucle (arrivé avec `LIENS_SIGNING_KEY`) ;
+  - un `{# ... #}` de gabarit Django ne peut pas s'étendre sur plusieurs lignes (il s'affiche tel quel) : utiliser `{% comment %}` ;
+  - les contrats `lint-imports` interdisent d'importer les modèles d'une autre application : passer par ses sélecteurs ;
+  - la CI ne démarre que si une pull request est ouverte.
 
 **2026-11-20 : statistiques en page dédiée, parcours du gérant.**
 - Administration : page « Statistiques » (`/statistiques/`, lien dans « Comptes ») : chiffres clés, tableau par gérant (annonces,

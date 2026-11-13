@@ -63,9 +63,11 @@ des visites inutiles. On lui demande parfois de payer avant d'avoir vu la chambr
 Le site et l'application parlent au **même serveur** et à la **même base de données**. Une chambre publiée depuis
 l'application apparaît aussitôt sur le site, et inversement.
 
-**Le modèle économique** (décidé, pas encore activé) : abonnement des gérants et, plus tard, alertes payantes pour les
-locataires. Tout est **prêt dans le code mais éteint** (réglages `SUBSCRIPTION_ENABLED` et `PAID_ALERTS_ENABLED`) : en V1,
-rien n'est payant et aucun écran de paiement n'est visible.
+**Le modèle économique** : abonnement des gérants et alertes payantes des locataires, payés par **KKiaPay** (Mobile Money
+ou carte, fenêtre de paiement sur le site). Tout est **construit mais éteint par défaut** : deux cases indépendantes dans
+l'administration (`SUBSCRIPTION_ENABLED` pour les gérants, `PAID_ALERTS_ENABLED` pour les locataires, prix réglables)
+permettent de commencer par les locataires puis d'activer les gérants. Un administrateur peut aussi activer à la main
+l'abonnement d'un gérant qui a payé en espèces.
 
 ---
 
@@ -216,7 +218,7 @@ processus Python : le premier argument choisit le rôle (`infra/docker/entrypoin
 | `realtime` | WebSocket de la messagerie | gunicorn + uvicorn (port 8001) | Tant qu'une appli est ouverte | Plus d'instantané ; les push continuent |
 | `admin` | Administration | gunicorn + uvicorn (port 8002) | Quand l'équipe travaille | L'équipe ne peut plus modérer |
 | `worker` | Tâches : notifications, alertes, rappels, envois chez Cloudinary | Celery, files `default` et `notifications` | En continu | Notifications en retard (rattrapées ensuite) |
-| `worker-media` | Traitement photos et vidéos | Celery, file `media`, 1 à la fois, 2 CPU, 1,5 Go max | À chaque envoi de média | Médias bloqués « en traitement » |
+| `worker-media` | Traitement photos et vidéos | Celery, file `media`, 2 à la fois (`MEDIA_CONCURRENCY`), 2 CPU, 1,5 Go max | À chaque envoi de média | Médias bloqués « en traitement » |
 | `beat` | Réveil : lance les tâches planifiées | Celery beat (instance unique) | Toutes les minutes | Plus de tâches planifiées |
 | `migrer` | Met la base à jour puis s'arrête | `migrate` + `collectstatic` | Au démarrage | Les autres ne démarrent pas |
 | `postgres` | Base de données | PostgreSQL 16 | Toujours | Tout s'arrête |
@@ -303,11 +305,11 @@ Même si le code Python avait un bug, la base refuserait (migrations `accounts/0
 | Thème | Tables | Contenu |
 |---|---|---|
 | Comptes | `users`, `gerant_profiles`, `devices` | Comptes (nom d'utilisateur, prénom, nom, e-mail confirmé, empreinte de la clé de secours ; aucun numéro), profils gérants (vérification, taux de réponse), appareils connectés |
-| Annonces | `districts`, `room_types`, `listings`, `listing_media`, `favorites`, `alerts` | Quartiers, types de logement, chambres, photos et vidéos, favoris, alertes |
+| Annonces | `districts`, `room_types`, `listings`, `listing_media`, `listing_reviews`, `favorites`, `alerts` | Quartiers, types de logement, chambres, photos et vidéos, avis (liés à la chambre **et** au gérant), favoris, alertes |
 | Messagerie | `conversations`, `messages` | Une conversation par locataire et par chambre ; messages numérotés |
 | Notifications | `notifications` | Centre de notifications, suivi de livraison |
 | Modération | `reports`, `moderation_actions` | Signalements, décisions (avertissement, suspension…) |
-| Abonnement | `subscriptions`, `payments` | Prêtes, inactives en V1 |
+| Abonnement et paiements | `subscriptions`, `payments`, `transactions` | Abonnements, ancien circuit de paiement, paiements KKiaPay (abonnements, alertes) ; éteints par défaut |
 | Système | `app_settings`, `daily_stats`, `audit_logs`, `admin_sessions` | Paramètres réglables, statistiques journalières, journal, sessions d'administration |
 
 **Extensions** : `pg_trgm` et `unaccent` servent à la recherche tolérante (« banikani » trouve « Banikanni »).
@@ -340,7 +342,7 @@ remplir le cache pour les faire effacer et retenter sans limite. Ils sont donc d
 |---|---|---|
 | `default` | `worker` | Alertes à la publication, vues, entretien |
 | `notifications` | `worker` | Push, rattrapage, rappels |
-| `media` | `worker-media` (un à la fois) | Conversion des photos et vidéos |
+| `media` | `worker-media` (deux à la fois) | Conversion des photos et vidéos |
 
 Une tâche est **acquittée à la fin** : si un ouvrier meurt au milieu, la tâche est reprise.
 
@@ -381,8 +383,9 @@ et la liste blanche de l'administration la vérifie (`client_ip`).
 
 En façade, Caddy obtient et renouvelle **seul** les certificats HTTPS et active HTTP/3. Dans tous les cas il compresse
 les réponses, ajoute les en-têtes
-de sécurité (HSTS, anti-sniffing…), et sert `/static/` et `/media/` avec un cache d'un an (les noms de fichiers
-changent à chaque version, donc pas de risque de vieux fichiers).
+de sécurité (HSTS, anti-sniffing…), et sert `/static/` et `/media/` avec un cache d'un an. Pour qu'un script ou une feuille de style corrigés atteignent
+tout de suite les navigateurs, les adresses de `/static/` portent une **empreinte du contenu** (`.../envoi.js?v=ab12cd34ef`,
+`config/stockage.py`) : sans elle, un navigateur garderait l'ancienne copie pendant un an.
 
 ---
 
@@ -506,7 +509,8 @@ deviennent invalides dès qu'ils ont servi.
 - **Comment** : l'équipe crée le compte dans l'administration (« Créer un gérant » : prénom, nom, zone, **sans mot de
   passe**) après vérification et entretien. L'administration affiche un **lien d'activation** (72 h, une seule fois),
   envoyé par WhatsApp ou e-mail : le gérant y choisit son nom d'utilisateur et son mot de passe, puis reçoit sa clé de
-  secours. Aucun mot de passe ne circule. Un signal attribue le plan Gratuit.
+  secours. Aucun mot de passe ne circule. Le compte est **vérifié dès sa création** (l'entretien a eu lieu avant) et
+  reçoit le plan Gratuit.
 - **Indicateurs** : taux de réponse et délai médian de réponse sur 30 jours, recalculés chaque nuit, affichés sur ses
   annonces.
 - **Où** : `apps/accounts/services/administration.py`, `adminsite/admin.py`, `docs/tuto-compte-gerant.md`.
@@ -516,15 +520,13 @@ deviennent invalides dès qu'ils ont servi.
 ```mermaid
 stateDiagram-v2
   [*] --> Brouillon
-  Brouillon --> EnRelecture: 1re publication (si relecture activée)
+  Brouillon --> EnTraitement: publier, médias encore en cours
+  EnTraitement --> Publiée: médias prêts
   Brouillon --> Publiée: publier (règles OK)
-  EnRelecture --> Publiée: approuvée
-  EnRelecture --> Masquée: refusée
   Publiée --> Masquée: gérant, modération ou péremption (J+14)
   Masquée --> Publiée: remise en ligne / confirmation
-  Publiée --> Louée: gérant « louée »
-  Louée --> Publiée: annuler « louée »
-  Louée --> Archivée: après 90 jours
+  Publiée --> Archivée: gérant « louée » (médias supprimés aussitôt)
+  Archivée --> Brouillon: « reproposer » (nouvelles photos)
   Publiée --> Retirée: modération
 ```
 
@@ -532,10 +534,14 @@ stateDiagram-v2
   prêtes (la vidéo est **facultative**), pas de coordonnées dans le texte. Le serveur dit précisément **ce qui manque** (« readiness »).
 - **Fraîcheur** : le masquage automatique est coupé (`STALE_HIDE_DAYS` = 0) : le gérant marque lui-même une chambre
   « louée » ou la masque.
-- **Conditions** : loyer (et « à débattre »), caution du loyer en mois, **caution eau** et **caution électricité** en
-  francs, avance, frais de démarcheur.
-- **Louée** : les locataires en conversation sont prévenus ; la vidéo est supprimée à J+7 ; les conversations passent
-  en lecture seule à J+30 ; l'annonce est archivée à J+90.
+- **Conditions** : loyer (et « à débattre »), **caution eau** et **caution électricité** en francs, avance, frais de
+  démarcheur. La caution du loyer n'est plus demandée sur le site (l'API la garde, à 0 par défaut).
+- **Publication directe** : un gérant vérifié publie sans attendre, y compris sa première annonce ; l'équipe
+  (administrateurs et modérateurs) reçoit un courriel à chaque première mise en ligne et modère après coup.
+- **Louée** (après confirmation) : les locataires en conversation sont prévenus ; **photos et vidéo sont supprimées
+  aussitôt** et l'annonce est archivée ; les conversations passent en lecture seule à J+30. La fiche reste ouverte
+  (« déjà louée », lien vers les chambres libres) et les chambres **libres passent toujours avant** dans les favoris et les
+  listes. Les **avis** sont liés au gérant (et à la chambre) : sa note ne dépend pas de la vie de chaque annonce.
 - **Types de logement** : une liste vivante, de la chambre simple à la villa, avec les variantes courantes à Parakou
   (chambre sanitaire et semi-sanitaire, entrée-couché simple ou sanitaire, chambre-salon simple ou sanitaire, meublé
   salon sanitaire) ; un gérant peut **proposer** un nouveau type, que la modération valide ou rattache.
@@ -548,8 +554,14 @@ stateDiagram-v2
 
 - **Envoi** : par morceaux, reprenable (protocole tus), quotas vérifiés avant.
 - **Traitement** (file `media`) : empreinte SHA-256 ; photos → EXIF retiré, orientation appliquée, WebP 480/960/1600 ;
-  vidéos → contrôle du format (`ffprobe`), MP4 H.264 720p, affiche WebP ; délai maximal ; `ffmpeg` limité aux fichiers
-  locaux.
+  vidéos → contrôle du format (`ffprobe`), durée de **10 à 60 s**, MP4 H.264 720p, affiche WebP ; `ffmpeg` limité aux
+  fichiers locaux. Une vidéo déjà en H.264 720p est **copiée** sans ré-encodage ; sinon encodage rapide (30 images/s, débit
+  plafonné, 2 fils). `worker-media` traite 2 fichiers à la fois (`MEDIA_CONCURRENCY`) ; un traitement bloqué depuis 20
+  minutes passe en échec et l'annonce repart en brouillon.
+- **Étape médias de l'éditeur** : « Suivant » reste grisé tant que des fichiers partent ou sont traités, ou que les photos
+  manquent. La page **ne se recharge pas** : elle suit l'API, puis remplace seulement le récapitulatif, les vignettes et
+  l'étape Publication. Un envoi resté « en cours » depuis plus de 5 minutes est signalé comme interrompu.
+- **Chambre louée** : photos et vidéo sont supprimées aussitôt (voir §12.6).
 - **Stockage** : derrière l'interface `StorageProvider` (ADR 0007). Disque du serveur par défaut ; **Cloudinary**
   s'active depuis Administration › Paramètres › Photos et vidéos (ADR 0010). Chaque média garde sa place : une clé
   rangée chez Cloudinary commence par `cloudinary:`, donc basculer ne touche que les nouveaux envois. La commande
@@ -575,12 +587,14 @@ stateDiagram-v2
 ### 12.9 Favoris, alertes, dernières consultations
 
 - **Favoris** : un cœur ; si la chambre est louée ou masquée, une notification (une seule).
-- **Alertes** : jusqu'à 5 par locataire ; chaque critère est une liste à choix multiples (quartiers, types, budget,
+- **Alertes** : **un e-mail confirmé est exigé** pour en créer sur le site (elles arrivent par e-mail et sur le site, dans
+  la cloche et la page Notifications) ; payantes si `PAID_ALERTS_ENABLED` (§12.13). Jusqu'à 5 par locataire ; chaque critère est une liste à choix multiples (quartiers, types, budget,
   distance de l'UP, eau, électricité, cuisine, douche interne, cour clôturée) ; une alerte sans aucune option est
   refusée. Seules les alertes actives sont listées (celles en pause sont repliées). À chaque publication, le serveur trouve en SQL
   les alertes qui correspondent et notifie **une seule fois** par couple alerte/chambre ; au-delà de 3 par jour, un
   **récapitulatif** remplace les notifications.
-- **Dernières chambres consultées** : sur le téléphone seulement (mobile) ou dans la session (site), rien en base.
+- **Dernières chambres consultées** : sur le téléphone seulement (mobile) ou dans la session (site), rien en base ; seules les
+  chambres encore libres sont affichées.
 - **Où** : `services/favoris.py`, `services/alertes.py`, `mobile/src/features/listings/consultees.ts`.
 
 ### 12.10 Messagerie
@@ -602,6 +616,10 @@ stateDiagram-v2
 - **Jamais de doublon** : chaque notification a une clé d'unicité.
 - **Pas de push** si la conversation est ouverte à l'écran (« présence »).
 - **Fiabilité** : 5 essais avec attente croissante ; rattrapage chaque minute ; jetons push invalides désactivés.
+- **Une notification par conversation** : les messages d'une même personne pour une même chambre mettent à jour la même
+  notification (au lieu d'en empiler plusieurs) ; après lecture, la suivante repart à « 1 ».
+- **Cloche du site** : les 5 dernières notifications, chacune avec un bouton « Consulter » vers la conversation, l'annonce
+  ou les alertes.
 - **Confort** : regroupement par conversation (« 3 nouveaux messages »), **réponse directe** depuis la notification,
   bannière discrète quand l'application est ouverte, canaux Android (messages, alertes, rappels, compte), préférences
   par catégorie.
@@ -619,12 +637,22 @@ stateDiagram-v2
 - **Effets** : une suspension coupe toutes les sessions et masque les annonces du gérant ; à la fin, tout revient.
 - **Où** : `apps/moderation/services.py`, `adminsite/admin_moderation.py`.
 
-### 12.13 Abonnement (prêt, éteint)
+### 12.13 Paiements et abonnement (construits, éteints par défaut)
 
-- **But** : faire payer les gérants (plans, période, grâce, Mobile Money via KKiaPay plus tard).
-- **État** : modèles, services, machine à états, webhooks signés, échéances : **tout est testé mais inactif**. Les
-  routes répondent 404 tant que `SUBSCRIPTION_ENABLED` est faux ; aucun écran de paiement.
-- **Où** : `apps/billing/`, `apps/core/providers/paiement.py`.
+- **But** : faire payer les gérants (abonnement : formules de `PLANS`) et les locataires (chaque nouvelle alerte, prix
+  `ALERT_PRICE`), par **KKiaPay**.
+- **Déroulé** : le navigateur ouvre la fenêtre KKiaPay ; à la fin, le serveur **revérifie** la transaction auprès de
+  KKiaPay (statut, montant, identifiant jamais réutilisé) ; le **webhook** (secret partagé) rattrape un navigateur fermé
+  trop tôt. Table `transactions`. Jamais de confiance au navigateur.
+- **Locataires** : options choisies, puis paiement au clic sur « Créer l'alerte » ; l'alerte se crée après paiement. Un
+  paiement vaut une alerte ; il faut un e-mail confirmé.
+- **Gérants** : sans abonnement payant, « Publier une chambre » mène à la page des formules ; leurs annonces en ligne
+  restent visibles. Page **Abonnement** (formule, dates, historique) pour les deux rôles.
+- **Espèces** : un administrateur active l'abonnement d'un gérant depuis sa fiche (action « Activer un abonnement
+  (paiement en espèces) »), noté comme une transaction.
+- **Suppression de compte** : page de confirmation qui annonce que l'abonnement payé est perdu, sans remboursement.
+- **Où** : `apps/billing/` (`services.py`, `transactions.py`), `apps/core/providers/paiement.py`, `web/views_paiement.py`,
+  `web/static/js/paiement.js`. Mise en service : `docs/administration.md`.
 
 ### 12.14 Journal d'activité
 
@@ -650,9 +678,10 @@ sa valeur par défaut, est dans `docs/administration.md`.
 
 ### 12.17 Statistiques
 
-- **Gérant** : vues, contacts, favoris par chambre (7 ou 30 jours), tableau de bord.
+- **Gérant** : vues, contacts, favoris par chambre (7 ou 30 jours), tableau de bord (où il arrive après sa connexion).
 - **Équipe** : tableau de bord de l'administration (à traiter, activité, **audience site / application**, téléphones
-  actifs).
+  actifs) et page **Statistiques** (`/statistiques/`) : chiffres clés, tableaux par gérant et par locataire, et un bloc
+  détaillé sur la fiche de chaque compte (`adminsite/statistiques.py`).
 - **Comment** : compteurs journaliers dans `daily_stats` (`apps/core/stats.py`).
 
 ---
@@ -819,7 +848,7 @@ ne touche pas au code métier.
 |---|---|---|---|
 | Push | `PushProvider` | `console` | `expo` (FCM prévu) |
 | Stockage des médias | `StorageProvider` | `local` (disque) ou `cloudinary` (choisi dans l'administration) | `s3` (squelette) |
-| Paiement | `PaymentProvider` | `fake` (signé) | KKiaPay |
+| Paiement | `PaymentProvider` | `fake` (signé, tests) ; KKiaPay (fenêtre du site, vérification serveur, webhook) | FedaPay possible |
 | Anti-robot site | `CaptchaProvider` | `turnstile` (clés de test en développement) | Turnstile avec les vraies clés |
 
 ---
