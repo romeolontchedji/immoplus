@@ -531,6 +531,7 @@ def fiche_publique(ident) -> dict | None:
         "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months,
         "advance_months": annonce.advance_months,
+        "prepaid_months": annonce.prepaid_months,
         "agent_fee_amount": annonce.agent_fee_amount,
         "water_deposit_amount": annonce.water_deposit_amount,
         "electricity_deposit_amount": annonce.electricity_deposit_amount,

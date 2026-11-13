@@ -32,6 +32,10 @@ class AnnonceForm(_Base):
         help_text="Coche si tu acceptes de discuter du loyer : la fiche affichera « à débattre ».",
     )  # fmt: skip
     advance_months = forms.IntegerField(label="Avance (mois)", min_value=0, max_value=12)
+    prepaid_months = forms.IntegerField(
+        label="Pré-payé (mois)", min_value=0, max_value=12, required=False, initial=0,
+        help_text="Mois de loyer à payer avant d'entrer dans la chambre. 0 s'il n'y en a pas.",
+    )  # fmt: skip
     agent_fee_amount = forms.IntegerField(
         label="Frais de démarcheur (FCFA)", min_value=0, required=False, initial=0
     )
@@ -97,6 +101,7 @@ class AnnonceForm(_Base):
     def donnees(self) -> dict:
         d = dict(self.cleaned_data)
         d["agent_fee_amount"] = d.get("agent_fee_amount") or 0
+        d["prepaid_months"] = d.get("prepaid_months") or 0
         d["water_deposit_amount"] = d.get("water_deposit_amount") or 0
         d["electricity_deposit_amount"] = d.get("electricity_deposit_amount") or 0
         d["address_private"] = d.get("address_private") or ""

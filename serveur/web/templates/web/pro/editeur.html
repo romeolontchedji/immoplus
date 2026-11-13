@@ -138,10 +138,13 @@
             {% with champ=form.advance_months %}
               {% include "web/composants/champ.html" %}
             {% endwith %}
-            {% with champ=form.agent_fee_amount %}
+            {% with champ=form.prepaid_months %}
               {% include "web/composants/champ.html" %}
             {% endwith %}
           </div>
+          {% with champ=form.agent_fee_amount %}
+            {% include "web/composants/champ.html" %}
+          {% endwith %}
           <div class="grille grille--2">
             {% with champ=form.water_deposit_amount %}
               {% include "web/composants/champ.html" %}
