@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from django.test import Client
 
@@ -405,3 +407,48 @@ def test_une_action_sur_les_medias_redirige(session_gerant):
     r = c.post(f"/pro/annonces/{a.pk}", {"action": "couvrir", "media_id": str(media.pk)})
     assert r.status_code == 302 and r["Location"].endswith("?etape=6&ok=media")
     assert "Médias mis à jour" in c.get(r["Location"]).content.decode()
+
+
+def test_le_profil_n_autorise_pas_le_remplissage_des_mots_de_passe(session_gerant):
+    c, _ = session_gerant
+    page = c.get("/compte/profil").content.decode()
+    assert 'autocomplete="current-password"' not in page and 'autocomplete="new-password"' in page
+
+
+def test_suppression_en_deux_temps_avec_avertissement_d_abonnement(session_gerant):
+    from apps.accounts.tests.fabriques import MOT_DE_PASSE
+    from apps.billing import services
+    from apps.core import parametres
+
+    c, g = session_gerant
+    parametres.definir(
+        "PLANS",
+        [
+            {"code": "free_v1", "label": "Gratuit", "price": 0, "period_months": 1, "active": True},
+            {"code": "standard", "label": "Standard", "price": 500, "period_months": 1, "active": True},
+        ],
+    )
+    services.activer_formule(g.pk, "standard")
+    r = c.post("/compte/profil", {"action": "suppression", "password": MOT_DE_PASSE})
+    assert r.status_code == 302 and r["Location"] == "/compte/supprimer"
+    g.user.refresh_from_db()
+    assert g.user.deleted_at is None  # le mot de passe seul ne supprime plus rien
+    page = c.get("/compte/supprimer").content.decode()
+    assert "abonnement en cours sera perdu" in page and "récupérable" in page
+    # Sans la case cochée, rien n'est supprimé.
+    assert c.post("/compte/supprimer", {}).status_code == 200
+    g.user.refresh_from_db()
+    assert g.user.deleted_at is None
+    assert c.post("/compte/supprimer", {"comprends": "oui"}).status_code == 302
+    g.user.refresh_from_db()
+    assert g.user.deleted_at is not None
+
+
+def test_profil_d_un_gerant_supprime_dit_clairement_qu_il_est_parti():
+    from apps.accounts.services import compte
+
+    g = gerant_verifie()
+    compte.anonymiser(g.user, acteur=g.user)
+    r = Client().get(f"/gerants/{g.user.pk}")
+    assert r.status_code == 410 and "n'est plus sur Immo+" in r.content.decode()
+    assert Client().get(f"/gerants/{uuid.uuid4()}").status_code == 404

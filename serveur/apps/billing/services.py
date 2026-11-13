@@ -245,7 +245,7 @@ def activer_formule(gerant_id, plan_code: str) -> Subscription:
 @transaction.atomic
 def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) -> Subscription:
     """Un administrateur active la formule d'un gérant qui a payé en espèces (n périodes, notées comme une transaction)."""
-    from apps.accounts.models import GerantProfile
+    from apps.accounts import selectors as comptes
 
     from .models import Transaction
 
@@ -262,7 +262,7 @@ def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) 
         raise ErreurMetier(
             "validation_error", "Entre 1 et 24 périodes.", champs={"periodes": ["Entre 1 et 24"]}
         )
-    profil = GerantProfile.objects.filter(pk=gerant_id).first()
+    profil = comptes.profil_gerant_par_id(gerant_id)
     if profil is None:
         raise ErreurMetier("not_found", "Gérant introuvable.", statut=404)
     montant = int(choisie["price"]) * int(periodes)

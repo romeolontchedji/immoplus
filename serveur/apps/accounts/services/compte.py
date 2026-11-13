@@ -183,6 +183,13 @@ def definir_preferences(utilisateur: User, valeurs: dict) -> dict:
     return utilisateur.notif_prefs
 
 
+def verifier_suppression(utilisateur: User, mot_de_passe: str) -> None:
+    """Première étape de la suppression sur le site : le mot de passe est juste, rien n'est encore supprimé."""
+    if utilisateur.role not in (Role.CLIENT, Role.GERANT):
+        raise ErreurMetier("forbidden", "Ce compte ne peut pas être supprimé ici.", statut=403)
+    _exiger_mot_de_passe(utilisateur, mot_de_passe)
+
+
 def supprimer(utilisateur: User, mot_de_passe: str) -> None:
     """Supprime le compte à la demande (application et site) : anonymisation, appareils supprimés (CDC §9.23)."""
     if utilisateur.role not in (Role.CLIENT, Role.GERANT):

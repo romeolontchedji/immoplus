@@ -138,10 +138,9 @@ def _appliquer(attente: Transaction, id_kkiapay: str) -> Transaction:
             ligne.paid_at = timezone.now()
             ligne.save(update_fields=["provider_ref", "status", "paid_at"])
             if ligne.objet == Transaction.Objet.ABONNEMENT:
-                from apps.accounts.models import GerantProfile
+                from apps.accounts import selectors as comptes
 
-                profil = GerantProfile.objects.get(user=utilisateur)
-                services.activer_formule(profil.pk, ligne.plan_code)
+                services.activer_formule(comptes.profil_gerant(utilisateur).pk, ligne.plan_code)
             audit.enregistrer(
                 "paiement.kkiapay",
                 acteur=utilisateur,

@@ -14,6 +14,7 @@ from django.templatetags.static import static
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
+from apps.accounts import selectors as comptes_selectors
 from apps.accounts.services import compte as service_compte
 from apps.chat import selectors as chat_selectors
 from apps.chat import services as chat
@@ -491,7 +492,11 @@ def profil_gerant(request, gerant_id):
     """Profil public d'un gérant : identité publique, chambres en ligne, avis ; jamais de numéro (plan v3, F1)."""
     profil = selectors.profil_gerant_public(gerant_id)
     if profil is None:
-        raise Http404
+        # Compte supprimé ou suspendu : on le dit clairement (depuis une ancienne conversation), pas de « page introuvable ».
+        motif = comptes_selectors.gerant_indisponible(gerant_id)
+        if motif in (None, "inconnu"):
+            raise Http404
+        return render(request, "web/public/gerant-absent.html", {"motif": motif}, status=410 if motif == "supprime" else 404)
     for carte in profil["listings"]:
         carte["type_label"] = _libelle_type(carte["room_type"])
     return render(request, "web/public/gerant.html", {"g": profil})

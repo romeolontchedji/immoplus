@@ -210,6 +210,9 @@ def test_suppression_du_compte():
         c.post("/compte/profil", {"action": "suppression", "password": "faux"}).status_code == 200
     )
     r = c.post("/compte/profil", {"action": "suppression", "password": MOT_DE_PASSE})
+    assert r.status_code == 302 and r["Location"] == "/compte/supprimer"
+    assert not User.objects.filter(username__startswith="supprime.").exists()  # rien n'est supprimé encore
+    r = c.post("/compte/supprimer", {})  # page de confirmation : rien à perdre, un clic suffit
     assert (
         r.status_code == 302
         and User.objects.get(username__startswith="supprime.").status == "deleted"
