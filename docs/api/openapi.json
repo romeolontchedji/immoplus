@@ -2267,7 +2267,7 @@
         "/v1/pro/listings/{annonce_id}": {
             "get": {
                 "operationId": "v1_pro_listings_retrieve",
-                "summary": "Lire une annonce (adresse privée comprise)",
+                "summary": "Lire une annonce (version gérant)",
                 "parameters": [
                     {
                         "in": "path",
@@ -3279,10 +3279,6 @@
                         "type": "string",
                         "maxLength": 160
                     },
-                    "address_private": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
                     "latitude": {
                         "type": "string",
                         "format": "decimal",
@@ -3413,9 +3409,6 @@
                     "landmark_text": {
                         "type": "string"
                     },
-                    "address_private": {
-                        "type": "string"
-                    },
                     "latitude": {
                         "type": "number",
                         "format": "double"
@@ -3505,7 +3498,6 @@
                     }
                 },
                 "required": [
-                    "address_private",
                     "advance_months",
                     "agent_fee_amount",
                     "available_from",
@@ -4032,10 +4024,6 @@
                     "muted": {
                         "type": "boolean"
                     },
-                    "address_private": {
-                        "type": "string",
-                        "nullable": true
-                    },
                     "my_read_seq": {
                         "type": "integer"
                     },
@@ -4047,7 +4035,6 @@
                     }
                 },
                 "required": [
-                    "address_private",
                     "blocked_by_me",
                     "id",
                     "last_message_at",
@@ -5322,10 +5309,6 @@
                     "landmark_text": {
                         "type": "string",
                         "maxLength": 160
-                    },
-                    "address_private": {
-                        "type": "string",
-                        "maxLength": 255
                     },
                     "latitude": {
                         "type": "string",

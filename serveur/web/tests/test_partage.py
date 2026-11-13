@@ -87,7 +87,7 @@ class TestApercuDuLien:
         assert meta(page, "description") == description
 
     def test_donnees_structurees_sans_adresse_privee(self):
-        a = ListingFactory(rent_amount=30000, address_private="Maison bleue derrière la pharmacie")
+        a = ListingFactory(rent_amount=30000)
         page = html(Client().get(f"/annonces/{a.slug}"))
         annonce, fil = json_ld(page)
         assert annonce["@type"] == "RealEstateListing"
@@ -95,7 +95,6 @@ class TestApercuDuLien:
         assert annonce["about"]["address"]["addressLocality"] == "Parakou"
         assert annonce["about"]["address"]["streetAddress"] == a.district.name
         assert fil["@type"] == "BreadcrumbList" and len(fil["itemListElement"]) == 3
-        assert "pharmacie" not in page
 
     def test_le_texte_de_l_annonce_ne_casse_pas_le_json_ld(self):
         a = ListingFactory(title="Chambre </script><b>&")

@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 from apps.accounts.api.authentication import AuthJwt, EstClientOuGerant
 from apps.core.api.throttles import LimiteCompte, LimiteLecture
 from apps.core.errors import ErreurMetier
-from apps.listings import selectors as annonces
 
 from .. import selectors, services, ws
 from . import serializers as s
@@ -121,11 +120,6 @@ class ConversationDetail(_Participant):
     def get(self, request, conversation_id):
         conversation = selectors.conversation_du_participant(request.user.pk, conversation_id)
         sortie = _conversation_out(conversation, request.user.pk)
-        sortie["address_private"] = (
-            annonces.adresse_privee(conversation.listing_id)
-            if conversation.gerant_id == request.user.pk
-            else None
-        )
         autre = selectors.autre_participant(conversation, request.user.pk)
         sortie["my_read_seq"] = selectors.position_de_lecture(conversation, request.user.pk)
         sortie["other_read_seq"] = selectors.position_de_lecture(conversation, autre)

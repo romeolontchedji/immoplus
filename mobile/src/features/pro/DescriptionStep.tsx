@@ -16,7 +16,7 @@ import { EntetePublication } from "./EntetePublication";
 
 /** Étape de l'assistant où se saisit chaque champ obligatoire. */
 const ETAPE_DU_CHAMP: Partial<Record<(typeof CHAMPS_CREATION)[number], string>> = {
-  district: "localisation", landmark_text: "localisation", address_private: "localisation",
+  district: "localisation", landmark_text: "localisation",
   water_sources: "equipements", electricity_meter: "equipements", kitchen: "equipements", has_private_bathroom: "equipements",
   is_fenced: "equipements",
 };

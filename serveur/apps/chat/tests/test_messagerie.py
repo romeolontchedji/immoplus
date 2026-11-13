@@ -617,15 +617,11 @@ class TestApi:
             "has_more"
         ]
 
-    def test_detail_adresse_privee_reservee_au_gerant(self, decor):
+    def test_detail_sans_adresse_privee(self, decor):
         conversation, *_ = ouvrir(decor)
-        decor.annonce.address_private = "Rue 12 maison bleue"
-        decor.annonce.save()
         d_ger = client_de(decor.gerant.user).get(f"/v1/conversations/{conversation.pk}").json()
         d_loc = client_de(decor.locataire).get(f"/v1/conversations/{conversation.pk}").json()
-        assert (
-            d_ger["address_private"] == "Rue 12 maison bleue" and d_loc["address_private"] is None
-        )
+        assert "address_private" not in d_ger and "address_private" not in d_loc
         assert d_loc["last_seq"] == 1 and d_loc["my_read_seq"] == 1 and d_loc["other_read_seq"] == 0
 
     def test_filtre_par_annonce_cote_gerant(self, decor):

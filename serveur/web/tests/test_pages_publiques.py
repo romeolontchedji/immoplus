@@ -88,7 +88,7 @@ class TestFilEtFiche:
 
     def test_fiche_sans_donnee_privee(self):
         p = gerant_verifie()
-        a = ListingFactory(gerant=p, address_private="Rue 12 maison bleue", title="Belle chambre")
+        a = ListingFactory(gerant=p, title="Belle chambre")
         medias_prets(a, photos=2, video=True)
         r = Client().get(f"/annonces/{a.slug}")
         page = html(r)
@@ -296,7 +296,7 @@ class TestEspaceLocataire:
 class TestMessagesWeb:
     def mise_en_place(self):
         p = gerant_verifie()
-        a = ListingFactory(gerant=p, address_private="Rue 12 maison bleue")
+        a = ListingFactory(gerant=p)
         locataire = ClientFactory()
         conversation, *_ = chat.ouvrir(
             locataire, a.pk, "Bonjour, la chambre est libre ?", str(uuid.uuid4())
@@ -308,11 +308,11 @@ class TestMessagesWeb:
         cote_gerant = connecte(p.user)
         assert "Bonjour, la chambre est libre" in html(cote_gerant.get("/compte/messages"))
         page = html(cote_gerant.get(f"/compte/messages/{conversation.pk}"))
-        assert "Bonjour, la chambre est libre" in page and "Rue 12 maison bleue" in page
+        assert "Bonjour, la chambre est libre" in page and "Adresse privée" not in page
         conversation.refresh_from_db()
         assert conversation.gerant_read_seq == 1
         page_loc = html(connecte(locataire).get(f"/compte/messages/{conversation.pk}"))
-        assert "Rue 12" not in page_loc
+        assert "Adresse privée" not in page_loc
 
     def test_envoi_blocage_deblocage(self):
         p, a, locataire, conversation = self.mise_en_place()

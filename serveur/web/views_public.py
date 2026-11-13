@@ -831,9 +831,6 @@ def _messagerie(request, c=None, message=None, niveau=None):
             message=message,
             niveau=niveau,
             motifs=MOTIFS_CONVERSATION,
-            adresse=selectors.adresse_privee(c.listing_id)
-            if c.gerant_id == request.user.pk
-            else None,
         )
     return render(request, "web/public/messagerie.html", contexte)
 

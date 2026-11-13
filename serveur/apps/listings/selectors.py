@@ -490,7 +490,7 @@ def _trouver_visible(ident) -> Listing | None:
 
 
 def fiche_publique(ident) -> dict | None:
-    """Fiche d'une annonce (par identifiant ou par slug). Jamais d'adresse privée ni de numéro (EF-REC-08)."""
+    """Fiche d'une annonce (par identifiant ou par slug). Jamais de numéro de téléphone (EF-REC-08)."""
     annonce = _trouver_visible(ident)
     if annonce is None:
         return None
@@ -592,7 +592,7 @@ def slugs_publies() -> list[tuple[str, object]]:
 
 
 def annonce_pour_messagerie(annonce_id) -> dict | None:
-    """Ce dont la messagerie a besoin d'une annonce : jamais l'adresse privée (voir `adresse_privee`)."""
+    """Ce dont la messagerie a besoin d'une annonce : jamais de coordonnées."""
     ligne = (
         Listing.objects.filter(pk=annonce_id, deleted_at__isnull=True)
         .select_related("district")
@@ -635,14 +635,6 @@ def annonces_pour_messagerie(ids) -> dict:
             "cover_url": poster,
         }
     return res
-
-
-def adresse_privee(annonce_id) -> str:
-    """Adresse précise, réservée aux participants d'une conversation (CDC §10.5)."""
-    return (
-        Listing.objects.filter(pk=annonce_id).values_list("address_private", flat=True).first()
-        or ""
-    )
 
 
 # ----------------------------------------------------------------------------- favoris et alertes

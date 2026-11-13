@@ -116,9 +116,6 @@ class Listing(models.Model):
         District, on_delete=models.PROTECT, related_name="listings", verbose_name="quartier"
     )
     landmark_text = models.CharField(max_length=160, verbose_name="repère")
-    address_private = models.CharField(
-        max_length=255, blank=True, default="", verbose_name="adresse privée"
-    )
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     distance_to_campus_m = models.IntegerField(verbose_name="distance à l'UP (m)")

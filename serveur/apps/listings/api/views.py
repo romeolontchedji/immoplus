@@ -162,7 +162,7 @@ class AnnonceProDetail(_Pro):
 
     @extend_schema(
         tags=TAG_PRO,
-        summary="Lire une annonce (adresse privée comprise)",
+        summary="Lire une annonce (version gérant)",
         responses={200: s.AnnonceProOut},
     )
     def get(self, request, annonce_id):

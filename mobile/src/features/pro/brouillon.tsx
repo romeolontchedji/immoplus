@@ -20,7 +20,6 @@ export type Brouillon = {
   available_from?: string; // AAAA-MM-JJ
   district?: string; // identifiant du quartier
   landmark_text?: string;
-  address_private?: string;
   latitude?: string; // facultatif (décision V7) : GPS du téléphone, sinon le serveur prend le centre du quartier
   longitude?: string;
   has_private_bathroom?: boolean;
@@ -38,7 +37,7 @@ export const PHOTOS_MIN = 5;
 /** Champs obligatoires pour créer l'annonce côté serveur. */
 export const CHAMPS_CREATION = [
   "title", "room_type", "rent_amount", "deposit_months", "advance_months", "available_from", "district", "landmark_text",
-  "address_private", "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter", "kitchen",
+  "has_private_bathroom", "is_fenced", "water_sources", "electricity_meter", "kitchen",
 ] as const satisfies readonly (keyof Brouillon)[];
 
 export function champsManquants(b: Brouillon): (typeof CHAMPS_CREATION)[number][] {

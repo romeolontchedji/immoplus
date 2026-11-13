@@ -261,7 +261,6 @@ class Command(BaseCommand):
                     room_type=type_,
                     district=district,
                     landmark_text=f"Près du marché de {district.name}",
-                    address_private="Rue 14, quartier étudiant",
                     latitude=district.latitude,
                     longitude=district.longitude,
                     rent_amount=loyer,

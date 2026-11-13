@@ -21,7 +21,6 @@ class AnnonceIn(serializers.Serializer):
     )
     district = serializers.UUIDField()
     landmark_text = serializers.CharField(max_length=160)
-    address_private = serializers.CharField(max_length=255, required=False, allow_blank=True)
     latitude = serializers.DecimalField(
         max_digits=9,
         decimal_places=6,
@@ -76,7 +75,6 @@ class AnnonceProOut(serializers.Serializer):
     district = serializers.UUIDField(source="district_id")
     district_name = serializers.CharField(source="district.name")
     landmark_text = serializers.CharField()
-    address_private = serializers.CharField()
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
     distance_to_campus_m = serializers.IntegerField()
