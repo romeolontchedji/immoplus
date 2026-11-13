@@ -174,4 +174,15 @@ request.
 - **Mots de passe du profil** : `autocomplete="new-password"` ; certains gestionnaires de mots de passe l'ignorent.
 - **Courriels** : tous partent aussi en HTML (`apps/core/tasks.py`) ; mise en forme non testée dans les clients de messagerie réels.
 - **Webhook et domaine** : l'adresse déclarée chez KKiaPay ne doit pas être redirigée (une redirection compte comme un échec).
+- **Commande `supprimer_comptes_test`** : écrite sans pouvoir être lancée ici (PostgreSQL absent du poste) ; elle suspend le déclencheur
+  `audit_logs_pas_de_modification` dans une transaction (rôle `migrate`, propriétaire des tables). **À essayer d'abord en simulation** sur
+  le VPS. La suppression en cascade s'appuie sur les clés `PROTECT` : une table ajoutée plus tard avec une clé de ce genre sera supprimée
+  elle aussi, sans liste à maintenir.
+- **Résumé hebdomadaire et rappels d'abonnement** : heures du planning (lundi 7 h, 9 h tous les jours) lues par Celery dans le fuseau du
+  projet ; courriels non testés avec le vrai serveur SMTP. Aucun courriel n'est envoyé à un gérant sans adresse confirmée (notification seule).
+- **Réponse du gérant à un avis** : l'API publique n'expose pas la réponse (elle n'a pas été ajoutée pour ne pas changer le schéma) ;
+  elle n'est visible que sur le site.
+- **Messages de l'équipe** : le contenu n'est pas filtré (l'équipe peut donner un numéro ou un lien) ; les messages d'un utilisateur à
+  l'équipe sont limités à 5 par 24 h mais pas contrôlés (pas de détection de coordonnées). La réponse d'un utilisateur arrive dans la
+  boîte de l'équipe et par courriel, pas par notification dans l'administration. Rien n'est exposé à l'API ni à l'application mobile.
 

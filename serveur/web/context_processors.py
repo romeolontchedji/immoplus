@@ -4,6 +4,7 @@ from django.utils.functional import SimpleLazyObject
 
 from apps.chat import selectors as chat_selectors
 from apps.core import configuration
+from apps.moderation import messages_equipe as equipe
 from apps.notifications import selectors as notifications
 
 # Pages sans barre latérale même connecté : l'accueil (menus inchangés) et les pages de connexion.
@@ -47,6 +48,7 @@ def navigation(request):
         "abonnement_requis": abonnement_requis,
         "non_lus_messages": chat_selectors.total_non_lus(utilisateur.pk, utilisateur.role),
         "non_lues_notifications": notifications.non_lues(utilisateur.pk),
+        "non_lus_equipe": equipe.non_lus(utilisateur.pk),
         # Les 5 dernières, pour la fenêtre de la cloche (lues seulement si elle est affichée).
         "notifications_recentes": SimpleLazyObject(lambda: _recentes(utilisateur.pk)),
         # Barre latérale fixe sur toutes les pages des comptes connectés, sauf l'accueil (plan v3, E2).

@@ -52,4 +52,12 @@ app.conf.beat_schedule = {
         "task": "apps.billing.echeances",
         "schedule": crontab(minute=0, hour=4),
     },
+    "rappels-fin-abonnement": {
+        "task": "apps.billing.rappels_fin_abonnement",
+        "schedule": crontab(minute=0, hour=9),
+    },
+    "resume-hebdomadaire-equipe": {
+        "task": "apps.moderation.resume_hebdomadaire",
+        "schedule": crontab(minute=0, hour=7, day_of_week=1),
+    },
 }

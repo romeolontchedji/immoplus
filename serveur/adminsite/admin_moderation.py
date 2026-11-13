@@ -498,7 +498,31 @@ class ReportAdmin(admin.ModelAdmin):
     list_select_related = ("reporter", "assigned_to")
     list_filter = ("status", "reason_code", "source", "target_type")
     ordering = ("created_at",)
-    actions = ["prendre", "classer"]
+    actions = ["prendre", "classer", "ecrire_au_plaignant", "ecrire_a_la_personne_visee"]
+
+    @admin.action(description="Écrire à la personne qui a signalé")
+    def ecrire_au_plaignant(self, request, queryset):
+        from .admin_equipe import rediriger_vers_ecriture
+
+        rapport = queryset.select_related("reporter").first()
+        if rapport is None:
+            return None
+        return rediriger_vers_ecriture(
+            self, request, rapport.reporter, contexte=f"signalement:{rapport.pk}",
+            objet="À propos de ton signalement",
+        )  # fmt: skip
+
+    @admin.action(description="Écrire à la personne visée par le signalement")
+    def ecrire_a_la_personne_visee(self, request, queryset):
+        from .admin_equipe import rediriger_vers_ecriture
+
+        rapport = queryset.first()
+        if rapport is None:
+            return None
+        return rediriger_vers_ecriture(
+            self, request, _personne_visee(rapport), contexte=f"signalement:{rapport.pk}",
+            objet="À propos d'un signalement te concernant",
+        )  # fmt: skip
     readonly_fields = [
         "personne_visee", "acces_rapide", "reason_code", "details", "status", "signale_par",
         "target_type", "target_id", "listing", "assigned_to", "resolved_by", "resolved_at", "resolution_note",
@@ -730,20 +754,48 @@ class AvisAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_hidden", "rating")
     search_fields = ("comment", "listing__title")
-    readonly_fields = ("listing", "author", "rating", "comment", "created_at", "updated_at")
+    readonly_fields = (
+        "listing", "author", "rating", "comment", "owner_reply", "owner_replied_at", "created_at", "updated_at",
+    )  # fmt: skip
     fields = (
         "listing",
         "author",
         "rating",
         "comment",
+        "owner_reply",
+        "owner_replied_at",
         "is_hidden",
         "hidden_reason",
         "created_at",
         "updated_at",
     )
     ordering = ("-created_at",)
-    actions = ("masquer", "reafficher")
+    actions = ("masquer", "reafficher", "ecrire_a_l_auteur", "ecrire_au_gerant")
     list_select_related = ("listing", "author")
+
+    @admin.action(description="Écrire à l'auteur de l'avis")
+    def ecrire_a_l_auteur(self, request, queryset):
+        from .admin_equipe import rediriger_vers_ecriture
+
+        avis = queryset.select_related("listing", "author").first()
+        if avis is None:
+            return None
+        return rediriger_vers_ecriture(
+            self, request, avis.author, contexte=f"avis:{avis.pk}",
+            objet=f"À propos de ton avis sur « {avis.listing.title[:60]} »",
+        )  # fmt: skip
+
+    @admin.action(description="Écrire au gérant concerné par l'avis")
+    def ecrire_au_gerant(self, request, queryset):
+        from .admin_equipe import rediriger_vers_ecriture
+
+        avis = queryset.select_related("listing", "listing__gerant__user").first()
+        if avis is None:
+            return None
+        return rediriger_vers_ecriture(
+            self, request, avis.listing.gerant.user, contexte=f"avis:{avis.pk}",
+            objet=f"À propos d'un avis reçu sur « {avis.listing.title[:60]} »",
+        )  # fmt: skip
 
     @admin.display(description="Note", ordering="rating")
     def note_etoiles(self, obj):

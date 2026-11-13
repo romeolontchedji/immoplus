@@ -38,6 +38,7 @@ L'**administrateur a la main sur tout ce qui peut s'écrire** ; le modérateur t
 |---|---|---|
 | Signalements : lire, prendre, classer, sanctionner | ✔ | ✔ |
 | Lire une conversation (motif obligatoire, journalisé) | ✔ | ✔ |
+| **Écrire à un locataire ou à un gérant** (réponse à une question, à un avis, suite à une décision) | ✔ | ✔ |
 | Annonces : masquer, retirer (avec motif), remettre en ligne ce qui a été masqué, approuver, refuser | ✔ | ✔ |
 | Annonces : rétablir une annonce **retirée**, marquer louée, supprimer, **corriger** titre, loyer, repère, date, quartier | ✔ | |
 | Avis : masquer, réafficher | ✔ | ✔ |
@@ -135,7 +136,8 @@ Une page demande un **motif obligatoire** (10 caractères au moins) : le gérant
 journalisée dans « Actions de modération » et dans le journal d'activité. Les mêmes décisions existent depuis un signalement.
 Une chambre **marquée louée** est archivée aussitôt, photos et vidéo supprimées.
 
-**Avis.** Publiés tout de suite. Actions **Masquer** (l'avis disparaît du public, l'auteur le garde) et
+**Avis.** Publiés tout de suite. Le gérant peut y **répondre publiquement** (la réponse se lit sous l'avis ; on ne répond
+pas à un avis masqué). Actions **Masquer** (l'avis disparaît du public, l'auteur le garde) et
 **Réafficher**.
 
 **Types de logement.** Un **administrateur ajoute** un type depuis **Types de logement › Ajouter** (libellé de 3 à 40
@@ -318,6 +320,7 @@ Publication, fraîcheur et cycle de vie des chambres.
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
 | `LISTING_PREMODERATION` | décoché | **Sans effet pour l'instant** (la relecture préalable a été retirée : un gérant vérifié publie directement et l'équipe est prévenue par courriel). Gardé pour une éventuelle réactivation. |
+| `EMAIL_RESUME_HEBDOMADAIRE` | coché | Coché : chaque lundi à 7 h, administrateurs et modérateurs reçoivent un résumé par courriel (nouvelles annonces, signalements ouverts, paiements de la semaine). |
 | `EMAIL_NOUVELLES_ANNONCES` | coché | Coché : à la première mise en ligne d'une annonce, un courriel part à l'équipe (administrateurs et modérateurs). |
 | `STALE_REMINDER_DAYS` | `[7, 10]` | Liste de jours sans confirmation après lesquels le gérant reçoit un rappel, ex. [7, 10]. Utilisé seulement si le masquage automatique ci-dessous est actif. |
 | `STALE_HIDE_DAYS` | `0` | Nombre de jours sans confirmation avant que l'annonce soit masquée automatiquement. 0 = jamais (recommandé : le gérant marque lui-même une chambre louée). |
@@ -380,6 +383,7 @@ indépendantes.
 | Paramètre | Par défaut | À quoi il sert |
 |---|---|---|
 | `SUBSCRIPTION_ENABLED` | décoché | Coché : les gérants doivent payer un abonnement pour publier (leurs annonces déjà en ligne restent visibles). Décoché : tout est gratuit. |
+| `SUBSCRIPTION_REMINDER_DAYS` | `[7, 1]` | Jours avant la fin d'un abonnement payant où le gérant reçoit un rappel (notification et courriel). Liste vide : aucun rappel. |
 | `SUBSCRIPTION_GRACE_DAYS` | `7` | Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son abonnement. |
 | `PLANS` | `[{"code": "free_v1", "label": "Gratuit V1", "price": 0, "period_months": 1, "max_active_listings": null, "active": true}, {"code": "standard", "label": "Standard", "price": null, "period_months": 1, "max_active_listings": null, "active": false}]` | Liste des formules d'abonnement (code, nom, prix en FCFA, durée). Ne sert qu'une fois l'abonnement activé. |
 | `PAID_ALERTS_ENABLED` | décoché | Coché : un locataire paie une fois chaque nouvelle alerte (prix ci-dessous). Les alertes déjà créées continuent de fonctionner. Décoché : alertes gratuites. |
@@ -434,4 +438,56 @@ redirection compte comme un échec). Le webhook rattrape un paiement dont le nav
 le serveur revérifie toujours la transaction auprès de KKiaPay. Ensuite : fixer le prix de la formule « standard » dans
 `PLANS` (prix et `"active": true`, `free_v1` reste à `"price": 0`), puis cocher `PAID_ALERTS_ENABLED` et/ou
 `SUBSCRIPTION_ENABLED`. Tester d'abord en `KKIAPAY_SANDBOX=true`.
+
+### Courriels automatiques à l'équipe et aux gérants
+
+- **Nouvelle annonce** : à chaque première mise en ligne (`EMAIL_NOUVELLES_ANNONCES`).
+- **Résumé hebdomadaire** : chaque lundi à 7 h aux administrateurs et modérateurs qui ont une adresse (`EMAIL_RESUME_HEBDOMADAIRE`) :
+  nouvelles annonces de la semaine (les 10 dernières, avec un lien vers la liste filtrée), signalements ouverts (dont ceux hors
+  délai de 24 h), paiements de la semaine (nombre, total, abonnements et alertes) et le lien vers les statistiques.
+- **Fin d'abonnement** : le gérant est prévenu 7 jours puis 1 jour avant la fin d'un abonnement payant (`SUBSCRIPTION_REMINDER_DAYS`),
+  par notification et, si son adresse est confirmée, par courriel. Un abonnement annulé en fin de période n'est pas relancé.
+
+### Supprimer définitivement des comptes de test (ligne de commande)
+
+Un compte se supprime normalement par **anonymisation** (le journal d'activité, les messages et les annonces gardent leurs liens, et le
+journal est protégé dans la base). Pour effacer des comptes créés pour des essais, un administrateur lance, **sur le serveur** (jamais depuis
+le web) et avec le service `migrer` (propriétaire des tables) :
+
+```bash
+cd ~/apps/immoplus
+# 1. Simulation : liste ce qui serait effacé, ne supprime rien
+immoplus run --rm migrer python manage.py supprimer_comptes_test --nom-utilisateur kofi.test
+# 2. Exécution réelle
+immoplus run --rm migrer python manage.py supprimer_comptes_test --nom-utilisateur kofi.test --confirmer SUPPRIMER
+# Nettoyer d'un coup les restes des comptes déjà « supprimés » (anonymisés)
+immoplus run --rm migrer python manage.py supprimer_comptes_test --anonymises --confirmer SUPPRIMER
+```
+
+Sélection : `--nom-utilisateur`, `--email`, `--id` (répétables) ou `--anonymises`. **Ce qui est effacé** : le compte et tout ce qui lui appartient
+(annonces et leurs photos/vidéos, conversations et messages, favoris, alertes, avis, notifications, appareils, abonnements, paiements,
+signalements qui le visent) **et ses lignes du journal d'activité**. **Décision sur le journal** : ces lignes identifient une personne
+de test, donc elles sont effacées (la commande suspend la garde du journal le temps de la suppression, dans une seule transaction qui
+s'annule en cas d'erreur) ; il reste **une seule ligne de trace** sans donnée personnelle (`compte.supprime_definitivement` : identifiant,
+rôle, mention « commande »). **Garde-fous** : le personnel n'est jamais supprimé ; un compte qui a un paiement réussi (vrai argent) est
+refusé sauf `--meme-payes` ; les conversations effacées disparaissent aussi chez l'autre personne (un locataire de test qui parlait à un vrai
+gérant fait perdre cette conversation au gérant : à éviter avec de vrais comptes) ; sans `--confirmer SUPPRIMER`, rien n'est effacé.
+
+### Écrire aux utilisateurs et répondre à leurs questions
+
+Administrateurs **et** modérateurs peuvent écrire à un locataire ou à un gérant, et répondre à ses questions.
+
+- **Boîte de l'équipe** : **Modération › Messages de l'équipe**. La tuile **Messages à traiter** de l'accueil compte les questions
+  des utilisateurs qui attendent une réponse. Filtres : sens (équipe → personne ou personne → équipe), à traiter, à propos de.
+- **Répondre** : cochez un message, action **Répondre à cette personne** : la page montre tout l'échange et un formulaire (objet
+  facultatif, 2 000 caractères au plus). Répondre marque ses questions en attente comme **traitées**.
+- **Écrire à partir d'un contexte** (l'objet est pré-rempli) : depuis **Avis** (« Écrire à l'auteur de l'avis », « Écrire au gérant concerné »),
+  depuis **Signalements** (« Écrire à la personne qui a signalé », « Écrire à la personne visée ») et depuis **Comptes** (« Écrire un message
+  à cette personne », administrateurs).
+- **Ce que reçoit la personne** : une notification (non désactivable, prioritaire) et un courriel si son adresse est confirmée ; elle lit le
+  message dans **Équipe Immo+** (menu du site, avec un compteur de non lus) et peut répondre depuis la même page.
+- **Questions des utilisateurs** : un locataire ou un gérant écrit à l'équipe depuis **Équipe Immo+** (5 messages par 24 h au plus) ; tous
+  les administrateurs et modérateurs actifs qui ont une adresse reçoivent un courriel avec le lien pour répondre.
+- Toute écriture de l'équipe est inscrite dans le journal d'activité. L'application mobile n'a pas cet écran (la messagerie de l'équipe
+  n'existe pas dans l'API) : le message arrive par notification et courriel, la réponse se fait sur le site.
 

@@ -320,6 +320,7 @@
                       <span class="avis-item__date">{{ a.created_at|date:"j F Y" }}</span>
                     </div>
                     {% if a.comment %}<p class="avis-item__texte">{{ a.comment }}</p>{% endif %}
+                    {% if a.owner_reply %}<p class="avis-item__texte"><strong>Réponse du gérant :</strong> {{ a.owner_reply }}</p>{% endif %}
                   </li>
                 {% endfor %}
               </ul>

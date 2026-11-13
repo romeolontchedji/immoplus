@@ -20,7 +20,7 @@ SECTIONS = [
     ("annonces", "Annonces", "Publication, fraîcheur et cycle de vie des chambres.",
      ["LISTING_PREMODERATION", "STALE_REMINDER_DAYS", "STALE_HIDE_DAYS", "RENTED_REPORTS_THRESHOLD",
       "RENTED_VIDEO_DELETE_DAYS", "READONLY_AFTER_RENT_DAYS", "ARCHIVE_AFTER_RENT_DAYS", "CAMPUS_REFERENCE",
-      "EMAIL_NOUVELLES_ANNONCES"]),
+      "EMAIL_NOUVELLES_ANNONCES", "EMAIL_RESUME_HEBDOMADAIRE"]),
     ("messagerie", "Messagerie, alertes et notifications", "Limites d'envoi et protection des coordonnées.",
      ["CONTACT_LEAK_MODE", "MESSAGE_PER_MINUTE", "NEW_CONVERSATIONS_PER_DAY", "ALERTS_MAX_PER_USER",
       "UNANSWERED_REMINDER_H"]),
@@ -32,7 +32,7 @@ SECTIONS = [
     ("moderation", "Modération", "Garde-fous du personnel.",
      ["STAFF_READS_ALERT_THRESHOLD", "MODERATOR_MAX_SUSPENSION_DAYS"]),
     ("abonnement", "Paiements (KKiaPay)", "Éteints par défaut. Cochez pour faire payer les gérants (abonnement) et les locataires (alertes).",
-     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "PLANS", "PAID_ALERTS_ENABLED", "ALERT_PRICE"]),
+     ["SUBSCRIPTION_ENABLED", "SUBSCRIPTION_GRACE_DAYS", "SUBSCRIPTION_REMINDER_DAYS", "PLANS", "PAID_ALERTS_ENABLED", "ALERT_PRICE"]),
 ]  # fmt: skip
 
 CHOIX = {
@@ -102,7 +102,7 @@ NOTES = {
     "AUTH_RATE_PER_MIN_IP": "Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une "
     "même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après "
     "des mots de passe faux.",
-    "EMAIL_NOUVELLES_ANNONCES": "Coché : chaque administrateur (adresse confirmée) reçoit un courriel quand un gérant "
+    "EMAIL_NOUVELLES_ANNONCES": "Coché : les administrateurs et modérateurs reçoivent un courriel quand un gérant "
     "met une nouvelle annonce en ligne, avec le lien pour la voir ou la masquer. Les remises en ligne ne comptent pas.",
     "TURNSTILE_ENABLED": "Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe "
     "oublié sur le site. Décoché (réglage au lancement) : aucun défi, et le widget n'est pas chargé ; seules les "
@@ -121,6 +121,10 @@ NOTES = {
     "restent visibles). Décoché : tout est gratuit.",
     "SUBSCRIPTION_GRACE_DAYS": "Jours pendant lesquels un gérant garde ses annonces en ligne après la fin de son "
     "abonnement.",
+    "SUBSCRIPTION_REMINDER_DAYS": "Liste de jours avant la fin d'un abonnement payant où le gérant est prévenu (notification et courriel), "
+    "ex. [7, 1]. Liste vide : aucun rappel.",
+    "EMAIL_RESUME_HEBDOMADAIRE": "Coché : chaque lundi, l'équipe (administrateurs et modérateurs) reçoit un résumé par courriel : "
+    "nouvelles annonces, signalements ouverts, paiements de la semaine.",
     "PLANS": "Formules d'abonnement des gérants (code, nom, prix en FCFA, durée). Pour vendre la formule « standard » : "
     "fixez son prix et mettez \"active\": true.",
     "PAID_ALERTS_ENABLED": "Coché : un locataire paie une fois chaque nouvelle alerte (prix ci-dessous). Les alertes déjà "

@@ -145,6 +145,56 @@ class TestAvis:
         avis.donner(loc, a.pk, 5, "Après la location aussi.")  # on peut encore noter une chambre louée
         assert selectors.resume_avis_gerant(a.gerant_id) == {"average": 5.0, "count": 1}
 
+    def test_le_gerant_repond_a_un_avis(self, django_capture_on_commit_callbacks):
+        a = ListingFactory()
+        loc = ClientFactory(full_name="Awa Bio")
+        echanger(loc, a)
+        avis_ = avis.donner(loc, a.pk, 4, "Chambre propre.")
+        with django_capture_on_commit_callbacks(execute=True):
+            avis.repondre(a.gerant, avis_.pk, "Merci Awa, à bientôt !")
+        avis_.refresh_from_db()
+        assert avis_.owner_reply == "Merci Awa, à bientôt !" and avis_.owner_replied_at
+        assert Notification.objects.filter(user=loc, kind="listing.review_reply").count() == 1
+        assert selectors.avis(annonce_id=a.pk)[0]["owner_reply"] == "Merci Awa, à bientôt !"
+        # modifier la réponse ne prévient pas une seconde fois ; la vider la retire
+        with django_capture_on_commit_callbacks(execute=True):
+            avis.repondre(a.gerant, avis_.pk, "Merci beaucoup !")
+        assert Notification.objects.filter(user=loc, kind="listing.review_reply").count() == 1
+        avis.repondre(a.gerant, avis_.pk, "")
+        avis_.refresh_from_db()
+        assert avis_.owner_reply == "" and avis_.owner_replied_at is None
+
+    def test_seul_le_gerant_de_la_chambre_repond_sans_coordonnees(self):
+        a = ListingFactory()
+        loc = ClientFactory()
+        echanger(loc, a)
+        avis_ = avis.donner(loc, a.pk, 5, "Super")
+        with pytest.raises(ErreurMetier) as e:
+            avis.repondre(gerant_verifie(), avis_.pk, "Merci")  # un autre gérant
+        assert e.value.statut == 404
+        with pytest.raises(ErreurMetier) as e:
+            avis.repondre(a.gerant, avis_.pk, "Appelle-moi au 97 12 34 56")
+        assert e.value.code == "contact_detected"
+        Review.objects.filter(pk=avis_.pk).update(is_hidden=True)
+        with pytest.raises(ErreurMetier) as e:
+            avis.repondre(a.gerant, avis_.pk, "Merci")
+        assert e.value.code == "review_hidden"
+
+    def test_page_avis_recus_du_gerant(self):
+        from apps.accounts.tests.fabriques import MOT_DE_PASSE
+
+        a = ListingFactory()
+        loc = ClientFactory(full_name="Awa Bio")
+        echanger(loc, a)
+        avis_ = avis.donner(loc, a.pk, 3, "Moyen")
+        c = Client()
+        c.post("/connexion", {"username": a.gerant.user.username, "password": MOT_DE_PASSE})
+        assert "Moyen" in c.get("/pro/avis").content.decode()
+        r = c.post("/pro/avis", {"avis_id": str(avis_.pk), "reply": "On va améliorer ça."})
+        assert r.status_code == 302 and r["Location"].endswith("?ok=repondu")
+        public = Client().get(f"/annonces/{a.slug}").content.decode()
+        assert "Réponse du gérant" in public and "On va améliorer ça." in public
+
     def test_coordonnees_refusees_et_note_bornee(self):
         a = ListingFactory()
         loc = ClientFactory()

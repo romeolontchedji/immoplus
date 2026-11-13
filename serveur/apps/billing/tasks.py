@@ -16,3 +16,9 @@ def appliquer_evenement(paiement_id: str, statut: str) -> str:
 @shared_task(name="apps.billing.echeances")
 def echeances() -> dict:
     return services.echeances()
+
+
+@shared_task(name="apps.billing.rappels_fin_abonnement")
+def rappels_fin_abonnement() -> dict:
+    return services.rappels_fin_abonnement()
+

@@ -59,6 +59,13 @@
           <span class="lg-tuile__libelle">Annonces en traitement</span>
           <span class="lg-tuile__aide">médias en cours de traitement</span>
         </a>
+        <a class="lg-tuile{% if v.messages_a_traiter %} lg-tuile--urgent{% endif %}"
+           href="{% url 'admin:moderation_messageequipe_changelist' %}?vers_utilisateur__exact=0&traite_le__isempty=1">
+          <span class="lg-tuile__icone lg-tuile__icone--rouge">{% include "admin/includes_icone.html" with nom="flag" %}</span>
+          <span class="lg-tuile__nombre">{{ v.messages_a_traiter }}</span>
+          <span class="lg-tuile__libelle">Messages à traiter</span>
+          <span class="lg-tuile__aide">questions des utilisateurs</span>
+        </a>
         <a class="lg-tuile"
            href="{% url 'admin:listings_listing_changelist' %}?published_at__gte={{ v.depuis_7_jours }}">
           <span class="lg-tuile__icone">{% include "admin/includes_icone.html" with nom="house" %}</span>

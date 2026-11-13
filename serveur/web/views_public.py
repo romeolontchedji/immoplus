@@ -836,6 +836,9 @@ def conversation(request, conversation_id):
 def _lien_notification(n: dict) -> str | None:
     """Lien profond vers la ressource visée, quand elle existe (conversation d'abord, sinon annonce)."""
     data = n.get("data") or {}
+    url = str(data.get("url") or "")
+    if url.startswith("/") and not url.startswith("//"):
+        return url  # lien interne donné par la notification (ex. « Renouveler mon abonnement »)
     if data.get("conversation_id"):
         return f"/compte/messages/{data['conversation_id']}"
     if data.get("slug"):

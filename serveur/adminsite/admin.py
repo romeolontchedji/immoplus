@@ -171,7 +171,7 @@ class UserAdmin(admin.ModelAdmin):
         return format_html('<a class="button" href="{}">{}</a>', url, texte)
 
     actions = [
-        "suspendre", "reactiver", "bannir", "deconnecter_comptes", "passer_moderateur",
+        "ecrire_message", "suspendre", "reactiver", "bannir", "deconnecter_comptes", "passer_moderateur",
         "passer_administrateur", "supprimer_comptes",
     ]  # fmt: skip
 
@@ -362,6 +362,12 @@ class UserAdmin(admin.ModelAdmin):
     @admin.action(description="Bannir")
     def bannir(self, request, queryset):
         self._appliquer(request, queryset, "banned")
+
+    @admin.action(description="Écrire un message à cette personne")
+    def ecrire_message(self, request, queryset):
+        from .admin_equipe import rediriger_vers_ecriture
+
+        return rediriger_vers_ecriture(self, request, queryset.first())
 
     @admin.action(description="Déconnecter partout (site et application)")
     def deconnecter_comptes(self, request, queryset):
@@ -739,7 +745,7 @@ class TransactionAdmin(LectureSeule):
         return None
 
 
-from . import admin_moderation, admin_referentiels  # noqa: E402,F401  (modération, quartiers)
+from . import admin_equipe, admin_moderation, admin_referentiels  # noqa: E402,F401  (messages, modération, quartiers)
 
 # Les droits du personnel viennent du rôle (apps/accounts/permissions_personnel.py) : les groupes ne servent à rien.
 if admin.site.is_registered(Group):

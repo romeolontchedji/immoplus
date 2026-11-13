@@ -355,6 +355,8 @@ Une tâche est **acquittée à la fin** : si un ouvrier meurt au milieu, la tâc
 | Toutes les 30 min | Rappel aux gérants | Message non lu depuis 2 h |
 | Toutes les heures | Nettoyage des envois abandonnés, purge des médias, fin des suspensions | Ménage |
 | Toutes les 6 h | Fraîcheur des annonces | Relance à J+7 et J+10, masquage à J+14 sans confirmation |
+| Chaque jour à 9 h | Rappels de fin d'abonnement | Prévient le gérant 7 jours et 1 jour avant la fin d'un abonnement payant (notification, et courriel si l'adresse est confirmée) |
+| Chaque lundi à 7 h | Résumé hebdomadaire de l'équipe | Courriel aux administrateurs et modérateurs : nouvelles annonces, signalements ouverts, paiements |
 | Chaque nuit | Lecture seule des conversations (location + 30 j), archivage (location + 90 j), indicateurs des gérants, rétention du journal, échéances d'abonnement | Cycle de vie |
 
 **Un seul réveil à la fois.** `beat` ne démarre que s'il obtient un **verrou dans Redis**
@@ -541,7 +543,9 @@ stateDiagram-v2
 - **Louée** (après confirmation) : les locataires en conversation sont prévenus ; **photos et vidéo sont supprimées
   aussitôt** et l'annonce est archivée ; les conversations passent en lecture seule à J+30. La fiche reste ouverte
   (« déjà louée », lien vers les chambres libres) et les chambres **libres passent toujours avant** dans les favoris et les
-  listes. Les **avis** sont liés au gérant (et à la chambre) : sa note ne dépend pas de la vie de chaque annonce.
+  listes. Les **avis** sont liés au gérant (et à la chambre) : sa note ne dépend pas de la vie de chaque annonce. Le gérant **répond
+  publiquement** à un avis depuis « Avis reçus » (600 caractères, sans coordonnées, modifiable ou retirable) ; sa réponse
+  s'affiche sous l'avis et l'auteur est prévenu à la première réponse.
 - **Types de logement** : une liste vivante, de la chambre simple à la villa, avec les variantes courantes à Parakou
   (chambre sanitaire et semi-sanitaire, entrée-couché simple ou sanitaire, chambre-salon simple ou sanitaire, meublé
   salon sanitaire) ; un gérant peut **proposer** un nouveau type, que la modération valide ou rattache.
@@ -618,12 +622,22 @@ stateDiagram-v2
 - **Fiabilité** : 5 essais avec attente croissante ; rattrapage chaque minute ; jetons push invalides désactivés.
 - **Une notification par conversation** : les messages d'une même personne pour une même chambre mettent à jour la même
   notification (au lieu d'en empiler plusieurs) ; après lecture, la suivante repart à « 1 ».
+- **Fin d'abonnement** : un gérant à abonnement payant est prévenu 7 jours puis 1 jour avant la fin (`SUBSCRIPTION_REMINDER_DAYS`),
+  une seule fois par étape, avec le lien « Renouveler mon abonnement ».
 - **Cloche du site** : les 5 dernières notifications, chacune avec un bouton « Consulter » vers la conversation, l'annonce
   ou les alertes.
 - **Confort** : regroupement par conversation (« 3 nouveaux messages »), **réponse directe** depuis la notification,
   bannière discrète quand l'application est ouverte, canaux Android (messages, alertes, rappels, compte), préférences
   par catégorie.
 - **Où** : `apps/notifications/`, `mobile/src/features/notifications/`.
+
+### 12.11 bis Messages de l'équipe
+
+- **But** : l'équipe répond à une question, à un avis ou à une décision de modération, et les utilisateurs lui écrivent.
+- **Comment** : table `team_messages` (un fil par personne). L'équipe écrit depuis l'administration (boîte « Messages de l'équipe », ou
+  depuis un avis, un signalement, un compte) ; la personne reçoit une notification et un courriel, et lit le fil dans « Équipe Immo+ »
+  sur le site. Une question d'un utilisateur prévient l'équipe par courriel (5 par 24 h au plus par personne).
+- **Où** : `apps/moderation/messages_equipe.py`, `adminsite/admin_equipe.py`, `web/views_equipe.py`.
 
 ### 12.12 Signalements et modération
 

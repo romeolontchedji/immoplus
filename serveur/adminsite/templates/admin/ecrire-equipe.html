@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <h1>Écrire à {{ personne.full_name|default:personne.username }}</h1>
+    <p class="lg-bandeau">
+      {% if personne.role == "gerant" %}Gérant{% else %}Locataire{% endif %}
+      {% if personne.username %}· {{ personne.username }}{% endif %}.
+      La personne reçoit une notification (et un courriel si son adresse est confirmée) et lit votre message dans
+      « Équipe Immo+ ». <a href="{% url 'admin:accounts_user_change' personne.pk %}">Voir son compte</a>
+    </p>
+
+    <div class="module">
+      <h2>Échanges</h2>
+      <div class="lg-section">
+        {% for m in fil %}
+          <div class="lg-carte">
+            <strong>{% if m.vers_utilisateur %}Équipe{% else %}{{ personne.full_name|default:personne.username }}{% endif %}</strong>
+            · {{ m.created_at|date:"d/m/Y H:i" }}
+            {% if m.vers_utilisateur %}· {% if m.lu_le %}lu{% else %}non lu{% endif %}{% elif not m.traite_le %}· <strong>à traiter</strong>{% endif %}
+            {% if m.objet %}<br><em>{{ m.objet }}</em>{% endif %}
+            <p>{{ m.corps|linebreaksbr }}</p>
+          </div>
+        {% empty %}
+          <p>Aucun échange pour l'instant.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="module">
+      <h2>Nouveau message</h2>
+      <div class="lg-section">
+        {% if erreur %}<p class="errornote">{{ erreur }}</p>{% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="contexte" value="{{ contexte }}">
+          <p>
+            <label for="objet">Objet (facultatif) :</label><br>
+            <input type="text" id="objet" name="objet" size="70" maxlength="120" value="{{ objet }}">
+          </p>
+          <p>
+            <label for="corps">Message ({{ corps_max }} caractères au plus) :</label><br>
+            <textarea id="corps" name="corps" rows="7" cols="70" maxlength="{{ corps_max }}" required>{{ corps }}</textarea>
+          </p>
+          <div class="lg-section__actions">
+            <input type="submit" value="Envoyer" class="default">
+            <a href="{% url 'admin:moderation_messageequipe_changelist' %}">Retour à la boîte de l'équipe</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
