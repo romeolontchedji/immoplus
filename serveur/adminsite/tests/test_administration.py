@@ -17,7 +17,7 @@ from apps.accounts.tests.fabriques import (
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
-from apps.listings.tests.fabriques import ListingFactory
+from apps.listings.tests.fabriques import ListingFactory, medias_prets
 from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
@@ -478,6 +478,7 @@ class TestMasquerOuRetirerUneAnnonce:
         from apps.notifications.models import Notification
 
         annonce = ListingFactory()
+        medias_prets(annonce)  # une annonce incomplète n'est pas remise en ligne
         c, _ = se_connecter(
             personnel(PersonnelFactory if fabrique == "moderateur" else AdminFactory)
         )
@@ -545,7 +546,7 @@ class TestPouvoirsDeLAdministrateur:
         )
         assert (
             r.status_code == 200
-            and RoomType.objects.filter(label__icontains="colocation").count() == 1
+            and RoomType.objects.filter(slug__startswith="colocation_etudiante").count() == 1
         )
 
     def test_un_moderateur_n_ajoute_pas_de_type(self):
@@ -556,7 +557,8 @@ class TestPouvoirsDeLAdministrateur:
         from apps.listings.models import RoomType
         from apps.listings.services import types as types_chambre
 
-        c, admin_ = se_connecter(personnel(AdminFactory))
+        admin_ = personnel(AdminFactory)
+        c, _ = se_connecter(admin_)
         libre = types_chambre.creer_officiel("Type libre", acteur=admin_)
         utilise = types_chambre.creer_officiel("Type utilise", acteur=admin_)
         ListingFactory(room_type=utilise.slug)

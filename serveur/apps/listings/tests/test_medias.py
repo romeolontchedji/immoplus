@@ -454,7 +454,9 @@ class TestGestion:
         from django.utils import timezone
 
         bloque = ListingMedia.objects.create(listing=annonce, kind="video", declared_size_bytes=10)
-        recent = ListingMedia.objects.create(listing=annonce, kind="video", declared_size_bytes=10)
+        recent = ListingMedia.objects.create(
+            listing=ListingFactory(), kind="video", declared_size_bytes=10
+        )  # une seule vidéo active par annonce
         ListingMedia.objects.filter(pk__in=[bloque.pk, recent.pk]).update(status="processing")
         ListingMedia.objects.filter(pk=bloque.pk).update(
             updated_at=timezone.now() - timedelta(minutes=30)

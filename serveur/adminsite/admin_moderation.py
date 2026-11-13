@@ -877,4 +877,17 @@ class AvisAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return (
+            request.user.is_active and request.user.role == "admin"
+        )  # la modération masque, l'administration supprime
+
+    def delete_model(self, request, obj):
+        audit.enregistrer(
+            "avis.supprime", acteur=request.user, cible=obj.author,
+            metadata={"avis": str(obj.pk), "annonce": str(obj.listing_id), "note": obj.rating},
+        )  # fmt: skip
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        for avis in list(queryset):
+            self.delete_model(request, avis)

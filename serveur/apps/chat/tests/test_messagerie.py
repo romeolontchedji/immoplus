@@ -402,6 +402,9 @@ class TestNotificationsDeMessage:
         DeviceFactory(user=decor.gerant.user, push_provider="expo", push_token="jeton-gerant")
         with django_capture_on_commit_callbacks(execute=True):
             conversation, m1, *_ = ouvrir(decor)
+        with django_capture_on_commit_callbacks(
+            execute=True
+        ):  # chaque message a sa propre validation
             m2, *_ = services.envoyer(decor.locataire, conversation.pk, "Et la caution ?", mid())
         notifs = Notification.objects.filter(user=decor.gerant.user, kind="message.received")
         assert notifs.count() == 1 and len(boite()) == 2
@@ -434,6 +437,9 @@ class TestNotificationsDeMessage:
         DeviceFactory(user=decor.gerant.user, push_provider="expo", push_token="jeton-gerant")
         with django_capture_on_commit_callbacks(execute=True):
             conversation, *_ = ouvrir(decor)
+        with django_capture_on_commit_callbacks(
+            execute=True
+        ):  # chaque message a sa propre validation
             services.envoyer(decor.locataire, conversation.pk, "Et la caution ?", mid())
         dernier, premier = boite()[0], boite()[1]
         assert (
