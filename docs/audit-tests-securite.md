@@ -158,3 +158,24 @@ nettoyage priorisé. Il ne retire rien lui-même : les retraits se font en accor
   repo sûr et la reprise possible.
 - Les contrôles de sécurité d'exécution (CSP, 2FA, axes, cookies, throttles, rôles PG) : ils sont déjà
   chers mais actifs.
+
+## 9. Audit de sécurité du code (2026-11-13)
+
+Relecture du serveur (réglages, authentification, paiement, fichiers envoyés, Caddy, Docker, WebSockets, nouvelles
+fonctions) et `pip-audit` sur `base.txt`. Aucune faille critique ni haute dans le code.
+
+| Constat | Gravité | État |
+|---|---|---|
+| Un tiers pouvait empêcher le titulaire de se connecter en épuisant le plafond horaire d'échecs de son nom d'utilisateur | Moyenne | **Corrigé** : le plafond ne s'applique pas aux appareils et adresses déjà connectés au compte (30 jours) |
+| Courriels de réinitialisation sans limite par compte | Faible | **Corrigé** : 3 par heure et par compte, réponse inchangée |
+| Chemin de redirection après connexion non encodé (`/connexion?next=`) | Faible | **Corrigé** |
+| `KKIAPAY_SANDBOX=true` en production valide de faux paiements | Haute si oublié | **À surveiller** : vrai sandbox éteint ; le porteur utilise de vraies clés à prix réduit avant les vrais prix |
+| L'identifiant KKiaPay envoyé par le navigateur n'est pas lié à la référence de la transaction | Faible | **Ouvert** : comparer `stateData` à la référence, une fois sa forme confirmée en sandbox |
+| Dépendances : DRF (6 alertes), filelock (16) | Haute à faible | **Corrigé** : DRF 3.18.3, filelock 4.2.1 (les alertes se ferment après le nouveau scan de GitHub) |
+| Dépendances mobile : `decode-uri-component` via `query-string` (expo-router), `deepmerge` (jest) | Haute / faible | **Ouvert, sans correctif** : demande une montée de version majeure d'Expo ; risque limité (blocage côté téléphone) |
+| `minimatch` (outils de lint et d'empreinte Expo) | Moyenne | **Corrigé** : 11.0.8, limité à ces deux outils |
+
+Points solides confirmés : réglages de production qui refusent de démarrer en cas de configuration dangereuse, cookies
+`__Host-`, API refusant tout par défaut avec plafonds, réponse de connexion uniforme, double authentification de
+l'administration, paiement revérifié chez KKiaPay, requêtes SQL paramétrées, images recréées sans métadonnées, ffmpeg
+sans shell, conteneurs sans droits administrateur, réseau des données isolé.

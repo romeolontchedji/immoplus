@@ -60,12 +60,13 @@ Côté **gérant** : appels qui n'aboutissent pas, visites répétées pour des 
 
 ### Hero
 - **Pastille** (ouverte à tous) : `Chambres à Parakou, près de l'UP et partout en ville`
-- **Titre (recommandé)** : **Vois ta chambre avant de te déplacer.**
-- **Sous-titre** : `Visite en vidéo, gérants vérifiés par notre équipe, alerte dès qu'une chambre se libère. Tu choisis en connaissance de cause.`
+- **Titre (retenu 2026-11-13)** : **Trouve ta chambre à Parakou, en deux clics.**
+- **Sous-titre** : `Visite en vidéo, zéro paiement avant la visite.`
+- **Recherche** : libellé `Où veux-tu habiter ?`, exemple `Quartier, type de chambre, forage…`
 - **CTA principal (jaune)** : `Voir les chambres`
-- **CTA secondaire (contour)** : `Créer une alerte`
-- **Lien discret** : `Tu loues des chambres ? Fais visiter sans bouger`
-- **Puces de confiance** : `Gérants vérifiés` · `Visite en vidéo` · `Contact direct`
+- **CTA secondaire (contour)** : `Me prévenir des nouvelles chambres`
+- *(le lien discret « Tu loues des chambres ? » et les trois puces de confiance ont été retirés de la bannière)*
+- **Autres textes de l'accueil** : « Pourquoi Immo+ ? » (*Tu vois avant de te déplacer. · Un gérant vérifié, pas un inconnu. · Les chambres viennent à toi.*), « Comment ça marche ? », « Choisis ton quartier », bouton `Être prévenu(e)`. La FAQ indique le prix forfaitaire des alertes quand elles sont payantes (lu dans `ALERT_PRICE`).
 
 **Variantes A/B du titre** (à tester, une seule à la fois) :
 - B (peur) : `Visite d'abord. Paie ensuite.`

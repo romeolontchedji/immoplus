@@ -83,10 +83,17 @@ La page d'accueil réunit :
 
 - États : *Ouvert*, *En cours d'examen*, *Traité : sanction*, *Classé sans suite*.
 - Motifs : fausse annonce, déjà louée, prix différent, coordonnées partagées, harcèlement, arnaque, autre.
-- Actions de la liste : **Prendre** (passe en examen à ton nom) et **Classer** (sans suite).
+- Actions de la liste : **Prendre en charge** (passe en examen à ton nom), **Classer comme traité** (le dossier est
+  géré : état « Traité »), **Classer sans suite**, et **Écrire** à la personne qui a signalé ou à la personne visée.
 - La fiche d'un signalement donne les liens utiles : compte visé, annonce, conversation, et une décision
   pré-remplie. Lire une conversation demande un **motif**, inscrit au journal. Au-delà de
   `STAFF_READS_ALERT_THRESHOLD` lectures par jour, les administrateurs sont alertés.
+
+**Conversations.** Rubrique **Chat › Conversations** (administrateurs et modérateurs) : toutes les conversations entre
+locataires et gérants, avec l'annonce, les deux personnes, le nombre de messages et l'état, **sans aucun contenu** dans
+la liste. Le bouton **Lire** demande un **motif** (obligatoire, inscrit au journal non modifiable) avant d'ouvrir les
+messages ; le nombre de lectures par personne est surveillé (`STAFF_READS_ALERT_THRESHOLD`). La lecture reste aussi
+possible depuis un signalement.
 
 **Décisions de modération.** Le formulaire « Ajouter » *est* l'outil de sanction : il applique l'action puis la
 journalise. Actions : message masqué, message supprimé, annonce masquée, annonce retirée, avertissement, suspension
@@ -361,7 +368,7 @@ Verrouillages et défi anti-robot.
 |---|---|---|
 | `LOGIN_LOCK_THRESHOLD` | `5` | Nombre de mauvais mots de passe d'affilée avant de bloquer temporairement la connexion (site et application). |
 | `LOGIN_LOCK_MINUTES` | `15` | Durée du premier blocage, en minutes ; elle double à chaque nouveau blocage du même compte. |
-| `LOGIN_FAILS_PER_HOUR_PER_PHONE` | `30` | Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les attaques réparties). |
+| `LOGIN_FAILS_PER_HOUR_PER_PHONE` | `30` | Plafond d'échecs par heure pour un même nom d'utilisateur, tous appareils confondus (contre les attaques réparties). Il ne s'applique pas aux appareils et adresses déjà connectés avec succès à ce compte (30 jours) : un tiers ne peut donc pas empêcher le titulaire de se connecter. |
 | `RATE_IP_FACTOR` | `3` | Les visiteurs non connectés sont comptés par adresse IP ; or des centaines d'abonnés mobiles ou d'étudiants du campus partagent souvent la même. Plafonds anonymes par minute et par adresse = 60 (pages publiques) ou 240 (fil) × ce nombre. Les comptes connectés ont chacun leur propre compteur. À monter un jour de forte affluence si des visiteurs voient « Trop de requêtes ». |
 | `AUTH_RATE_PER_MIN_IP` | `60` | Connexions, inscriptions et rafraîchissements de session acceptés par minute depuis une même adresse IP (un campus entier peut en partager une). Chaque compte garde son propre verrouillage après des mots de passe faux. |
 | `TURNSTILE_ENABLED` | décoché | Coché : le défi anti-robot (Cloudflare Turnstile) protège l'inscription et le mot de passe oublié sur le site. Décoché (réglage au lancement) : aucun défi et le widget n'est pas chargé ; seules les limites de débit freinent les robots. À cocher quand les vraies clés Cloudflare sont dans `.env`. |

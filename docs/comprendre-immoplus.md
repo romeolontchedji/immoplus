@@ -473,7 +473,8 @@ Pour chaque fonctionnalité : **à quoi ça sert**, **comment**, **quand**, et *
 - **Comment** : le serveur vérifie le mot de passe (Argon2) et renvoie une **paire de jetons** (voir §16). La réponse en
   cas d'échec est **identique** que le compte existe ou non : impossible de deviner qui est inscrit.
 - **Verrouillage progressif** : 5 échecs → 15 min ; puis 30 min, 1 h… jusqu'à 24 h en cas de récidive ; plafond horaire
-  par nom d'utilisateur. Sur le site, case « Se souvenir de moi » ; sur mobile, **déverrouillage par empreinte**
+  par nom d'utilisateur (sans effet sur les appareils déjà connectés au compte, pour qu'un tiers ne puisse pas
+  bloquer le titulaire). Sur le site, case « Se souvenir de moi » ; sur mobile, **déverrouillage par empreinte**
   facultatif. Les échecs sont visibles dans l'administration (« Connexions échouées »).
 - **Où** : `services/authentification.py`, `verrouillage.py`, `jetons.py` ; `mobile/src/features/auth/verrou.tsx`.
 
@@ -481,8 +482,8 @@ Pour chaque fonctionnalité : **à quoi ça sert**, **comment**, **quand**, et *
 
 Trois portes, proposées dans cet ordre :
 
-1. **Lien par e-mail** (si l'utilisateur a ajouté et **confirmé** une adresse) : valable 30 minutes, une seule fois.
-   La réponse est la même que le compte existe ou non.
+1. **Lien par e-mail** (si l'utilisateur a ajouté et **confirmé** une adresse) : valable 30 minutes, une seule fois,
+   3 courriels au plus par heure et par compte. La réponse est la même que le compte existe ou non.
 2. **Clé de secours** : nom d'utilisateur + clé + nouveau mot de passe. Une **nouvelle clé** remplace aussitôt
    l'ancienne. Tentatives verrouillées comme la connexion.
 3. **L'équipe**, en dernier recours : après vérification de l'identité, l'administration génère un lien valable
@@ -536,8 +537,8 @@ stateDiagram-v2
   prêtes (la vidéo est **facultative**), pas de coordonnées dans le texte. Le serveur dit précisément **ce qui manque** (« readiness »).
 - **Fraîcheur** : le masquage automatique est coupé (`STALE_HIDE_DAYS` = 0) : le gérant marque lui-même une chambre
   « louée » ou la masque.
-- **Conditions** : loyer (et « à débattre »), **caution eau** et **caution électricité** en francs, avance, frais de
-  démarcheur. La caution du loyer n'est plus demandée sur le site (l'API la garde, à 0 par défaut).
+- **Conditions** : loyer (et « à débattre »), **caution eau** et **caution électricité** en francs, avance, **pré-payé** (nombre de mois de loyer à régler avant d'entrer, 0 = aucun ; site seulement, hors API),
+  frais de démarcheur. La caution du loyer n'est plus demandée sur le site (l'API la garde, à 0 par défaut).
 - **Publication directe** : un gérant vérifié publie sans attendre, y compris sa première annonce ; l'équipe
   (administrateurs et modérateurs) reçoit un courriel à chaque première mise en ligne et modère après coup.
 - **Louée** (après confirmation) : les locataires en conversation sont prévenus ; **photos et vidéo sont supprimées
@@ -577,9 +578,19 @@ stateDiagram-v2
 
 - **Fil** : chambres publiées, filtres (quartier, budget, type, douche interne, gérants vérifiés…), tris (récentes,
   prix, proximité de l'université), pagination par curseur, page en cache 60 s.
-- **Recherche** : au fil de la frappe, sans rechargement de page : chaque mot compte comme un **début de mot**
-  (« B », « Ba », « Bani »…) sur le titre, le quartier, le repère, le type et les équipements ; tolérance aux fautes à
-  partir de 4 lettres (trigrammes PostgreSQL), accents ignorés.
+- **Recherche** : au fil de la frappe, sans rechargement de page, et elle **comprend les phrases**
+  (`services/recherche_texte.py`). « je cherche une chambre sanitaire à zogo avec forage et douche » devient : type
+  *Chambre sanitaire*, quartier *Zongo* (la faute est corrigée), eau *forage*, *douche interne*. Les mots de
+  remplissage (« je », « cherche », « une », « chambre », « pas chère », « à », « avec »…) et les budgets en chiffres sont
+  ignorés ; les quartiers, les types de chambre (« chambre sanitaire » n'est pas « semi-sanitaire ») et les
+  équipements (eau, électricité, cuisine, douche, clôture) reconnus deviennent des **filtres**. Ce qui reste est
+  cherché dans le texte : chaque mot compte comme un **début de mot** (« B », « Ba », « Bani »…) sur le titre, le
+  quartier, le repère, le type et les équipements, avec tolérance aux fautes **mot par mot** (trigrammes PostgreSQL,
+  à partir de 4 lettres), accents ignorés. Si aucune annonce ne contient **tous** les mots, la recherche passe en
+  « ou » (au moins un mot) et le dit. Un seul mot est gardé tel quel (frappe en cours). La page Chambres explique ce
+  qui a été compris (« Compris : Quartier Zongo (tu as écrit « zogo ») ») et, sans résultat, propose des quartiers
+  et la création d'une alerte (qui reprend ce qui a été compris). Site et API partagent ce comportement ; la réponse
+  de l'API ne change pas de forme.
 - **Fiche** : tout sauf l'adresse précise ; seule la **position du quartier** est publique ; distance à l'université
   calculée (formule de haversine).
 - **Partage** : bouton « Partager » (WhatsApp, Facebook, applications du téléphone dont TikTok, lien à copier). Un seul
