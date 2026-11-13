@@ -302,7 +302,9 @@ def test_interrupteur_encore_disponible(session_gerant):
     )
     assert r.status_code == 302
     a.refresh_from_db()
-    assert a.status == "archived" and a.rented_at is not None  # louée : médias supprimés, archivée aussitôt
+    assert (
+        a.status == "archived" and a.rented_at is not None
+    )  # louée : médias supprimés, archivée aussitôt
     c.post("/pro/dashboard", {"action": "disponible", "annonce_id": str(a.pk), "disponible": "1"})
     a.refresh_from_db()
     assert a.status == "draft"  # plus de médias : on repart d'un brouillon
@@ -355,7 +357,9 @@ def test_suivant_grise_pendant_le_traitement_et_un_envoi_interrompu_ne_bloque_pa
 
     c, g = session_gerant
     a = ListingFactory(gerant=g, status="draft", published_at=None)
-    medias_prets(a, video=False)  # la vidéo « en cours » est créée juste dessous (une seule vidéo active)
+    medias_prets(
+        a, video=False
+    )  # la vidéo « en cours » est créée juste dessous (une seule vidéo active)
     video = ListingMedia.objects.create(
         listing=a, kind="video", declared_size_bytes=10, status="processing"
     )
@@ -374,8 +378,12 @@ def test_la_cloche_liste_les_notifications_recentes(session_gerant):
     from apps.notifications.models import Notification
 
     c, g = session_gerant
-    Notification.objects.create(user=g.user, kind="alert.match", title="Nouvelle chambre à Zongo", body="25 000 F")
-    page = c.get("/").content.decode()  # la cloche est dans l'en-tête de l'accueil ; ailleurs, la barre latérale
+    Notification.objects.create(
+        user=g.user, kind="alert.match", title="Nouvelle chambre à Zongo", body="25 000 F"
+    )
+    page = c.get(
+        "/"
+    ).content.decode()  # la cloche est dans l'en-tête de l'accueil ; ailleurs, la barre latérale
     assert "Nouvelle chambre à Zongo" in page and "Aucune notification pour l" not in page
 
 
@@ -425,7 +433,13 @@ def test_suppression_en_deux_temps_avec_avertissement_d_abonnement(session_geran
         "PLANS",
         [
             {"code": "free_v1", "label": "Gratuit", "price": 0, "period_months": 1, "active": True},
-            {"code": "standard", "label": "Standard", "price": 500, "period_months": 1, "active": True},
+            {
+                "code": "standard",
+                "label": "Standard",
+                "price": 500,
+                "period_months": 1,
+                "active": True,
+            },
         ],
     )
     services.activer_formule(g.pk, "standard")

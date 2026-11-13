@@ -85,7 +85,11 @@ def commandes_autorisees(annonce) -> list[dict]:
         ]
     if statut == StatutAnnonce.ARCHIVED and annonce.rented_at is not None:
         return [  # louée puis archivée : ses médias sont supprimés, la reproposer repart d'un brouillon
-            {"action": "annuler-louee", "libelle": "Reproposer (nouveau brouillon)", "primaire": True},
+            {
+                "action": "annuler-louee",
+                "libelle": "Reproposer (nouveau brouillon)",
+                "primaire": True,
+            },
             SUPPRIMER,
         ]
     if statut in (StatutAnnonce.PROCESSING, StatutAnnonce.ARCHIVED):
@@ -366,7 +370,9 @@ def _abonnement_manquant(profil) -> bool:
 def editeur(request, profil, annonce_id=None):
     annonce = None
     if annonce_id is None and request.method == "GET" and _abonnement_manquant(profil):
-        return redirect(LIEN_ABONNEMENT)  # nouvelle chambre sans abonnement : page des formules, avec un mot aimable
+        return redirect(
+            LIEN_ABONNEMENT
+        )  # nouvelle chambre sans abonnement : page des formules, avec un mot aimable
     if annonce_id is not None:
         annonce = selectors.annonce_du_gerant(profil, annonce_id)
         if annonce is None:
@@ -396,10 +402,14 @@ def editeur(request, profil, annonce_id=None):
                 return redirect("/pro/annonces?ok=supprimee")
             elif action in ACTIONS and annonce:
                 annonce = ACTIONS[action](profil, annonce.pk)
-                if action == "publier":  # fini avec l'éditeur : retour à la liste, pas sur l'étape des médias
+                if (
+                    action == "publier"
+                ):  # fini avec l'éditeur : retour à la liste, pas sur l'étape des médias
                     attente = annonce.status != StatutAnnonce.PUBLISHED
                     return redirect(f"/pro/annonces?ok={'attente' if attente else 'publiee'}")
-                if action == "louee":  # chambre louée = archivée : retour sur « Mes annonces », pas sur l'étape 7
+                if (
+                    action == "louee"
+                ):  # chambre louée = archivée : retour sur « Mes annonces », pas sur l'étape 7
                     return redirect("/pro/annonces?ok=louee")
                 return redirect(f"/pro/annonces/{annonce.pk}?etape=7&ok=statut")
             elif action in ACTIONS_MEDIAS and annonce:
@@ -416,7 +426,9 @@ def editeur(request, profil, annonce_id=None):
                 _signaler(form, erreur)
     if annonce is not None:
         annonce.refresh_from_db()
-    if request.method == "GET":  # après une action : on revient ici par une redirection (pas de « renvoyer les données »)
+    if (
+        request.method == "GET"
+    ):  # après une action : on revient ici par une redirection (pas de « renvoyer les données »)
         message = MESSAGES_OK.get(request.GET.get("ok", ""))
     liste_medias = _medias_vue(medias.lister(profil, annonce.pk)) if annonce else []
     en_cours = any(m["en_cours"] for m in liste_medias)

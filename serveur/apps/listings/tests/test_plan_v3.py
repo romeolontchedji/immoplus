@@ -138,11 +138,15 @@ class TestAvis:
         echanger(loc, a)
         avis.donner(loc, a.pk, 4, "Très bien.")
         assert Review.objects.get(listing=a).gerant_id == a.gerant_id
-        annonces.marquer_louee(a.gerant, a.pk)  # chambre louée : médias supprimés, archivée aussitôt
+        annonces.marquer_louee(
+            a.gerant, a.pk
+        )  # chambre louée : médias supprimés, archivée aussitôt
         a.refresh_from_db()
         assert a.status == "archived"
         assert selectors.resume_avis_gerant(a.gerant_id) == {"average": 4.0, "count": 1}
-        avis.donner(loc, a.pk, 5, "Après la location aussi.")  # on peut encore noter une chambre louée
+        avis.donner(
+            loc, a.pk, 5, "Après la location aussi."
+        )  # on peut encore noter une chambre louée
         assert selectors.resume_avis_gerant(a.gerant_id) == {"average": 5.0, "count": 1}
 
     def test_le_gerant_repond_a_un_avis(self, django_capture_on_commit_callbacks):

@@ -126,7 +126,7 @@ NOTES = {
     "EMAIL_RESUME_HEBDOMADAIRE": "Coché : chaque lundi, l'équipe (administrateurs et modérateurs) reçoit un résumé par courriel : "
     "nouvelles annonces, signalements ouverts, paiements de la semaine.",
     "PLANS": "Formules d'abonnement des gérants (code, nom, prix en FCFA, durée). Pour vendre la formule « standard » : "
-    "fixez son prix et mettez \"active\": true.",
+    'fixez son prix et mettez "active": true.',
     "PAID_ALERTS_ENABLED": "Coché : un locataire paie une fois chaque nouvelle alerte (prix ci-dessous). Les alertes déjà "
     "créées continuent de fonctionner. Décoché : alertes gratuites.",
     "ALERT_PRICE": "Prix d'une alerte en FCFA (par exemple 500).",

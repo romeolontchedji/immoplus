@@ -6,13 +6,13 @@ l'adresse aussi ; le fichier lui-même n'est pas renommé (rien à régénérer,
 
 import hashlib
 import re
-from functools import lru_cache
+from functools import cache
 
 from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.storage import StaticFilesStorage
 
 
-@lru_cache(maxsize=None)
+@cache
 def _empreinte(nom: str) -> str:
     chemin = finders.find(nom)
     if not chemin or not isinstance(chemin, str):

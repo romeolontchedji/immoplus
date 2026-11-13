@@ -25,7 +25,10 @@ def test_l_equipe_ecrit_a_un_locataire(django_capture_on_commit_callbacks):
     modo = PersonnelFactory()
     with django_capture_on_commit_callbacks(execute=True):
         m = equipe.ecrire_a(
-            modo, locataire, "Ton avis a été relu : il est conforme.\nMerci !", objet="À propos de ton avis"
+            modo,
+            locataire,
+            "Ton avis a été relu : il est conforme.\nMerci !",
+            objet="À propos de ton avis",
         )
     assert m.vers_utilisateur and m.auteur_id == modo.pk and m.utilisateur_id == locataire.pk
     n = Notification.objects.get(user=locataire, kind="team.message")
@@ -41,10 +44,14 @@ def test_l_equipe_ecrit_a_un_locataire(django_capture_on_commit_callbacks):
 def test_seul_le_personnel_ecrit_et_seulement_aux_utilisateurs():
     locataire = ClientFactory()
     with pytest.raises(ErreurMetier) as e:
-        equipe.ecrire_a(ClientFactory(), locataire, "Bonjour")  # un locataire n'écrit pas « au nom de l'équipe »
+        equipe.ecrire_a(
+            ClientFactory(), locataire, "Bonjour"
+        )  # un locataire n'écrit pas « au nom de l'équipe »
     assert e.value.statut == 403
     with pytest.raises(ErreurMetier) as e:
-        equipe.ecrire_a(AdminFactory(), PersonnelFactory(), "Bonjour")  # le personnel n'est pas un destinataire
+        equipe.ecrire_a(
+            AdminFactory(), PersonnelFactory(), "Bonjour"
+        )  # le personnel n'est pas un destinataire
     assert e.value.statut == 404
     with pytest.raises(ErreurMetier):
         equipe.ecrire_a(AdminFactory(), locataire, " ")  # message vide

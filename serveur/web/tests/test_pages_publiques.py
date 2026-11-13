@@ -425,7 +425,9 @@ class TestNotificationsEtReferencement:
         )
         c = connecte(u)
         page = html(c.get("/compte/notifications"))
-        assert f'href="/compte/notifications/{n.pk}/ouvrir"' in page  # « Consulter » marque lue puis redirige
+        assert (
+            f'href="/compte/notifications/{n.pk}/ouvrir"' in page
+        )  # « Consulter » marque lue puis redirige
         assert "Marquer lue" in page
         assert (
             c.post(

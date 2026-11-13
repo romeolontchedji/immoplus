@@ -26,6 +26,7 @@ def ClientFactory(**champs):  # noqa: N802 - locataire avec e-mail confirmé (ex
     champs.setdefault("email_verified_at", timezone.now())
     return _ClientFactory(**champs)
 
+
 PUBLIQUE = secrets.token_urlsafe(16)
 SECRET = secrets.token_urlsafe(16)  # hash secret du webhook
 CLES = {
@@ -54,7 +55,13 @@ def abonnement_exige():
         "PLANS",
         [
             {"code": "free_v1", "label": "Gratuit", "price": 0, "period_months": 1, "active": True},
-            {"code": "standard", "label": "Standard", "price": 2000, "period_months": 1, "active": True},
+            {
+                "code": "standard",
+                "label": "Standard",
+                "price": 2000,
+                "period_months": 1,
+                "active": True,
+            },
         ],
     )
     yield
@@ -159,7 +166,9 @@ class TestAbonnement:
         assert fenetre["amount"] == 2000 and fenetre["key"] == PUBLIQUE
         transactions.confirmer(g.user, str(attente.pk), "tx-8")
         assert services.can_publish(g.pk) is True
-        assert Subscription.objects.filter(gerant_id=g.pk, plan_code="standard", status="active").exists()
+        assert Subscription.objects.filter(
+            gerant_id=g.pk, plan_code="standard", status="active"
+        ).exists()
 
     def test_formule_gratuite_ou_inconnue_refusee(self, abonnement_exige):
         g = gerant_verifie()
@@ -205,7 +214,10 @@ class TestWebhook:
 
         entetes = {"HTTP_X_KKIAPAY_SECRET": secret} if secret else {}
         return Client().post(
-            "/paiement/webhook/kkiapay", json.dumps(donnees), content_type="application/json", **entetes
+            "/paiement/webhook/kkiapay",
+            json.dumps(donnees),
+            content_type="application/json",
+            **entetes,
         )
 
     def test_secret_faux_refuse(self, alertes_payantes):
@@ -231,7 +243,11 @@ class TestWebhook:
         attente, _ = transactions.preparer(u, "alerte")
         kkiapay["status"] = "FAILED"  # KKiaPay dit autre chose que le corps reçu
         r = self._envoyer(
-            {"transactionId": "w-3", "event": "transaction.success", "stateData": {"data": str(attente.pk)}}
+            {
+                "transactionId": "w-3",
+                "event": "transaction.success",
+                "stateData": {"data": str(attente.pk)},
+            }
         )
         assert r.json()["result"] == "refuse" and transactions.credits_alerte(u) == 0
 
@@ -242,7 +258,9 @@ class TestWebhook:
     def test_echec_marque_la_transaction(self, alertes_payantes):
         u = ClientFactory()
         attente, _ = transactions.preparer(u, "alerte")
-        self._envoyer({"transactionId": "w-5", "event": "transaction.failed", "stateData": str(attente.pk)})
+        self._envoyer(
+            {"transactionId": "w-5", "event": "transaction.failed", "stateData": str(attente.pk)}
+        )
         attente.refresh_from_db()
         assert attente.status == "failed"
 

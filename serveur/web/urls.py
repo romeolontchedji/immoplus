@@ -30,7 +30,11 @@ urlpatterns = [
     path("compte/messages", pub.mes_conversations, name="messages"),
     path("compte/messages/<str:conversation_id>", pub.conversation, name="conversation"),
     path("compte/notifications", pub.mes_notifications, name="notifications"),
-    path("compte/notifications/<str:notification_id>/ouvrir", pub.ouvrir_notification, name="notification_ouvrir"),
+    path(
+        "compte/notifications/<str:notification_id>/ouvrir",
+        pub.ouvrir_notification,
+        name="notification_ouvrir",
+    ),
     path("compte/equipe", equipe_vue.fil_equipe, name="equipe"),
     path("robots.txt", pub.robots, name="robots"),
     path("sitemap.xml", pub.sitemap, name="sitemap"),

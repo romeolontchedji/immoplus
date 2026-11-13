@@ -34,36 +34,9 @@ def _exiger_admin(request) -> None:
         raise PermissionDenied
 
 
-def confirmer_action(modeladmin, request, queryset, *, action, titre, explication, bouton="Confirmer"):
-    """Page de confirmation d'une action sensible ; retourne la page tant que `confirmer` n'est pas posté, sinon None."""
-    from django.template.response import TemplateResponse
-
-    if request.POST.get("confirmer") == "oui":
-        return None
-    opts = modeladmin.model._meta
-    return TemplateResponse(
-        request,
-        "admin/confirmer-action.html",
-        {
-            **modeladmin.admin_site.each_context(request),
-            "title": titre,
-            "opts": opts,
-            "objets": list(queryset),
-            "explication": explication,
-            "action": action,
-            "bouton": bouton,
-            "ids": request.POST.getlist(helpers.ACTION_CHECKBOX_NAME),
-            "retour": reverse(f"admin:{opts.app_label}_{opts.model_name}_changelist"),
-        },
-    )
-
-
-def _exiger_admin(request) -> None:
-    if not (request.user.is_active and request.user.role == "admin"):
-        raise PermissionDenied
-
-
-def confirmer_action(modeladmin, request, queryset, *, action, titre, explication, bouton="Confirmer"):
+def confirmer_action(
+    modeladmin, request, queryset, *, action, titre, explication, bouton="Confirmer"
+):
     """Page de confirmation d'une action sensible ; retourne la page tant que `confirmer` n'est pas posté, sinon None."""
     from django.template.response import TemplateResponse
 
@@ -745,7 +718,11 @@ class TransactionAdmin(LectureSeule):
         return None
 
 
-from . import admin_equipe, admin_moderation, admin_referentiels  # noqa: E402,F401  (messages, modération, quartiers)
+from . import (  # noqa: E402,F401  (messages, modération, quartiers)
+    admin_equipe,
+    admin_moderation,
+    admin_referentiels,
+)
 
 # Les droits du personnel viennent du rôle (apps/accounts/permissions_personnel.py) : les groupes ne servent à rien.
 if admin.site.is_registered(Group):

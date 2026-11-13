@@ -222,10 +222,16 @@ def recevoir_webhook(nom_fournisseur: str, corps: bytes, entetes: dict) -> tuple
 
 def activer_formule(gerant_id, plan_code: str) -> Subscription:
     """Paiement reçu : la formule devient active pour une période (renouvellement : la période s'ajoute)."""
-    choisi = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), {"period_months": 1})
+    choisi = next(
+        (p for p in parametres.lire("PLANS") if p["code"] == plan_code), {"period_months": 1}
+    )
     courant = abonnement_courant(gerant_id, creer=False)
     maintenant = timezone.now()
-    if courant is not None and courant.plan_code == plan_code and courant.status in STATUTS_PUBLIABLES:
+    if (
+        courant is not None
+        and courant.plan_code == plan_code
+        and courant.status in STATUTS_PUBLIABLES
+    ):
         debut = max(courant.current_period_end, maintenant)
         courant.current_period_end = _fin_de_periode(debut, choisi["period_months"])
         courant.save(update_fields=["current_period_end", "updated_at"])
@@ -291,7 +297,9 @@ def terminer_abonnement(*, acteur, abonnement: Subscription) -> Subscription:
         raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
     if abonnement.plan_code == PLAN_GRATUIT or abonnement.status == StatutAbonnement.EXPIRED:
         raise ErreurMetier(
-            "invalid_transition", "Cet abonnement n'est pas un abonnement payant en cours.", statut=409
+            "invalid_transition",
+            "Cet abonnement n'est pas un abonnement payant en cours.",
+            statut=409,
         )
     if abonnement.status in (StatutAbonnement.ACTIVE, StatutAbonnement.TRIALING):
         changer_statut(abonnement, StatutAbonnement.CANCELED, motif="equipe")
@@ -326,7 +334,8 @@ def bilan_paiements(depuis: datetime.datetime) -> dict:
     reussis = Transaction.objects.filter(status=StatutPaiement.SUCCEEDED, paid_at__gte=depuis)
     total = reussis.aggregate(n=Count("id"), somme=Sum("amount"))
     par_objet = {
-        o: n for o, n in reussis.values_list("objet").annotate(n=Count("id")).values_list("objet", "n")
+        o: n
+        for o, n in reussis.values_list("objet").annotate(n=Count("id")).values_list("objet", "n")
     }
     return {
         "nombre": total["n"] or 0,
@@ -344,7 +353,9 @@ def rappels_fin_abonnement(maintenant: datetime.datetime | None = None) -> dict:
     from apps.accounts import selectors as comptes
     from apps.notifications import services as notifications
 
-    jours_voulus = sorted({int(j) for j in (parametres.lire("SUBSCRIPTION_REMINDER_DAYS") or []) if int(j) > 0})
+    jours_voulus = sorted(
+        {int(j) for j in (parametres.lire("SUBSCRIPTION_REMINDER_DAYS") or []) if int(j) > 0}
+    )
     bilan = {"rappels": 0}
     if not jours_voulus:
         return bilan

@@ -77,7 +77,9 @@ class Command(BaseCommand):
             action="store_true",
             help="Accepte un compte qui a un paiement réussi (à n'utiliser que pour un essai en sandbox).",
         )
-        parser.add_argument("--confirmer", default="", help="Écrire SUPPRIMER pour exécuter vraiment.")
+        parser.add_argument(
+            "--confirmer", default="", help="Écrire SUPPRIMER pour exécuter vraiment."
+        )
 
     # ------------------------------------------------------------------ sélection
     def _selection(self, options) -> list[User]:
@@ -104,16 +106,19 @@ class Command(BaseCommand):
             for u in User.objects.filter(status="deleted", username__startswith="supprime."):
                 trouves[u.pk] = u
         if not trouves:
-            raise CommandError("Aucun compte désigné (--nom-utilisateur, --email, --id ou --anonymises).")
+            raise CommandError(
+                "Aucun compte désigné (--nom-utilisateur, --email, --id ou --anonymises)."
+            )
         return list(trouves.values())
 
     def _verifier(self, comptes: list[User], options) -> None:
         for u in comptes:
             if u.role in ROLES_PERSONNEL:
                 raise CommandError(f"{u.username or u.email} est un compte du personnel : refusé.")
-            if not options["meme_payes"] and Transaction.objects.filter(
-                user=u, status="succeeded"
-            ).exists():
+            if (
+                not options["meme_payes"]
+                and Transaction.objects.filter(user=u, status="succeeded").exists()
+            ):
                 raise CommandError(
                     f"{u.username or u.pk} a un paiement réussi : refusé (ajoute --meme-payes si c'est un essai)."
                 )
@@ -123,10 +128,14 @@ class Command(BaseCommand):
         decompte: Counter = Counter()
         lignes_journal = 0
         with connection.cursor() as c:
-            c.execute(f"ALTER TABLE audit_logs DISABLE TRIGGER {DECLENCHEUR}")  # annulé avec la transaction
+            c.execute(
+                f"ALTER TABLE audit_logs DISABLE TRIGGER {DECLENCHEUR}"
+            )  # annulé avec la transaction
         for u in comptes:
             profil = GerantProfile.objects.filter(user=u).first()
-            if profil is not None and reel:  # les fichiers ne se « re-créent » pas : jamais en simulation
+            if (
+                profil is not None and reel
+            ):  # les fichiers ne se « re-créent » pas : jamais en simulation
                 for annonce in Listing.objects.filter(gerant_id=profil.pk):
                     medias.supprimer_tous(annonce)  # fichiers photos et vidéos
             lignes_journal += AuditLog.objects.filter(actor=u).count()
@@ -134,7 +143,9 @@ class Command(BaseCommand):
             AuditLog.objects.filter(target_id=str(u.pk)).delete()
             _effacer(u, decompte)
         with connection.cursor() as c:
-            c.execute("SET CONSTRAINTS ALL IMMEDIATE")  # les vérifications de clés se font avant de remettre la garde
+            c.execute(
+                "SET CONSTRAINTS ALL IMMEDIATE"
+            )  # les vérifications de clés se font avant de remettre la garde
             c.execute(f"ALTER TABLE audit_logs ENABLE TRIGGER {DECLENCHEUR}")
         return decompte, lignes_journal
 
@@ -167,5 +178,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Comptes supprimés définitivement."))
         else:
             self.stdout.write(
-                self.style.WARNING("SIMULATION : rien n'a été effacé. Ajoute --confirmer SUPPRIMER pour exécuter.")
+                self.style.WARNING(
+                    "SIMULATION : rien n'a été effacé. Ajoute --confirmer SUPPRIMER pour exécuter."
+                )
             )

@@ -178,13 +178,17 @@ def supprimer(type_chambre: RoomType, *, acteur) -> None:
     """Supprime un type que plus aucune annonce ni alerte n'utilise (sinon : le rattacher à un autre)."""
     if Listing.objects.filter(room_type=type_chambre.slug).exists():
         raise ErreurMetier(
-            "conflict", "Des annonces utilisent ce type : rattache-le d'abord à un autre.", statut=409
+            "conflict",
+            "Des annonces utilisent ce type : rattache-le d'abord à un autre.",
+            statut=409,
         )
     with connection.cursor() as c:
         c.execute("SELECT 1 FROM alerts WHERE %s = ANY(room_types) LIMIT 1", [type_chambre.slug])
         if c.fetchone():
             raise ErreurMetier(
-                "conflict", "Des alertes utilisent ce type : rattache-le d'abord à un autre.", statut=409
+                "conflict",
+                "Des alertes utilisent ce type : rattache-le d'abord à un autre.",
+                statut=409,
             )
     audit.enregistrer(
         "room_type.supprime",

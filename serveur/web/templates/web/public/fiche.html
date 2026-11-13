@@ -44,7 +44,8 @@
       {% if f.status != "published" %}
         <div class="alerte alerte--avertissement" role="status">
           <p>Cette chambre est déjà louée.</p>
-          <p><a class="bouton bouton--primaire" href="/annonces?district={{ f.district.slug }}">Voir les chambres libres à {{ f.district.name }}</a></p>
+          <p><a class="bouton bouton--primaire"
+   href="/annonces?district={{ f.district.slug }}">Voir les chambres libres à {{ f.district.name }}</a></p>
         </div>
       {% endif %}
       {# En-tête : quartier d'abord, puis titre, note, prix et favori (plan v3, B2 et B3) #}

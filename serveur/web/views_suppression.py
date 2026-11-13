@@ -69,5 +69,11 @@ def supprimer_mon_compte(request):
     return render(
         request,
         "web/auth/confirmer-suppression.html",
-        {"u": u, "titre": "Supprimer mon compte", "pertes": a_perdre, "graves": graves, "erreur": erreur},
+        {
+            "u": u,
+            "titre": "Supprimer mon compte",
+            "pertes": a_perdre,
+            "graves": graves,
+            "erreur": erreur,
+        },
     )

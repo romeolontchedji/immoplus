@@ -496,7 +496,12 @@ def profil_gerant(request, gerant_id):
         motif = comptes_selectors.gerant_indisponible(gerant_id)
         if motif in (None, "inconnu"):
             raise Http404
-        return render(request, "web/public/gerant-absent.html", {"motif": motif}, status=410 if motif == "supprime" else 404)
+        return render(
+            request,
+            "web/public/gerant-absent.html",
+            {"motif": motif},
+            status=410 if motif == "supprime" else 404,
+        )
     for carte in profil["listings"]:
         carte["type_label"] = _libelle_type(carte["room_type"])
     return render(request, "web/public/gerant.html", {"g": profil})

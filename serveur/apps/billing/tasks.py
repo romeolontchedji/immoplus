@@ -21,4 +21,3 @@ def echeances() -> dict:
 @shared_task(name="apps.billing.rappels_fin_abonnement")
 def rappels_fin_abonnement() -> dict:
     return services.rappels_fin_abonnement()
-

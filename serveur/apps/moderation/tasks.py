@@ -11,4 +11,3 @@ def expirer_sanctions() -> int:
 @shared_task(name="apps.moderation.resume_hebdomadaire")
 def resume_hebdomadaire() -> dict:
     return resume.envoyer()
-

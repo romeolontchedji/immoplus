@@ -44,7 +44,12 @@
           </summary>
           {# ── Formulaire : visible seulement après « Créer une nouvelle alerte » ── #}
           <div class="carte p-6 alertes-nouvelle__carte">
-            <form method="post" class="pile" novalidate data-alerte-formulaire{% if alertes_payantes and not credits_alerte and not sans_email and not edition %} data-paiement="1"{% endif %}>
+            <form method="post"
+                  class="pile"
+                  novalidate
+                  data-alerte-formulaire{% if alertes_payantes and not credits_alerte and not sans_email and not edition %}
+                  data-paiement="1"
+                  {% endif %}>
               {% csrf_token %}
               {% if edition %}
                 <input type="hidden" name="action" value="modifier">
@@ -337,5 +342,7 @@
     </div>
   </section>
   <script src="{% static 'js/listes-multiples.js' %}" defer></script>
-  {% if alertes_payantes %}<script src="{% static 'js/paiement.js' %}" defer></script>{% endif %}
+  {% if alertes_payantes %}
+    <script src="{% static 'js/paiement.js' %}" defer></script>
+  {% endif %}
 {% endblock %}

@@ -86,7 +86,8 @@ class AnnonceEquipeForm(forms.ModelForm):
         donnees = super().clean()
         try:
             contenu.refuser_si_coordonnees(
-                title=str(donnees.get("title") or ""), landmark_text=str(donnees.get("landmark_text") or "")
+                title=str(donnees.get("title") or ""),
+                landmark_text=str(donnees.get("landmark_text") or ""),
             )
         except ErreurMetier as erreur:
             raise forms.ValidationError(erreur.message) from erreur
@@ -104,7 +105,12 @@ class ListingAdmin(admin.ModelAdmin):
         "district",
         "published_at",
     )
-    list_filter = (("published_at", admin.DateFieldListFilter), "status", "hidden_reason", "district")
+    list_filter = (
+        ("published_at", admin.DateFieldListFilter),
+        "status",
+        "hidden_reason",
+        "district",
+    )
     search_fields = ("title", "slug", "gerant__full_name")
     # Les dernières mises en ligne d'abord (les brouillons, sans date, à la fin).
     ordering = (F("published_at").desc(nulls_last=True), "-created_at")
@@ -197,13 +203,19 @@ class ListingAdmin(admin.ModelAdmin):
                 self.message_user(
                     request, f"« {annonce.title} » : {erreur.message}", level=messages.ERROR
                 )
-                if erreur.code == "validation_error":  # motif trop court : inutile d'insister annonce par annonce
+                if (
+                    erreur.code == "validation_error"
+                ):  # motif trop court : inutile d'insister annonce par annonce
                     break
         if faites:
-            self.message_user(request, f"{faites} annonce(s) traitée(s) ; le gérant est prévenu avec le motif.")
+            self.message_user(
+                request, f"{faites} annonce(s) traitée(s) ; le gérant est prévenu avec le motif."
+            )
         return None
 
-    @admin.action(description="Masquer (modération) : l'annonce quitte le site, le gérant peut la corriger")
+    @admin.action(
+        description="Masquer (modération) : l'annonce quitte le site, le gérant peut la corriger"
+    )
     def masquer_annonces(self, request, queryset):
         return self._decider(
             request,
@@ -216,7 +228,9 @@ class ListingAdmin(admin.ModelAdmin):
             defaut="listing_hidden",
         )
 
-    @admin.action(description="Retirer (modération) : définitif, le gérant ne peut pas la remettre en ligne")
+    @admin.action(
+        description="Retirer (modération) : définitif, le gérant ne peut pas la remettre en ligne"
+    )
     def retirer_annonces(self, request, queryset):
         return self._decider(
             request,
@@ -250,7 +264,13 @@ class ListingAdmin(admin.ModelAdmin):
 
         _exiger_admin(request)
         reponse = confirmer_action(
-            self, request, queryset, action=action, titre=titre, explication=explication, bouton=bouton
+            self,
+            request,
+            queryset,
+            action=action,
+            titre=titre,
+            explication=explication,
+            bouton=bouton,
         )
         if reponse is not None:
             return reponse
@@ -259,7 +279,10 @@ class ListingAdmin(admin.ModelAdmin):
             try:
                 appliquer(annonce)
                 audit.enregistrer(
-                    "listing.action_equipe", acteur=request.user, cible=annonce, metadata={"action": action}
+                    "listing.action_equipe",
+                    acteur=request.user,
+                    cible=annonce,
+                    metadata={"action": action},
                 )
                 faites += 1
             except ErreurMetier as erreur:
@@ -372,7 +395,9 @@ class RoomTypeAdmin(admin.ModelAdmin):
     readonly_fields = ("slug", "status", "proposed_by", "reviewed_by", "reviewed_at", "created_at")
 
     def has_add_permission(self, request):
-        return request.user.is_active and request.user.role == "admin"  # un type validé, ajouté directement
+        return (
+            request.user.is_active and request.user.role == "admin"
+        )  # un type validé, ajouté directement
 
     def has_delete_permission(self, request, obj=None):
         # Un administrateur supprime un type que plus rien n'utilise (page du type) ; sinon « Rattacher ».
@@ -380,7 +405,9 @@ class RoomTypeAdmin(admin.ModelAdmin):
 
     def get_actions(self, request):
         actions = super().get_actions(request)
-        actions.pop("delete_selected", None)  # jamais en masse : chaque suppression vérifie l'usage du type
+        actions.pop(
+            "delete_selected", None
+        )  # jamais en masse : chaque suppression vérifie l'usage du type
         return actions
 
     def get_form(self, request, obj=None, **kwargs):
@@ -401,7 +428,6 @@ class RoomTypeAdmin(admin.ModelAdmin):
         except ErreurMetier as erreur:
             self.message_user(request, erreur.message, level=messages.ERROR)
 
-
     @admin.display(description="Annonces")
     def annonces(self, obj):
         return Listing.objects.filter(room_type=obj.slug, deleted_at__isnull=True).count()
@@ -410,7 +436,9 @@ class RoomTypeAdmin(admin.ModelAdmin):
         _exiger_personnel(request)  # seuls le libellé et l'ordre sont modifiables ici
         if not change:
             nouveau = types_chambre.creer_officiel(
-                form.cleaned_data["label"], acteur=request.user, ordre=form.cleaned_data["sort_order"]
+                form.cleaned_data["label"],
+                acteur=request.user,
+                ordre=form.cleaned_data["sort_order"],
             )
             obj.pk, obj.slug, obj.status = nouveau.pk, nouveau.slug, nouveau.status
             obj.label, obj.sort_order = nouveau.label, nouveau.sort_order
@@ -498,7 +526,13 @@ class ReportAdmin(admin.ModelAdmin):
     list_select_related = ("reporter", "assigned_to")
     list_filter = ("status", "reason_code", "source", "target_type")
     ordering = ("created_at",)
-    actions = ["prendre", "classer_traite", "classer", "ecrire_au_plaignant", "ecrire_a_la_personne_visee"]
+    actions = [
+        "prendre",
+        "classer_traite",
+        "classer",
+        "ecrire_au_plaignant",
+        "ecrire_a_la_personne_visee",
+    ]
 
     @admin.action(description="Écrire à la personne qui a signalé")
     def ecrire_au_plaignant(self, request, queryset):
@@ -523,6 +557,7 @@ class ReportAdmin(admin.ModelAdmin):
             self, request, _personne_visee(rapport), contexte=f"signalement:{rapport.pk}",
             objet="À propos d'un signalement te concernant",
         )  # fmt: skip
+
     readonly_fields = [
         "personne_visee", "acces_rapide", "reason_code", "details", "status", "signale_par",
         "target_type", "target_id", "listing", "assigned_to", "resolved_by", "resolved_at", "resolution_note",

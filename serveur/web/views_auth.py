@@ -265,7 +265,9 @@ def espace_compte(request):
     """Tableau de bord du locataire ; ses informations personnelles sont dans « Mon profil » (plan v3, E1)."""
     u = request.user
     if u.role != "client":
-        if request.GET:  # lien avec paramètres (confirmation d'e-mail…) : vers le profil, qui les lit
+        if (
+            request.GET
+        ):  # lien avec paramètres (confirmation d'e-mail…) : vers le profil, qui les lit
             return redirect(f"/compte/profil?{request.GET.urlencode()}")
         return redirect(_accueil_du_compte(request))
     from apps.chat import selectors as chat_selectors

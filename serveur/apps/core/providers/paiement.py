@@ -124,7 +124,7 @@ class PaiementKkiapay(PaymentProvider):
         import urllib.request
 
         url = self.URL_TEST if settings.KKIAPAY_SANDBOX else self.URL_REELLE
-        requete = urllib.request.Request(
+        requete = urllib.request.Request(  # noqa: S310 - URL fixe (HTTPS), jamais saisie par un utilisateur
             url,
             data=json.dumps({"transactionId": reference}).encode(),
             headers={

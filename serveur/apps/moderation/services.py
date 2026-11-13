@@ -218,11 +218,18 @@ def classer_traite(acteur, rapport: Report, note: str) -> Report:
     _exiger_personnel(acteur)
     if rapport.status not in ETATS_OUVERTS:
         raise ErreurMetier("report_closed", "Ce dossier est déjà clos.", statut=409)
-    rapport.status, rapport.resolved_by, rapport.resolved_at = "resolved_actioned", acteur, timezone.now()
+    rapport.status, rapport.resolved_by, rapport.resolved_at = (
+        "resolved_actioned",
+        acteur,
+        timezone.now(),
+    )
     rapport.resolution_note = _motif(note)[:500]
     rapport.save(update_fields=["status", "resolved_by", "resolved_at", "resolution_note"])
     audit.enregistrer(
-        "signalement.traite", acteur=acteur, cible=rapport, metadata={"note": rapport.resolution_note}
+        "signalement.traite",
+        acteur=acteur,
+        cible=rapport,
+        metadata={"note": rapport.resolution_note},
     )
     return rapport
 

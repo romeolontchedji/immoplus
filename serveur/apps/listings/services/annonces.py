@@ -555,12 +555,17 @@ def remettre_en_ligne_apres_moderation(annonce: Listing, *, acteur) -> None:
     """L'équipe annule un masquage décidé par la modération : l'annonce revient en ligne si elle est encore valide."""
     if annonce.status != StatutAnnonce.HIDDEN or annonce.hidden_reason != "moderation":
         raise ErreurMetier(
-            "listing_locked", "Seule une annonce masquée par la modération se remet en ligne.", statut=409
+            "listing_locked",
+            "Seule une annonce masquée par la modération se remet en ligne.",
+            statut=409,
         )
     manques = manques_a_la_publication(annonce)
     if manques:
         raise ErreurMetier(
-            "listing_not_publishable", "L'annonce n'est plus publiable.", statut=409, champs={"manques": manques}
+            "listing_not_publishable",
+            "L'annonce n'est plus publiable.",
+            statut=409,
+            champs={"manques": manques},
         )
     mettre_en_ligne(annonce, acteur=acteur)
 

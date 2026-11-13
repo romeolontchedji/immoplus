@@ -23,7 +23,9 @@ from .models import Transaction
 
 
 def configure() -> bool:
-    return bool(settings.KKIAPAY_PRIVATE_KEY and settings.KKIAPAY_PUBLIC_KEY and settings.KKIAPAY_SECRET)
+    return bool(
+        settings.KKIAPAY_PRIVATE_KEY and settings.KKIAPAY_PUBLIC_KEY and settings.KKIAPAY_SECRET
+    )
 
 
 def alertes_payantes() -> bool:
@@ -161,7 +163,9 @@ def marquer_rembourse(*, acteur, ligne: Transaction) -> Transaction:
     if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
         raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
     if ligne.status != StatutPaiement.SUCCEEDED:
-        raise ErreurMetier("invalid_transition", "Seul un paiement réussi se rembourse.", statut=409)
+        raise ErreurMetier(
+            "invalid_transition", "Seul un paiement réussi se rembourse.", statut=409
+        )
     ligne.status = StatutPaiement.REFUNDED
     ligne.save(update_fields=["status"])
     audit.enregistrer(
@@ -253,5 +257,7 @@ def recevoir_webhook(corps: bytes, entetes: dict) -> str:
     except ErreurMetier as erreur:
         if erreur.code == "payment_unverified":
             raise
-        return "refuse"  # montant ou statut incohérent : déjà journalisé, inutile que KKiaPay réessaie
+        return (
+            "refuse"  # montant ou statut incohérent : déjà journalisé, inutile que KKiaPay réessaie
+        )
     return "applique"

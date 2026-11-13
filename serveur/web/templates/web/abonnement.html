@@ -12,7 +12,9 @@
       </div>
     </div>
     {% if raison %}
-      <div class="alerte alerte--avertissement" role="status"><p>{{ raison }}</p></div>
+      <div class="alerte alerte--avertissement" role="status">
+        <p>{{ raison }}</p>
+      </div>
     {% endif %}
     {% if not actif %}
       <div class="alerte alerte--succes" role="status">
@@ -22,9 +24,10 @@
       </div>
     {% endif %}
     {% if actif and not paiement_possible %}
-      <div class="alerte alerte--danger" role="status"><p>Le paiement n'est pas disponible pour le moment. Contacte l'équipe Immo+.</p></div>
+      <div class="alerte alerte--danger" role="status">
+        <p>Le paiement n'est pas disponible pour le moment. Contacte l'équipe Immo+.</p>
+      </div>
     {% endif %}
-
     {% if gerant %}
       <section class="carte p-5 pile" aria-labelledby="titre-etat">
         <h2 class="fs-18 fw-bold mb-0" id="titre-etat">Mon abonnement</h2>
@@ -53,9 +56,12 @@
                 <h3 class="fs-16 fw-bold mb-0">{{ f.label }}</h3>
                 <p class="texte-doux mb-0">{{ f.price }} F pour {{ f.period_months }} mois · Mobile Money ou carte</p>
               </div>
-              <button class="bouton bouton--primaire" type="button" data-payer data-objet="abonnement" data-plan="{{ f.code }}"{% if not paiement_possible %} disabled{% endif %}>
-                Payer {{ f.price }} F
-              </button>
+              <button class="bouton bouton--primaire"
+                      type="button"
+                      data-payer
+                      data-objet="abonnement"
+                      data-plan="{{ f.code }}"
+                      {% if not paiement_possible %} disabled{% endif %}>Payer {{ f.price }} F</button>
             </div>
           {% empty %}
             <p class="texte-doux">Aucune formule n'est proposée pour l'instant.</p>
@@ -84,7 +90,6 @@
         {% endif %}
       </section>
     {% endif %}
-
     <section class="pile" aria-labelledby="titre-historique">
       <h2 class="fs-18 fw-bold mb-0" id="titre-historique">Historique des paiements</h2>
       {% if historique %}
