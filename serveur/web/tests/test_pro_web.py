@@ -26,11 +26,18 @@ def session_gerant():
 def formulaire(quartier, **extra):
     return {
         "action": "enregistrer", "title": "Chambre propre près du campus", "room_type": "single", "district": str(quartier.pk),
-        "landmark_text": "Derrière la pharmacie", "address_private": "",
+        "landmark_text": "Derrière la pharmacie",
         "rent_amount": "25000", "advance_months": "1", "agent_fee_amount": "0",
         "available_from": "2026-11-01", "has_private_bathroom": "on", "is_fenced": "on", "water_sources": "running",
         "electricity_meter": "individual", "kitchen": "private", "description_md": "Chambre **calme**", **extra,
     }  # fmt: skip
+
+
+def test_l_editeur_garde_le_repere_public_sans_adresse_precise_ni_distance(session_gerant):
+    c, _ = session_gerant
+    page = c.get("/pro/annonces/nouvelle").content.decode()
+    assert "Repère public" in page and "Adresse précise" not in page
+    assert "distance à l" not in page.lower()
 
 
 def test_creation_puis_edition(session_gerant):

@@ -516,6 +516,12 @@ class TestCartesEtFiche:
         assert re.search(r'annonce__proximite">\s*Zongo\s*</p>', page)
         assert "m de l&#x27;UP" not in page and "m de l'UP" not in page
 
+    def test_l_en_tete_de_la_fiche_donne_le_repere_public_et_aucune_distance(self):
+        a = ListingFactory(landmark_text="derrière la pharmacie", room_type="studio")
+        page = html(Client().get(f"/annonces/{a.slug}"))
+        assert "· derrière la pharmacie" in page and "Université de Parakou" not in page
+        assert " m de l" not in page
+
     def test_la_fiche_localise_sans_inventer_de_repere(self):
         a = ListingFactory(landmark_text="")
         page = html(Client().get(f"/annonces/{a.slug}"))

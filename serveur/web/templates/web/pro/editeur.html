@@ -113,13 +113,6 @@
           {% with champ=form.landmark_text %}
             {% include "web/composants/champ.html" %}
           {% endwith %}
-          {% with champ=form.address_private %}
-            {% include "web/composants/champ.html" %}
-          {% endwith %}
-          <p class="champ__aide">
-            La distance à l'UP est calculée depuis le centre du quartier. Depuis l'application, tu peux utiliser la position
-            exacte de ton téléphone.
-          </p>
         </div>
         {% include "web/pro/etape-navigation.html" with precedent=1 suivant=3 %}
       </section>

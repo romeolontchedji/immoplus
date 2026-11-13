@@ -58,6 +58,7 @@
           <h1 class="fiche-titre">{{ f.title }}</h1>
           <p class="fiche-tete__meta">
             {{ f.type_label }}
+            {% if f.landmark_text %}· {{ f.landmark_text }}{% endif %}
             · {% if f.status == "published" %}Disponible{% else %}Déjà louée{% endif %}
           </p>
           <a class="fiche-note" href="#avis">
