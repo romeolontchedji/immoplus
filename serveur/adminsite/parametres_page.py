@@ -67,8 +67,8 @@ NOTES = {
     "LEGAL_UPDATED_AT": "Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ.",
     "TERMS_VERSION": "Changer ce numéro oblige chaque utilisateur à accepter de nouveau les conditions à sa prochaine "
     "connexion. Ne le modifier que si les conditions ont réellement changé.",
-    "LISTING_PREMODERATION": "Coché : chaque annonce attend la validation de l'équipe avant d'être visible. Décoché : "
-    "seule la première annonce d'un gérant est relue.",
+    "LISTING_PREMODERATION": "Sans effet pour l'instant : un gérant vérifié publie directement et l'équipe est prévenue par "
+    "courriel à chaque première mise en ligne (voir « courriel à l'équipe » ci-dessous).",
     "STALE_REMINDER_DAYS": "Liste de jours sans confirmation après lesquels le gérant reçoit un rappel, ex. [7, 10]. "
     "Utilisé seulement si le masquage automatique ci-dessous est actif.",
     "STALE_HIDE_DAYS": "Nombre de jours sans confirmation avant que l'annonce soit masquée automatiquement. 0 = jamais "

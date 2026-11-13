@@ -18,7 +18,7 @@ lui-même son nom d'utilisateur et son mot de passe.
 | 2 | Création du compte dans l'administration | administrateur | **fait** |
 | 3 | Création et envoi du lien d'activation (WhatsApp, e-mail) | administrateur | **fait** (envoi manuel) |
 | 4 | Activation : nom d'utilisateur, mot de passe, clé de secours | gérant | **fait** (site) |
-| 5 | Badge Vérifié + première annonce | administrateur / modérateur | **fait** (modération) |
+| 5 | Compte vérifié dès sa création ; publication directe | administrateur | **fait** |
 
 ## Étape 1 — Contact et vérification (hors plateforme)
 
@@ -96,9 +96,14 @@ usage unique) après avoir vérifié son identité. Voir `docs/administration.md
 
 ## Étape 5 — Après l'activation
 
-- publier une annonce exige le badge **Vérifié** : l'administrateur passe
-  `verification_status` à `verified` ;
-- la **première annonce** passe par la modération avant publication (CDC §9.23).
+- publier une annonce exige le badge **Vérifié** : le compte créé par l'équipe l'est **dès sa création** (l'entretien a eu
+  lieu avant), sans second geste ;
+- toutes les annonces, **première comprise**, sont en ligne aussitôt ; l'équipe (administrateurs et modérateurs) reçoit un
+  courriel et modère après coup ;
+- quand les paiements des gérants sont activés, il faut un abonnement pour publier de nouvelles chambres (page
+  « Abonnement » du menu) ; un administrateur peut l'activer à la main pour un paiement en espèces ;
+- après sa **connexion**, le gérant arrive sur son tableau de bord ; une chambre marquée louée est archivée aussitôt, photos et
+  vidéo supprimées.
 
 ## État
 

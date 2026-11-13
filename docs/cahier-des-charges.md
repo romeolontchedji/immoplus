@@ -200,7 +200,7 @@ Implémente **tout** ce que décrivent les sections 4 à 11 du CDC. Les points c
 - Détection des coordonnées (§11.7) dans titre, repère, adresse privée, description et messages ; mode `mask` par défaut, `flag`, `block` ; corpus de tests (numéros épelés, mélange chiffres/lettres, e-mails, liens, mots-clés) ; aucun faux positif sur les prix.
 - Distance au campus par haversine à l'enregistrement ; position publique arrondie à 3 décimales.
 - Pipeline média : création d'envoi avec quotas (§11.2), **protocole tus** (création, `HEAD`, `PATCH`, morceaux de 1 Mo, lecture du flux par blocs sans charger en mémoire, comptage dans `received_bytes`, expiration 24 h, reprise après coupure), contrôle `ffprobe` (conteneur mov/mp4/webm), `ffmpeg` avec format d'entrée forcé, `-protocol_whitelist file` et délai maximal, HLS 360p/720p en segments de 2 s, affiche WebP, photos WebP sans EXIF, SHA-256, détection de doublons, suppression différée, états visibles. Interface `StorageProvider` (local, squelette S3/R2) et `VideoProvider` (local ffmpeg).
-- Publication : conditions du §9.23, première annonce d'un gérant en relecture par la modération, passage automatique à `published` quand tout est prêt ; fraîcheur J+7/J+10/J+14 ; « louée » avec vidéo supprimée à J+7 et conversations en lecture seule à J+30 ; archivage à J+90.
+- Publication : conditions du §9.23, publication directe pour un gérant vérifié (l'équipe est prévenue par courriel à la première mise en ligne), passage automatique à `published` quand les médias sont prêts ; fraîcheur J+7/J+10/J+14 ; « louée » : photos et vidéo supprimées et annonce archivée aussitôt, conversations en lecture seule à J+30 (mise à jour 2026-11, décisions du porteur).
 
 ## 8.6 Fil, recherche, fiche, favoris, alertes (§7.4, §7.5, §9.22)
 
@@ -589,7 +589,7 @@ Immo+ est un **monolithe modulaire** Django : un seul code, une seule base Postg
 | Vidéo | ffmpeg sur worker-media : HLS en 360p et 720p, segments de 2 s, affiche WebP ; interface `VideoProvider` | Deux qualités suffisent (360p pour la 3G, 720p pour le wifi) et divisent le temps de calcul ; un service managé reste possible (palier 3). |
 | Notifications | Interface `PushProvider` : Expo Push ou FCM (décision en phase 0) | Les deux couvrent Android ; Expo simplifie les jetons. |
 | SMS (OTP) | Interface `SmsProvider` ; agrégateur choisi sur devis (§17) | Aucun service gratuit ou généreux n'existe : la limite de coût est une exigence (§5.3). |
-| Paiement (inactif) | Interface `PaymentProvider` ; implémentation factice, squelettes FedaPay et KKiaPay | Prêt sans être activé. |
+| Paiement (éteint par défaut) | Interface `PaymentProvider` ; implémentation factice et **KKiaPay réel** (fenêtre de paiement du site, vérification serveur, webhook) | Activé séparément pour les gérants et les locataires depuis l'administration (mise à jour 2026-11). |
 | Reverse proxy | Caddy 2 : HTTPS automatique, HTTP/3 (UDP 443 ouvert), compression zstd ou gzip | Configuration courte, certificats gérés, un seul point d'entrée. |
 | Conteneurs et livraison | Docker, Docker Compose, GitHub Actions, images publiées sur un registre | Même environnement en local et en production. |
 | Exploitation | Journaux JSON, Sentry (sans données personnelles), sonde externe sur `/readyz`, sauvegardes avec restic + pg_dump chiffrés | Léger et suffisant pour un serveur (§13.4). |
@@ -929,9 +929,9 @@ Chaque exigence indique ses surfaces (APP, WEB, ADM, §3.1) et sa priorité. « 
 | EF-ANN-08 | Photos : 3 à 10, JPEG, PNG ou HEIC, 10 Mo maximum ; EXIF supprimé ; variantes WebP ; réordonnables ; photo de couverture au choix. | Toutes (gérant) | M |
 | EF-ANN-09 | Traitement vidéo asynchrone avec état visible (envoi, traitement, prêt, échec avec motif). Une annonce n'est visible que si sa vidéo est prête. | Toutes (gérant) | M |
 | EF-ANN-10 | Adresse précise facultative, visible seulement des participants d'une conversation ; le public voit le quartier, le repère et une position arrondie (environ 100 m). | Toutes | S |
-| EF-ANN-11 | Publication immédiate pour un gérant vérifié, modération a posteriori ; exception : la première annonce de chaque gérant n'est publiée qu'après relecture de sa vidéo par la modération (cible 24 h). Pré-modération générale activable par paramètre. | Toutes, ADM | M |
+| EF-ANN-11 | Publication immédiate pour un gérant vérifié, **y compris sa première annonce** (décision 2026-11 : l'entretien a lieu avant la création du compte, qui est vérifié d'emblée) ; modération a posteriori, administrateurs et modérateurs prévenus par courriel à chaque première mise en ligne. `LISTING_PREMODERATION` est conservé mais sans effet. | Toutes, ADM | M |
 | EF-ANN-12 | Modification d'une annonce publiée ; changements de statut et de loyer tracés dans `audit_logs`. | Toutes, ADM | M |
-| EF-ANN-13 | « Louée » en un geste : conversations conservées, vidéo supprimée 7 jours plus tard sauf annulation, photos conservées. | Toutes (gérant) | M |
+| EF-ANN-13 | « Louée » en un geste, avec confirmation : conversations conservées, **photos et vidéo supprimées aussitôt** (fichiers compris) et annonce archivée ; la fiche reste ouverte (« déjà louée », lien vers les chambres libres). « Reproposer » repart d'un brouillon (nouvelles photos). Les avis restent liés au gérant. | Toutes (gérant) | M |
 | EF-ANN-14 | Fraîcheur : relance à J+7 et J+10 sans confirmation, masquage automatique à J+14, réactivation par confirmation. | Toutes (gérant) | M |
 | EF-ANN-15 | Bouton « Cette chambre est déjà louée » côté locataire ; trois signalements distincts préviennent le gérant et ouvrent un dossier. | Toutes (locataire) | S |
 | EF-ANN-16 | Vidéo identique (même SHA-256) déjà publiée par un autre gérant : signalement automatique à la modération. | ADM | S |
@@ -1055,12 +1055,12 @@ Calculées par agrégations SQL en lecture seule, mises en cache 5 minutes ; les
 | ID | Exigence | Surfaces | Prio. |
 |---|---|---|---|
 | EF-ABO-01 | Modèle de données et services de facturation complets (abonnements, paiements, événements de webhook), livrés, testés et inactifs ; les plans sont des paramètres (`app_settings`). | Back | M |
-| EF-ABO-02 | Drapeau `SUBSCRIPTION_ENABLED`, faux par défaut : aucune restriction de publication, aucun écran d'abonnement, endpoints répondant `404 feature_disabled`. | Toutes | M |
-| EF-ABO-03 | Point d'extension unique `can_publish(gerant)` appelé à la création et à la publication ; toujours vrai quand le drapeau est faux. | Back | M |
-| EF-ABO-04 | Interface `PaymentProvider` (initier, vérifier, rembourser, traiter un webhook) ; implémentation factice, squelettes FedaPay et KKiaPay. | Back | M |
+| EF-ABO-02 | Drapeaux `SUBSCRIPTION_ENABLED` (gérants) et `PAID_ALERTS_ENABLED` (locataires), faux par défaut et indépendants : aucune restriction, endpoints de l'API répondant `404 feature_disabled`. Activés, le gérant sans abonnement payant est renvoyé vers `/compte/abonnement` et le locataire paie chaque nouvelle alerte (`ALERT_PRICE`). | Toutes | M |
+| EF-ABO-03 | Point d'extension unique `can_publish(gerant)` appelé à la création et à la publication ; toujours vrai quand le drapeau est faux. Drapeau vrai : il faut un abonnement payant en cours (le plan Gratuit V1 ne suffit plus) ; les annonces déjà en ligne restent visibles. | Back | M |
+| EF-ABO-04 | Interface `PaymentProvider` ; implémentation factice et KKiaPay : fenêtre de paiement sur le site, transaction revérifiée côté serveur (statut, montant, identifiant jamais réutilisé), webhook `POST /paiement/webhook/kkiapay` authentifié par secret. Un abonnement peut aussi être activé en espèces par un administrateur. | Back | M |
 | EF-ABO-05 | Webhooks : signature vérifiée, idempotence par identifiant d'événement, traitement asynchrone. | Back | M |
 | EF-ABO-06 | Plan « Gratuit V1 » (prix 0, sans limite) attribué à tout gérant vérifié, pour que l'activation future ne demande aucune migration de données. | Back | M |
-| EF-ABO-07 | Écrans « Mon abonnement » et « Choisir un plan » développés, masqués par le drapeau. | Toutes (gérant) | S |
+| EF-ABO-07 | Page « Abonnement » (`/compte/abonnement`, menu et profil) pour les gérants et les locataires : formule, dates, formules à payer, historique des paiements. | Toutes | S |
 | EF-ABO-08 | Cycle de vie : essai, actif, impayé (grâce de 7 jours), annulé, expiré ; à l'expiration, annonces visibles 7 jours puis masquées (règle à valider avant activation). | Back | S |
 
 ### 7.12 Site web : pages publiques et référencement (EF-WEB)
@@ -1459,7 +1459,7 @@ Valeurs de l'annexe A modifiables sans redéploiement ; lues avec un cache court
 | description | varchar(255) | NN |  |
 | updated_by / updated_at | uuid / timestamptz | FK→users / NN |  |
 
-### 9.20 subscriptions — Abonnements (inactif)
+### 9.20 subscriptions — Abonnements (éteints par défaut)
 
 | Champ | Type | Contraintes | Description |
 |---|---|---|---|
@@ -1471,7 +1471,7 @@ Valeurs de l'annexe A modifiables sans redéploiement ; lues avec un cache court
 | cancel_at_period_end / canceled_at | boolean / timestamptz | NN, DEF false / — |  |
 | created_at / updated_at | timestamptz | NN | Un seul abonnement non expiré par gérant (index unique partiel) |
 
-### 9.21 payments — Paiements (inactif)
+### 9.21 payments — Paiements (ancien circuit, éteint par défaut)
 
 Contient aussi les événements de webhook reçus.
 
@@ -1487,6 +1487,22 @@ Contient aussi les événements de webhook reçus.
 | idempotency_key | varchar(64) | UQ, NN | Évite un double débit |
 | webhook_events | jsonb | NN, DEF '[]' | Liste {event_id, received_at, signature_valid, payload} ; un événement déjà présent est ignoré |
 | paid_at / created_at | timestamptz |  |  |
+
+### 9.21 bis transactions — Paiements par la fenêtre KKiaPay
+
+Un paiement fait depuis le site : abonnement d'un gérant (`objet = abonnement`) ou alerte d'un locataire (`objet = alerte`). Naît « en attente » à l'ouverture de la fenêtre ; passe à « réussi » seulement après revérification auprès de KKiaPay par le serveur.
+
+| Champ | Type | Contraintes | Description |
+|---|---|---|---|
+| id | uuid | PK |  |
+| user_id | uuid | NN, FK→users (PROTECT) | Le payeur |
+| objet | varchar(12) | NN | `abonnement` ou `alerte` |
+| plan_code | varchar(32) | — | Formule payée (abonnement) |
+| amount | integer | NN | FCFA |
+| status | varchar(10) | NN, DEF 'pending' | pending, succeeded, failed, refunded |
+| provider_ref | varchar(120) | UQ | Identifiant KKiaPay (`especes-…` pour un paiement en espèces noté par un administrateur) |
+| alert_id / used_at | uuid / timestamptz | FK, SET NULL / — | Alerte créée avec ce paiement ; `used_at` vide = un crédit d'alerte disponible |
+| created_at / paid_at | timestamptz |  |  |
 
 ### 9.22 Requêtes critiques et index
 
@@ -1667,14 +1683,14 @@ Une connexion par appareil sur `wss://…/ws/v1/?ticket=…` (ticket de `POST /w
 
 | Transition | Déclencheur | Effets |
 |---|---|---|
-| draft → processing | Publication alors qu'un média est en traitement, ou première annonce d'un gérant (relecture de sa vidéo par la modération) | En attente ; invisible du public ; passe seule à `published` quand le média est `ready` et la relecture faite. |
+| draft → processing | Publication alors qu'un média est en traitement | En attente ; invisible du public ; passe seule à `published` quand les médias sont `ready`. |
 | draft / processing → published | Publication avec toutes les conditions du §9.23 | `published_at`, `last_confirmed_at` = maintenant, `reminder_stage` = 0 ; événement `listing.published`. |
 | processing → draft | Échec du traitement de la vidéo | Notification avec motif ; le gérant remplace la vidéo. |
 | published → hidden | Pas de confirmation à J+14 (`stale`), modération, choix du gérant, suspension du gérant | Retrait du fil et des pages publiques ; conversations ouvertes ; notification. |
 | hidden → published | Confirmation, levée de la modération, rétablissement du gérant | Remise en ligne si les conditions sont toujours remplies ; fraîcheur réinitialisée. |
 | published → rented | Le gérant marque l'annonce louée | `rented_at` = maintenant ; vidéo programmée pour suppression à J+7 ; conversations en lecture seule à J+30 ; notification aux locataires en conversation et aux favoris. |
 | rented → published | Annulation avant suppression de la vidéo | `delete_after` effacé. Après suppression de la vidéo, republier exige une nouvelle vidéo (retour à `draft`). |
-| rented → archived | 90 jours après la location | Retrait des pages publiques (les conversations sont en lecture seule depuis 30 jours après la location). |
+| published → rented → archived | « Marquer louée » : les deux changements se font ensemble, aussitôt | Photos et vidéo supprimées, retrait du fil ; la fiche reste ouverte avec « déjà louée ». Conversations en lecture seule 30 jours après la location. (Les annonces « louées » avant la mise à jour sont archivées à 90 jours.) |
 | tout état → removed | Décision de modération ou d'administration | Retrait définitif de l'affichage ; conservation pour le journal. |
 
 Chaque changement de statut écrit une ligne `listing.status_changed` dans `audit_logs` (ancien statut, nouveau statut, auteur, loyer avant et après).
@@ -1944,7 +1960,7 @@ Automatisés quand c'est possible, joués à la main sur appareils réels avant 
 | 5 | Un locataire sur WEB trouve l'annonce par filtres, contacte le gérant ; le gérant reçoit le push sur APP, répond ; le locataire voit la réponse en temps réel et l'accusé de lecture. WebSocket coupé : le repli par interrogation livre le message sans perte ni doublon ; application du gérant passée en arrière-plan ou réseau coupé puis rétabli : le push part quand même. |
 | 6 | Un message contenant un numéro est marqué, l'expéditeur reçoit le rappel, un dossier apparaît dans ADM ; le modérateur ouvre la conversation avec un motif (ligne dans `audit_logs`) et masque le message. |
 | 7 | Un locataire crée une alerte ; la publication d'une annonce correspondante déclenche une seule notification, même après une republication. |
-| 8 | Le gérant marque l'annonce louée ; la vidéo disparaît 7 jours plus tard (horloge avancée) ; une annulation avant l'échéance la conserve. |
+| 8 | Le gérant marque l'annonce louée (après confirmation) ; ses photos et sa vidéo disparaissent aussitôt et l'annonce est archivée ; « Reproposer » repart d'un brouillon. |
 | 9 | Fraîcheur : relances à J+7 et J+10, masquage à J+14, confirmation qui remet en ligne. |
 | 10 | Suspension d'un gérant : annonces masquées, écriture refusée, levée qui les rétablit. |
 | 11 | Abonnement inactif : aucun écran ni endpoint ; en test, l'activation du drapeau refuse la publication sans abonnement actif et la permet après un paiement factice. |
@@ -2003,7 +2019,7 @@ Hypothèses retenues faute de décision ou d'information complète. Chacune se c
 | 7 | Liste blanche d'IP de l'administration | Obligatoire en production : liste blanche d'adresses ou, si elles ne sont pas stables, VPN (WireGuard) dont l'adresse sert de liste blanche. Le nom d'hôte n'est pas secret ; la 2FA et le verrouillage par compte s'y ajoutent. |
 | 8 | Durées de conservation | Valeurs proposées : conversations 12 mois après la dernière activité, journaux 24 mois, pièces des gérants 12 mois après la fin de la relation, OTP 90 jours. À valider avec un juriste. |
 | 9 | Détection des coordonnées | Mode « masquer » par défaut pour les signaux forts (numéro, e-mail, lien) ; mots-clés seulement signalés ; « bloquer » prêt, pas de blocage automatique (faux positifs sur les prix). Vidéos et photos non analysées : première vidéo de chaque gérant relue. |
-| 10 | Publication des annonces | Immédiate pour un gérant vérifié, modération a posteriori, sauf la première annonce de chaque gérant (relecture de la vidéo) ; pré-modération générale activable. |
+| 10 | Publication des annonces | Immédiate pour un gérant vérifié, y compris la première annonce ; modération a posteriori, équipe prévenue par courriel (décision 2026-11). |
 | 11 | Adresse précise de la chambre | Visible seulement dans la conversation, pour garder un rôle à la plateforme. |
 | 12 | Web Push sur le site | Priorité C : les notifications fiables passent par l'application ; le site affiche compteur et messages en direct tant qu'il est ouvert. |
 | 13 | Valeurs chiffrées | Durées, tailles, plafonds et délais de l'annexe A sont des valeurs de départ à ajuster avec le démarcheur et d'après les mesures. |
@@ -2029,8 +2045,8 @@ Valeurs de départ. Celles marquées « base » sont lues dans `app_settings` et
 | Envoi tus : morceau · expiration d'un envoi inactif | 1 Mo · 24 h | code |  |
 | Quotas d'envoi | 1 vidéo et 10 photos par annonce ; 2 envois ouverts et 500 Mo en attente par gérant ; refus au-delà de 85 % de disque | base | EF-ANN-19 |
 | Originaux conservés après traitement | 24 h | code | §11.2 |
-| Suppression de la vidéo après location | 7 jours | base | EF-ANN-13 |
-| Fraîcheur : relances · masquage · archivage | J+7 et J+10 · J+14 · 90 jours après location | base | EF-ANN-14 |
+| Suppression des médias après location | immédiate (l'ancien délai de 7 jours n'est plus utilisé) | base | EF-ANN-13 |
+| Fraîcheur : relances · masquage · archivage | J+7 et J+10 · J+14 · à la location (90 jours pour les anciennes annonces louées) | base | EF-ANN-14 |
 | Signalements « déjà louée » avant dossier | 3 distincts | base | EF-ANN-15 |
 | Annonces actives par gérant | 20 | base | EF-ANN-17 |
 | Description · titre | 4 000 caractères · 5 à 120 caractères | code |  |
@@ -2064,7 +2080,7 @@ Valeurs de départ. Celles marquées « base » sont lues dans `app_settings` et
 | listing.media_failed | Gérant | Centre, push | Échec du traitement avec motif lisible. |
 | listing.reminder | Gérant | Centre, push | « Cette chambre est-elle toujours libre ? » à J+7 et J+10. |
 | listing.hidden | Gérant | Centre, push | Masquée (fraîcheur, modération, suspension) avec le motif. |
-| listing.rented_video_scheduled | Gérant | Centre | Suppression de la vidéo à J+7, avec possibilité d'annuler. |
+| listing.rented_video_scheduled | Gérant | Centre | Chambre marquée louée : photos et vidéo supprimées, annonce archivée. |
 | listing.reported_rented | Gérant | Centre, push | Trois locataires la signalent comme déjà louée. |
 | report.outcome | Auteur du signalement | Centre | Décision prise (sans détailler la sanction). |
 | account.sanction | Utilisateur concerné | Centre, push | Avertissement, suspension, bannissement, rétablissement ; non désactivable. |

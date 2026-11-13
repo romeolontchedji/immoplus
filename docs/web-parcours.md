@@ -59,9 +59,14 @@ contraste, en une seule fois.
 |---|---|---|---|---|---|---|---|
 | Lister ses annonces | `/pro/annonces` | GET | `views_pro.liste` | `selectors.annonces_du_gerant` | gérant | table/liste | 302 ; 404 si rôle ≠ gérant |
 | Créer/éditer | `/pro/annonces[/nouvelle\|/<id>]` | GET/POST | `editeur` | `services.annonces.{creer_brouillon,modifier}` | gérant propriétaire | 302 / message | `ErreurMetier` liée au champ |
-| Publier / confirmer / masquer / louer / annuler | idem | POST | `editeur` | `services.annonces.*` | gérant propriétaire | message | `listing_not_publishable` (manques) |
+| Publier / confirmer / masquer / louer / annuler | idem | POST | `editeur` | `services.annonces.*` | gérant propriétaire | 302 (publier → `/pro/annonces`, louer → `/pro/annonces`, autres → l'éditeur avec message) | `listing_not_publishable` (manques) ; `subscription_required` → 302 `/compte/abonnement?raison=publier` |
 | Supprimer un brouillon | idem | POST | `editeur` | `services.annonces.supprimer_brouillon` | gérant propriétaire | 302 liste | `ErreurMetier` |
-| Envoyer des médias | `/v1/...` (API) | POST | `envoi.js` | `media`, `services.medias` | gérant propriétaire | progression | format/taille ; propriété |
+| Envoyer des médias | `/v1/...` (API) | POST | `envoi.js` | `media`, `services.medias` | gérant propriétaire | progression, puis mise à jour de la page sans rechargement (GET) | format/taille ; propriété |
+| Abonnement (formule, historique) | `/compte/abonnement` (alias `/pro/abonnement`) | GET | `views_paiement.abonnement` | `billing.services`, `billing.transactions` | connecté (locataire ou gérant) | page | 302 connexion |
+| Préparer / confirmer un paiement KKiaPay | `/paiement/preparer`, `/paiement/confirmer` | POST (JSON) | `views_paiement` | `billing.transactions` | connecté | JSON | `payment_unavailable` 503, `email_required` 409, `payment_failed` 402 |
+| Webhook KKiaPay | `/paiement/webhook/kkiapay` | POST | `views_paiement.webhook` | `billing.transactions.recevoir_webhook` | secret `x-kkiapay-secret` | JSON | 403 secret faux ; 502 si KKiaPay ne répond pas (il réessaie) |
+| Supprimer mon compte (confirmation) | `/compte/supprimer` | GET/POST | `views_suppression.supprimer_mon_compte` | `compte.anonymiser` | connecté, mot de passe donné < 10 min | page puis 302 `/` | 302 profil si la demande a expiré |
+| Profil public d'un gérant | `/gerants/<id>` | GET | `views_public.profil_gerant` | `selectors.profil_gerant_public` | public | page | 410 « n'est plus sur Immo+ » (compte supprimé) ; 404 identifiant inconnu |
 
 ## Référencement
 
@@ -71,4 +76,4 @@ contraste, en une seule fois.
 
 - **ADM** (hôte et administration séparés) : phase 6, sur le processus `admin` uniquement.
 - **APP mobile** : hors Web.
-- **Facturation** : désactivée (`SUBSCRIPTION_ENABLED`), aucun paiement simulé.
+- **Facturation** : éteinte par défaut (`SUBSCRIPTION_ENABLED`, `PAID_ALERTS_ENABLED`) ; activée, elle passe par KKiaPay (lignes ci-dessus), jamais par un paiement simulé en production.

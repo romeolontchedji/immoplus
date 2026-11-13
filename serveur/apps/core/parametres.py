@@ -86,7 +86,7 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     "UNANSWERED_REMINDER_H": (2, "Heures avant le rappel au gérant pour un message non lu."),
     "LISTING_PREMODERATION": (
         False,
-        "Pré-modération de toutes les annonces (désactivée par défaut).",
+        "Sans effet : un gérant vérifié publie directement, l'équipe est prévenue par courriel.",
     ),
     "STAFF_READS_ALERT_THRESHOLD": (
         20,

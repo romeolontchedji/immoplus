@@ -119,10 +119,11 @@ en production.** Idem pour `CAMPUS_REFERENCE` (déjà dans le projet, non revu).
 
 ## C. Limites et manques connus
 
-- **Pré-modération** : `LISTING_PREMODERATION` existe en paramètre, mais la règle « première annonce d'un gérant relue »
-  reste celle d'avant (statut `processing`) ; l'approbation passe par l'admin (action « Approuver et publier »).
-- **Notifications groupées** (« 3 nouveaux messages de X ») : seule la `collapse_key` est posée ; le regroupement visuel
-  dépend de l'application mobile. Aucun résumé quotidien.
+- **Pré-modération** (mis à jour 2026-11) : la relecture de la première annonce a été **retirée** à la demande du porteur :
+  un gérant vérifié publie directement et l'équipe reçoit un courriel. `LISTING_PREMODERATION` reste en paramètre mais n'a
+  aucun effet ; l'action « Approuver » ne sert plus que pour d'anciennes annonces `processing`.
+- **Notifications groupées** (mis à jour 2026-11) : les messages d'une même personne pour une même chambre mettent à jour
+  **une seule notification** par conversation (`apps/notifications/services.regrouper`). Aucun résumé quotidien.
 - **Push** : seul le fournisseur « console » (développement) est testé ; `ExpoPushProvider` n'a jamais parlé à Expo ;
   `FcmPushProvider` est un squelette qui lève `NotImplementedError`. Les jetons invalides sont désactivés (`push_invalid_at`).
 - **SMS de repli au gérant** (`SMS_FALLBACK_ENABLED`) : écrit et testé avec un faux fournisseur, désactivé par défaut.
@@ -149,3 +150,28 @@ cd serveur && DB_USER=<superutilisateur> DB_PASSWORD=<mdp> DB_NAME=immoplus ../.
 ```
 Exécuter en **série** : le mode parallèle (`-n`) entre en conflit sur la création des rôles de la base de test
 (problème antérieur à cette session).
+
+## D. Ajouts de novembre 2026 : ce qui reste à vérifier
+
+Travaux faits sur la branche `chore/integration` (voir `docs/avancement.md`, entrées du 2026-11-12 au 2026-11-20). Ces tests n'ont
+**pas été exécutés sur le poste de développement** (pytest absent) : seule la CI GitHub les exécute, à l'ouverture d'une pull
+request.
+
+- **KKiaPay** : l'adresse et les en-têtes de vérification (`POST /api/v1/transactions/status`, `x-api-key`, `x-private-key`,
+  `x-secret-key`) viennent du code du SDK officiel Node.js, pas d'une documentation d'API ; un premier paiement réel d'alerte a
+  réussi et le webhook a été reçu. **À confirmer en sandbox** : la forme de `stateData` dans le webhook (nous y passons notre
+  référence), le comportement en cas de paiement échoué ou annulé, et si les clés de test diffèrent des clés réelles.
+- **Pas de remboursement ni de renouvellement automatique** : un abonnement se rachète ; un remboursement se fait depuis le
+  tableau de bord KKiaPay. La fenêtre de paiement est ouverte depuis le navigateur : `Permissions-Policy: payment=()` reste en
+  place (à relâcher si un paiement par carte l'exige).
+- **Alerte payée mais non créée** : un paiement réussi dont le formulaire n'est pas parti reste un **crédit** au compte ; la page
+  « Mes alertes » le dit et reprend la création si les options sont gardées dans le navigateur.
+- **Archivage immédiat d'une chambre louée** : irréversible pour les médias (confirmation demandée). L'API répond `archived`
+  à « marquer louée » ; l'application mobile n'a pas été adaptée. Les avis sont liés au gérant (`Review.gerant`, migration
+  0013) ; une suppression physique d'annonce supprimerait encore ses avis (cascade) : aucun traitement ne le fait.
+- **Statistiques de l'administration** : lecture seule, calculées à la demande ; une panne d'une lecture affiche
+  « Statistiques indisponibles » sans casser la fiche. Les 100 plus actifs seulement.
+- **Mots de passe du profil** : `autocomplete="new-password"` ; certains gestionnaires de mots de passe l'ignorent.
+- **Courriels** : tous partent aussi en HTML (`apps/core/tasks.py`) ; mise en forme non testée dans les clients de messagerie réels.
+- **Webhook et domaine** : l'adresse déclarée chez KKiaPay ne doit pas être redirigée (une redirection compte comme un échec).
+

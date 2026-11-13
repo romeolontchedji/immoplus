@@ -289,7 +289,7 @@ clé des sauvegardes. Ouvre-le (`nano .env`) et renseigne seulement :
 | Variable | Valeur |
 |---|---|
 | `DOMAIN` | `immoplus.bj` (sans `www`) |
-| `ADMIN_ALLOWED_IPS` | Ton adresse fixe ou celle de ton VPN, par ex. `203.0.113.7/32`. Une adresse de réseau mobile change souvent : un VPN (WireGuard, Tailscale) est plus fiable. Vide = administration fermée à tous. |
+| `ADMIN_ALLOWED_IPS` | Tes adresses ou **plages de réseau** (notation CIDR), séparées par des **espaces ou des virgules**, par ex. `203.0.113.7/32 198.51.100.0/24`. Une adresse de réseau mobile change souvent : donne la plage de ton opérateur (ou de ton réseau de bureau) plutôt qu'une seule adresse, ou utilise un VPN. Vide = administration fermée à tous. |
 | `PUSH_PROVIDER` | `expo` |
 | `CAPTCHA_PROVIDER` | `turnstile` |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` | Tes clés (étape 3.2) |
@@ -298,6 +298,9 @@ clé des sauvegardes. Ouvre-le (`nano .env`) et renseigne seulement :
 | `ERREURS_DESTINATAIRES` | Ton adresse : un courriel à chaque nouvelle erreur (au plus un par heure et par erreur) |
 | `RESTIC_REPOSITORY`, `SAUVEGARDE_CLE_ACCES`, `SAUVEGARDE_CLE_SECRETE` | Cloudflare R2 (étape 4.2, facultatif : vide = pas de copie hors du VPS) |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Cloudinary (étape 4.5, facultatif : vide = médias sur le disque du VPS) |
+| `KKIAPAY_PUBLIC_KEY`, `KKIAPAY_PRIVATE_KEY`, `KKIAPAY_SECRET` | Les trois clés du tableau de bord KKiaPay (Developers › API Keys) ; facultatif tant que les paiements sont éteints |
+| `KKIAPAY_WEBHOOK_SECRET` | Une chaîne aléatoire que tu inventes (`python3 -c "import secrets; print(secrets.token_urlsafe(32))"`), à saisir aussi comme « hash secret » en créant le webhook chez KKiaPay |
+| `KKIAPAY_SANDBOX` | `true` pour essayer, `false` pour de vrais paiements |
 | `WEB_CONCURRENCY` | Processus du site et de l'API : `3` pour un VPS de 4 cœurs partagé, `2` pour 2 cœurs (`docs/capacite.md`) |
 
 Ne touche pas aux secrets générés. Régénère ensuite les fichiers des services **sans changer les secrets** :
@@ -309,6 +312,11 @@ grep -o '^[A-Z_]*=' .env | head -40        # liste les noms, jamais les valeurs
 
 > ⚠️ N'utilise jamais `--force` sur un serveur en service : il génère de nouveaux mots de passe et la base existante
 > ne s'ouvrirait plus.
+
+> ⚠️ `creer_env.py --services` **ne complète pas `.env`** : il lit `.env` pour réécrire les fichiers des services. Une
+> variable ajoutée par une nouvelle version (comme les clés KKiaPay) n'apparaît dans `.env` que si tu l'y écris toi-même.
+> Il réécrit aussi `caddy.env` et `admin.env` : **revérifie ensuite `ADMIN_ALLOWED_IPS`**
+> (`grep ADMIN_ALLOWED_IPS infra/compose/env/caddy.env infra/compose/env/admin.env`).
 
 **Copie `.env` dans le coffre de l'équipe**, sans le coller dans une messagerie. Sans lui, une restauration est
 impossible (il contient aussi `RESTIC_PASSWORD`, la clé qui déchiffre les sauvegardes).
@@ -574,7 +582,16 @@ bash infra/vps/deployer.sh
 ```
 
 Les migrations sont appliquées automatiquement par le service `migrer`. `.env` n'est jamais touché par `git pull`.
-Si une version ajoute une variable à `.env.example`, ajoute-la à `.env` puis `python3 outils/creer_env.py --services`.
+Si une version ajoute une variable à `.env.example`, ajoute-la à `.env` (`nano .env`), puis
+`python3 outils/creer_env.py --services`, vérifie `ADMIN_ALLOWED_IPS` (étape 6.2), et lance `bash infra/vps/deployer.sh`.
+Pour qu'un **simple changement de `.env`** (sans nouvelle version) soit pris en compte : régénère les fichiers des services,
+puis `immoplus up -d --force-recreate <service>` (noms : `web-api`, `realtime`, `admin`, `worker`, `worker-media`, `beat`,
+`caddy` ; il n'existe pas de service `web`). L'alias `immoplus` doit être enregistré dans `~/.bashrc`.
+
+**Une correction de script ou de style n'apparaît pas ?** `/static/` est mis en cache un an, mais ses adresses portent une
+empreinte du contenu (`?v=…`) : après un déploiement, un rafraîchissement normal suffit. Si ce n'est pas le cas, vérifie que le
+déploiement a bien reconstruit l'image (`immoplus ps`) et regarde le code source de la page : l'adresse du script doit finir
+par `?v=` suivi de dix caractères.
 
 ## 16. Revenir en arrière
 
@@ -592,6 +609,8 @@ Pour revenir ensuite à la version courante : `git checkout main && bash infra/v
 ```bash
 immoplus ps                                  # état des services Immo+
 immoplus logs -f web-api                     # journaux en direct (Ctrl+C pour quitter)
+immoplus logs --since 30m worker             # derniers journaux d'un service (courriels, tâches)
+immoplus exec -T postgres psql -U postgres -d immoplus -c "select status, count(*) from transactions group by 1;"   # lecture seule
 immoplus restart caddy                       # après une modification de assetlinks.json
 immoplus run --rm admin python manage.py creer_personnel --email … --nom … --role moderator
 docker stats --no-stream | grep immoplus     # mémoire et processeur des conteneurs Immo+

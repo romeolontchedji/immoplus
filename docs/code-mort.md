@@ -51,8 +51,10 @@ conséquence, le mot `export` est simplement de trop.
 | Attestation de l'application (Play Integrity, App Attest) | Interface prête, fournisseur `fake` | Développement des deux fournisseurs |
 | Pièces d'identité chiffrées | `PRIVATE_FILES_KEY` et volume `media_private` en place | Aucune fonctionnalité ne les utilise (la vérification des gérants se fait hors plateforme) |
 | `VIDEO_PROVIDER` | Réglage déclaré | Aucune interface : le traitement vidéo appelle `ffmpeg` directement |
-| Remboursements | `rembourser()` dans les trois fournisseurs de paiement | Jamais appelé : à relier au moment de l'abonnement payant |
-| Abonnement, alertes payantes | Complets et testés | Éteints volontairement (`SUBSCRIPTION_ENABLED`, `PAID_ALERTS_ENABLED`) |
+| Remboursements | `rembourser()` dans les fournisseurs de paiement (KKiaPay : non implémenté, remboursement depuis son tableau de bord) | Jamais appelé |
+| Abonnement, alertes payantes (KKiaPay) | Complets et testés ; premier paiement réel réussi | **Éteints par défaut**, deux cases séparées (`SUBSCRIPTION_ENABLED`, `PAID_ALERTS_ENABLED`) |
+| `LISTING_PREMODERATION`, `RENTED_VIDEO_DELETE_DAYS` | Paramètres déclarés | Sans effet : publication directe d'un gérant vérifié, médias supprimés dès la location |
+| Ancien circuit `payments` / API `/v1/pro/payments` | Complet, factice | Remplacé sur le site par `transactions` (KKiaPay) ; hors schéma public |
 | SMS de repli au gérant | Code présent | Éteint (`SMS_FALLBACK_ENABLED`) |
 | Push FCM direct | Squelette | Expo suffit pour l'instant |
 | Stockage S3 / R2 | Squelette (ADR 0007) | Client S3 et compte |
