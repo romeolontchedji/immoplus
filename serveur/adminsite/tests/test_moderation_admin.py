@@ -93,6 +93,13 @@ class TestSignalements:
         assert r1.status == "in_review" and r1.assigned_to_id == u.pk
         assert r2.status == "resolved_dismissed"
 
+    def test_classer_comme_traite(self, mod):
+        _, c = mod
+        r, _ = services.signaler(ClientFactory(), "listing", ListingFactory().pk, "scam")
+        lancer(c, "moderation_report", "classer_traite", [r.pk])
+        r.refresh_from_db()
+        assert r.status == "resolved_actioned" and r.resolved_at is not None
+
     def test_la_liste_nomme_la_personne_visee_et_son_numero(self, mod):
         _, c = mod
         p = gerant_verifie()

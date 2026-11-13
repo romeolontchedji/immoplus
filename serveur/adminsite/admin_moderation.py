@@ -498,7 +498,7 @@ class ReportAdmin(admin.ModelAdmin):
     list_select_related = ("reporter", "assigned_to")
     list_filter = ("status", "reason_code", "source", "target_type")
     ordering = ("created_at",)
-    actions = ["prendre", "classer", "ecrire_au_plaignant", "ecrire_a_la_personne_visee"]
+    actions = ["prendre", "classer_traite", "classer", "ecrire_au_plaignant", "ecrire_a_la_personne_visee"]
 
     @admin.action(description="Écrire à la personne qui a signalé")
     def ecrire_au_plaignant(self, request, queryset):
@@ -606,6 +606,15 @@ class ReportAdmin(admin.ModelAdmin):
         for rapport in queryset:
             try:
                 services.prendre_en_charge(request.user, rapport)
+            except ErreurMetier as erreur:
+                _signaler_erreur(self, request, erreur)
+
+    @admin.action(description="Classer comme traité")
+    def classer_traite(self, request, queryset):
+        _exiger_personnel(request)
+        for rapport in queryset:
+            try:
+                services.classer_traite(request.user, rapport, "Situation traitée par l'équipe.")
             except ErreurMetier as erreur:
                 _signaler_erreur(self, request, erreur)
 
