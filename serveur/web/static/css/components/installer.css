@@ -1,0 +1,23 @@
+/* Invitation à installer l'application sur l'écran d'accueil (visible après connexion). */
+.installer {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--divider); background: var(--primary-soft);
+}
+.installer[hidden] { display: none; }
+.installer__icone { width: 2.5rem; height: 2.5rem; border-radius: var(--r-field); flex: none; }
+.installer__texte { flex: 1 1 14rem; margin: 0; font-size: var(--fs-14); color: var(--night); }
+.installer__texte strong { display: block; font-size: var(--fs-15); }
+.installer__fermer {
+  min-width: var(--cible); min-height: var(--cible); border: 0; border-radius: var(--r-field);
+  background: transparent; color: var(--night); font: inherit; font-size: var(--fs-20); cursor: pointer;
+}
+.installer__fermer:hover { background: var(--blue-soft-hover); }
+.installer__fermer:focus-visible { outline: none; box-shadow: var(--anneau-focus); }
+
+/* Page affichée sans réseau. */
+.hors-ligne {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-4);
+  min-height: 100vh; padding: var(--sp-6); text-align: center; background: var(--bg);
+}
+.hors-ligne__titre { margin: 0; font-size: var(--fs-26); color: var(--night); }
+.hors-ligne__texte { max-width: 28rem; margin: 0; color: var(--text-muted); }

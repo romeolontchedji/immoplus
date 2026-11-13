@@ -19,6 +19,8 @@ TOUJOURS_OUVERTS = (
     "/v1/webhooks/",
     "/paiement/webhook/",  # KKiaPay : un paiement validé pendant la maintenance doit quand même être reçu
     "/healthz",
+    "/manifest.webmanifest",  # application installable : lisibles même en maintenance
+    "/sw.js",
     "/readyz",
     "/static/",
     "/media/",

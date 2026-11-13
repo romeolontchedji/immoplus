@@ -62,6 +62,10 @@ Une ligne par décision ; le détail de la phase 0 est dans `docs/adr/`.
   l'eau et l'électricité (elles ne bloquent pas) et sur le budget (jusqu'à 5 000 F au-dessus du plafond). Plus de distance
   à l'UP dans le formulaire. Budget : liste ou montant saisi. Une alerte sans activité du locataire depuis 14 jours est mise
   en pause (notification et courriel), réactivable en un clic. Maximum 3 courriels par jour et par alerte, puis un récapitulatif.
+- **Application installable (PWA)** : le site a un manifeste (`/manifest.webmanifest`), un service worker (`/sw.js`) et une page
+  « Pas de connexion » (`/hors-ligne`). Aucune page n'est gardée en mémoire (comptes, messages et alertes restent privés et
+  à jour) ; seuls les fichiers du site et la page hors ligne le sont. Après connexion, un bandeau propose d'installer l'application
+  (bouton sur Android et ordinateur, explication du geste sur iPhone) ; refusé, il ne revient qu'après 14 jours.
 - **Fiche d'une chambre** : ni carte, ni distance, ni adresse précise : le quartier et le repère public. L'adresse précise est
   supprimée partout (site, API, mobile, base) ; la distance à l'UP reste calculée seulement pour les filtres « près de l'UP ».
 - **Accueil** : titre « Trouve ta chambre à Parakou, en deux clics. », accroche « Visite en vidéo, zéro paiement avant la visite. ».

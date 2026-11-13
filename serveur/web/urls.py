@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.urls import path
 
-from . import views
+from . import views, views_pwa
 from . import views_auth as a
 from . import views_equipe as equipe_vue
 from . import views_paiement as paiement
@@ -36,6 +36,9 @@ urlpatterns = [
         name="notification_ouvrir",
     ),
     path("compte/equipe", equipe_vue.fil_equipe, name="equipe"),
+    path("manifest.webmanifest", views_pwa.manifeste, name="manifeste"),
+    path("sw.js", views_pwa.service_worker, name="service-worker"),
+    path("hors-ligne", views_pwa.hors_ligne, name="hors-ligne"),
     path("robots.txt", pub.robots, name="robots"),
     path("sitemap.xml", pub.sitemap, name="sitemap"),
     path("connexion", a.connexion, name="connexion"),

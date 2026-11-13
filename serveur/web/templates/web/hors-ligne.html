@@ -1,0 +1,23 @@
+{% load static immoplus %}
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <title>Pas de connexion — Immo+</title>
+    <link rel="stylesheet" href="{% css_immoplus %}">
+  </head>
+  <body>
+    <main class="hors-ligne">
+      <img src="{% static 'design/logo-horizontal.svg' %}"
+           alt="Immo+"
+           width="144"
+           height="36">
+      <h1 class="hors-ligne__titre">Pas de connexion</h1>
+      <p class="hors-ligne__texte">Immo+ a besoin d'Internet pour te montrer les chambres. Vérifie ton réseau, puis réessaie.</p>
+      <a class="bouton bouton--primaire bouton--grand" href="/">Réessayer</a>
+    </main>
+  </body>
+</html>

@@ -923,7 +923,7 @@ def mes_notifications(request):
 def robots(request):
     contenu = (
         "User-agent: *\nAllow: /\nDisallow: /compte\nDisallow: /pro\nDisallow: /connexion\nDisallow: /inscription\n"
-        "Disallow: /mot-de-passe\nDisallow: /activer\nDisallow: /deconnexion\n"
+        "Disallow: /mot-de-passe\nDisallow: /activer\nDisallow: /deconnexion\nDisallow: /hors-ligne\n"
     )
     contenu += f"Sitemap: {_base_site(request)}/sitemap.xml\n"
     return HttpResponse(contenu, content_type="text/plain; charset=utf-8")
