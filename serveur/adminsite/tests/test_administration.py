@@ -506,6 +506,14 @@ class TestMasquerOuRetirerUneAnnonce:
         assert Listing.objects.get(pk=annonce.pk).status == "published"
 
 
+class TestPageDeRubrique:
+    def test_la_page_d_une_rubrique_renvoie_a_l_accueil_sans_erreur(self):
+        c, _ = se_connecter(personnel(AdminFactory))
+        for rubrique in ("listings", "accounts"):
+            r = c.get(f"/{rubrique}/")
+            assert r.status_code == 302 and r["Location"] == reverse("admin:index")
+
+
 class TestCarteNouvellesAnnonces:
     def test_la_carte_compte_les_annonces_des_sept_derniers_jours_et_mene_a_la_liste(self):
         from apps.listings.tests.fabriques import ListingFactory

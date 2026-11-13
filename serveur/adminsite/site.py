@@ -180,6 +180,13 @@ class AdminImmoplus(AdminSite):
                 )
         return rubriques
 
+    def app_index(self, request, app_label, extra_context=None):
+        """La page d'une rubrique (`/listings/`) réutilisait le gabarit du tableau de bord sans ses chiffres et plantait
+        (VariableDoesNotExist) : l'accueil, qui regroupe déjà toutes les rubriques, la remplace."""
+        from django.shortcuts import redirect
+
+        return redirect("admin:index")
+
     def index(self, request, extra_context=None):
         contexte = extra_context or {}
         if request.user.is_active and request.user.role in ("admin", "moderator"):
