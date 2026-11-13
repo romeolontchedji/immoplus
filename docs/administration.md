@@ -51,7 +51,8 @@ Un modérateur ne peut pas suspendre plus de `MODERATOR_MAX_SUSPENSION_DAYS` jou
 
 La page d'accueil réunit :
 
-- **À traiter** : signalements ouverts, annonces en traitement, gérants en attente de vérification, types
+- **À traiter** : signalements ouverts, annonces en traitement, **nouvelles annonces** (mises en ligne ces 7 jours : un coup d'œil
+  même si elles sont déjà visibles ; la liste s'ouvre triée de la plus récente à la plus ancienne), gérants en attente de vérification, types
   de logement proposés. Chaque chiffre mène à la liste concernée.
 - **Activité** : inscriptions, annonces publiées, conversations, vues, et un graphe des 14 derniers jours.
 - **Téléphones actifs** sur 7 jours (Android, iOS).
