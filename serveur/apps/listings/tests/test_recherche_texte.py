@@ -16,6 +16,78 @@ QUARTIERS = [
 ]
 
 
+TYPES = [
+    ("single", "Chambre simple"),
+    ("chambre_sanitaire", "Chambre sanitaire"),
+    ("chambre_semi_sanitaire", "Chambre semi-sanitaire"),
+    ("entree_coucher", "Entrée-couché simple"),
+    ("entree_coucher_sanitaire", "Entrée-couché sanitaire"),
+    ("studio", "Studio"),
+    ("studio_meuble", "Studio meublé"),
+]
+
+
+class TestTypesEtEquipements:
+    def test_chambre_sanitaire_est_un_type_et_non_le_seul_mot_sanitaire(self):
+        a = recherche_texte.analyser("zongo, banikanni, chambre sanitaire", QUARTIERS, TYPES)
+        assert a.districts == ["zongo", "banikanni"]
+        assert a.types == ["chambre_sanitaire"] and a.mots == []
+
+    def test_le_type_semi_sanitaire_n_est_pas_confondu(self):
+        assert recherche_texte.analyser("chambre semi sanitaire", QUARTIERS, TYPES).types == [
+            "chambre_semi_sanitaire"
+        ]
+
+    def test_un_mot_de_type_sans_precision_prend_les_variantes(self):
+        assert set(recherche_texte.analyser("studio", QUARTIERS, TYPES).types) == {
+            "studio",
+            "studio_meuble",
+        }
+        assert set(recherche_texte.analyser("entrée couché", QUARTIERS, TYPES).types) == {
+            "entree_coucher",
+            "entree_coucher_sanitaire",
+        }
+
+    def test_un_type_mal_ecrit_est_reconnu(self):
+        a = recherche_texte.analyser("studoi", QUARTIERS, TYPES)
+        assert a.types[:1] == ["studio"] and a.comprises[0]["corrige"] is True
+
+    def test_sanitaire_seul_reste_un_mot_de_recherche(self):
+        a = recherche_texte.analyser("sanitaire", QUARTIERS, TYPES)
+        assert a.types == [] and a.mots == ["sanitaire"]
+
+    def test_eau_electricite_cuisine_douche_cloture(self):
+        a = recherche_texte.analyser(
+            "forage compteur individuel cuisine commune douche cloturée", QUARTIERS, TYPES
+        )
+        assert a.filtres == {
+            "water": ["borehole"],
+            "meter": ["individual"],
+            "kitchen": ["shared"],
+            "bathroom": True,
+            "fenced": True,
+        }
+        assert a.mots == []
+
+    def test_un_equipement_mal_ecrit_est_reconnu(self):
+        a = recherche_texte.analyser("foraje et puit", QUARTIERS, TYPES)
+        assert a.filtres["water"] == ["borehole", "well"]
+        assert all(c["corrige"] for c in a.comprises)
+
+    def test_le_compteur_d_eau_n_est_pas_celui_de_l_electricite(self):
+        a = recherche_texte.analyser("compteur eau personnel", QUARTIERS, TYPES)
+        assert a.filtres == {"water": ["individual"]}
+
+    def test_cuisine_seule_reste_un_mot_de_recherche(self):
+        assert recherche_texte.analyser("studio cuisine", QUARTIERS, TYPES).mots == ["cuisine"]
+
+    def test_un_critere_deja_pose_n_est_pas_remplace(self):
+        a = recherche_texte.analyser(
+            "chambre sanitaire forage", QUARTIERS, TYPES, deja=frozenset({"types", "water"})
+        )
+        assert a.types == [] and "water" not in a.filtres
+
+
 class TestAnalyse:
     def test_un_quartier_mal_ecrit_est_reconnu(self):
         a = recherche_texte.analyser("zogo", QUARTIERS)
@@ -122,7 +194,9 @@ class TestRechercheDansLeFil:
     def test_la_page_chambres_explique_ce_qu_elle_a_compris(self):
         DistrictFactory(name="Zongo", slug="zongo-w")
         page = Client().get("/annonces", {"q": "zogo"}).content.decode()
-        assert "Quartier compris" in page and "Zongo" in page and "tu as écrit" in page
+        assert (
+            "Compris" in page and "Quartier" in page and "Zongo" in page and "tu as écrit" in page
+        )
         assert (
             "Aucune chambre à Zongo pour l&#x27;instant." in page
             or "Aucune chambre à Zongo" in page
@@ -145,3 +219,21 @@ class TestRechercheDansLeFil:
         page = Client().get("/annonces", {"q": "introuvablezz"}).content.decode()
         assert "Aucune chambre pour" in page and "introuvablezz" in page
         assert "/quartiers/zongo-s" in page
+
+    def test_chambre_sanitaire_ne_ramene_pas_les_semi_sanitaires(self):
+        sanitaire = self._indexee(room_type="chambre_sanitaire", title="Chambre propre")
+        self._indexee(room_type="chambre_semi_sanitaire", title="Chambre propre aussi")
+        r = fil.rechercher({"q": "chambre sanitaire"})
+        assert [i["id"] for i in r["items"]] == [sanitaire.pk]
+        assert r["interpretation"]["types"] == ["chambre_sanitaire"]
+
+    def test_les_equipements_de_la_phrase_deviennent_des_filtres(self):
+        voulue = self._indexee(
+            title="Chambre un", water_sources=["borehole"], has_private_bathroom=True
+        )
+        self._indexee(title="Chambre deux", water_sources=["borehole"], has_private_bathroom=False)
+        self._indexee(title="Chambre trois", water_sources=["running"], has_private_bathroom=True)
+        r = fil.rechercher({"q": "je veux un forage avec douche"})
+        assert [i["id"] for i in r["items"]] == [voulue.pk]
+        genres = {c["genre"] for c in r["interpretation"]["comprises"]}
+        assert genres == {"Eau", "Douche"}

@@ -5,6 +5,7 @@ from apps.core import stats
 from .. import selectors
 from . import filtres as f
 from . import recherche_texte
+from . import types as types_chambre
 
 # Un quartier qui donne moins de résultats que ce seuil déclenche la proposition des quartiers voisins.
 SEUIL_VOISINS = 3
@@ -39,20 +40,47 @@ def _mode_de_recherche(effectifs: dict, analyse) -> str:
     return "et" if premiere["items"] else "ou"
 
 
+def _deja_pose(criteres: dict) -> frozenset[str]:
+    """Critères déjà choisis dans les filtres de la page : la saisie ne les remplace pas."""
+    return frozenset(
+        cle
+        for cle, pose in {
+            "districts": criteres["districts"],
+            "types": criteres["types"],
+            "water": criteres["water"],
+            "meter": criteres["meter"],
+            "kitchen": criteres["kitchen"],
+            "bathroom": criteres["bathroom"] is not None,
+            "fenced": criteres["fenced"] is not None,
+        }.items()
+        if pose
+    )
+
+
 def rechercher(params) -> dict:
     criteres = f.normaliser(params)
-    # La saisie est comprise avant d'être cherchée : quartier reconnu (même avec une faute), remplissage écarté.
+    # La saisie est comprise avant d'être cherchée : types, équipements et quartiers reconnus (même avec une faute),
+    # remplissage écarté.
     analyse = recherche_texte.analyser(
         criteres["q"],
         [(d.slug, d.name) for d in selectors.quartiers_actifs()],
-        chercher_quartiers=not criteres[
-            "districts"
-        ],  # un quartier déjà choisi dans les filtres prime
+        [(t["slug"], t["label"]) for t in types_chambre.publics()],
+        deja=_deja_pose(criteres),
     )
     effectifs = {
         **criteres,
         "q": " ".join(analyse.mots),
         "districts": criteres["districts"] or analyse.districts,
+        "types": criteres["types"] or analyse.types,
+        "water": criteres["water"] or analyse.filtres.get("water", []),
+        "meter": criteres["meter"] or analyse.filtres.get("meter", []),
+        "kitchen": criteres["kitchen"] or analyse.filtres.get("kitchen", []),
+        "bathroom": criteres["bathroom"]
+        if criteres["bathroom"] is not None
+        else analyse.filtres.get("bathroom"),
+        "fenced": criteres["fenced"]
+        if criteres["fenced"] is not None
+        else analyse.filtres.get("fenced"),
     }
     mode = _mode_de_recherche(effectifs, analyse)
     resultat = selectors.fil({**effectifs, "q_mode": mode})
@@ -71,8 +99,11 @@ def rechercher(params) -> dict:
             "mots": analyse.mots,
             "ignores": analyse.ignores,
             "reconnus": analyse.reconnus,
+            "comprises": analyse.comprises,
+            "types": analyse.types,
+            "filtres": analyse.filtres,
             "mode": mode,
-            "sans_critere": bool(criteres["q"] and not analyse.mots and not analyse.reconnus),
+            "sans_critere": bool(criteres["q"] and not analyse.mots and not analyse.comprises),
         },
         "suggestions": selectors.quartiers_avec_chambres(6) if vide and criteres["q"] else [],
     }

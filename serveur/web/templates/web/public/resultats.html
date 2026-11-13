@@ -31,11 +31,11 @@
     </div>
   {% endif %}
   {% with comprise=resultat.interpretation %}
-    {% if comprise.reconnus %}
+    {% if comprise.comprises %}
       <p class="alerte alerte--information" role="status">
-        Quartier compris&nbsp;:
-        {% for r in comprise.reconnus %}
-          <strong>{{ r.nom }}</strong>{% if r.corrige %} (tu as écrit «&nbsp;{{ r.saisi }}&nbsp;»){% endif %}{% if not forloop.last %},{% endif %}
+        Compris&nbsp;:
+        {% for c in comprise.comprises %}
+          {{ c.genre }} <strong>{{ c.libelle }}</strong>{% if c.corrige %} (tu as écrit «&nbsp;{{ c.saisi }}&nbsp;»){% endif %}{% if not forloop.last %} ·{% endif %}
         {% endfor %}
       </p>
     {% endif %}
