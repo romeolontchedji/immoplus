@@ -1,0 +1,22 @@
+{% extends "web/base.html" %}
+{% block titre %}Gérant absent — Immo+{% endblock %}
+{% block contenu %}
+  <section class="section">
+    <div class="conteneur pile pile--large">
+      <div class="etat-vide">
+        <h1 class="etat-vide__titre">
+          {% if motif == "supprime" %}Ce gérant n'est plus sur Immo+{% else %}Ce profil n'est pas disponible pour le moment{% endif %}
+        </h1>
+        <p class="texte-doux">
+          {% if motif == "supprime" %}
+            Son compte a été supprimé : ses annonces ne sont plus visibles. Tes anciennes conversations avec lui restent
+            lisibles, mais tu ne peux plus lui écrire.
+          {% else %}
+            Ses annonces ne sont pas visibles actuellement. Tu peux continuer ta recherche parmi les chambres libres.
+          {% endif %}
+        </p>
+        <p><a class="bouton bouton--primaire" href="/annonces">Voir les chambres disponibles</a></p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

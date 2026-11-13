@@ -1,0 +1,58 @@
+{% extends "web/espace.html" %}
+{% block titre %}Supprimer mon compte — Immo+{% endblock %}
+{% block espace %}
+  <div class="profil">
+    <section class="compte-section-carte compte-section-carte--danger" aria-labelledby="titre-confirmation">
+      <h1 class="compte-section-carte__titre color-danger" id="titre-confirmation">
+        {% include "web/composants/icone.html" with nom="circle-alert" taille=20 %}
+        Dernière étape : confirmer la suppression
+      </h1>
+      <p class="mb-0">
+        Ton mot de passe est correct. <strong>Rien n'est encore supprimé.</strong> Une fois confirmée, la suppression est
+        <strong>définitive</strong> : ton nom, ton adresse e-mail et ton nom d'utilisateur sont effacés, tes appareils sont
+        déconnectés, et personne ne peut récupérer ce compte.
+      </p>
+      {% if pertes.abonnement %}
+        <div class="alerte alerte--danger" role="alert">
+          <p>
+            <strong>Ton abonnement en cours sera perdu.</strong> Formule « {{ pertes.abonnement.formule }} », payée jusqu'au
+            {{ pertes.abonnement.fin|date:"d/m/Y" }}. Il ne sera ni remboursé, ni transférable, ni récupérable.
+          </p>
+        </div>
+      {% endif %}
+      {% if pertes.credits_alerte %}
+        <div class="alerte alerte--danger" role="alert">
+          <p>
+            <strong>Tu as payé {{ pertes.credits_alerte }} alerte{{ pertes.credits_alerte|pluralize }} que tu n'as pas encore créée{{ pertes.credits_alerte|pluralize }}.</strong>
+            Ce paiement sera perdu, sans remboursement.
+          </p>
+        </div>
+      {% endif %}
+      <ul>
+        {% if u.role == "gerant" %}
+          <li>
+            {% if pertes.annonces %}Tes {{ pertes.annonces }} annonce{{ pertes.annonces|pluralize }} en ligne seront retirée{{ pertes.annonces|pluralize }}.{% else %}Tes annonces seront archivées.{% endif %}
+          </li>
+          <li>Les locataires qui ont discuté avec toi verront que tu n'es plus sur la plateforme.</li>
+        {% else %}
+          {% if pertes.alertes %}<li>Tes alertes actives ({{ pertes.alertes }}) s'arrêteront.</li>{% endif %}
+          <li>Tes favoris et tes conversations ne seront plus accessibles.</li>
+        {% endif %}
+      </ul>
+      {% if erreur %}<p class="champ__erreur" role="alert">{{ erreur }}</p>{% endif %}
+      <form method="post" class="pile">
+        {% csrf_token %}
+        {% if graves %}
+          <label class="case">
+            <input type="checkbox" name="comprends" value="oui">
+            Je comprends que ce que j'ai payé sera perdu définitivement.
+          </label>
+        {% endif %}
+        <div class="rangee">
+          <button class="bouton bouton--danger" type="submit">Oui, supprimer définitivement mon compte</button>
+          <button class="bouton bouton--secondaire" type="submit" name="annuler" value="1">Non, garder mon compte</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

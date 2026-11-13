@@ -54,6 +54,13 @@ def appareil_par_id(identifiant) -> Device | None:
     return Device.objects.filter(pk=identifiant).first()
 
 
+def profil_gerant_par_id(gerant_id):
+    """Profil d'un gérant par identifiant, avec son compte (administration), ou None."""
+    from .models import GerantProfile
+
+    return GerantProfile.objects.select_related("user").filter(pk=gerant_id).first()
+
+
 def profil_gerant(utilisateur):
     """Profil du gérant connecté (colonnes publiques seulement) ; 403 si le compte n'en a pas."""
     from .models import GerantProfile
@@ -84,6 +91,21 @@ def gerants_publics(identifiants) -> dict:
         }
         for ligne in lignes
     }
+
+
+def gerant_indisponible(gerant_id) -> str | None:
+    """Pourquoi le profil public d'un gérant n'est pas montré : « supprime », « indisponible » (suspendu, banni), ou None
+    si le profil existe et est actif ; `inconnu` quand aucun gérant n'a cet identifiant."""
+    from .models import GerantProfile
+
+    ligne = (
+        GerantProfile.objects.filter(pk=gerant_id).values("user__deleted_at", "user__status").first()
+    )
+    if ligne is None:
+        return "inconnu"
+    if ligne["user__deleted_at"] is not None or ligne["user__status"] == "deleted":
+        return "supprime"
+    return None if ligne["user__status"] == "active" else "indisponible"
 
 
 def gerant_public(gerant_id) -> dict | None:

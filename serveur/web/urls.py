@@ -7,6 +7,7 @@ from . import views
 from . import views_auth as a
 from . import views_paiement as paiement
 from . import views_pro as p
+from . import views_suppression as suppression
 from . import views_public as pub
 
 urlpatterns = [
@@ -41,6 +42,7 @@ urlpatterns = [
     path("compte/email/confirmer/<str:jeton>", a.confirmer_email, name="email-confirmer"),
     path("compte", a.espace_compte, name="compte"),
     path("compte/profil", a.mon_profil, name="profil"),
+    path("compte/supprimer", suppression.supprimer_mon_compte, name="compte-supprimer"),
     path("compte/preferences", a.mes_preferences, name="preferences"),
     path("compte/appareils", a.mes_appareils, name="appareils"),
     path(

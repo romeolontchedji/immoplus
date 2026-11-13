@@ -76,14 +76,20 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = (
         "id", "username", "full_name", "email", "email_verified_at", "recovery_key_created_at", "role",
         "token_version", "terms_version", "terms_accepted_at", "last_seen_at", "deleted_at", "created_at",
-        "updated_at", "avatar_path", "liens_compte",
+        "updated_at", "avatar_path", "liens_compte", "statistiques",
     )  # fmt: skip
     fields = (
         "id", "username", "first_name", "last_name", "full_name", "liens_compte", "role", "status",
         "suspended_until", "email", "email_verified_at", "recovery_key_created_at", "token_version",
         "terms_version", "terms_accepted_at", "last_seen_at", "deleted_at", "created_at", "updated_at",
-        "avatar_path",
+        "avatar_path", "statistiques",
     )  # fmt: skip
+
+    @admin.display(description="Statistiques")
+    def statistiques(self, obj):
+        from .statistiques import statistiques_html
+
+        return statistiques_html(obj)
 
     @admin.display(description="Accès au compte")
     def liens_compte(self, obj):
@@ -337,7 +343,14 @@ class GerantProfileAdmin(admin.ModelAdmin):
         "created_by",
         "created_at",
         "updated_at",
+        "statistiques",
     )
+
+    @admin.display(description="Statistiques")
+    def statistiques(self, obj):
+        from .statistiques import statistiques_html
+
+        return statistiques_html(obj.user) if obj is not None else "—"
 
     def get_queryset(self, request):
         return GerantProfile.complets.select_related(
@@ -359,6 +372,7 @@ class GerantProfileAdmin(admin.ModelAdmin):
             "verified_at",
             "verified_by",
             "created_by",
+            "statistiques",
         ]
         if request.user.role == "admin":  # pièces et notes : administrateurs seulement
             champs += [

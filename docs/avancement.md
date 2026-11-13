@@ -2,6 +2,16 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-19 : suppression de compte, gérant parti, statistiques.**
+- Suppression sur le site en deux temps : mot de passe, puis page de confirmation (`/compte/supprimer`) qui dit ce qui est
+  perdu : abonnement payé en cours (« ni remboursé, ni transférable, ni récupérable », case à cocher obligatoire), alertes
+  payées non créées, annonces en ligne. L'API mobile reste en une étape.
+- Profil public d'un gérant supprimé : page « Ce gérant n'est plus sur Immo+ » (410) au lieu de « page introuvable ».
+- Administration : fiche d'un gérant et d'un locataire avec leurs statistiques (annonces, audience, réputation, abonnement et
+  paiements ; conversations, favoris, alertes, avis, paiements) : `adminsite/statistiques.py`.
+- Profil : les navigateurs ne remplissent plus les mots de passe (`new-password`) ; seule la connexion l'autorise.
+- Correction des règles d'import : `billing` passe par les sélecteurs de `accounts` (plus d'import de ses modèles).
+
 **2026-11-18 : scripts à jour chez tous, médias sans rechargement.**
 - Cause racine : Caddy sert `/static/` avec `Cache-Control: immutable` pendant un an et les fichiers n'avaient pas de version :
   un navigateur qui avait déjà chargé `paiement.js` ou `envoi.js` gardait l'ancienne copie (le paiement de l'alerte ne s'ouvrait

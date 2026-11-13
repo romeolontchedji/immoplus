@@ -9,6 +9,7 @@ from functools import wraps
 from django.conf import settings
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
@@ -348,9 +349,10 @@ def mon_profil(request):
                 )  # garde CETTE session ouverte ; les autres tombent
                 message = "Ton mot de passe a été changé. Les autres appareils sont déconnectés."
             elif action == "suppression":
-                compte.supprimer(u, d["password"])
-                logout(request)
-                return redirect("/?compte_supprime=1")
+                # Mot de passe juste : rien n'est supprimé avant la page de confirmation qui suit.
+                compte.verifier_suppression(u, d["password"])
+                request.session["suppression_demandee"] = timezone.now().timestamp()
+                return redirect("/compte/supprimer")
         except ErreurMetier as erreur:
             _signaler(form, erreur)
     return render(

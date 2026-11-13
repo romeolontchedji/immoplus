@@ -136,10 +136,12 @@ class AjoutEmail(_Base):
     )
 
 
+# Sur le profil, le navigateur ne remplit jamais un mot de passe : « new-password » le lui interdit. Seule la page de
+# connexion garde « current-password » (remplissage autorisé).
 class MotDePasseActuel(_Base):
     password = forms.CharField(
         label="Ton mot de passe actuel",
-        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
         strip=False,
         max_length=128,
     )
@@ -147,7 +149,10 @@ class MotDePasseActuel(_Base):
 
 class ChangementMotDePasse(_Base):
     current_password = forms.CharField(
-        label="Mot de passe actuel", widget=forms.PasswordInput, strip=False, max_length=128
+        label="Mot de passe actuel",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        strip=False,
+        max_length=128,
     )
     new_password = forms.CharField(
         label="Nouveau mot de passe",
@@ -174,7 +179,7 @@ class ChangementMotDePasse(_Base):
 class Suppression(_Base):
     password = forms.CharField(
         label="Confirme avec ton mot de passe",
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
         strip=False,
         max_length=128,
     )
