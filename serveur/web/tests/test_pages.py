@@ -16,7 +16,7 @@ def test_accueil():
     assert reponse.status_code == 200
     html = reponse.content.decode()
     assert '<html lang="fr" data-theme="light">' in html
-    assert "Trouve ta chambre à Parakou, sans courir partout." in html
+    assert "Trouve ta chambre à Parakou, en deux clics." in html
     assert 'class="accueil-hero"' in html and "Comment ça marche" in html
     assert re.search(r'href="/static/css/dist/immoplus\.[0-9a-f]{10}\.css"', html)
 

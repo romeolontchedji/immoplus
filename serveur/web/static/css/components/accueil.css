@@ -126,7 +126,7 @@
 /* ── Section "Comment ça marche" ───────────────────────────────────────────── */
 .accueil-section-entete { text-align: center; margin-bottom: var(--sp-10); }
 .accueil-section-entete h2 { margin-bottom: var(--sp-2); }
-.accueil-section-sous-titre { font-size: var(--fs-16); color: var(--text-muted); margin: 0; }
+.accueil-section-sous-titre { font-size: var(--fs-16); color: var(--text-muted); margin: 0 auto; }  /* `p` a une largeur max : on centre la boîte */
 
 .accueil-comment__grille {
   display: grid; gap: var(--sp-6); grid-template-columns: 1fr;
