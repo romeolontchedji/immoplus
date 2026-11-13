@@ -30,13 +30,37 @@
       <a class="recapitulatif__effacer" href="{{ action }}" data-filtre-lien>Tout effacer</a>
     </div>
   {% endif %}
+  {% with comprise=resultat.interpretation %}
+    {% if comprise.reconnus %}
+      <p class="alerte alerte--information" role="status">
+        Quartier compris&nbsp;:
+        {% for r in comprise.reconnus %}
+          <strong>{{ r.nom }}</strong>{% if r.corrige %} (tu as écrit «&nbsp;{{ r.saisi }}&nbsp;»){% endif %}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      </p>
+    {% endif %}
+    {% if comprise.sans_critere %}
+      <p class="alerte alerte--information" role="status">
+        Aucun quartier ni mot précis dans «&nbsp;{{ comprise.saisie }}&nbsp;». Voici toutes les chambres&nbsp;: essaie un quartier,
+        un type de chambre ou un équipement (forage, clôture, cuisine…).
+      </p>
+    {% elif comprise.mode == "ou" and not resultat.vide %}
+      <p class="alerte alerte--information" role="status">
+        Aucune chambre ne contient tous tes mots. Voici celles qui en contiennent au moins un.
+      </p>
+    {% endif %}
+  {% endwith %}
   {% if resultat.vide %}
     <div class="etat-vide" role="status">
       <span class="etat-vide__symbole">{% include "web/composants/icone.html" with nom="search" taille=32 %}</span>
       <div>
         <h2 class="etat-vide__titre">
-          {% if params.district %}
+          {% if resultat.interpretation.reconnus %}
+            Aucune chambre à {% for r in resultat.interpretation.reconnus %}{{ r.nom }}{% if not forloop.last %}, {% endif %}{% endfor %} pour l'instant.
+          {% elif params.district %}
             Aucune chambre ne correspond dans ce quartier.
+          {% elif params.q %}
+            Aucune chambre pour «&nbsp;{{ params.q }}&nbsp;».
           {% else %}
             Aucune chambre ne correspond pour l'instant.
           {% endif %}
@@ -44,10 +68,22 @@
         <p class="etat-vide__texte">
           {% if resultat.voisins %}
             Regarde juste en dessous : des chambres avec les mêmes critères dans les quartiers voisins.
+          {% elif params.q %}
+            Essaie avec moins de mots, ou juste le nom d'un quartier. Tu peux aussi créer une alerte : on te prévient dès qu'une chambre correspond.
           {% else %}
             Retire un filtre, ou crée une alerte : on te prévient dès qu'une chambre correspond.
           {% endif %}
         </p>
+        {% if resultat.suggestions %}
+          <ul class="filtres-actifs">
+            {% for q in resultat.suggestions %}
+              <li>
+                <a class="puce"
+                   href="/quartiers/{{ q.slug }}">{{ q.nom }}{% if q.nombre %} · {{ q.nombre }}{% endif %}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
       </div>
       {% if resultat.alerte_proposee %}
         <div class="etat-vide__actions">

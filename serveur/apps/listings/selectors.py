@@ -180,8 +180,10 @@ def _appliquer_criteres(requete, f: dict):
         # Recherche au fil de la frappe : chaque mot compte comme un début de mot (« B », « Ba », « Bani »…) sur
         # le titre, le quartier, le repère, le type, les équipements et les autres détails (vecteur de recherche).
         # Lettres et chiffres seulement : la requête reste toujours valide.
+        # Mode « ou » (`q_mode`) : une annonce qui contient au moins un des mots suffit ; par défaut, tous les mots.
+        mode_ou = f.get("q_mode") == "ou"
         mots = re.findall(r"[^\W_]+", f["q"])[:8]
-        prefixes = " & ".join(f"{m}:*" for m in mots)
+        prefixes = (" | " if mode_ou else " & ").join(f"{m}:*" for m in mots)
         # Que des symboles : seule la tolérance aux fautes (plus bas) peut encore trouver.
         sql, params = "FALSE", []
         if mots:
@@ -192,10 +194,20 @@ def _appliquer_criteres(requete, f: dict):
             # Repli : mots vides ou très courts (« a », « de »), ignorés par la recherche plein texte.
             sql = (
                 "search_vector @@ to_tsquery('french', unaccent(%s))"
-                f" OR ({' AND '.join([debut_de_mot] * len(mots))})"
+                f" OR ({(' OR ' if mode_ou else ' AND ').join([debut_de_mot] * len(mots))})"
             )
             params = [prefixes, *mots]
-        if len(f["q"]) >= 4:
+        if (
+            mode_ou
+        ):  # tolérance aux fautes mot par mot (la phrase entière ne ressemble à aucun titre)
+            for mot in mots:
+                if len(mot) >= 4:
+                    sql += (
+                        " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
+                        " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4"
+                    )
+                    params += [mot, mot]
+        elif len(f["q"]) >= 4:
             sql += (
                 " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.title))) > 0.3"
                 " OR word_similarity(unaccent(lower(%s)), unaccent(lower(listings.landmark_text))) > 0.4"

@@ -175,6 +175,12 @@ def _liste(request, *, quartier=None, action="/annonces", forces=None, campus=Fa
     }
     if quartier is not None:
         critere_alerte["district"] = quartier.slug
+    comprise = resultat.get("interpretation") or {}
+    if comprise.get("reconnus") and not critere_alerte.get("district"):
+        # « zogo » reconnu comme Zongo : l'alerte porte sur le quartier, pas sur la faute de frappe.
+        critere_alerte["district"] = ",".join(r["slug"] for r in comprise["reconnus"])
+        if not comprise.get("mots"):
+            critere_alerte.pop("q", None)
     contexte = {
         "resultat": resultat, "params": {**forces, **request.GET.dict(), "district": params.get("district", "")},
         "seo": _seo_liste(request, quartier=quartier, campus=campus),
