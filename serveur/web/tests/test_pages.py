@@ -16,7 +16,7 @@ def test_accueil():
     assert reponse.status_code == 200
     html = reponse.content.decode()
     assert '<html lang="fr" data-theme="light">' in html
-    assert "Vois ta chambre avant de te déplacer." in html
+    assert "Trouve ta chambre à Parakou, sans courir partout." in html
     assert 'class="accueil-hero"' in html and "Comment ça marche" in html
     assert re.search(r'href="/static/css/dist/immoplus\.[0-9a-f]{10}\.css"', html)
 
@@ -50,3 +50,16 @@ def test_aucun_style_ni_script_en_ligne():
 def test_aucun_chemin_d_administration_sur_le_site_public():
     for chemin in ("/admin/", "/admin/login/", "/pilotage/"):
         assert Client().get(chemin).status_code == 404
+
+
+@pytest.mark.pg
+@pytest.mark.django_db
+def test_accueil_annonce_le_prix_forfaitaire_des_alertes_quand_elles_sont_payantes():
+    from apps.core import parametres
+
+    page = Client().get("/").content.decode()
+    assert "créer des alertes ne coûte rien" in page  # alertes gratuites par défaut
+    parametres.definir("PAID_ALERTS_ENABLED", True)
+    parametres.definir("ALERT_PRICE", 1500)
+    page = Client().get("/").content.decode()
+    assert "prix forfaitaire de 1 500&nbsp;F" in page
