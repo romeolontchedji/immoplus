@@ -86,10 +86,10 @@ def test_la_page_equipe_du_site():
     page = c.get("/compte/equipe").content.decode()
     assert "Bienvenue sur Immo+." in page and "L'équipe Immo+" in page
     assert equipe.non_lus(u.pk) == 0  # affiché : lu
-    r = c.post("/compte/equipe", {"subject": "Aide", "body": "Je n'arrive pas à publier."})
+    r = c.post("/compte/equipe", {"subject": "Aide", "body": "Je n arrive pas a publier."})
     assert r.status_code == 302 and r["Location"] == "/compte/equipe?ok=envoye"
     assert MessageEquipe.objects.filter(utilisateur=u, vers_utilisateur=False).count() == 1
-    assert "Je n'arrive pas à publier." in c.get("/compte/equipe").content.decode()
+    assert "Je n arrive pas a publier." in c.get("/compte/equipe").content.decode()
 
 
 def test_consulter_une_notification_la_marque_lue_puis_redirige():

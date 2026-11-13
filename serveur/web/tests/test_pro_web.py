@@ -355,7 +355,7 @@ def test_suivant_grise_pendant_le_traitement_et_un_envoi_interrompu_ne_bloque_pa
 
     c, g = session_gerant
     a = ListingFactory(gerant=g, status="draft", published_at=None)
-    medias_prets(a)
+    medias_prets(a, video=False)  # la vidéo « en cours » est créée juste dessous (une seule vidéo active)
     video = ListingMedia.objects.create(
         listing=a, kind="video", declared_size_bytes=10, status="processing"
     )
@@ -375,7 +375,7 @@ def test_la_cloche_liste_les_notifications_recentes(session_gerant):
 
     c, g = session_gerant
     Notification.objects.create(user=g.user, kind="alert.match", title="Nouvelle chambre à Zongo", body="25 000 F")
-    page = c.get("/pro/annonces").content.decode()
+    page = c.get("/").content.decode()  # la cloche est dans l'en-tête de l'accueil ; ailleurs, la barre latérale
     assert "Nouvelle chambre à Zongo" in page and "Aucune notification pour l" not in page
 
 
@@ -383,10 +383,10 @@ def test_la_cloche_propose_consulter(session_gerant):
     from apps.notifications.models import Notification
 
     c, g = session_gerant
-    Notification.objects.create(
+    n = Notification.objects.create(
         user=g.user, kind="alert.match", title="Nouvelle", body="x", data={"slug": "chambre-zongo"}
     )
-    assert 'href="/annonces/chambre-zongo"' in c.get("/pro/annonces").content.decode()
+    assert f'href="/compte/notifications/{n.pk}/ouvrir"' in c.get("/").content.decode()
 
 
 def test_les_adresses_statiques_portent_une_empreinte():

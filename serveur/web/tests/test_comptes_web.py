@@ -353,9 +353,9 @@ def test_deconnecter_partout_garde_cette_session():
     assert not u.devices.filter(revoked_at__isnull=True).exists()
 
 
-def test_le_gerant_arrive_sur_son_profil_depuis_compte():
+def test_le_gerant_arrive_sur_son_tableau_de_bord_depuis_compte():
     _, c = gerant_active()
-    assert c.get("/compte")["Location"] == "/compte/profil"
+    assert c.get("/compte")["Location"] == "/pro/dashboard"
 
 
 def test_un_gerant_connecte_arrive_sur_son_tableau_de_bord():

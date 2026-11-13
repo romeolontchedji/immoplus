@@ -53,7 +53,7 @@ def dernier_code(adresse: str) -> str | None:
 
     for message in reversed(mail.outbox):
         if adresse in message.to:
-            trouve = re.search(r"\b(\d{6})\b", message.subject)
+            trouve = re.search(r"\b(\d{6})\b", message.body)  # le code est dans le corps, jamais dans l'objet
             return trouve.group(1) if trouve else None
     return None
 
