@@ -360,7 +360,7 @@
                  href="/connexion?next=/annonces/{{ f.slug }}">Contacter le gérant</a>
               <p class="texte-doux texte-micro texte-centre mb-0">Connecte-toi pour écrire au gérant.</p>
             {% endif %}
-            {% if not est_proprietaire %}
+            {% if not est_proprietaire and not request.user.is_authenticated or not est_proprietaire and request.user.role == "client" %}
               <a class="bouton--pilule-doux largeur-pleine" href="{{ alerte_url }}">Créer une alerte semblable</a>
             {% endif %}
             <div class="fiche-securite-encart" role="note">
