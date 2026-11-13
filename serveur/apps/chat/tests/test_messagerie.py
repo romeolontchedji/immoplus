@@ -182,6 +182,11 @@ class TestEnvoi:
         )
 
     def test_trente_messages_par_minute(self, decor):
+        import time
+
+        # Le plafond compte par minute civile : on évite de passer le changement de minute pendant le test.
+        if timezone.now().second >= 50:
+            time.sleep(61 - timezone.now().second)
         conversation, *_ = ouvrir(decor)
         for _ in range(29):
             services.envoyer(decor.locataire, conversation.pk, "ok", mid())

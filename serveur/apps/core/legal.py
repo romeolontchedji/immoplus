@@ -2,6 +2,7 @@
 (`LEGAL_*`), un seul rendu partagé par le site (HTML) et l'application (blocs de texte simples).
 """
 
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -16,8 +17,17 @@ _md = MarkdownIt("commonmark", {"html": False})  # source interne, HTML brut int
 
 
 @lru_cache(maxsize=len(DOCUMENTS))
-def _source(slug: str) -> str:
+def source_d_origine(slug: str) -> str:
+    """Texte fourni avec l'application (celui qui sert tant que l'administration n'a rien enregistré)."""
     return (DOSSIER / DOCUMENTS[slug]).read_text(encoding="utf-8")
+
+
+def _source(slug: str) -> str:
+    """Texte en vigueur : celui de l'administration s'il existe, sinon le texte d'origine."""
+    from .models import LegalDocument
+
+    modifie = LegalDocument.objects.filter(pk=slug).values_list("body_md", flat=True).first()
+    return modifie if modifie else source_d_origine(slug)
 
 
 def editeur() -> dict:
@@ -66,8 +76,13 @@ def _texte_en_ligne(jeton) -> tuple[str | None, str]:
 def document(slug: str) -> dict:
     if slug not in DOCUMENTS:
         raise ErreurMetier("not_found", "Document introuvable.", statut=404)
+    return _construire(slug, _source(slug))
+
+
+def _construire(slug: str, texte: str) -> dict:
+    """Découpe un texte Markdown en titre, résumé et sections (blocs pour l'application, HTML pour le site)."""
     e = editeur()
-    source = _remplir(_source(slug), e)
+    source = _remplir(texte, e)
     jetons = _md.parse(source)
     titre, resume, sections = "", "", []
     type_bloc = None
@@ -106,3 +121,84 @@ def document(slug: str) -> dict:
         "editor": e,
         "sections": sections,
     }
+
+
+# --------------------------------------------------------------- modification depuis l'administration
+TEXTE_MAX = 60_000
+VARIABLES = ("raison_sociale", "rccm", "ifu", "adresse", "email", "telephone")
+
+
+def valider(texte: str) -> str:
+    """Texte prêt à enregistrer, ou `ErreurMetier` expliquant ce qui ne va pas."""
+    texte = (texte or "").replace("\r\n", "\n").strip()
+    if not texte:
+        raise ErreurMetier("validation_error", "Le texte est vide.")
+    if len(texte) > TEXTE_MAX:
+        raise ErreurMetier(
+            "validation_error", f"Le texte est trop long ({TEXTE_MAX} caractères au plus)."
+        )
+    if not texte.startswith("# "):
+        raise ErreurMetier(
+            "validation_error",
+            "Le texte commence par le titre du document, sur une ligne « # Titre ».",
+        )
+    if not any(ligne.startswith("## ") for ligne in texte.splitlines()):
+        raise ErreurMetier(
+            "validation_error",
+            "Ajoute au moins une section, sur une ligne « ## 1. Titre de la section ».",
+        )
+    inconnues = sorted(set(re.findall(r"\[\[([^\]]*)\]\]", texte)) - set(VARIABLES))
+    if inconnues:
+        raise ErreurMetier(
+            "validation_error",
+            f"Variable inconnue : [[{inconnues[0]}]]. Variables permises : "
+            + ", ".join(f"[[{v}]]" for v in VARIABLES)
+            + ".",
+        )
+    return texte
+
+
+def apercu(texte: str) -> dict:
+    """Rendu d'un texte en cours d'écriture (titre, résumé, sections HTML), sans l'enregistrer."""
+    doc = _construire("apercu", valider(texte))
+    return {
+        "title": doc["title"],
+        "summary": doc["summary"],
+        "sections": [s["html"] for s in doc["sections"]],
+    }
+
+
+def enregistrer(slug: str, texte: str, *, acteur, nouvelle_acceptation: bool = False) -> None:
+    """Enregistre le texte d'un document (administrateur), date la mise à jour et, si demandé, fait accepter de
+    nouveau à chacun la nouvelle version."""
+    import datetime
+
+    from django.db import transaction
+
+    if slug not in DOCUMENTS:
+        raise ErreurMetier("not_found", "Document introuvable.", statut=404)
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    texte = valider(texte)
+    from .models import LegalDocument
+
+    with transaction.atomic():
+        LegalDocument.objects.update_or_create(
+            slug=slug, defaults={"body_md": texte, "updated_by": acteur}
+        )
+        parametres.definir("LEGAL_UPDATED_AT", datetime.date.today().isoformat(), par=acteur)
+        if nouvelle_acceptation:
+            courante = str(parametres.lire("TERMS_VERSION"))
+            suivante = str(int(courante) + 1) if courante.isdigit() else "2"
+            parametres.definir("TERMS_VERSION", suivante, par=acteur)
+
+
+def retablir(slug: str, *, acteur) -> None:
+    """Revient au texte d'origine fourni avec l'application."""
+    from .models import LegalDocument
+
+    if slug not in DOCUMENTS:
+        raise ErreurMetier("not_found", "Document introuvable.", statut=404)
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    LegalDocument.objects.filter(pk=slug).delete()

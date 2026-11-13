@@ -718,8 +718,9 @@ class TransactionAdmin(LectureSeule):
         return None
 
 
-from . import (  # noqa: E402,F401  (messages, modération, quartiers)
+from . import (  # noqa: E402,F401  (messages, textes légaux, modération, quartiers)
     admin_equipe,
+    admin_legal,
     admin_moderation,
     admin_referentiels,
 )

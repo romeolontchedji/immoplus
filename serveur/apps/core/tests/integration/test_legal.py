@@ -56,3 +56,44 @@ def test_pages_web(url, titre):
     html = r.content.decode()
     assert titre in html and 'class="legal-hero"' in html and "Version provisoire" in html
     assert "style=" not in html.split('class="legal-hero"')[1]  # CSP : aucun style en ligne
+
+
+@pytest.mark.parametrize("url", ["/conditions", "/confidentialite"])
+def test_le_nom_de_l_editeur_s_affiche_sans_rccm_ni_ifu(url):
+    html = Client().get(url).content.decode()
+    assert "NEXIX" in html and "RCCM" not in html and "IFU" not in html
+
+
+def test_rccm_et_ifu_ne_s_affichent_que_s_ils_sont_renseignes():
+    parametres.definir("LEGAL_RCCM", "RB/PKO/99 B 00042")
+    html = Client().get("/conditions").content.decode()
+    assert "RCCM : RB/PKO/99 B 00042" in html and "IFU" not in html
+
+
+def test_les_textes_disent_la_verite_sur_les_paiements_et_la_lecture_des_conversations():
+    conditions = Client().get("/v1/legal/conditions").content.decode()
+    assert "entièrement gratuit" not in conditions and "KKiaPay" in conditions
+    confidentialite = Client().get("/v1/legal/confidentialite").content.decode()
+    assert "KKiaPay" in confidentialite and "pour la modération" in confidentialite
+
+
+# --------------------------------------------------------------- texte modifiable depuis l'administration
+from apps.core import legal  # noqa: E402
+from apps.core.errors import ErreurMetier  # noqa: E402
+
+TEXTE = "# Conditions test\n\nRésumé du document.\n\n## 1. Premier point\n\nTexte **en gras**, écrit par [[raison_sociale]].\n"
+
+
+@pytest.mark.parametrize(
+    ("texte", "message"),
+    [
+        ("", "vide"),
+        ("Sans titre\n\n## 1. Section", "titre du document"),
+        ("# Titre seul", "au moins une section"),
+        ("# T\n\n## 1. S\n\n[[inconnue]]", "Variable inconnue"),
+    ],
+)
+def test_un_texte_invalide_est_refuse_avec_une_explication(texte, message):
+    with pytest.raises(ErreurMetier) as e:
+        legal.valider(texte)
+    assert message in e.value.message

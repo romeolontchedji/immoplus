@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div id="content-main">
+    <p class="lg-bandeau">
+      Ces textes s'affichent sur le site (« Conditions » et « Confidentialité ») et dans l'application. Une modification
+      est en ligne tout de suite. Version à accepter actuellement : <strong>{{ version }}</strong> · dernière mise à jour
+      affichée : <strong>{{ mise_a_jour }}</strong>.
+    </p>
+    <div class="module">
+      <h2>Documents</h2>
+      <div class="lg-section">
+        {% for d in documents %}
+          <div class="lg-carte">
+            <strong>{{ d.titre }}</strong>
+            · {% if d.modifie_le %}modifié le {{ d.modifie_le|date:"d/m/Y H:i" }}{% else %}texte d'origine{% endif %}
+            <p>
+              <a class="button" href="{{ d.lien }}">Modifier</a>
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

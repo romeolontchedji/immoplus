@@ -237,10 +237,21 @@ jour.
 Une fois la nouvelle version **publiée sur les magasins** : Paramètres › `MIN_SUPPORTED_VERSION` = la nouvelle
 version (ex. `1.2.0`).
 
-### 5.7 Changer les conditions d'utilisation
+### 5.7 Changer les conditions d'utilisation et la politique de confidentialité
 
-Après avoir modifié les textes (`serveur/apps/core/textes_legaux/`) et déployé : Paramètres › `TERMS_VERSION` + 1 et
-`LEGAL_UPDATED_AT` = la date. Chacun devra accepter les nouvelles conditions à sa prochaine connexion.
+Depuis l'administration (réservé aux administrateurs) : **Core › Textes légaux**, puis **Modifier** sur le document.
+
+- Le texte s'écrit avec une barre d'outils (gras, italique, titre de section, liste à puces, lien) et un **aperçu en
+  direct**, rendu comme sur le site et dans l'application. Le texte est du Markdown ; le HTML brut n'est pas permis.
+- Première ligne `# Titre du document`, puis chaque section sur une ligne `## 1. Titre`. Les variables
+  `[[raison_sociale]]`, `[[adresse]]`, `[[email]]`, `[[telephone]]` (et `[[rccm]]`, `[[ifu]]`) sont remplies
+  automatiquement depuis les paramètres `LEGAL_*`.
+- **Enregistrer** met le texte en ligne tout de suite (site et application) et met à jour la date « mise à jour ».
+- Cocher **Demander à chacun d'accepter de nouveau** quand le texte change sur le fond : cela ajoute 1 à
+  `TERMS_VERSION`, et chacun devra accepter à sa prochaine connexion. Pour une simple correction de forme, ne pas cocher.
+- **Rétablir le texte d'origine** supprime la version modifiée : le texte fourni avec l'application
+  (`serveur/apps/core/textes_legaux/`) s'affiche de nouveau.
+- Chaque enregistrement est inscrit au journal d'activité (`legal.modifie`, `legal.retabli`).
 
 ### 5.8 Ranger les photos et vidéos chez Cloudinary (ou revenir au disque)
 
@@ -305,12 +316,12 @@ Affichés sur le site, dans l'app et dans les textes légaux.
 |---|---|---|
 | `TEAM_PHONE` | `+2290160239288` | Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229… |
 | `LEGAL_PROVISIONAL` | coché | Coché : un bandeau prévient que les mentions légales sont provisoires. À décocher quand l'entreprise est réellement immatriculée et les champs ci-dessous exacts. |
-| `LEGAL_COMPANY` | `IMMOPLUS SARL` | Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité. |
-| `LEGAL_RCCM` | `RB/PKO/26 B 00001` | Numéro d'immatriculation au registre du commerce (RCCM). |
-| `LEGAL_IFU` | `3202600000001` | Identifiant fiscal unique (IFU) de la société. |
+| `LEGAL_COMPANY` | `NEXIX` | Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité. |
+| `LEGAL_RCCM` | (vide) | Numéro RCCM. Vide : il n’est affiché nulle part (site, application). |
+| `LEGAL_IFU` | (vide) | Numéro IFU. Vide : il n’est affiché nulle part (site, application). |
 | `LEGAL_ADDRESS` | `Banikanni, Parakou, République du Bénin` | Adresse du siège, affichée dans les textes légaux. |
 | `LEGAL_EMAIL` | `contact@immoplus.bj` | Adresse où écrire pour une question légale ou sur ses données personnelles. |
-| `LEGAL_UPDATED_AT` | `2026-10-17` | Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ. |
+| `LEGAL_UPDATED_AT` | `2026-11-13` | Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ. |
 | `TERMS_VERSION` | `1` | Changer ce numéro oblige chaque utilisateur à accepter de nouveau les conditions à sa prochaine connexion. Ne le modifier que si les conditions ont réellement changé. |
 
 ### Annonces

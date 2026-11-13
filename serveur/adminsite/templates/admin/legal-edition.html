@@ -1,0 +1,69 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block content %}
+  <div id="content-main">
+    <p class="lg-bandeau">
+      {% if personnalise %}Texte modifié depuis l'administration.{% else %}Texte d'origine fourni avec l'application.{% endif %}
+      Écris avec la barre d'outils ; l'aperçu se met à jour pendant la frappe. <a href="{{ lien_liste }}">Retour aux textes légaux</a>
+    </p>
+    {% if erreur %}<p class="errornote">{{ erreur }}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="module">
+        <h2>Texte</h2>
+        <div class="lg-section">
+          <p class="help">
+            <button type="button" class="button" data-legal-action="gras"><strong>Gras</strong></button>
+            <button type="button" class="button" data-legal-action="italique"><em>Italique</em></button>
+            <button type="button" class="button" data-legal-action="section">Titre de section</button>
+            <button type="button" class="button" data-legal-action="liste">Liste à puces</button>
+            <button type="button" class="button" data-legal-action="puce">Puce avec libellé</button>
+            <button type="button" class="button" data-legal-action="lien">Lien</button>
+          </p>
+          <textarea id="legal-texte"
+                    name="texte"
+                    rows="28"
+                    style="width: 100%; font-family: ui-monospace, Consolas, monospace"
+                    data-apercu="{{ lien_apercu }}">{{ texte }}</textarea>
+          <p class="help">
+            Première ligne : <code># Titre du document</code>. Chaque section commence par <code>## 1. Titre</code>.
+            Variables remplies automatiquement : {% for v in variables %}<code>[[{{ v }}]]</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
+            Le HTML n'est pas permis.
+          </p>
+        </div>
+      </div>
+      <div class="module">
+        <h2>Après l'enregistrement</h2>
+        <div class="lg-section">
+          <p>
+            <label>
+              <input type="checkbox" name="nouvelle_acceptation">
+              Demander à chacun d'accepter de nouveau (version {{ version }} → {{ version|add:"1" }})
+            </label>
+          </p>
+          <p class="help">
+            À cocher quand le texte change sur le fond (paiements, données, règles). Pour une simple correction de forme, laisse décoché.
+            La date « mise à jour » affichée est mise à jour automatiquement.
+          </p>
+        </div>
+      </div>
+      <div class="lg-section__actions">
+        <input type="submit" value="Enregistrer" class="default">
+        {% if personnalise %}
+          <input type="submit"
+                 name="retablir"
+                 value="Rétablir le texte d'origine"
+                 formnovalidate>
+        {% endif %}
+      </div>
+    </form>
+    <div class="module">
+      <h2>Aperçu</h2>
+      <div class="lg-section">
+        <p id="legal-apercu-message" class="errornote" role="status"></p>
+        <div id="legal-apercu"></div>
+      </div>
+    </div>
+  </div>
+  <script src="{% static 'admin/js/legal-editeur.js' %}" defer></script>
+{% endblock %}

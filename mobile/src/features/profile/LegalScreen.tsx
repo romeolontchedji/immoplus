@@ -74,7 +74,7 @@ export function LegalScreen() {
             </View>
             <Text style={{ color: colors.white, fontSize: 15, lineHeight: 22 }}>{doc.summary}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: sp[2] }}>
-              {[`Mise à jour : ${dateLisible(doc.updated_at)}`, `RCCM : ${doc.editor.rccm}`, `IFU : ${doc.editor.ifu}`, "Parakou, Bénin"].map((p) => (
+              {[`Mise à jour : ${dateLisible(doc.updated_at)}`, ...(doc.editor.rccm ? [`RCCM : ${doc.editor.rccm}`] : []), ...(doc.editor.ifu ? [`IFU : ${doc.editor.ifu}`] : []), "Parakou, Bénin"].map((p) => (
                 <View key={p} style={{ paddingHorizontal: sp[3], paddingVertical: 5, borderRadius: rayon.pilule, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.28)" }}>
                   <Text style={{ color: colors.white, fontSize: 12, fontWeight: "700" }}>{p}</Text>
                 </View>
@@ -112,7 +112,7 @@ export function LegalScreen() {
           <View style={{ flexDirection: "row", gap: sp[3], padding: sp[4], borderRadius: rayon.card, backgroundColor: colors.blueSoft }}>
             <Shield size={18} color={colors.primary} />
             <Text variante="legende" muted style={{ flex: 1, fontWeight: "600", lineHeight: 19 }}>
-              {`${doc.editor.company} — RCCM : ${doc.editor.rccm} — IFU : ${doc.editor.ifu} — ${doc.editor.address} — ${doc.editor.email}`}
+              {[doc.editor.company, doc.editor.rccm && `RCCM : ${doc.editor.rccm}`, doc.editor.ifu && `IFU : ${doc.editor.ifu}`, doc.editor.address, doc.editor.email].filter(Boolean).join(" — ")}
             </Text>
           </View>
         </ScrollView>

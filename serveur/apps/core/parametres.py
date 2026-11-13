@@ -144,12 +144,15 @@ DEFAUTS: dict[str, tuple[object, str]] = {
     # Identité de l'éditeur dans les textes légaux : VALEURS FICTIVES PROVISOIRES (décision du 2026-10-17),
     # à remplacer par les vraies avant l'ouverture au public, puis passer LEGAL_PROVISIONAL à faux.
     "LEGAL_PROVISIONAL": (True, "Textes légaux provisoires (identité fictive) : bandeau affiché."),
-    "LEGAL_COMPANY": ("IMMOPLUS SARL", "Raison sociale de l'éditeur."),
-    "LEGAL_RCCM": ("RB/PKO/26 B 00001", "Numéro RCCM de l'éditeur."),
-    "LEGAL_IFU": ("3202600000001", "Numéro IFU de l'éditeur."),
+    "LEGAL_COMPANY": (
+        "NEXIX",
+        "Nom de l'éditeur, repris dans les conditions et la confidentialité.",
+    ),
+    "LEGAL_RCCM": ("", "Numéro RCCM de l'éditeur (vide : non affiché)."),
+    "LEGAL_IFU": ("", "Numéro IFU de l'éditeur (vide : non affiché)."),
     "LEGAL_ADDRESS": ("Banikanni, Parakou, République du Bénin", "Siège social de l'éditeur."),
     "LEGAL_EMAIL": ("contact@immoplus.bj", "Contact pour les questions légales et les données."),
-    "LEGAL_UPDATED_AT": ("2026-10-17", "Date de mise à jour des textes légaux (AAAA-MM-JJ)."),
+    "LEGAL_UPDATED_AT": ("2026-11-13", "Date de mise à jour des textes légaux (AAAA-MM-JJ)."),
 }
 
 _DELAI_CACHE_S = 30
