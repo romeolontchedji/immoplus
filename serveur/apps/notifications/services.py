@@ -31,9 +31,9 @@ CATEGORIES = {
     "favorite.unavailable": "alertes",
     "subscription.reminder": "rappels",
 }
-NON_DESACTIVABLES = {"account.sanction"}
+NON_DESACTIVABLES = {"account.sanction", "team.message"}
 # Les alertes partent aussi par courriel (adresse confirmée) : un visiteur du site n'a pas toujours l'application.
-KINDS_COURRIEL = {"alert.match", "alert.digest", "subscription.reminder"}
+KINDS_COURRIEL = {"alert.match", "alert.digest", "subscription.reminder", "team.message"}
 
 # Canaux Android créés par l'application (mobile/src/features/notifications/push.ts). Les messages sont prioritaires :
 # bannière immédiate, son et vibration, même téléphone en veille, comme une messagerie.
@@ -47,7 +47,7 @@ CANAUX = {
     "listing.reported_rented": "rappels",
     "subscription.reminder": "rappels",
 }
-PRIORITAIRES = {"message.received", "message.unanswered_reminder", "account.sanction"}
+PRIORITAIRES = {"message.received", "message.unanswered_reminder", "account.sanction", "team.message"}
 
 
 def options_push(n: Notification) -> push.OptionsPush:
@@ -207,6 +207,18 @@ def _apres_creation(notification_id, motif: str | None) -> None:
 def _texte_courriel(n: Notification, prenom: str) -> str:
     site = settings.SITE_URL
     lignes = [f"Bonjour {prenom}," if prenom else "Bonjour,", "", n.body, ""]
+    if n.kind == "team.message":
+        return "\n".join(
+            [
+                f"Bonjour {prenom}," if prenom else "Bonjour,",
+                "",
+                "L'équipe Immo+ t'a écrit :",
+                "",
+                n.data.get("_corps") or n.body,
+                "",
+                f"Lire et répondre : {site}/compte/equipe",
+            ]
+        ) + "\n"
     if n.kind == "subscription.reminder":
         lignes += [
             f"Renouveler mon abonnement : {site}/compte/abonnement",

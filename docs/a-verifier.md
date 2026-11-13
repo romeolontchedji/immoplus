@@ -182,4 +182,7 @@ request.
   projet ; courriels non testés avec le vrai serveur SMTP. Aucun courriel n'est envoyé à un gérant sans adresse confirmée (notification seule).
 - **Réponse du gérant à un avis** : l'API publique n'expose pas la réponse (elle n'a pas été ajoutée pour ne pas changer le schéma) ;
   elle n'est visible que sur le site.
+- **Messages de l'équipe** : le contenu n'est pas filtré (l'équipe peut donner un numéro ou un lien) ; les messages d'un utilisateur à
+  l'équipe sont limités à 5 par 24 h mais pas contrôlés (pas de détection de coordonnées). La réponse d'un utilisateur arrive dans la
+  boîte de l'équipe et par courriel, pas par notification dans l'administration. Rien n'est exposé à l'API ni à l'application mobile.
 

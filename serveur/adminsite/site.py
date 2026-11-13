@@ -29,7 +29,7 @@ class FormulaireConnexion(AuthenticationForm):
 # Menu de l'administration : rubriques par fréquence d'usage (et non par ordre alphabétique), icône par rubrique.
 ORDRE_RUBRIQUES = ["moderation", "accounts", "listings", "axes", "audit", "core", "billing"]
 ORDRE_PAGES = {
-    "moderation": ["Report", "ModerationAction"],
+    "moderation": ["Report", "MessageEquipe", "ModerationAction"],
     "accounts": ["GerantProfile", "User"],
     "listings": ["Listing", "Review", "RoomType", "District"],
     "axes": ["AccessAttempt", "AccessFailureLog", "AccessLog"],
@@ -244,6 +244,7 @@ def _a_traiter() -> dict:
     from apps.accounts.models import GerantProfile
     from apps.core import parametres
     from apps.listings.models import Listing, RoomType
+    from apps.moderation.models import MessageEquipe
 
     return {
         "gerants_a_verifier": GerantProfile.complets.filter(
@@ -252,6 +253,9 @@ def _a_traiter() -> dict:
         "gerants_total": GerantProfile.complets.count(),
         "types_proposes": RoomType.objects.filter(status="pending").count(),
         "annonces_en_relecture": Listing.objects.filter(status="processing").count(),
+        "messages_a_traiter": MessageEquipe.objects.filter(
+            vers_utilisateur=False, traite_le__isnull=True
+        ).count(),
         # Nouvelles annonces : mises en ligne ces 7 jours, même si elles sont déjà visibles (coup d'œil de l'équipe).
         "nouvelles_annonces": Listing.objects.filter(
             published_at__gte=timezone.now() - datetime.timedelta(days=7), deleted_at__isnull=True

@@ -5,6 +5,7 @@ from django.urls import path
 
 from . import views
 from . import views_auth as a
+from . import views_equipe as equipe_vue
 from . import views_paiement as paiement
 from . import views_pro as p
 from . import views_suppression as suppression
@@ -29,6 +30,7 @@ urlpatterns = [
     path("compte/messages", pub.mes_conversations, name="messages"),
     path("compte/messages/<str:conversation_id>", pub.conversation, name="conversation"),
     path("compte/notifications", pub.mes_notifications, name="notifications"),
+    path("compte/equipe", equipe_vue.fil_equipe, name="equipe"),
     path("robots.txt", pub.robots, name="robots"),
     path("sitemap.xml", pub.sitemap, name="sitemap"),
     path("connexion", a.connexion, name="connexion"),

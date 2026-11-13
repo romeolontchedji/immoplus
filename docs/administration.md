@@ -38,6 +38,7 @@ L'**administrateur a la main sur tout ce qui peut s'écrire** ; le modérateur t
 |---|---|---|
 | Signalements : lire, prendre, classer, sanctionner | ✔ | ✔ |
 | Lire une conversation (motif obligatoire, journalisé) | ✔ | ✔ |
+| **Écrire à un locataire ou à un gérant** (réponse à une question, à un avis, suite à une décision) | ✔ | ✔ |
 | Annonces : masquer, retirer (avec motif), remettre en ligne ce qui a été masqué, approuver, refuser | ✔ | ✔ |
 | Annonces : rétablir une annonce **retirée**, marquer louée, supprimer, **corriger** titre, loyer, repère, date, quartier | ✔ | |
 | Avis : masquer, réafficher | ✔ | ✔ |
@@ -471,4 +472,22 @@ s'annule en cas d'erreur) ; il reste **une seule ligne de trace** sans donnée p
 rôle, mention « commande »). **Garde-fous** : le personnel n'est jamais supprimé ; un compte qui a un paiement réussi (vrai argent) est
 refusé sauf `--meme-payes` ; les conversations effacées disparaissent aussi chez l'autre personne (un locataire de test qui parlait à un vrai
 gérant fait perdre cette conversation au gérant : à éviter avec de vrais comptes) ; sans `--confirmer SUPPRIMER`, rien n'est effacé.
+
+### Écrire aux utilisateurs et répondre à leurs questions
+
+Administrateurs **et** modérateurs peuvent écrire à un locataire ou à un gérant, et répondre à ses questions.
+
+- **Boîte de l'équipe** : **Modération › Messages de l'équipe**. La tuile **Messages à traiter** de l'accueil compte les questions
+  des utilisateurs qui attendent une réponse. Filtres : sens (équipe → personne ou personne → équipe), à traiter, à propos de.
+- **Répondre** : cochez un message, action **Répondre à cette personne** : la page montre tout l'échange et un formulaire (objet
+  facultatif, 2 000 caractères au plus). Répondre marque ses questions en attente comme **traitées**.
+- **Écrire à partir d'un contexte** (l'objet est pré-rempli) : depuis **Avis** (« Écrire à l'auteur de l'avis », « Écrire au gérant concerné »),
+  depuis **Signalements** (« Écrire à la personne qui a signalé », « Écrire à la personne visée ») et depuis **Comptes** (« Écrire un message
+  à cette personne », administrateurs).
+- **Ce que reçoit la personne** : une notification (non désactivable, prioritaire) et un courriel si son adresse est confirmée ; elle lit le
+  message dans **Équipe Immo+** (menu du site, avec un compteur de non lus) et peut répondre depuis la même page.
+- **Questions des utilisateurs** : un locataire ou un gérant écrit à l'équipe depuis **Équipe Immo+** (5 messages par 24 h au plus) ; tous
+  les administrateurs et modérateurs actifs qui ont une adresse reçoivent un courriel avec le lien pour répondre.
+- Toute écriture de l'équipe est inscrite dans le journal d'activité. L'application mobile n'a pas cet écran (la messagerie de l'équipe
+  n'existe pas dans l'API) : le message arrive par notification et courriel, la réponse se fait sur le site.
 

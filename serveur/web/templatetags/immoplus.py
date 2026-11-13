@@ -60,6 +60,7 @@ MENU_LOCATAIRE = (
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
     ("Abonnement", "/compte/abonnement", "banknote", None, False),
+    ("Équipe Immo+", "/compte/equipe", "megaphone", "non_lus_equipe", False),
     ("Mon profil", "/compte/profil", "user", None, False),
 )
 MENU_GERANT = (
@@ -70,6 +71,7 @@ MENU_GERANT = (
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
     ("Chambres", "/annonces", "search", None, False),
+    ("Équipe Immo+", "/compte/equipe", "megaphone", "non_lus_equipe", False),
     ("Mon profil", "/compte/profil", "user", None, False),
 )
 MENU_REGLAGES = (

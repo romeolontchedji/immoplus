@@ -66,6 +66,7 @@ contraste, en une seule fois.
 | Préparer / confirmer un paiement KKiaPay | `/paiement/preparer`, `/paiement/confirmer` | POST (JSON) | `views_paiement` | `billing.transactions` | connecté | JSON | `payment_unavailable` 503, `email_required` 409, `payment_failed` 402 |
 | Webhook KKiaPay | `/paiement/webhook/kkiapay` | POST | `views_paiement.webhook` | `billing.transactions.recevoir_webhook` | secret `x-kkiapay-secret` | JSON | 403 secret faux ; 502 si KKiaPay ne répond pas (il réessaie) |
 | Supprimer mon compte (confirmation) | `/compte/supprimer` | GET/POST | `views_suppression.supprimer_mon_compte` | `compte.anonymiser` | connecté, mot de passe donné < 10 min | page puis 302 `/` | 302 profil si la demande a expiré |
+| Équipe Immo+ (fil avec l'équipe, question) | `/compte/equipe` | GET/POST | `views_equipe.fil_equipe` | `moderation.messages_equipe` | connecté (locataire ou gérant) | page ; 302 `?ok=envoye` | `rate_limited` 429 (5 par 24 h), message de 2 à 2 000 caractères |
 | Profil public d'un gérant | `/gerants/<id>` | GET | `views_public.profil_gerant` | `selectors.profil_gerant_public` | public | page | 410 « n'est plus sur Immo+ » (compte supprimé) ; 404 identifiant inconnu |
 
 ## Référencement

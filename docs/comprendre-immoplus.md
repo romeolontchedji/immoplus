@@ -631,6 +631,14 @@ stateDiagram-v2
   par catégorie.
 - **Où** : `apps/notifications/`, `mobile/src/features/notifications/`.
 
+### 12.11 bis Messages de l'équipe
+
+- **But** : l'équipe répond à une question, à un avis ou à une décision de modération, et les utilisateurs lui écrivent.
+- **Comment** : table `team_messages` (un fil par personne). L'équipe écrit depuis l'administration (boîte « Messages de l'équipe », ou
+  depuis un avis, un signalement, un compte) ; la personne reçoit une notification et un courriel, et lit le fil dans « Équipe Immo+ »
+  sur le site. Une question d'un utilisateur prévient l'équipe par courriel (5 par 24 h au plus par personne).
+- **Où** : `apps/moderation/messages_equipe.py`, `adminsite/admin_equipe.py`, `web/views_equipe.py`.
+
 ### 12.12 Signalements et modération
 
 - **Signaler** : une chambre, un message, une conversation ou un compte (motifs : fausse annonce, arnaque,

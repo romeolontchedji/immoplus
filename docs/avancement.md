@@ -2,6 +2,12 @@
 
 > **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
 
+**2026-11-25 : messages entre l'équipe et les utilisateurs.**
+- Administrateurs et modérateurs écrivent à un locataire ou à un gérant (réponse à une question, à un avis, suite à une décision de
+  modération) et lisent leurs questions : boîte « Messages de l'équipe », tuile « Messages à traiter », actions depuis les avis, les
+  signalements et les comptes. Côté utilisateur : page « Équipe Immo+ » (fil, écrire à l'équipe, 5 par 24 h), notification et courriel.
+  Table `team_messages` (migration moderation 0006). Pas dans l'API ni dans l'application mobile.
+
 **2026-11-24 : rappels, résumé hebdomadaire, réponse aux avis, suppression des comptes de test.**
 - Rappel de fin d'abonnement : notification et courriel au gérant, 7 jours puis 1 jour avant (`SUBSCRIPTION_REMINDER_DAYS`), une fois par étape.
 - Résumé hebdomadaire par courriel à l'équipe (lundi 7 h) : nouvelles annonces, signalements ouverts, paiements (`EMAIL_RESUME_HEBDOMADAIRE`).

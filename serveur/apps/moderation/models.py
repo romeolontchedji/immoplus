@@ -186,3 +186,44 @@ class ModerationAction(models.Model):
         indexes = [
             models.Index(fields=["target_user", "-created_at"], name="moderation_utilisateur_idx")
         ]
+
+
+class MessageEquipe(models.Model):
+    """Message entre l'équipe (administrateurs, modérateurs) et une personne (locataire ou gérant).
+
+    Un fil par personne (`utilisateur`). `vers_utilisateur` : l'équipe écrit (réponse à une question, à un avis, suite à
+    une décision de modération). Sinon c'est la personne qui écrit à l'équipe (une question)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    utilisateur = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="+", verbose_name="personne"
+    )
+    auteur = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="auteur",
+    )
+    vers_utilisateur = models.BooleanField(verbose_name="écrit à la personne")
+    objet = models.CharField(max_length=120, blank=True, default="", verbose_name="objet")
+    corps = models.TextField(verbose_name="message")
+    contexte_type = models.CharField(
+        max_length=12, blank=True, default="", verbose_name="à propos de"
+    )  # avis, signalement, annonce, compte, question
+    contexte_id = models.UUIDField(null=True, blank=True, verbose_name="référence")
+    lu_le = models.DateTimeField(null=True, blank=True, verbose_name="lu le")
+    traite_le = models.DateTimeField(null=True, blank=True, verbose_name="traité le")
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="envoyé le")
+
+    class Meta:
+        db_table = "team_messages"
+        verbose_name = "message de l'équipe"
+        verbose_name_plural = "messages de l'équipe"
+        ordering = ["created_at"]
+        indexes = [models.Index(fields=["utilisateur", "created_at"], name="equipe_fil_idx")]
+
+    def __str__(self) -> str:
+        sens = "équipe → personne" if self.vers_utilisateur else "personne → équipe"
+        return f"{sens} · {self.objet or self.corps[:40]}"

@@ -622,6 +622,47 @@ class TestPouvoirsDeLAdministrateur:
         assert not Review.objects.filter(pk=avis.pk).exists()
 
 
+class TestMessagesEquipe:
+    def test_un_moderateur_ecrit_depuis_l_administration(self):
+        from apps.moderation.models import MessageEquipe
+
+        locataire = ClientFactory(username="awa.msg")
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        url = reverse("admin:moderation_messageequipe_ecrire", args=[locataire.pk])
+        assert c.get(url).status_code == 200
+        r = c.post(url, {"corps": "Bonjour Awa, voici notre réponse.", "objet": "Ta question", "contexte": "question"})
+        assert r.status_code == 302
+        m = MessageEquipe.objects.get(utilisateur=locataire)
+        assert m.vers_utilisateur and m.objet == "Ta question" and m.contexte_type == "question"
+
+    def test_on_n_ecrit_pas_a_un_membre_du_personnel(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        autre = personnel(AdminFactory)
+        assert c.get(reverse("admin:moderation_messageequipe_ecrire", args=[autre.pk])).status_code == 404
+
+    def test_depuis_un_avis_on_ecrit_a_son_auteur_avec_l_objet_pre_rempli(self):
+        from apps.listings.models import Review
+
+        annonce = ListingFactory(title="Chambre Zongo")
+        auteur = ClientFactory()
+        avis = Review.objects.create(listing=annonce, author=auteur, rating=2, comment="Bof")
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        r = c.post(
+            reverse("admin:listings_review_changelist"),
+            {"action": "ecrire_a_l_auteur", "_selected_action": [str(avis.pk)]},
+        )
+        assert r.status_code == 302
+        assert str(auteur.pk) in r["Location"] and "avis%3A" in r["Location"] and "Chambre+Zongo" in r["Location"]
+
+    def test_la_tuile_compte_les_messages_a_traiter(self):
+        from apps.moderation import messages_equipe as equipe
+
+        equipe.ecrire_a_l_equipe(ClientFactory(), "J'ai une question")
+        c, _ = se_connecter(personnel(AdminFactory))
+        page = c.get(reverse("admin:index")).content.decode()
+        assert "Messages à traiter" in page
+
+
 class TestPageDeRubrique:
     def test_la_page_d_une_rubrique_renvoie_a_l_accueil_sans_erreur(self):
         c, _ = se_connecter(personnel(AdminFactory))
