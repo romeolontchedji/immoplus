@@ -502,7 +502,7 @@ class TestAlertes:
         a.refresh_from_db()
         with django_capture_on_commit_callbacks(execute=True):
             annonces.mettre_en_ligne(a, acteur=p.user)
-        assert len([m for m in mail.outbox if "nouvelle annonce" in m.subject]) == 1
+        assert len([m for m in mail.outbox if "nouvelle annonce" in m.subject]) == len(envoyes)
 
     def test_plafond_quotidien_et_recapitulatif(self):
         """Plan v2, A2 : 3 notifications par alerte et par jour, puis un seul récapitulatif qui grossit."""
