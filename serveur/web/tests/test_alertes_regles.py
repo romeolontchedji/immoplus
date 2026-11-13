@@ -114,7 +114,7 @@ class TestFormulaire:
     def test_la_page_montre_le_nom_en_premier_et_les_cases_sans_distance(self):
         page = connecte(verifie()).get("/compte/alertes?nouvelle=1").content.decode()
         assert "Distance de l" not in page
-        assert page.index("Nom de l&#x27;alerte") < page.index("Quartiers")
+        assert page.index("Nom de l'alerte") < page.index("Quartiers")
         assert 'name="indispensables"' in page and "Douche et WC internes" in page
         assert "Cour clôturée" in page and "Rien d&#x27;obligatoire" not in page
         assert 'name="max_rent_libre"' in page
