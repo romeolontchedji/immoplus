@@ -356,3 +356,12 @@ def test_deconnecter_partout_garde_cette_session():
 def test_le_gerant_arrive_sur_son_profil_depuis_compte():
     _, c = gerant_active()
     assert c.get("/compte")["Location"] == "/compte/profil"
+
+
+def test_un_gerant_connecte_arrive_sur_son_tableau_de_bord():
+    from apps.accounts.tests.fabriques import GerantFactory
+
+    GerantFactory(username="gerant.web")
+    c = Client()
+    r = c.post("/connexion", {"username": "gerant.web", "password": MOT_DE_PASSE})
+    assert r.status_code == 302 and r["Location"] == "/pro/dashboard"

@@ -61,12 +61,21 @@ def connecte_obligatoire(vue):
     return enveloppe
 
 
+def _accueil_du_compte(request) -> str:
+    """Où l'on tombe après la connexion : le tableau de bord du gérant, l'espace du locataire."""
+    utilisateur = getattr(request, "user", None)
+    if utilisateur is not None and utilisateur.is_authenticated and utilisateur.role == "gerant":
+        return "/pro/dashboard"
+    return "/compte"
+
+
 def _suite(request) -> str:
-    cible = request.GET.get("next") or request.POST.get("next") or "/compte"
+    defaut = _accueil_du_compte(request)
+    cible = request.GET.get("next") or request.POST.get("next") or defaut
     sure = url_has_allowed_host_and_scheme(
         cible, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     )
-    return cible if sure and cible.startswith("/") and not cible.startswith("//") else "/compte"
+    return cible if sure and cible.startswith("/") and not cible.startswith("//") else defaut
 
 
 def _page(request, gabarit: str, form, titre: str, **extra):
@@ -255,7 +264,9 @@ def espace_compte(request):
     """Tableau de bord du locataire ; ses informations personnelles sont dans « Mon profil » (plan v3, E1)."""
     u = request.user
     if u.role != "client":
-        return redirect("/compte/profil" + (f"?{request.GET.urlencode()}" if request.GET else ""))
+        if request.GET:  # lien avec paramètres (confirmation d'e-mail…) : vers le profil, qui les lit
+            return redirect(f"/compte/profil?{request.GET.urlencode()}")
+        return redirect(_accueil_du_compte(request))
     from apps.chat import selectors as chat_selectors
     from apps.listings import selectors as listing_selectors
     from apps.listings.services import types as types_chambre

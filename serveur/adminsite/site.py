@@ -55,6 +55,7 @@ class AdminImmoplus(AdminSite):
         return [
             path("verification/", self.verification, name="verification"),
             path("erreurs/", self.admin_view(self.erreurs), name="erreurs"),
+            path("statistiques/", self.admin_view(self.statistiques), name="statistiques"),
             path(
                 "connexions-echouees/",
                 self.admin_view(self.connexions_echouees),
@@ -62,6 +63,15 @@ class AdminImmoplus(AdminSite):
             ),
             *super().get_urls(),
         ]
+
+    def statistiques(self, request):
+        """Page dédiée aux statistiques : chiffres clés, puis le détail par gérant et par locataire."""
+        from django.shortcuts import render
+
+        from .statistiques import vue_ensemble
+
+        contexte = {**self.each_context(request), "title": "Statistiques", **vue_ensemble()}
+        return render(request, "admin/statistiques.html", contexte)
 
     def connexions_echouees(self, request):
         """Échecs de connexion des locataires et gérants (site et application) : axes ne voit que l'administration."""

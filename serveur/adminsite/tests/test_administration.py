@@ -452,6 +452,28 @@ class TestActions:
         assert AuditLog.objects.filter(action="parametre.modifie").exists()
 
 
+class TestPageStatistiques:
+    def test_page_dediee_avec_gerants_et_locataires(self):
+        from apps.accounts.tests.fabriques import ClientFactory
+        from apps.listings.tests.fabriques import gerant_verifie
+
+        gerant_verifie()
+        ClientFactory(full_name="Awa Locataire")
+        c, _ = se_connecter(personnel(AdminFactory))
+        r = c.get(reverse("admin:statistiques"))
+        corps = r.content.decode()
+        assert r.status_code == 200
+        assert "Chiffres clés" in corps and "Awa Locataire" in corps and "Gérants" in corps
+
+    def test_la_fiche_d_un_gerant_affiche_ses_statistiques(self):
+        from apps.listings.tests.fabriques import gerant_verifie
+
+        g = gerant_verifie()
+        c, _ = se_connecter(personnel(AdminFactory))
+        corps = c.get(reverse("admin:accounts_user_change", args=[g.user.pk])).content.decode()
+        assert "Statistiques" in corps and "Audience" in corps
+
+
 class TestTableauDeBord:
     def test_la_vue_d_ensemble_s_affiche_avec_des_donnees_reelles(self):
         from apps.core import stats
