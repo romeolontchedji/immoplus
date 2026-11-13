@@ -130,6 +130,40 @@ class TestSignalements:
             AuditLog.objects.filter(action="conversation.lue_par_personnel", actor=u).count() == 1
         )
 
+    def test_la_liste_des_conversations_ne_montre_aucun_message(self, mod):
+        _, c = mod
+        annonce = ListingFactory(gerant=gerant_verifie())
+        chat.ouvrir(ClientFactory(), annonce.pk, "Mon secret de loyer", str(uuid.uuid4()))
+        page = c.get(reverse("admin:chat_conversation_changelist"))
+        assert page.status_code == 200
+        assert annonce.title in page.content.decode()
+        assert "Mon secret de loyer" not in page.content.decode()  # lecture seulement avec un motif
+
+    def test_lecture_d_une_conversation_depuis_la_liste_avec_motif_et_journal(self, mod):
+        u, c = mod
+        annonce = ListingFactory(gerant=gerant_verifie())
+        conversation, *_ = chat.ouvrir(
+            ClientFactory(full_name="Awa Locataire"),
+            annonce.pk,
+            "Le loyer baisse ?",
+            str(uuid.uuid4()),
+        )
+        url = reverse("admin:chat_conversation_lire", args=[conversation.pk])
+        assert "Motif de la lecture" in c.get(url).content.decode()
+        refus = c.post(url, {"reason": "x"})
+        assert "Le loyer baisse" not in refus.content.decode()
+        ok = c.post(url, {"reason": "Contrôle de modération de routine"}).content.decode()
+        assert "Le loyer baisse ?" in ok and "Locataire · Awa Locataire" in ok
+        assert (
+            AuditLog.objects.filter(action="conversation.lue_par_personnel", actor=u).count() == 1
+        )
+
+    def test_un_locataire_ne_lit_pas_les_conversations_de_l_administration(self):
+        annonce = ListingFactory(gerant=gerant_verifie())
+        conversation, *_ = chat.ouvrir(ClientFactory(), annonce.pk, "Bonjour", str(uuid.uuid4()))
+        r = Client().get(reverse("admin:chat_conversation_lire", args=[conversation.pk]))
+        assert r.status_code == 302  # sans compte du personnel : renvoyé vers la connexion
+
     def test_un_signalement_d_annonce_n_ouvre_pas_de_conversation(self, mod):
         _, c = mod
         r, _ = services.signaler(ClientFactory(), "listing", ListingFactory().pk, "scam")

@@ -501,7 +501,7 @@ class TestQuartiersDeLAccueil:
         ListingFactory.create_batch(2, district=q)
         page = html(Client().get("/"))
         assert (
-            "Cherche par quartier" in page
+            "Choisis ton quartier" in page
             and f"/quartiers/{q.slug}" in page
             and "2 chambres" in page
         )

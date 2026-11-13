@@ -27,7 +27,7 @@ class FormulaireConnexion(AuthenticationForm):
 
 
 # Menu de l'administration : rubriques par fréquence d'usage (et non par ordre alphabétique), icône par rubrique.
-ORDRE_RUBRIQUES = ["moderation", "accounts", "listings", "axes", "audit", "core", "billing"]
+ORDRE_RUBRIQUES = ["moderation", "chat", "accounts", "listings", "axes", "audit", "core", "billing"]
 ORDRE_PAGES = {
     "moderation": ["Report", "MessageEquipe", "ModerationAction"],
     "accounts": ["GerantProfile", "User"],
@@ -36,6 +36,7 @@ ORDRE_PAGES = {
 }
 ICONES_RUBRIQUES = {
     "moderation": "flag",
+    "chat": "message",
     "accounts": "users",
     "listings": "house",
     "axes": "shield",
@@ -48,6 +49,14 @@ ICONES_RUBRIQUES = {
 class AdminImmoplus(AdminSite):
     site_header = "Immo+ — administration"
     site_title = "Immo+"
+
+    @property
+    def site_url(self):
+        """« Voir le site » mène à l'accueil du site public, pas à l'accueil de cette administration."""
+        from django.conf import settings
+
+        return settings.SITE_URL
+
     index_title = "Tableau de bord"
     login_form = FormulaireConnexion
 

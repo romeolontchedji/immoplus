@@ -5,7 +5,7 @@ from django.http import Http404
 from django.shortcuts import render
 from django.templatetags.static import static
 
-from apps.core import configuration, legal
+from apps.core import configuration, legal, parametres
 from apps.listings import selectors as annonces
 
 from .views_public import _base_site, _json_ld
@@ -43,11 +43,22 @@ def _json_ld_accueil(request) -> str:
     )
 
 
+def _prix_alerte_affiche() -> str | None:
+    """Prix forfaitaire d'une alerte (réglage de l'administration), ou `None` si les alertes sont gratuites."""
+    if not parametres.lire("PAID_ALERTS_ENABLED"):
+        return None
+    prix = int(parametres.lire("ALERT_PRICE") or 0)
+    return f"{prix:,}".replace(",", "\u202f") if prix > 0 else None
+
+
 def accueil(request):
+    prix = _prix_alerte_affiche()
     return render(
         request,
         "web/accueil.html",
         {
+            "alertes_payantes": prix is not None,
+            "prix_alerte": prix,
             "quartiers": annonces.quartiers_avec_chambres(),
             "json_ld": _json_ld_accueil(request),
             "canonique": f"{_base_site(request)}/",

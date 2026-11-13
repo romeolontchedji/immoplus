@@ -17,11 +17,8 @@
     <div class="conteneur accueil-hero__conteneur">
       <div class="accueil-hero__texte">
         <span class="accueil-hero__capsule">Chambres à Parakou, près de l'UP et partout en ville</span>
-        <h1 class="accueil-hero__titre" id="hero-titre">Vois ta chambre avant de te déplacer.</h1>
-        <p class="accueil-hero__accroche">
-          Visite en vidéo, gérants vérifiés par notre équipe, alerte dès qu'une chambre se libère.
-          Tu choisis en connaissance de cause.
-        </p>
+        <h1 class="accueil-hero__titre" id="hero-titre">Trouve ta chambre à Parakou, sans courir partout.</h1>
+        <p class="accueil-hero__accroche">Visite en vidéo, gérants vérifiés, zéro paiement avant la visite.</p>
         {# Barre de recherche rapide #}
         <div class="accueil-recherche" role="search">
           {# Un seul champ : quartier, type ou équipement ; les filtres détaillés sont sur la page Chambres. #}
@@ -30,12 +27,12 @@
                 action="/annonces"
                 id="form-recherche-hero">
             <div class="accueil-recherche__champ">
-              <label class="accueil-recherche__label" for="recherche-hero">RECHERCHER</label>
+              <label class="accueil-recherche__label" for="recherche-hero">Où veux-tu habiter&nbsp;?</label>
               <input class="accueil-recherche__saisie"
                      id="recherche-hero"
                      name="q"
                      type="search"
-                     placeholder="Quartier, type, forage, cuisine…"
+                     placeholder="Quartier, type de chambre, forage…"
                      autocomplete="off">
             </div>
             <button class="accueil-recherche__bouton" type="submit">Voir les chambres</button>
@@ -44,56 +41,8 @@
         {# Appel secondaire : « Voir les chambres » est déjà le bouton de la recherche juste au-dessus #}
         <div class="accueil-hero__actions">
           <a class="bouton bouton--contour-clair bouton--grand"
-             href="/compte/alertes?nouvelle=1">Créer une alerte</a>
+             href="/compte/alertes?nouvelle=1">Me prévenir des nouvelles chambres</a>
         </div>
-        <p class="accueil-hero__lien-discret">
-          <a href="#comment-ca-marche">Tu loues des chambres&nbsp;? Fais visiter sans bouger</a>
-        </p>
-        {# Promesses #}
-        <ul class="accueil-hero__promesses" aria-label="Nos engagements">
-          <li>
-            <svg width="16"
-                 height="16"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Gérants vérifiés
-          </li>
-          <li>
-            <svg width="16"
-                 height="16"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Visite en vidéo
-          </li>
-          <li>
-            <svg width="16"
-                 height="16"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2.5"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Contact direct
-          </li>
-        </ul>
       </div>
     </div>
   </section>
@@ -101,8 +50,7 @@
   <section class="section accueil-piliers" aria-labelledby="piliers-titre">
     <div class="conteneur">
       <div class="accueil-section-entete">
-        <h2 id="piliers-titre">Louer à Parakou sans mauvaise surprise</h2>
-        <p class="accueil-section-sous-titre">Ce que change Immo+ quand tu cherches une chambre.</p>
+        <h2 id="piliers-titre">Pourquoi Immo+&nbsp;?</h2>
       </div>
       <div class="accueil-piliers__grille">
         <article class="accueil-pilier">
@@ -119,8 +67,8 @@
               <path d="m22 8-10 5L2 8" />
             </svg>
           </span>
-          <h3 class="accueil-pilier__titre">Tu ne paies pas pour une chambre que tu n'as pas vue.</h3>
-          <p class="accueil-pilier__texte">Regarde la visite en vidéo, vérifie le gérant, puis seulement après, déplace-toi.</p>
+          <h3 class="accueil-pilier__titre">Tu vois avant de te déplacer.</h3>
+          <p class="accueil-pilier__texte">La visite en vidéo te montre la vraie chambre. Tu te déplaces seulement si elle te plaît.</p>
         </article>
         <article class="accueil-pilier">
           <span class="accueil-pilier__icone" aria-hidden="true">
@@ -138,7 +86,7 @@
           </span>
           <h3 class="accueil-pilier__titre">Un gérant vérifié, pas un inconnu.</h3>
           <p class="accueil-pilier__texte">
-            Chaque gérant fournit ses pièces et rencontre notre équipe avant de publier sa première annonce.
+            Chaque gérant a passé un entretien avec notre équipe avant de publier sa première annonce.
           </p>
         </article>
         <article class="accueil-pilier">
@@ -155,9 +103,9 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </span>
-          <h3 class="accueil-pilier__titre">Tu n'as plus besoin d'être dans le bon groupe.</h3>
+          <h3 class="accueil-pilier__titre">Les chambres viennent à toi.</h3>
           <p class="accueil-pilier__texte">
-            Toutes les chambres au même endroit. Crée une alerte&nbsp;: dès qu'une chambre correspond, on te prévient.
+            Dis-nous ce que tu cherches. Dès qu'une chambre correspond, on te prévient. Plus besoin de surveiller les groupes.
           </p>
         </article>
       </div>
@@ -169,8 +117,8 @@
            aria-labelledby="comment-titre">
     <div class="conteneur">
       <div class="accueil-section-entete">
-        <h2 id="comment-titre">Trouver ou louer, en 3 étapes</h2>
-        <p class="accueil-section-sous-titre">Que tu cherches une chambre ou que tu en loues, tout tient en trois étapes.</p>
+        <h2 id="comment-titre">Comment ça marche&nbsp;?</h2>
+        <p class="accueil-section-sous-titre">Trois étapes, que tu cherches une chambre ou que tu en loues.</p>
       </div>
       <div class="accueil-comment__grille">
         {# Locataire #}
@@ -180,22 +128,22 @@
             <li class="accueil-comment__etape">
               <span class="accueil-comment__numero" aria-hidden="true">1</span>
               <div>
-                <strong>Trouve ce qui te convient</strong>
-                <span>Quartier, budget, type : tu ne gardes que les chambres qui t'intéressent.</span>
+                <strong>Choisis tes critères</strong>
+                <span>Quartier, budget, type : il ne reste que les chambres qui comptent pour toi.</span>
               </div>
             </li>
             <li class="accueil-comment__etape">
               <span class="accueil-comment__numero" aria-hidden="true">2</span>
               <div>
                 <strong>Regarde la visite</strong>
-                <span>Parcours la chambre en vidéo, sans te déplacer.</span>
+                <span>Parcours la chambre en vidéo, depuis chez toi.</span>
               </div>
             </li>
             <li class="accueil-comment__etape">
               <span class="accueil-comment__numero" aria-hidden="true">3</span>
               <div>
-                <strong>Contacte le gérant</strong>
-                <span>Écris-lui dans l'app, fixe la visite, puis décide.</span>
+                <strong>Écris au gérant</strong>
+                <span>Pose tes questions, fixe la visite, puis décide.</span>
               </div>
             </li>
           </ol>
@@ -209,30 +157,30 @@
               <span class="accueil-comment__numero accueil-comment__numero--soleil"
                     aria-hidden="true">1</span>
               <div>
-                <strong>Contacte l'équipe Immo+</strong>
-                <span>Écris-nous sur WhatsApp ou appelle-nous, pièces en main.</span>
+                <strong>Parle à l'équipe</strong>
+                <span>Écris-nous sur WhatsApp ou appelle-nous.</span>
               </div>
             </li>
             <li class="accueil-comment__etape accueil-comment__etape--clair">
               <span class="accueil-comment__numero accueil-comment__numero--soleil"
                     aria-hidden="true">2</span>
               <div>
-                <strong>On vérifie, puis on crée ton compte</strong>
-                <span>Pièce d'identité, justificatif, court entretien.</span>
+                <strong>On te rencontre</strong>
+                <span>Un court entretien avec notre équipe, puis on crée ton compte.</span>
               </div>
             </li>
             <li class="accueil-comment__etape accueil-comment__etape--clair">
               <span class="accueil-comment__numero accueil-comment__numero--soleil"
                     aria-hidden="true">3</span>
               <div>
-                <strong>Publie, puis reçois des demandes</strong>
-                <span>Une vidéo, des photos, et tu vois qui regarde ta chambre.</span>
+                <strong>Publie et reçois des demandes</strong>
+                <span>Une vidéo, quelques photos, et les locataires viennent à toi.</span>
               </div>
             </li>
           </ol>
           <a class="bouton accueil-comment__cta accueil-comment__cta--accent"
              href="{{ contact_equipe.whatsapp_url }}"
-             rel="noopener">Contacter l'équipe sur WhatsApp · {{ contact_equipe.phone_display }}</a>
+             rel="noopener">Parler à l'équipe sur WhatsApp · {{ contact_equipe.phone_display }}</a>
         </div>
       </div>
     </div>
@@ -327,8 +275,8 @@
     <section class="section accueil-quartiers" aria-labelledby="quartiers-titre">
       <div class="conteneur">
         <div class="accueil-quartiers__entete">
-          <h2 class="accueil-quartiers__titre" id="quartiers-titre">Cherche par quartier</h2>
-          <a class="accueil-quartiers__tout" href="/annonces">Toutes les chambres</a>
+          <h2 class="accueil-quartiers__titre" id="quartiers-titre">Choisis ton quartier</h2>
+          <a class="accueil-quartiers__tout" href="/annonces">Voir toutes les chambres</a>
         </div>
         <ul class="accueil-quartiers__liste">
           {% for q in quartiers %}
@@ -339,7 +287,7 @@
                   {% if q.nombre %}
                     {{ q.nombre }} chambre{{ q.nombre|pluralize }}
                   {% else %}
-                    Crée une alerte
+                    Être prévenu(e)
                   {% endif %}
                 </span>
               </a>
@@ -357,7 +305,7 @@
           <strong>Ne cours plus après les annonces.</strong>
           <p class="texte-doux mb-0">Dis-nous ton quartier et ton budget. On te prévient dès qu'une chambre correspond.</p>
         </div>
-        <a class="bouton bouton--primaire" href="/compte/alertes">Créer mon alerte</a>
+        <a class="bouton bouton--primaire" href="/compte/alertes">Être prévenu(e)</a>
       </div>
     </div>
   </section>
@@ -369,55 +317,59 @@
         <details class="faq__item">
           <summary class="faq__question">Immo+ est-il gratuit pour moi&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.</p>
+            {% if alertes_payantes %}
+              <p>Chercher une chambre et contacter un gérant ne coûte rien. Les alertes sont à un prix forfaitaire de {{ prix_alerte }}&nbsp;F, payé une seule fois pour chaque alerte.</p>
+            {% else %}
+              <p>Oui. Chercher, contacter un gérant et créer des alertes ne coûte rien.</p>
+            {% endif %}
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Je ne suis pas étudiant, puis-je l'utiliser&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Oui. Immo+ est ouvert à tous ceux qui cherchent une chambre à Parakou&nbsp;: étudiants, stagiaires, travailleurs, familles.</p>
+            <p>Oui. Immo+ est ouvert à tous&nbsp;: étudiants, stagiaires, travailleurs, familles.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Comment savoir que la chambre existe vraiment&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Regarde la visite en vidéo et le badge Vérifié du gérant. Ensuite, visite avant tout paiement.</p>
+            <p>Regarde la visite en vidéo et cherche le badge «&nbsp;Vérifié&nbsp;» sur le gérant. Visite toujours avant de payer.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Dois-je payer pour réserver&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Ne paie jamais avant d'avoir visité, et exige un reçu écrit pour chaque somme versée.</p>
+            <p>Ne paie jamais avant d'avoir visité, et demande un reçu écrit pour chaque somme.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">On me demande de l'argent avant la visite. Que faire&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Ne paie pas. Arrête la discussion et signale le message depuis la conversation&nbsp;: notre équipe regarde.</p>
+            <p>Ne paie pas, arrête la discussion et signale le message&nbsp;: notre équipe regarde.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Que veut dire «&nbsp;Vérifié&nbsp;»&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Le gérant a fourni sa pièce d'identité et un justificatif, et a passé un entretien avec notre équipe.</p>
+            <p>Le gérant a rencontré notre équipe et passé un entretien avant de publier.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Comment devient-on gérant&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>On ne s'inscrit pas seul&nbsp;: contacte l'équipe Immo+, fournis tes pièces, passe un court entretien. Ensuite, on crée ton compte.</p>
+            <p>Contacte l'équipe Immo+ et passe un court entretien. On crée ensuite ton compte.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Pourquoi je ne peux pas créer un compte gérant moi-même&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Pour protéger les locataires. Chaque gérant est connu de notre équipe avant de publier.</p>
+            <p>Pour protéger les locataires&nbsp;: chaque gérant est connu de notre équipe avant de publier.</p>
           </div>
         </details>
         <details class="faq__item">
           <summary class="faq__question">Comment fonctionnent les alertes&nbsp;?</summary>
           <div class="faq__reponse">
-            <p>Tu choisis un quartier, un budget et un type. Dès qu'une chambre correspond, tu reçois une notification.</p>
+            <p>Choisis un quartier, un budget et un type de chambre. Quand une chambre correspond, tu reçois une notification.</p>
           </div>
         </details>
       </div>
