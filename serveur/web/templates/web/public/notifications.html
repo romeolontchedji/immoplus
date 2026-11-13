@@ -53,7 +53,7 @@
                 <div class="rangee">
                   {% if g.derniere.lien %}
                     <a class="bouton bouton--petit bouton--primaire"
-                       href="{{ g.derniere.lien }}">Consulter</a>
+                       href="/compte/notifications/{{ g.derniere.id }}/ouvrir">Consulter</a>
                   {% endif %}
                   {% if g.non_lues %}
                     <form method="post">

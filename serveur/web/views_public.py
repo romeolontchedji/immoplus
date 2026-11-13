@@ -868,6 +868,16 @@ def _groupes_notifications(lignes) -> list[dict]:
 
 
 @connecte_obligatoire
+def ouvrir_notification(request, notification_id):
+    """Bouton « Consulter » : marque la notification lue, puis va vers la ressource visée."""
+    try:
+        n = notifications.ouvrir(request.user.pk, notification_id)
+    except ErreurMetier:
+        return redirect("/compte/notifications")
+    return redirect(_lien_notification(n) or "/compte/notifications")
+
+
+@connecte_obligatoire
 def mes_notifications(request):
     if request.method == "POST":
         if request.POST.get("action") == "lire" and request.POST.get("notification_id"):
