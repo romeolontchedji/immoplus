@@ -624,9 +624,12 @@ def mes_alertes(request):
             else:
                 _exiger_email_pour_alerte(sans_email)
                 alertes.creer(request.user, _donnees_alerte(request.POST))
-                message = "Alerte créée : tu seras prévenu par e-mail et sur le site des chambres qui correspondent."
+                # Redirection : l'écran revient formulaire vide et un rafraîchissement ne recrée rien.
+                return redirect("/compte/alertes?ok=creee")
         except ErreurMetier as e:
             message, niveau = _message(e), "danger"
+    if request.method == "GET" and request.GET.get("ok") == "creee":
+        message = "Alerte créée : tu seras prévenu par e-mail et sur le site des chambres qui correspondent."
     proposition = _criteres_proposes(request.GET)
     # Le formulaire reste replié sous « Créer une nouvelle alerte », sauf s'il y a quelque chose à y montrer.
     ouvrir = request.GET.get("nouvelle") == "1" or any(
