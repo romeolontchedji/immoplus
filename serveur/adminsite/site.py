@@ -27,7 +27,7 @@ class FormulaireConnexion(AuthenticationForm):
 
 
 # Menu de l'administration : rubriques par fréquence d'usage (et non par ordre alphabétique), icône par rubrique.
-ORDRE_RUBRIQUES = ["moderation", "accounts", "listings", "axes", "audit", "core", "billing"]
+ORDRE_RUBRIQUES = ["moderation", "chat", "accounts", "listings", "axes", "audit", "core", "billing"]
 ORDRE_PAGES = {
     "moderation": ["Report", "MessageEquipe", "ModerationAction"],
     "accounts": ["GerantProfile", "User"],
@@ -36,6 +36,7 @@ ORDRE_PAGES = {
 }
 ICONES_RUBRIQUES = {
     "moderation": "flag",
+    "chat": "message",
     "accounts": "users",
     "listings": "house",
     "axes": "shield",

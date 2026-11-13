@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
 from django.utils.html import format_html, format_html_join
@@ -513,6 +514,128 @@ class LectureConversationForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3}),
         help_text="Obligatoire avant l'ouverture ; conservé dans le journal d'activité.",
     )
+
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    """Conversations entre locataires et gérants, à la disposition de l'équipe pour la modération.
+
+    La liste ne montre aucun contenu : la lecture demande un motif, est journalisée et plafonnée par jour."""
+
+    list_display = (
+        "dernier_message",
+        "annonce",
+        "locataire",
+        "gerant_compte",
+        "nombre",
+        "statut",
+        "lecture",
+    )
+    list_display_links = None
+    list_select_related = ("listing", "client", "gerant")
+    list_filter = ("status",)
+    search_fields = (
+        "listing__title", "client__username", "client__full_name", "gerant__username", "gerant__full_name",
+    )  # fmt: skip
+    ordering = ("-last_message_at", "-created_at")
+    actions = None
+    fields = ("listing", "client", "gerant", "status", "created_at")
+    readonly_fields = fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.role in ("moderator", "admin")
+
+    @admin.display(description="Dernier message", ordering="last_message_at")
+    def dernier_message(self, obj):
+        return obj.last_message_at or obj.created_at
+
+    @admin.display(description="Annonce")
+    def annonce(self, obj):
+        return obj.listing.title
+
+    @admin.display(description="Locataire")
+    def locataire(self, obj):
+        return _compte(obj.client)
+
+    @admin.display(description="Gérant")
+    def gerant_compte(self, obj):
+        return _compte(obj.gerant)
+
+    @admin.display(description="Messages", ordering="last_seq")
+    def nombre(self, obj):
+        return obj.last_seq
+
+    @admin.display(description="État", ordering="status")
+    def statut(self, obj):
+        return "Bloquée" if obj.status == "blocked" else "Ouverte"
+
+    @admin.display(description="")
+    def lecture(self, obj):
+        return format_html(
+            '<a class="button" href="{}">Lire</a>',
+            reverse("admin:chat_conversation_lire", args=[obj.pk]),
+        )
+
+    def get_urls(self):
+        return [
+            path(
+                "<uuid:conversation_id>/lire/",
+                self.admin_site.admin_view(self.lire),
+                name="chat_conversation_lire",
+            ),
+            *super().get_urls(),
+        ]
+
+    def lire(self, request, conversation_id):
+        """Lecture d'une conversation : motif obligatoire avant l'ouverture, lecture inscrite au journal."""
+        _exiger_personnel(request)
+        conversation = (
+            Conversation.objects.select_related("listing", "client", "gerant")
+            .filter(pk=conversation_id)
+            .first()
+        )
+        if conversation is None:
+            raise Http404
+        formulaire = LectureConversationForm(request.POST or None)
+        lecture = None
+        if request.method == "POST" and formulaire.is_valid():
+            try:
+                lecture = services.lire_conversation(
+                    request.user, conversation_id, formulaire.cleaned_data["reason"]
+                )
+            except ErreurMetier as erreur:
+                formulaire.add_error(None, erreur.message)
+        noms = {
+            str(
+                conversation.client_id
+            ): f"Locataire · {conversation.client.full_name or 'sans nom'}",
+            str(conversation.gerant_id): f"Gérant · {conversation.gerant.full_name or 'sans nom'}",
+        }
+        contexte = {
+            **self.admin_site.each_context(request),
+            "title": f"Conversation · {conversation.listing.title}",
+            "form": formulaire,
+            "conversation": conversation,
+            "messages_conversation": (
+                [
+                    {**m, "expediteur": noms.get(str(m["sender_id"]), "Système")}
+                    for m in lecture["messages"]
+                ]
+                if lecture
+                else None
+            ),
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/lecture-conversation.html", contexte)
 
 
 @admin.register(Report)
