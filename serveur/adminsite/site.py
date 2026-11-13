@@ -49,6 +49,14 @@ ICONES_RUBRIQUES = {
 class AdminImmoplus(AdminSite):
     site_header = "Immo+ — administration"
     site_title = "Immo+"
+
+    @property
+    def site_url(self):
+        """« Voir le site » mène à l'accueil du site public, pas à l'accueil de cette administration."""
+        from django.conf import settings
+
+        return settings.SITE_URL
+
     index_title = "Tableau de bord"
     login_form = FormulaireConnexion
 

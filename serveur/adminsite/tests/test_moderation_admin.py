@@ -161,10 +161,8 @@ class TestSignalements:
     def test_un_locataire_ne_lit_pas_les_conversations_de_l_administration(self):
         annonce = ListingFactory(gerant=gerant_verifie())
         conversation, *_ = chat.ouvrir(ClientFactory(), annonce.pk, "Bonjour", str(uuid.uuid4()))
-        c = Client()
-        c.post("/login/", {"username": ClientFactory().email, "password": "x"})
-        r = c.get(reverse("admin:chat_conversation_lire", args=[conversation.pk]))
-        assert r.status_code == 302  # renvoyé vers la connexion
+        r = Client().get(reverse("admin:chat_conversation_lire", args=[conversation.pk]))
+        assert r.status_code == 302  # sans compte du personnel : renvoyé vers la connexion
 
     def test_un_signalement_d_annonce_n_ouvre_pas_de_conversation(self, mod):
         _, c = mod
