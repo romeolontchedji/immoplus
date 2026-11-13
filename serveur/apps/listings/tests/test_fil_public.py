@@ -492,7 +492,11 @@ class TestAlertes:
         with django_capture_on_commit_callbacks(execute=True):
             annonces.mettre_en_ligne(a, acteur=p.user)
         envoyes = [m for m in mail.outbox if "nouvelle annonce" in m.subject]
-        assert sorted(m.to[0] for m in envoyes) == sorted([admin.email, moderateur.email])
+        destinataires = {
+            m.to[0] for m in envoyes
+        }  # + l'administrateur qui a vérifié le gérant (fabrique)
+        assert {admin.email, moderateur.email} <= destinataires
+        assert "suspendu@exemple.bj" not in destinataires
         assert "Chambre Zongo" in envoyes[0].subject and f"/annonces/{a.slug}" in envoyes[0].body
         # Remise en ligne d'une annonce déjà publiée une fois : pas de second courriel.
         a.refresh_from_db()

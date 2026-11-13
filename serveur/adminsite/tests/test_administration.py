@@ -17,7 +17,7 @@ from apps.accounts.tests.fabriques import (
     PersonnelFactory,
 )
 from apps.audit.models import AuditLog
-from apps.listings.tests.fabriques import ListingFactory, medias_prets
+from apps.listings.tests.fabriques import ListingFactory, gerant_verifie, medias_prets
 from config.settings import admin_base
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
@@ -477,8 +477,10 @@ class TestMasquerOuRetirerUneAnnonce:
         from apps.listings.models import Listing
         from apps.notifications.models import Notification
 
-        annonce = ListingFactory()
-        medias_prets(annonce)  # une annonce incomplète n'est pas remise en ligne
+        annonce = ListingFactory(
+            gerant=gerant_verifie()
+        )  # gérant vérifié et photos : l'annonce est publiable
+        medias_prets(annonce)
         c, _ = se_connecter(
             personnel(PersonnelFactory if fabrique == "moderateur" else AdminFactory)
         )
