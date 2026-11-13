@@ -136,7 +136,7 @@ class PaiementKkiapay(PaymentProvider):
             method="POST",
         )
         try:
-            with urllib.request.urlopen(requete, timeout=15) as reponse:  # noqa: S310 - URL fixe ci-dessus
+            with urllib.request.urlopen(requete, timeout=15) as reponse:  # noqa: S310  # nosec B310 - URL fixe ci-dessus (HTTPS)
                 return json.loads(reponse.read() or b"{}")
         except (urllib.error.URLError, TimeoutError, ValueError) as erreur:
             raise ErreurPaiement("KKiaPay ne répond pas.") from erreur
