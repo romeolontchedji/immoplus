@@ -287,6 +287,26 @@ def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) 
 
 
 @transaction.atomic
+def terminer_abonnement(*, acteur, abonnement: Subscription) -> Subscription:
+    """Un administrateur met fin à un abonnement payant aussitôt (erreur, fraude, remboursement)."""
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    if abonnement.plan_code == PLAN_GRATUIT or abonnement.status == StatutAbonnement.EXPIRED:
+        raise ErreurMetier(
+            "invalid_transition", "Cet abonnement n'est pas un abonnement payant en cours.", statut=409
+        )
+    if abonnement.status in (StatutAbonnement.ACTIVE, StatutAbonnement.TRIALING):
+        changer_statut(abonnement, StatutAbonnement.CANCELED, motif="equipe")
+    changer_statut(abonnement, StatutAbonnement.EXPIRED, motif="equipe")
+    audit.enregistrer(
+        "abonnement.termine_par_equipe",
+        acteur=acteur,
+        metadata={"abonnement": str(abonnement.pk), "formule": abonnement.plan_code},
+    )
+    return abonnement
+
+
+@transaction.atomic
 def appliquer_evenement(paiement_id, statut: str) -> Payment:
     """Tâche : paiement réussi → abonnement actif pour une nouvelle période ; échec → statut d'échec."""
     paiement = Payment.objects.select_for_update().get(pk=paiement_id)

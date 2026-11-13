@@ -105,6 +105,17 @@ def supprimer_compte(*, acteur: User, cible: User) -> None:
     compte.anonymiser(cible, acteur=acteur, par_equipe=True)
 
 
+def deconnecter(*, acteur: User, cible: User) -> None:
+    """Déconnecte la personne partout (site et application) : appareils révoqués, sessions et jetons invalidés."""
+    if acteur.role != Role.ADMIN or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    cible.token_version += 1
+    cible.save(update_fields=["token_version", "updated_at"])
+    jetons.invalider_utilisateur(cible.pk)
+    appareils.revoquer_autres(cible, None, raison="deconnexion_equipe")
+    audit.enregistrer("compte.deconnecte", acteur=acteur, cible=cible)
+
+
 def lien_activation(*, acteur: User, gerant: User) -> str:
     """Lien d'activation d'un gérant (72 h, usage unique), à transmettre par WhatsApp ou e-mail."""
     if gerant.role != Role.GERANT or gerant.has_usable_password():

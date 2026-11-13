@@ -10,14 +10,21 @@ from django.urls import path, reverse
 from django.utils.html import format_html, format_html_join
 
 from apps.accounts.models import User
+from apps.audit import services as audit
 from apps.chat.models import Conversation, Message
 from apps.core.errors import ErreurMetier
+from apps.listings import selectors as listing_selectors
 from apps.listings.enums import StatutTypeChambre
 from apps.listings.models import Listing, RoomType
-from apps.listings.services import annonces
+from apps.listings.services import annonces, contenu
 from apps.listings.services import types as types_chambre
 from apps.moderation import services
 from apps.moderation.models import ModerationAction, Report
+
+
+def _exiger_admin(request) -> None:
+    if not (request.user.is_active and request.user.role == "admin"):
+        raise PermissionDenied
 
 
 def _exiger_personnel(request) -> None:
@@ -68,6 +75,24 @@ def _signaler_erreur(modeladmin, request, erreur: ErreurMetier) -> None:
     modeladmin.message_user(request, erreur.message, level=messages.ERROR)
 
 
+class AnnonceEquipeForm(forms.ModelForm):
+    """Correction d'une annonce par un administrateur : mêmes règles que pour un gérant (pas de coordonnées)."""
+
+    class Meta:
+        model = Listing
+        fields = ["title", "rent_amount", "landmark_text", "available_from", "district"]
+
+    def clean(self):
+        donnees = super().clean()
+        try:
+            contenu.refuser_si_coordonnees(
+                title=str(donnees.get("title") or ""), landmark_text=str(donnees.get("landmark_text") or "")
+            )
+        except ErreurMetier as erreur:
+            raise forms.ValidationError(erreur.message) from erreur
+        return donnees
+
+
 @admin.register(Listing)
 class ListingAdmin(admin.ModelAdmin):
     list_display = (
@@ -83,16 +108,36 @@ class ListingAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "gerant__full_name")
     # Les dernières mises en ligne d'abord (les brouillons, sans date, à la fin).
     ordering = (F("published_at").desc(nulls_last=True), "-created_at")
-    actions = ["masquer_annonces", "retirer_annonces", "remettre_en_ligne", "approuver", "refuser"]
+    actions = [
+        "masquer_annonces", "retirer_annonces", "remettre_en_ligne", "retablir_retiree",
+        "marquer_louee_equipe", "supprimer_annonces", "approuver", "refuser",
+    ]  # fmt: skip
 
     def has_add_permission(self, request):
         return False
 
+    # Un administrateur corrige le titre, le loyer, le repère, la date ou le quartier ; le reste se décide par les actions.
+    CHAMPS_MODIFIABLES = ("title", "rent_amount", "landmark_text", "available_from", "district")
+
     def has_change_permission(self, request, obj=None):
-        return False
+        return request.user.is_active and request.user.role == "admin"
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return False  # une annonce ne s'efface pas : elle se retire ou se supprime (archivage) par les actions
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs["form"] = AnnonceEquipeForm
+        kwargs["fields"] = list(self.CHAMPS_MODIFIABLES)
+        return super().get_form(request, obj, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        _exiger_admin(request)
+        obj.save(update_fields=[*form.changed_data, "updated_at"])
+        listing_selectors.invalider_fil()
+        audit.enregistrer(
+            "listing.modifiee_par_equipe", acteur=request.user, cible=obj,
+            metadata={"champs": sorted(form.changed_data)},
+        )  # fmt: skip
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("gerant", "district")
@@ -105,7 +150,10 @@ class ListingAdmin(admin.ModelAdmin):
         ]  # fmt: skip
 
     def get_readonly_fields(self, request, obj=None):
-        return self.get_fields(request, obj)
+        champs = self.get_fields(request, obj)
+        if request.user.is_active and request.user.role == "admin":
+            return [c for c in champs if c not in self.CHAMPS_MODIFIABLES]
+        return champs
 
     @admin.display(description="Type de logement")
     def type_de_logement(self, obj):
@@ -196,6 +244,59 @@ class ListingAdmin(admin.ModelAdmin):
         if faites:
             self.message_user(request, f"{faites} annonce(s) remise(s) en ligne.")
 
+    def _action_admin(self, request, queryset, *, action, titre, explication, bouton, appliquer):
+        """Action réservée aux administrateurs, avec confirmation, journal et message par annonce refusée."""
+        from .admin import confirmer_action
+
+        _exiger_admin(request)
+        reponse = confirmer_action(
+            self, request, queryset, action=action, titre=titre, explication=explication, bouton=bouton
+        )
+        if reponse is not None:
+            return reponse
+        faites = 0
+        for annonce in queryset:
+            try:
+                appliquer(annonce)
+                audit.enregistrer(
+                    "listing.action_equipe", acteur=request.user, cible=annonce, metadata={"action": action}
+                )
+                faites += 1
+            except ErreurMetier as erreur:
+                self.message_user(
+                    request, f"« {annonce.title} » : {erreur.message}", level=messages.WARNING
+                )
+        if faites:
+            self.message_user(request, f"{faites} annonce(s) traitée(s).")
+        return None
+
+    @admin.action(description="Rétablir une annonce retirée (elle repasse en masquée)")
+    def retablir_retiree(self, request, queryset):
+        return self._action_admin(
+            request, queryset, action="retablir_retiree", titre="Rétablir des annonces retirées",
+            explication="Les annonces retirées redeviennent masquées : le gérant peut les corriger et les republier.",
+            bouton="Oui, rétablir",
+            appliquer=lambda a: annonces.retablir_apres_retrait(a, acteur=request.user),
+        )  # fmt: skip
+
+    @admin.action(description="Marquer louée (au nom du gérant) : photos et vidéo supprimées")
+    def marquer_louee_equipe(self, request, queryset):
+        return self._action_admin(
+            request, queryset, action="marquer_louee_equipe", titre="Marquer des annonces louées",
+            explication="Les photos et la vidéo sont supprimées aussitôt et l'annonce est archivée. Irréversible pour les médias.",
+            bouton="Oui, elles sont louées",
+            appliquer=lambda a: annonces.marquer_louee(a.gerant, a.pk),
+        )  # fmt: skip
+
+    @admin.action(description="Supprimer (archive l'annonce et la retire de l'espace du gérant)")
+    def supprimer_annonces(self, request, queryset):
+        return self._action_admin(
+            request, queryset, action="supprimer_annonces", titre="Supprimer des annonces",
+            explication="Les annonces sont archivées et disparaissent de l'espace du gérant ; leurs médias sont purgés.",
+            bouton="Oui, supprimer",
+            appliquer=lambda a: annonces.supprimer(a.gerant, a.pk),
+        )  # fmt: skip
+
     @admin.action(description="Approuver et publier (première annonce)")
     def approuver(self, request, queryset):
         _exiger_personnel(request)
@@ -235,6 +336,20 @@ class RattachementForm(forms.Form):
     )
 
 
+class NouveauTypeForm(forms.ModelForm):
+    """Ajout d'un type de logement par un administrateur : refuse un nom déjà pris ou contenant des coordonnées."""
+
+    class Meta:
+        model = RoomType
+        fields = ["label", "sort_order"]
+
+    def clean_label(self):
+        try:
+            return types_chambre.verifier_libelle_libre(self.cleaned_data["label"])
+        except ErreurMetier as erreur:
+            raise forms.ValidationError(erreur.message) from erreur
+
+
 @admin.register(RoomType)
 class RoomTypeAdmin(admin.ModelAdmin):
     """Types de logement (décision V1) : les propositions des gérants se valident ou se rattachent à un type validé."""
@@ -257,10 +372,35 @@ class RoomTypeAdmin(admin.ModelAdmin):
     readonly_fields = ("slug", "status", "proposed_by", "reviewed_by", "reviewed_at", "created_at")
 
     def has_add_permission(self, request):
-        return False  # les types naissent d'une proposition de gérant (ou des 4 officiels)
+        return request.user.is_active and request.user.role == "admin"  # un type validé, ajouté directement
 
     def has_delete_permission(self, request, obj=None):
-        return False  # « Rattacher » remplace la suppression : aucune annonce ne perd son type
+        # Un administrateur supprime un type que plus rien n'utilise (page du type) ; sinon « Rattacher ».
+        return request.user.is_active and request.user.role == "admin"
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)  # jamais en masse : chaque suppression vérifie l'usage du type
+        return actions
+
+    def get_form(self, request, obj=None, **kwargs):
+        if obj is None:  # ajout : libellé et ordre seulement, le reste est calculé
+            kwargs["form"] = NouveauTypeForm
+            kwargs["fields"] = ["label", "sort_order"]
+        return super().get_form(request, obj, **kwargs)
+
+    def get_fields(self, request, obj=None):
+        return ("label", "sort_order") if obj is None else self.fields
+
+    def get_readonly_fields(self, request, obj=None):
+        return () if obj is None else self.readonly_fields
+
+    def delete_model(self, request, obj):
+        try:
+            types_chambre.supprimer(obj, acteur=request.user)
+        except ErreurMetier as erreur:
+            self.message_user(request, erreur.message, level=messages.ERROR)
+
 
     @admin.display(description="Annonces")
     def annonces(self, obj):
@@ -268,6 +408,13 @@ class RoomTypeAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         _exiger_personnel(request)  # seuls le libellé et l'ordre sont modifiables ici
+        if not change:
+            nouveau = types_chambre.creer_officiel(
+                form.cleaned_data["label"], acteur=request.user, ordre=form.cleaned_data["sort_order"]
+            )
+            obj.pk, obj.slug, obj.status = nouveau.pk, nouveau.slug, nouveau.status
+            obj.label, obj.sort_order = nouveau.label, nouveau.sort_order
+            return
         super().save_model(request, obj, form, change)
         types_chambre.vider_cache()
 
@@ -402,7 +549,22 @@ class ReportAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_active and request.user.role == "admin"
+
+    def delete_model(self, request, obj):
+        audit.enregistrer(
+            "avis.supprime_par_equipe", acteur=request.user, cible=obj.listing,
+            metadata={"avis": str(obj.pk), "note": obj.rating},
+        )  # fmt: skip
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        for avis in queryset:
+            audit.enregistrer(
+                "avis.supprime_par_equipe", acteur=request.user, cible=avis.listing,
+                metadata={"avis": str(avis.pk), "note": avis.rating},
+            )  # fmt: skip
+        super().delete_queryset(request, queryset)
 
     def changelist_view(self, request, extra_context=None):
         t = services.tableau()

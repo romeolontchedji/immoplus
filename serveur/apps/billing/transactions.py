@@ -155,6 +155,24 @@ def _appliquer(attente: Transaction, id_kkiapay: str) -> Transaction:
     return ligne
 
 
+def marquer_rembourse(*, acteur, ligne: Transaction) -> Transaction:
+    """Note qu'un paiement a été remboursé (le remboursement lui-même se fait chez KKiaPay). Une alerte payée non créée
+    n'est plus un crédit ; l'abonnement éventuel n'est pas touché (voir « Mettre fin à l'abonnement »)."""
+    if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    if ligne.status != StatutPaiement.SUCCEEDED:
+        raise ErreurMetier("invalid_transition", "Seul un paiement réussi se rembourse.", statut=409)
+    ligne.status = StatutPaiement.REFUNDED
+    ligne.save(update_fields=["status"])
+    audit.enregistrer(
+        "paiement.rembourse",
+        acteur=acteur,
+        cible=ligne.user,
+        metadata={"transaction": str(ligne.pk), "montant": ligne.amount, "objet": ligne.objet},
+    )
+    return ligne
+
+
 # --------------------------------------------------------------------------- crédits d'alerte
 def credits_alerte(utilisateur) -> int:
     return Transaction.objects.filter(

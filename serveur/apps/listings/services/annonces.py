@@ -542,6 +542,15 @@ def refuser(annonce: Listing, *, acteur) -> None:
     changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="moderation")
 
 
+def retablir_apres_retrait(annonce: Listing, *, acteur) -> None:
+    """Un administrateur annule un retrait : l'annonce redevient masquée (le gérant peut la corriger et la republier)."""
+    if getattr(acteur, "role", None) != "admin":
+        raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
+    if annonce.status != StatutAnnonce.REMOVED:
+        raise ErreurMetier("listing_locked", "Cette annonce n'est pas retirée.", statut=409)
+    changer_statut(annonce, StatutAnnonce.HIDDEN, acteur=acteur, raison="moderation")
+
+
 def remettre_en_ligne_apres_moderation(annonce: Listing, *, acteur) -> None:
     """L'équipe annule un masquage décidé par la modération : l'annonce revient en ligne si elle est encore valide."""
     if annonce.status != StatutAnnonce.HIDDEN or annonce.hidden_reason != "moderation":

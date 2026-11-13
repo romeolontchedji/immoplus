@@ -506,6 +506,122 @@ class TestMasquerOuRetirerUneAnnonce:
         assert Listing.objects.get(pk=annonce.pk).status == "published"
 
 
+class TestPouvoirsDeLAdministrateur:
+    """L'administrateur a la main sur tout ce qui peut s'écrire (le journal et l'anonymisation des comptes restent intacts)."""
+
+    @staticmethod
+    def _action(client, modele, action, objets, **extra):
+        return client.post(
+            reverse(f"admin:{modele}_changelist"),
+            {"action": action, "_selected_action": [str(o.pk) for o in objets], "confirmer": "oui", **extra},
+        )
+
+    def test_ajouter_un_type_de_logement(self):
+        from apps.listings.models import RoomType
+
+        c, _ = se_connecter(personnel(AdminFactory))
+        r = c.post(reverse("admin:listings_roomtype_add"), {"label": "Studio meublé", "sort_order": 50})
+        assert r.status_code == 302
+        t = RoomType.objects.get(label="Studio meublé")
+        assert t.status == "approved" and t.slug == "studio_meuble" and t.sort_order == 50
+        # un nom déjà pris (même sans accents ni majuscules) est refusé
+        r = c.post(reverse("admin:listings_roomtype_add"), {"label": "STUDIO MEUBLE", "sort_order": 1})
+        assert r.status_code == 200 and RoomType.objects.filter(label__icontains="studio").count() == 1
+
+    def test_un_moderateur_n_ajoute_pas_de_type(self):
+        c, _ = se_connecter(personnel(PersonnelFactory))
+        assert c.get(reverse("admin:listings_roomtype_add")).status_code == 403
+
+    def test_supprimer_un_type_inutilise_seulement(self):
+        from apps.listings.models import RoomType
+        from apps.listings.services import types as types_chambre
+
+        c, admin_ = se_connecter(personnel(AdminFactory))
+        libre = types_chambre.creer_officiel("Type libre", acteur=admin_)
+        utilise = types_chambre.creer_officiel("Type utilise", acteur=admin_)
+        ListingFactory(room_type=utilise.slug)
+        c.post(reverse("admin:listings_roomtype_delete", args=[libre.pk]), {"post": "yes"})
+        c.post(reverse("admin:listings_roomtype_delete", args=[utilise.pk]), {"post": "yes"})
+        assert not RoomType.objects.filter(pk=libre.pk).exists()
+        assert RoomType.objects.filter(pk=utilise.pk).exists()  # des annonces l'utilisent : à rattacher
+
+    def test_corriger_une_annonce_est_reserve_aux_administrateurs(self):
+        from apps.listings.models import Listing
+
+        annonce = ListingFactory(title="Ancien titre")
+        champs = {
+            "title": "Nouveau titre", "rent_amount": annonce.rent_amount, "landmark_text": annonce.landmark_text,
+            "available_from": annonce.available_from or "2026-12-01", "district": annonce.district_id,
+        }  # fmt: skip
+        url = reverse("admin:listings_listing_change", args=[annonce.pk])
+        modo, _ = se_connecter(personnel(PersonnelFactory))
+        assert modo.post(url, champs).status_code == 403
+        c, _ = se_connecter(personnel(AdminFactory))
+        c.post(url, champs)
+        assert Listing.objects.get(pk=annonce.pk).title == "Nouveau titre"
+        refus = c.post(url, {**champs, "title": "Appelle 97 12 34 56 vite"})  # coordonnées : refusées
+        assert refus.status_code == 200 and Listing.objects.get(pk=annonce.pk).title == "Nouveau titre"
+
+    def test_retablir_une_annonce_retiree_et_la_supprimer(self):
+        from apps.listings.models import Listing
+
+        retiree = ListingFactory(status="removed")
+        c, _ = se_connecter(personnel(AdminFactory))
+        self._action(c, "listings_listing", "retablir_retiree", [retiree])
+        assert Listing.objects.get(pk=retiree.pk).status == "hidden"
+        self._action(c, "listings_listing", "supprimer_annonces", [retiree])
+        assert Listing.objects.get(pk=retiree.pk).deleted_at is not None
+
+    def test_deconnecter_et_changer_le_role_du_personnel(self):
+        cible = personnel(PersonnelFactory)
+        avant = cible.token_version
+        c, _ = se_connecter(personnel(AdminFactory))
+        self._action(c, "accounts_user", "deconnecter_comptes", [cible])
+        cible.refresh_from_db()
+        assert cible.token_version > avant
+        self._action(c, "accounts_user", "passer_administrateur", [cible])
+        cible.refresh_from_db()
+        assert cible.role == "admin"
+        self._action(c, "accounts_user", "passer_moderateur", [cible])
+        cible.refresh_from_db()
+        assert cible.role == "moderator"
+
+    def test_abonnement_prolonger_puis_mettre_fin_et_marquer_rembourse(self):
+        from apps.billing import services
+        from apps.billing.models import Subscription, Transaction
+        from apps.core import parametres
+        from apps.listings.tests.fabriques import gerant_verifie
+
+        parametres.definir("PLANS", [
+            {"code": "free_v1", "label": "Gratuit", "price": 0, "period_months": 1, "active": True},
+            {"code": "standard", "label": "Standard", "price": 500, "period_months": 1, "active": True},
+        ])  # fmt: skip
+        g, admin_ = gerant_verifie(), personnel(AdminFactory)
+        services.activer_en_especes(acteur=admin_, gerant_id=g.pk, plan_code="standard")
+        abo = Subscription.objects.get(gerant_id=g.pk, plan_code="standard")
+        fin = abo.current_period_end
+        c, _ = se_connecter(admin_)
+        self._action(c, "billing_subscription", "prolonger", [abo])
+        abo.refresh_from_db()
+        assert abo.current_period_end > fin
+        self._action(c, "billing_subscription", "mettre_fin", [abo])
+        abo.refresh_from_db()
+        assert abo.status == "expired"
+        ligne = Transaction.objects.filter(user=g.user, status="succeeded").first()
+        self._action(c, "billing_transaction", "marquer_rembourse", [ligne])
+        ligne.refresh_from_db()
+        assert ligne.status == "refunded"
+
+    def test_supprimer_un_avis(self):
+        from apps.listings.models import Review
+
+        annonce = ListingFactory()
+        avis = Review.objects.create(listing=annonce, author=ClientFactory(), rating=1, comment="Nul")
+        c, _ = se_connecter(personnel(AdminFactory))
+        c.post(reverse("admin:listings_review_delete", args=[avis.pk]), {"post": "yes"})
+        assert not Review.objects.filter(pk=avis.pk).exists()
+
+
 class TestPageDeRubrique:
     def test_la_page_d_une_rubrique_renvoie_a_l_accueil_sans_erreur(self):
         c, _ = se_connecter(personnel(AdminFactory))
