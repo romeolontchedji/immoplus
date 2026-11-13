@@ -62,13 +62,15 @@ def test_la_tete_des_pages_declare_l_application():
     assert "js/pwa" in page
 
 
-def test_l_invitation_a_installer_n_est_montree_qu_apres_connexion():
-    visiteur = Client().get("/annonces").content.decode()
-    assert "data-installer-action" not in visiteur
-    connecte_page = connecte(ClientFactory()).get("/annonces").content.decode()
-    assert "data-installer-action" in connecte_page and "Installe Immo+" in connecte_page
-    # Cachée jusqu'à ce que le navigateur la propose.
-    assert re.search(r"data-installer\s+hidden", connecte_page)
+def test_l_invitation_a_installer_est_proposee_aux_visiteurs_comme_aux_comptes():
+    pages = (
+        Client().get("/annonces").content.decode(),
+        connecte(ClientFactory()).get("/annonces").content.decode(),
+    )
+    for page in pages:
+        assert "data-installer-action" in page and "Installe Immo+" in page
+        # Cachée jusqu'à ce que le navigateur la propose.
+        assert re.search(r"data-installer\s+hidden", page)
 
 
 def test_le_manifeste_et_le_service_worker_restent_lisibles_en_maintenance():

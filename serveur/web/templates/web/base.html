@@ -46,8 +46,7 @@
   <body>
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
     <div class="page">
-      {% if request.user.is_authenticated %}
-        {# Invitation à installer l'application, montrée après la connexion (js/pwa.js la révèle si c'est possible). #}
+      {# Invitation à installer l'application, pour tous les visiteurs (js/pwa.js la révèle si c'est possible). #}
         <aside class="installer"
                data-installer
                hidden
@@ -69,7 +68,6 @@
                   data-installer-fermer
                   aria-label="Plus tard">×</button>
         </aside>
-      {% endif %}
       <header class="entete">
         <div class="conteneur entete__barre">
           <a class="logotype" href="/" aria-label="Immo+ — Accueil">
