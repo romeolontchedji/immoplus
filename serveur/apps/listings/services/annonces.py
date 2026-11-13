@@ -25,9 +25,9 @@ journal = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from apps.accounts.models import GerantProfile
 
-CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "address_private", "description_md")
+CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "description_md")
 CHAMPS_MODIFIABLES = (
-    "title", "room_type", "district", "landmark_text", "address_private", "latitude", "longitude", "rent_amount",
+    "title", "room_type", "district", "landmark_text", "latitude", "longitude", "rent_amount",
     "deposit_months", "advance_months", "prepaid_months", "agent_fee_amount", "water_deposit_amount",
     "electricity_deposit_amount", "available_from", "has_private_bathroom", "is_fenced",
     "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
@@ -160,7 +160,7 @@ def _appliquer(annonce: Listing, donnees: dict) -> None:
                 annonce.district = _quartier(valeur)
             elif nom == "description_md":
                 annonce.description_md, annonce.description_html = contenu.rendre(valeur)
-            elif nom in ("title", "landmark_text", "address_private"):
+            elif nom in ("title", "landmark_text"):
                 setattr(annonce, nom, " ".join(str(valeur or "").split()))
             else:
                 setattr(annonce, nom, valeur)
@@ -405,9 +405,14 @@ def _prevenir_l_equipe(annonce: Listing) -> None:
     from apps.core.tasks import envoyer_courriel
 
     if not parametres.lire("EMAIL_NOUVELLES_ANNONCES"):
+        journal.info("Courriel de nouvelle annonce %s non envoyé : réglage désactivé", annonce.pk)
         return
     destinataires = comptes.courriels_equipe()
     if not destinataires:
+        journal.warning(
+            "Courriel de nouvelle annonce %s non envoyé : aucun administrateur ni modérateur actif avec une adresse",
+            annonce.pk,
+        )
         return
     gerant = annonce.gerant.user
     lignes = [

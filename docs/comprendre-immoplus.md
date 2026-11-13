@@ -164,7 +164,7 @@ automatiquement, voir §18).
 
 1. L'application envoie `GET https://api.immoplus.bj/v1/listings/chambre-salon-…`.
 2. **Caddy** reçoit la demande en HTTPS, vérifie qu'elle commence par `/v1/` et la passe à **web-api**.
-3. **web-api** cherche la chambre dans **PostgreSQL** (sans jamais lire l'adresse privée du gérant).
+3. **web-api** cherche la chambre dans **PostgreSQL** (l'adresse précise n'est ni demandée ni conservée).
 4. Il répond en JSON : titre, loyer, quartier, liste des photos et de la vidéo (des **adresses** de fichiers).
 5. L'application affiche la fiche, puis télécharge les photos : `https://api…/media/listings/…/w960.webp`. Ces
    fichiers sont servis **directement par Caddy** depuis le disque, sans déranger Django.
@@ -591,8 +591,8 @@ stateDiagram-v2
   qui a été compris (« Compris : Quartier Zongo (tu as écrit « zogo ») ») et, sans résultat, propose des quartiers
   et la création d'une alerte (qui reprend ce qui a été compris). Site et API partagent ce comportement ; la réponse
   de l'API ne change pas de forme.
-- **Fiche** : tout sauf l'adresse précise ; seule la **position du quartier** est publique ; distance à l'université
-  calculée (formule de haversine).
+- **Fiche** : quartier et **repère public** (pas d'adresse précise, pas de carte, pas de distance affichée) ; la distance à
+  l'université reste calculée (haversine) pour les filtres « près de l'UP ».
 - **Partage** : bouton « Partager » (WhatsApp, Facebook, applications du téléphone dont TikTok, lien à copier). Un seul
   lien suffit : balises Open Graph, image d'aperçu JPEG 1200 × 630 tirée de la couverture, données structurées
   schema.org pour Google. Le lien ouvre l'application si elle est installée.
@@ -852,8 +852,7 @@ tester d'autres personnes, il faut un **serveur en ligne**.
    CSRF, cookies `__Host-` en `Secure`, `HttpOnly`, `SameSite`.
 10. **Contenus** : Markdown assaini ; photos sans EXIF ; vidéos contrôlées et converties ; `ffmpeg` limité aux
     fichiers locaux, avec délai maximal ; tailles maximales par requête (Caddy) et par fichier.
-11. **Vie privée** : **aucun numéro de téléphone conservé** ; adresse précise jamais publique, seule la position du
-    quartier l'est ; **journaux masqués** (codes et numéros éventuels remplacés, `apps/core/logging.py`) ; adresse IP
+11. **Vie privée** : **aucun numéro de téléphone conservé** ; adresse précise ni demandée ni conservée ; **journaux masqués** (codes et numéros éventuels remplacés, `apps/core/logging.py`) ; adresse IP
     et navigateur du journal effacés après 90 jours.
 12. **Anti-robot** : **Turnstile** (Cloudflare) sur l'inscription et le mot de passe oublié du site ; l'application
     s'appuie sur les limites de débit et le verrouillage. Plus aucun SMS n'est envoyé : aucun budget à vider.

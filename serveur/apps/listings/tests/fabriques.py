@@ -34,7 +34,6 @@ def donnees_annonce(quartier, **extra):
         "room_type": "single",
         "district": str(quartier.pk),
         "landmark_text": "Derrière la pharmacie du carrefour",
-        "address_private": "Rue 12, maison bleue",
         "latitude": "9.340000",
         "longitude": "2.633000",
         "rent_amount": 25000,

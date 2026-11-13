@@ -56,7 +56,7 @@ Couches d'une application : `models / selectors / services / events / providers`
 ## 5. Sécurité (à ne jamais enfreindre)
 
 - Administration séparée : autre hôte, autre clé, autre cookie, autre rôle PostgreSQL, liste blanche d'adresses.
-- Aucun numéro de téléphone n'est conservé (ADR 0009) ; l'adresse précise d'un logement n'est jamais exposée.
+- Aucun numéro de téléphone n'est conservé (ADR 0009) ; l'adresse précise d'un logement n'est ni demandée ni conservée (seuls le quartier et un repère public sont saisis).
 - Aucun script ni style en ligne (CSP stricte) : pas d'attribut `style=`, pas de `onclick=`.
 - Aucun secret dans le dépôt ; `.env` et `infra/compose/env/*.env` sont ignorés.
 - 404 plutôt que 403 pour ne pas révéler l'existence d'une ressource.

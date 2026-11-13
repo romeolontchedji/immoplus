@@ -88,7 +88,7 @@ class TestFilEtFiche:
 
     def test_fiche_sans_donnee_privee(self):
         p = gerant_verifie()
-        a = ListingFactory(gerant=p, address_private="Rue 12 maison bleue", title="Belle chambre")
+        a = ListingFactory(gerant=p, title="Belle chambre")
         medias_prets(a, photos=2, video=True)
         r = Client().get(f"/annonces/{a.slug}")
         page = html(r)
@@ -296,7 +296,7 @@ class TestEspaceLocataire:
 class TestMessagesWeb:
     def mise_en_place(self):
         p = gerant_verifie()
-        a = ListingFactory(gerant=p, address_private="Rue 12 maison bleue")
+        a = ListingFactory(gerant=p)
         locataire = ClientFactory()
         conversation, *_ = chat.ouvrir(
             locataire, a.pk, "Bonjour, la chambre est libre ?", str(uuid.uuid4())
@@ -308,11 +308,11 @@ class TestMessagesWeb:
         cote_gerant = connecte(p.user)
         assert "Bonjour, la chambre est libre" in html(cote_gerant.get("/compte/messages"))
         page = html(cote_gerant.get(f"/compte/messages/{conversation.pk}"))
-        assert "Bonjour, la chambre est libre" in page and "Rue 12 maison bleue" in page
+        assert "Bonjour, la chambre est libre" in page and "Adresse privée" not in page
         conversation.refresh_from_db()
         assert conversation.gerant_read_seq == 1
         page_loc = html(connecte(locataire).get(f"/compte/messages/{conversation.pk}"))
-        assert "Rue 12" not in page_loc
+        assert "Adresse privée" not in page_loc
 
     def test_envoi_blocage_deblocage(self):
         p, a, locataire, conversation = self.mise_en_place()
@@ -508,16 +508,26 @@ class TestQuartiersDeLAccueil:
 
 
 class TestCartesEtFiche:
-    def test_la_carte_du_catalogue_affiche_le_type_de_chambre(self):
-        ListingFactory(room_type="studio", title="Studio témoin")
+    def test_la_carte_du_catalogue_met_le_type_et_le_quartier_sur_deux_lignes(self):
+        q = DistrictFactory(name="Zongo")
+        ListingFactory(room_type="studio", title="Studio témoin", district=q)
         page = html(Client().get("/annonces"))
-        assert "Studio ·" in page and "> · " not in page
+        assert re.search(r'annonce__type-quartier">\s*Studio\s*</span>', page)
+        assert re.search(r'annonce__proximite">\s*Zongo\s*</p>', page)
+        assert "m de l&#x27;UP" not in page and "m de l'UP" not in page
+
+    def test_l_en_tete_de_la_fiche_donne_le_repere_public_et_aucune_distance(self):
+        a = ListingFactory(landmark_text="derrière la pharmacie", room_type="studio")
+        page = html(Client().get(f"/annonces/{a.slug}"))
+        assert "· derrière la pharmacie" in page and "Université de Parakou" not in page
+        assert " m de l" not in page
 
     def test_la_fiche_localise_sans_inventer_de_repere(self):
         a = ListingFactory(landmark_text="")
         page = html(Client().get(f"/annonces/{a.slug}"))
-        assert "pharmacie du carrefour" not in page and "openstreetmap.org/?mlat=" in page
-        assert "Seul le quartier est indiqué" in page
+        assert "pharmacie du carrefour" not in page
+        assert "openstreetmap.org" not in page and "Voir le quartier sur la carte" not in page
+        assert "m de l&#x27;Université" not in page and "fiche-localisation" not in page
 
 
 def test_delai_de_reponse_lisible():

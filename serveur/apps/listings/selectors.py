@@ -27,6 +27,9 @@ def quartiers_actifs():
 
 
 RAYON_VOISINS_M = 3000
+TOLERANCE_BUDGET_ALERTE = (
+    5_000  # une alerte prévient jusqu'à 5 000 F au-dessus de son plafond de loyer
+)
 
 
 def quartiers_voisins(slugs: list[str], *, limite: int = 4) -> list[District]:
@@ -487,7 +490,7 @@ def _trouver_visible(ident) -> Listing | None:
 
 
 def fiche_publique(ident) -> dict | None:
-    """Fiche d'une annonce (par identifiant ou par slug). Jamais d'adresse privée ni de numéro (EF-REC-08)."""
+    """Fiche d'une annonce (par identifiant ou par slug). Jamais de numéro de téléphone (EF-REC-08)."""
     annonce = _trouver_visible(ident)
     if annonce is None:
         return None
@@ -589,7 +592,7 @@ def slugs_publies() -> list[tuple[str, object]]:
 
 
 def annonce_pour_messagerie(annonce_id) -> dict | None:
-    """Ce dont la messagerie a besoin d'une annonce : jamais l'adresse privée (voir `adresse_privee`)."""
+    """Ce dont la messagerie a besoin d'une annonce : jamais de coordonnées."""
     ligne = (
         Listing.objects.filter(pk=annonce_id, deleted_at__isnull=True)
         .select_related("district")
@@ -632,14 +635,6 @@ def annonces_pour_messagerie(ids) -> dict:
             "cover_url": poster,
         }
     return res
-
-
-def adresse_privee(annonce_id) -> str:
-    """Adresse précise, réservée aux participants d'une conversation (CDC §10.5)."""
-    return (
-        Listing.objects.filter(pk=annonce_id).values_list("address_private", flat=True).first()
-        or ""
-    )
 
 
 # ----------------------------------------------------------------------------- favoris et alertes
@@ -696,20 +691,19 @@ def alertes_correspondantes(annonce_id) -> list[tuple[uuid.UUID, uuid.UUID]]:
         Q(district_ids=[]) | Q(district_ids__contains=[annonce.district_id])
     )
     requete = requete.filter(Q(room_types=[]) | Q(room_types__contains=[annonce.room_type]))
-    requete = requete.filter(Q(max_rent__isnull=True) | Q(max_rent__gte=annonce.rent_amount))
+    # Budget : l'alerte prévient jusqu'à 5 000 F au-dessus du plafond choisi.
+    requete = requete.filter(
+        Q(max_rent__isnull=True) | Q(max_rent__gte=annonce.rent_amount - TOLERANCE_BUDGET_ALERTE)
+    )
     requete = requete.filter(
         Q(max_distance_m__isnull=True) | Q(max_distance_m__gte=annonce.distance_to_campus_m)
     )
+    # Stricts : douche et WC internes, cour clôturée, cuisine. L'eau et l'électricité sont souples : une chambre qui
+    # n'a pas exactement celle demandée est quand même signalée (le locataire voit les détails sur la fiche).
     if not annonce.has_private_bathroom:
         requete = requete.filter(private_bathroom_required=False)
     if not annonce.is_fenced:
         requete = requete.filter(fenced_required=False)
-    requete = requete.filter(
-        Q(water_sources=[]) | Q(water_sources__overlap=list(annonce.water_sources or []))
-    )
-    requete = requete.filter(
-        Q(electricity_meters=[]) | Q(electricity_meters__contains=[annonce.electricity_meter])
-    )
     requete = requete.filter(Q(kitchens=[]) | Q(kitchens__contains=[annonce.kitchen or "-"]))
     return list(requete.values_list("pk", "user_id"))
 
@@ -722,17 +716,13 @@ def annonces_pour_alerte(alerte: Alert):
     if alerte.room_types:
         requete = requete.filter(room_type__in=alerte.room_types)
     if alerte.max_rent:
-        requete = requete.filter(rent_amount__lte=alerte.max_rent)
+        requete = requete.filter(rent_amount__lte=alerte.max_rent + TOLERANCE_BUDGET_ALERTE)
     if alerte.max_distance_m:
         requete = requete.filter(distance_to_campus_m__lte=alerte.max_distance_m)
     if alerte.private_bathroom_required:
         requete = requete.filter(has_private_bathroom=True)
     if alerte.fenced_required:
         requete = requete.filter(is_fenced=True)
-    if alerte.water_sources:
-        requete = requete.filter(water_sources__overlap=alerte.water_sources)
-    if alerte.electricity_meters:
-        requete = requete.filter(electricity_meter__in=alerte.electricity_meters)
     if alerte.kitchens:
         requete = requete.filter(kitchen__in=alerte.kitchens)
     return requete

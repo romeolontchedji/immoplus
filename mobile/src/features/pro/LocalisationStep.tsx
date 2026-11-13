@@ -22,15 +22,13 @@ import { EntetePublication } from "./EntetePublication";
 const schema = z.object({
   district: z.string({ error: "Choisis un quartier." }).min(1, "Obligatoire."),
   landmark_text: z.string().trim().min(3, "Décris un repère.").max(200),
-  address_private: z.string().trim().min(3, "Adresse précise obligatoire.").max(300),
 });
 
 type Valeurs = z.infer<typeof schema>;
 
 /**
  * Étape 2/4 — Localisation (EF-ANN-03).
- * Quartier en chips + repère campus + adresse confidentielle.
- * L'adresse privée n'est jamais affichée aux locataires (serveur l'exclut des réponses publiques).
+ * Quartier en chips + repère public.
  * Pas de latitude ni de longitude à saisir (décision V7) : le serveur place la chambre au centre du quartier ; le gérant
  * qui est sur place peut partager la position exacte du téléphone, pour une distance à l'UP plus juste.
  */
@@ -56,7 +54,6 @@ export function LocalisationStep() {
       // Anciens brouillons : le slug était stocké à la place de l'identifiant ; on fait rechoisir le quartier.
       district: /^[0-9a-f-]{36}$/i.test(brouillon.district ?? "") ? (brouillon.district as string) : "",
       landmark_text: brouillon.landmark_text ?? "",
-      address_private: brouillon.address_private ?? "",
     },
   });
 
@@ -80,7 +77,6 @@ export function LocalisationStep() {
     maj({
       district: v.district,
       landmark_text: v.landmark_text,
-      address_private: v.address_private,
       latitude: gps?.latitude, // absent : le serveur prend le centre du quartier
       longitude: gps?.longitude,
     });
@@ -92,7 +88,7 @@ export function LocalisationStep() {
       <EntetePublication etape={2} total={6} />
 
       <Text variante="titre" style={{ marginTop: sp[2] }}>Où se trouve-t-elle ?</Text>
-      <Text muted>Le quartier est public. L’adresse précise reste confidentielle.</Text>
+      <Text muted>Le quartier et le repère sont publics.</Text>
 
       {/* Quartier — chips */}
       <View style={{ gap: sp[2] }}>
@@ -132,10 +128,10 @@ export function LocalisationStep() {
         )}
         <Text variante="legende" muted>
           {etatGps === "refusee"
-            ? "Position refusée : la distance à l'UP sera calculée depuis le centre du quartier."
+            ? "Position refusée : on prendra le centre du quartier."
             : etatGps === "erreur"
               ? "Position introuvable. Réessaie dehors, ou continue sans : on prendra le centre du quartier."
-              : "Facultatif. Sans ta position, la distance à l'UP est calculée depuis le centre du quartier."}
+              : "Facultatif. Sans ta position, on prend le centre du quartier."}
         </Text>
       </View>
 
@@ -154,20 +150,6 @@ export function LocalisationStep() {
         )}
       />
 
-      {/* Adresse confidentielle */}
-      <Controller
-        control={control}
-        name="address_private"
-        render={({ field }) => (
-          <TextField
-            label="Adresse précise (confidentielle)"
-            value={field.value}
-            onChangeText={field.onChange}
-            placeholder="Rue de l'Amitié, porte bleue…"
-            erreur={errors.address_private?.message}
-          />
-        )}
-      />
     </Screen>
   );
 }

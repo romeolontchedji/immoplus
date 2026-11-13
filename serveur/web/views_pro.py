@@ -300,7 +300,7 @@ def _agir_sur_media(profil, annonce, action, media_id):
 def _initial(annonce) -> dict:
     return {
         "title": annonce.title, "room_type": annonce.room_type, "district": str(annonce.district_id),
-        "landmark_text": annonce.landmark_text, "address_private": annonce.address_private,
+        "landmark_text": annonce.landmark_text,
         "rent_amount": annonce.rent_amount,
         "deposit_months": annonce.deposit_months, "advance_months": annonce.advance_months,
         "prepaid_months": annonce.prepaid_months,

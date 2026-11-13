@@ -54,19 +54,13 @@
     </div>
     <div class="annonce__corps">
       <div class="annonce__ligne-titre">
-        <span class="annonce__type-quartier">{{ a.room_type_label }} · {{ a.district.name }}</span>
+        <span class="annonce__type-quartier">{{ a.room_type_label }}</span>
         <p class="annonce__prix">
           {{ a.rent_amount|fcfa }} F
           {% if a.rent_negotiable %}<span class="annonce__debattre">à débattre</span>{% endif %}
         </p>
       </div>
-      <p class="annonce__proximite">
-        {% if a.distance_m %}
-          À {{ a.distance_m }} m de l'UP
-        {% else %}
-          {{ a.district.name }}
-        {% endif %}
-      </p>
+      <p class="annonce__proximite">{{ a.district.name }}</p>
     </div>
   </a>
 </article>

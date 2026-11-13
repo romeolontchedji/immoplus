@@ -850,7 +850,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lire une annonce (adresse privée comprise) */
+        /** Lire une annonce (version gérant) */
         get: operations["v1_pro_listings_retrieve"];
         put?: never;
         post?: never;
@@ -1168,7 +1168,6 @@ export interface components {
             /** Format: uuid */
             district: string;
             landmark_text: string;
-            address_private?: string;
             /**
              * Format: decimal
              * @description Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.
@@ -1213,7 +1212,6 @@ export interface components {
             district: string;
             district_name: string;
             landmark_text: string;
-            address_private: string;
             /** Format: double */
             latitude: number;
             /** Format: double */
@@ -1397,7 +1395,6 @@ export interface components {
             last_message_at: string | null;
             unread_count: number;
             muted: boolean;
-            address_private: string | null;
             my_read_seq: number;
             other_read_seq: number;
             last_seq: number;
@@ -1772,7 +1769,6 @@ export interface components {
             /** Format: uuid */
             district?: string;
             landmark_text?: string;
-            address_private?: string;
             /**
              * Format: decimal
              * @description Facultatif : GPS du téléphone. Absent, la chambre est placée au centre du quartier.

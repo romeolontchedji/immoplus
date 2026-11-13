@@ -36,7 +36,7 @@
   document.querySelectorAll("[data-alerte-formulaire]").forEach(function (form) {
     var erreur = form.querySelector("[data-alerte-erreur]");
     form.addEventListener("submit", function (e) {
-      var coche = form.querySelector("[data-liste-multiple] input:checked");
+      var coche = form.querySelector("[data-liste-multiple] input:checked, [data-critere-coche]:checked");
       var valeur = Array.prototype.some.call(form.querySelectorAll("[data-critere]"), function (c) { return c.value; });
       if (coche || valeur) return;
       e.preventDefault();

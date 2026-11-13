@@ -62,6 +62,15 @@
                  tabindex="-1"
                  data-alerte-erreur
                  hidden>Choisis d'abord au moins une option.</p>
+              <div class="champ">
+                <label class="champ__etiquette" for="label">Nom de l'alerte (facultatif)</label>
+                <input class="champ__saisie"
+                       id="label"
+                       name="label"
+                       placeholder="Ex : Chambre Zongo ou Albarika"
+                       maxlength="80"
+                       value="{{ proposition.label }}">
+              </div>
               <div class="grille grille--2">
                 {% include "web/composants/liste-multiple.html" with nom="district_ids" libelle="Quartiers" options=quartiers choisis=proposition.district_ids vide="Tous les quartiers" %}
                 {% include "web/composants/liste-multiple.html" with nom="room_types" libelle="Types de chambre" options=types choisis=proposition.room_types vide="Tous les types" %}
@@ -80,19 +89,17 @@
                   </select>
                 </div>
                 <div class="champ">
-                  <label class="champ__etiquette" for="max_distance_m">Distance de l'UP</label>
-                  <select class="champ__saisie"
-                          id="max_distance_m"
-                          name="max_distance_m"
-                          data-critere>
-                    <option value="">Peu importe</option>
-                    {% for v, l in distances %}
-                      <option value="{{ v }}"
-                              {% if v|stringformat:"d" == proposition.max_distance_m|stringformat:"s" %}selected{% endif %}>
-                        À {{ l }} au plus
-                      </option>
-                    {% endfor %}
-                  </select>
+                  <label class="champ__etiquette" for="max_rent_libre">Ou saisis ton montant (F / mois)</label>
+                  <input class="champ__saisie"
+                         id="max_rent_libre"
+                         name="max_rent_libre"
+                         type="text"
+                         inputmode="numeric"
+                         autocomplete="off"
+                         placeholder="Ex : 35000"
+                         maxlength="9"
+                         data-critere>
+                  <p class="champ__aide">Les chambres jusqu'à 5 000 F au-dessus de ton budget te sont aussi signalées.</p>
                 </div>
               </div>
               <div class="grille grille--2">
@@ -101,16 +108,23 @@
               </div>
               <div class="grille grille--2">
                 {% include "web/composants/liste-multiple.html" with nom="kitchens" libelle="Cuisine" options=cuisines choisis=proposition.kitchens vide="Peu importe" %}
-                {% include "web/composants/liste-multiple.html" with nom="indispensables" libelle="Indispensables" options=indispensables choisis=proposition.indispensables vide="Rien d'obligatoire" %}
-              </div>
-              <div class="champ">
-                <label class="champ__etiquette" for="label">Nom de l'alerte (facultatif)</label>
-                <input class="champ__saisie"
-                       id="label"
-                       name="label"
-                       placeholder="Ex : Chambre Zongo ou Albarika"
-                       maxlength="80"
-                       value="{{ proposition.label }}">
+                <div class="champ">
+                  <span class="champ__etiquette" id="libelle-indispensables">Indispensables</span>
+                  <div class="filtre filtre--cases"
+                       role="group"
+                       aria-labelledby="libelle-indispensables">
+                    {% for valeur, texte in indispensables %}
+                      <label class="champ--case">
+                        <input type="checkbox"
+                               name="indispensables"
+                               value="{{ valeur }}"
+                               data-critere-coche
+                               {% if valeur in proposition.indispensables %}checked{% endif %}>
+                        <span class="champ__etiquette">{{ texte }}</span>
+                      </label>
+                    {% endfor %}
+                  </div>
+                </div>
               </div>
               <div class="d-flex gap-3 align-items-center mt-3 flex-wrap">
                 <button class="bouton bouton--primaire bouton--grand" type="submit">

@@ -39,6 +39,13 @@ def notifier_alertes(annonce_id: str) -> int:
     return alertes.notifier_correspondances(annonce_id)
 
 
+@shared_task(name="apps.listings.expirer_alertes")
+def expirer_alertes() -> int:
+    from .services import alertes
+
+    return alertes.expirer_inactives()
+
+
 @shared_task(name="apps.listings.favoris_indisponibles")
 def notifier_indisponibilite(annonce_id: str, statut: str) -> int:
     from .services import favoris

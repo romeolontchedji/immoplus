@@ -29,7 +29,7 @@ function Section({ titre, children }: { titre: string; children: ReactNode }) {
 const entier = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(/\D/g, "")));
 
 type Valeurs = {
-  title: string; room_type: string; district: string; landmark_text: string; address_private: string;
+  title: string; room_type: string; district: string; landmark_text: string;
   rent_amount: string; deposit_months: string; advance_months: string; agent_fee_amount: string; available_from: string;
   water_deposit_amount: string; electricity_deposit_amount: string;
   has_private_bathroom: boolean; is_fenced: boolean; water_sources: string[]; electricity_meter: string; kitchen: string;
@@ -37,7 +37,7 @@ type Valeurs = {
 };
 
 const depuis = (a: AnnoncePro): Valeurs => ({
-  title: a.title, room_type: a.room_type, district: a.district, landmark_text: a.landmark_text, address_private: a.address_private,
+  title: a.title, room_type: a.room_type, district: a.district, landmark_text: a.landmark_text,
   rent_amount: String(a.rent_amount), deposit_months: String(a.deposit_months), advance_months: String(a.advance_months),
   agent_fee_amount: String(a.agent_fee_amount), available_from: a.available_from,
   water_deposit_amount: String(a.water_deposit_amount ?? 0), electricity_deposit_amount: String(a.electricity_deposit_amount ?? 0), has_private_bathroom: a.has_private_bathroom,
@@ -76,10 +76,8 @@ function Formulaire({ annonce }: { annonce: AnnoncePro }) {
 
       <View style={{ gap: sp[1] }}>
         <ListeDeroulante label="Quartier" options={(quartiers.data ?? []).map((q) => ({ valeur: q.id, libelle: q.name }))} valeurs={[v.district]} onChange={(x) => x[0] && maj({ district: x[0] })} />
-        {v.district !== initial.district ? <Text variante="legende" muted>La distance à l’UP sera recalculée depuis le centre du nouveau quartier.</Text> : null}
       </View>
       <TextField label="Repère (visible par les étudiants)" value={v.landmark_text} onChangeText={(x) => maj({ landmark_text: x })} erreur={erreur("landmark_text")} />
-      <TextField label="Adresse précise (confidentielle)" value={v.address_private} onChangeText={(x) => maj({ address_private: x })} erreur={erreur("address_private")} />
 
       <View style={{ flexDirection: "row", gap: sp[3] }}>
         <View style={{ flex: 1 }}><TextField label="Loyer / mois (F)" value={v.rent_amount} onChangeText={(x) => maj({ rent_amount: x })} keyboardType="number-pad" erreur={erreur("rent_amount")} /></View>

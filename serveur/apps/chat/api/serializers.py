@@ -72,7 +72,6 @@ class ListeConversationsOut(serializers.Serializer):
 
 
 class ConversationDetailOut(ConversationOut):
-    address_private = serializers.CharField(allow_null=True)
     my_read_seq = serializers.IntegerField()
     other_read_seq = serializers.IntegerField()
     last_seq = serializers.IntegerField()

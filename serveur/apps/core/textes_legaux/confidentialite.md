@@ -14,7 +14,7 @@ Contact : [[email]]
 - **Appareils :** identifiant d'installation de l'application, plateforme, version, et jeton de notification si tu les autorises.
 - **Activité :** favoris, alertes (quartiers, budget, type, équipements), conversations et messages, avis et réponses, messages échangés avec l'équipe, signalements.
 - **Paiements :** pour un paiement fait sur Immo+ (alerte, abonnement de gérant), nous gardons la référence de la transaction, le montant, la date et le résultat. Le numéro Mobile Money est saisi chez notre prestataire KKiaPay : Immo+ ne le voit pas et ne le conserve pas.
-- **Gérants :** annonces, photos et vidéos, adresse précise de la chambre (jamais montrée aux locataires avant un échange), pièces d'identité transmises à l'équipe pour la vérification.
+- **Gérants :** annonces, photos et vidéos, quartier et repère public de la chambre (l'adresse précise n'est pas demandée), pièces d'identité transmises à l'équipe pour la vérification.
 - **Sécurité :** adresse IP et type de navigateur dans les journaux techniques.
 
 Nous ne collectons pas ta position GPS en tant que locataire, et nous ne vendons aucune donnée.

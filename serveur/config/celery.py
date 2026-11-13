@@ -31,6 +31,10 @@ app.conf.beat_schedule = {
         "task": "apps.listings.fraicheur",
         "schedule": crontab(minute=0, hour="*/6"),
     },
+    "alertes-inactives": {
+        "task": "apps.listings.expirer_alertes",
+        "schedule": crontab(minute=15, hour=8),
+    },
     "fin-des-suspensions": {
         "task": "apps.moderation.expirer_sanctions",
         "schedule": crontab(minute=5),

@@ -150,7 +150,7 @@ class ListingAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related("gerant", "district")
 
     def get_fields(self, request, obj=None):
-        # L'adresse précise et la description brute ne sont pas des champs d'examen : on les masque ici.
+        # La description brute n'est pas un champ d'examen : on la masque ici.
         return [
             "title", "status", "hidden_reason", "gerant", "district", "type_de_logement", "rent_amount",
             "landmark_text", "available_from", "published_at", "last_confirmed_at", "rented_at", "created_at",

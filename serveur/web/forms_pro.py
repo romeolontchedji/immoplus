@@ -21,11 +21,6 @@ class AnnonceForm(_Base):
     landmark_text = forms.CharField(
         label="Repère public (ex. derrière la pharmacie)", max_length=160
     )
-    address_private = forms.CharField(
-        label="Adresse précise (visible seulement dans la conversation)",
-        max_length=255,
-        required=False,
-    )
     rent_amount = forms.IntegerField(label="Loyer mensuel (FCFA)", min_value=1)
     rent_negotiable = forms.BooleanField(
         label="Prix à débattre", required=False,
@@ -104,7 +99,6 @@ class AnnonceForm(_Base):
         d["prepaid_months"] = d.get("prepaid_months") or 0
         d["water_deposit_amount"] = d.get("water_deposit_amount") or 0
         d["electricity_deposit_amount"] = d.get("electricity_deposit_amount") or 0
-        d["address_private"] = d.get("address_private") or ""
         d["description_md"] = d.get("description_md") or ""
         d.pop(
             "nouveau_type", None

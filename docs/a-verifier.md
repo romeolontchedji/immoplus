@@ -84,9 +84,8 @@ migration, hors du modèle : l'ORM ne sait pas l'exprimer sur un champ texte. `m
 **B3. Colonne ajoutée à `messages` : `body_masked`.** Le CDC ne la prévoit pas. En mode `mask`, `body` garde le texte
 d'origine (consultable par la modération) et `body_masked` ce que voit le destinataire.
 
-**B4. Adresse privée dans le détail d'une conversation : réservée au gérant.** Le CDC (§10.5) dit « participant ». J'ai jugé
-qu'un locataire ne doit pas obtenir l'adresse précise en ouvrant une conversation ; le gérant la donne lui-même.
-Si vous voulez l'inverse : `ConversationDetail.get` dans `apps/chat/api/views.py`.
+**B4. Adresse privée : supprimée.** Décision du 2026-11-13 : l'adresse précise n'est plus demandée ni conservée ; le gérant
+la donne lui-même dans la discussion, le repère public suffit sur la fiche.
 
 **B5. Blocage : celui qui bloque peut encore écrire**, l'autre non (lecture littérale de EF-MSG). Le blocage ne passe
 pas en `read_only`. À confirmer.

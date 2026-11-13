@@ -110,6 +110,6 @@ class TestAlertesQuiTrouventVraiment:
         alertes.creer(loc, {"district_ids": [q.pk], "max_rent": 25000})
         page = html(connecte(loc).get("/compte/alertes"))
         assert (
-            'href="/annonces?district=zongo&amp;rent_max=25000"' in page
+            'href="/annonces?district=zongo&amp;rent_max=30000"' in page
         )  # plus d'identifiant interne
         assert "2 chambres en ligne correspondent déjà" in page

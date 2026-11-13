@@ -67,12 +67,6 @@ class TestRelectureDesAnnonces:
         a.refresh_from_db()
         assert a.status == "processing" and "pas publiable" in r.content.decode()
 
-    def test_la_fiche_admin_n_expose_pas_l_adresse_privee(self, mod):
-        _, c = mod
-        a = ListingFactory(address_private="Rue 12 maison bleue")
-        r = c.get(reverse("admin:listings_listing_change", args=[a.pk]))
-        assert r.status_code == 200 and "Rue 12" not in r.content.decode()
-
     def test_pas_d_ajout_ni_de_suppression(self, mod):
         _, c = mod
         assert c.get(reverse("admin:listings_listing_add")).status_code == 403

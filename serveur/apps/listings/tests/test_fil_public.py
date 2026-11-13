@@ -175,7 +175,7 @@ class TestFil:
             selectors.fil(f(q=q))
 
     def test_carte_legere_sans_donnee_privee(self):
-        a = ListingFactory(address_private="Rue 12 maison bleue")
+        a = ListingFactory()
         medias_prets(a, photos=5, video=True)
         carte = selectors.fil(f())["items"][0]
         texte = str(carte)
@@ -215,7 +215,7 @@ class TestFil:
 class TestFiche:
     def test_fiche_complete_sans_donnee_privee(self):
         p = gerant_verifie()
-        a = ListingFactory(gerant=p, address_private="Rue 12 maison bleue", latitude="9.341234",
+        a = ListingFactory(gerant=p, latitude="9.341234",
                            longitude="2.633987", distance_to_campus_m=530, description_html="<p>Calme</p>")  # fmt: skip
         medias_prets(a)
         fiche = selectors.fiche_publique(a.slug)

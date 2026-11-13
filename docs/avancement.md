@@ -16,6 +16,11 @@
   sur les signalements, titre non dupliqué, « Voir le site » mène au site public, code de connexion retiré de l'objet du
   courriel.
 - **Accueil** : nouveaux textes (titre « Trouve ta chambre à Parakou, en deux clics. »), sous-titre centré.
+- **Alertes** : eau, électricité et budget (+ 5 000 F) souples ; cases « Douche et WC internes » et « Cour clôturée »
+  visibles ; budget saisi à la main ; nom de l'alerte en premier ; distance à l'UP retirée ; mise en pause après 14 jours
+  sans activité (tâche quotidienne `apps.listings.expirer_alertes`, migration `listings 0016`).
+- **Fiche d'une chambre** : carte, distance et adresse précise retirées (migration `listings 0017` : le champ quitte le modèle,
+  les adresses saisies sont effacées, la colonne sera supprimée dans une migration suivante).
 - **Maintenance** : deux interrupteurs indépendants, `SITE_MAINTENANCE_ENABLED` (site web) et `MAINTENANCE_ENABLED`
   (application mobile) ; le webhook KKiaPay reste joignable ; bandeau sur l'accueil de l'administration.
 - **Administration** : l'icône de succès ne chevauche plus le texte des messages.

@@ -182,7 +182,6 @@
           <p class="msg-securite" role="note">
             Ne paie jamais avant d'avoir visité. Partage ton numéro seulement si tu le souhaites ; signale tout message suspect.
           </p>
-          {% if adresse %}<p class="msg-systeme">Adresse privée de la chambre : {{ adresse }}</p>{% endif %}
           {% if c.listing.status == "rented" or c.listing.status == "archived" %}<p class="msg-systeme">Cette chambre n'est plus disponible : elle est louée.</p>{% endif %}
           {% if message %}
             <div class="alerte alerte--{{ niveau|default:'information' }}"

@@ -54,7 +54,7 @@ class TestCreation:
         a = creer(pro, quartier)
         assert a["status"] == "draft" and a["slug"].startswith("chambre-propre-pres-du-campus-")
         assert 0 < a["distance_to_campus_m"] < 2000 and a["district_name"] == quartier.name
-        assert a["address_private"] == "Rue 12, maison bleue"
+        assert "address_private" not in a
         annonce = Listing.objects.get(pk=a["id"])
         # « Autres détails » en texte simple : les marques de mise en forme disparaissent, les lignes restent.
         assert "<strong>" not in annonce.description_html and "calme" in annonce.description_html
@@ -86,7 +86,7 @@ class TestCreation:
     @pytest.mark.parametrize(
         ("champ", "texte"),
         [("description_md", "Appelle-moi au 97 12 34 56"), ("title", "Chambre écris au +229 97123456"),
-         ("address_private", "joe@exemple.com"), ("landmark_text", "voir www.exemple.bj"),
+         ("landmark_text", "voir www.exemple.bj"),
          ("description_md", "zéro un neuf sept un deux trois quatre cinq six")],
     )  # fmt: skip
     def test_coordonnees_refusees(self, pro, quartier, champ, texte):
