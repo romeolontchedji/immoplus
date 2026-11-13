@@ -75,7 +75,7 @@ class TestTextesLegaux:
     def test_l_administrateur_modifie_un_texte_avec_apercu(self):
         c, _ = se_connecter(personnel(AdminFactory))
         assert (
-            "Conditions d'utilisation"
+            "Conditions d&#x27;utilisation"
             in c.get(reverse("admin:core_legaldocument_changelist")).content.decode()
         )
         page = c.get(
