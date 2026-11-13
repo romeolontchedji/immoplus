@@ -11,8 +11,8 @@
           <p class="legal-hero__resume">{{ doc.summary }}</p>
           <ul class="legal-hero__puces">
             <li>Mise à jour : {{ doc.updated_at }}</li>
-            <li>RCCM : {{ doc.editor.rccm }}</li>
-            <li>IFU : {{ doc.editor.ifu }}</li>
+            {% if doc.editor.rccm %}<li>RCCM : {{ doc.editor.rccm }}</li>{% endif %}
+            {% if doc.editor.ifu %}<li>IFU : {{ doc.editor.ifu }}</li>{% endif %}
             <li>Parakou, Bénin</li>
           </ul>
         </div>
@@ -36,7 +36,7 @@
       <footer class="legal-editeur">
         {% include "web/composants/icone.html" with nom="shield" taille=20 %}
         <p>
-          {{ doc.editor.company }} — RCCM : {{ doc.editor.rccm }} — IFU : {{ doc.editor.ifu }} —
+          {{ doc.editor.company }}{% if doc.editor.rccm %} — RCCM : {{ doc.editor.rccm }}{% endif %}{% if doc.editor.ifu %} — IFU : {{ doc.editor.ifu }}{% endif %} —
           {{ doc.editor.address }} — {{ doc.editor.email }}
         </p>
       </footer>

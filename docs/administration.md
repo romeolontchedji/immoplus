@@ -305,12 +305,12 @@ Affichés sur le site, dans l'app et dans les textes légaux.
 |---|---|---|
 | `TEAM_PHONE` | `+2290160239288` | Numéro affiché partout pour joindre l'équipe (appel et WhatsApp). Format international : +229… |
 | `LEGAL_PROVISIONAL` | coché | Coché : un bandeau prévient que les mentions légales sont provisoires. À décocher quand l'entreprise est réellement immatriculée et les champs ci-dessous exacts. |
-| `LEGAL_COMPANY` | `IMMOPLUS SARL` | Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité. |
-| `LEGAL_RCCM` | `RB/PKO/26 B 00001` | Numéro d'immatriculation au registre du commerce (RCCM). |
-| `LEGAL_IFU` | `3202600000001` | Identifiant fiscal unique (IFU) de la société. |
+| `LEGAL_COMPANY` | `NEXIX` | Nom officiel de la société qui édite Immo+, repris dans les conditions et la confidentialité. |
+| `LEGAL_RCCM` | (vide) | Numéro RCCM. Vide : il n’est affiché nulle part (site, application). |
+| `LEGAL_IFU` | (vide) | Numéro IFU. Vide : il n’est affiché nulle part (site, application). |
 | `LEGAL_ADDRESS` | `Banikanni, Parakou, République du Bénin` | Adresse du siège, affichée dans les textes légaux. |
 | `LEGAL_EMAIL` | `contact@immoplus.bj` | Adresse où écrire pour une question légale ou sur ses données personnelles. |
-| `LEGAL_UPDATED_AT` | `2026-10-17` | Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ. |
+| `LEGAL_UPDATED_AT` | `2026-11-13` | Date « mise à jour le » des textes légaux. Format AAAA-MM-JJ. |
 | `TERMS_VERSION` | `1` | Changer ce numéro oblige chaque utilisateur à accepter de nouveau les conditions à sa prochaine connexion. Ne le modifier que si les conditions ont réellement changé. |
 
 ### Annonces
