@@ -196,6 +196,7 @@ class TestEspaceLocataire:
                 "district_ids": str(q.pk),
                 "max_rent": "20000",
             },
+            follow=True,  # la création répond par une redirection (pas de « renvoyer les données »)
         )
         assert "Alerte créée" in html(r) and Alert.objects.filter(user=u).count() == 1
         alerte = Alert.objects.get(user=u)

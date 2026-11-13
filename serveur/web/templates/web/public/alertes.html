@@ -14,7 +14,7 @@
         </div>
       {% endif %}
       {% if alertes_payantes %}
-        <div class="carte p-5 pile">
+        <div class="carte p-5 pile" data-credits="{{ credits_alerte|default:0 }}">
           <h2 class="fs-18 fw-bold mb-0">Alertes : sois le premier prévenu</h2>
           <p class="texte-doux mb-0">
             Choisis tes options, puis clique sur « Créer l'alerte » : tu seras invité à payer
