@@ -90,3 +90,17 @@ def test_la_page_equipe_du_site():
     assert r.status_code == 302 and r["Location"] == "/compte/equipe?ok=envoye"
     assert MessageEquipe.objects.filter(utilisateur=u, vers_utilisateur=False).count() == 1
     assert "Je n'arrive pas à publier." in c.get("/compte/equipe").content.decode()
+
+
+def test_consulter_une_notification_la_marque_lue_puis_redirige():
+    u = ClientFactory(username="awa.test")
+    equipe.ecrire_a(PersonnelFactory(), u, "Bienvenue.", objet="Bonjour")
+    n = Notification.objects.get(user=u, kind="team.message")
+    assert n.read_at is None
+    c = Client()
+    c.post("/connexion", {"username": "awa.test", "password": MOT_DE_PASSE})
+    r = c.get(f"/compte/notifications/{n.pk}/ouvrir")
+    assert r.status_code == 302 and r["Location"] == "/compte/equipe"
+    n.refresh_from_db()
+    assert n.read_at is not None
+    assert c.get("/compte/notifications/pas-un-uuid/ouvrir")["Location"] == "/compte/notifications"
