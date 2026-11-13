@@ -68,6 +68,14 @@ DEFAUTS: dict[str, tuple[object, str]] = {
         ],
         "Plans d'abonnement des gérants (CDC §9.19) ; prix à fixer avant activation (décision V11).",
     ),
+    "SUBSCRIPTION_REMINDER_DAYS": (
+        [7, 1],
+        "Jours avant la fin d'un abonnement payant où le gérant reçoit un rappel (notification et courriel).",
+    ),
+    "EMAIL_RESUME_HEBDOMADAIRE": (
+        True,
+        "Résumé hebdomadaire par courriel à l'équipe : nouvelles annonces, signalements ouverts, paiements.",
+    ),
     "SUBSCRIPTION_GRACE_DAYS": (7, "Jours de grâce d'un abonnement impayé avant expiration."),
     "PAID_ALERTS_ENABLED": (
         False,

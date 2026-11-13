@@ -92,6 +92,42 @@ def commandes_autorisees(annonce) -> list[dict]:
     return []
 
 
+MESSAGES_AVIS = {
+    "repondu": "Ta réponse est publiée.",
+    "retiree": "Ta réponse est retirée.",
+}
+
+
+@gerant_obligatoire
+def avis_recus(request, profil):
+    """Avis laissés sur les chambres du gérant, avec la possibilité d'y répondre publiquement."""
+    from apps.listings.services import avis as service_avis
+
+    if request.method == "POST":
+        texte = request.POST.get("reply", "")
+        try:
+            service_avis.repondre(profil, request.POST.get("avis_id"), texte)
+        except ErreurMetier as erreur:
+            message, niveau = erreur.message, "danger"
+        else:
+            return redirect(f"/pro/avis?ok={'repondu' if texte.strip() else 'retiree'}")
+    else:
+        message, niveau = MESSAGES_AVIS.get(request.GET.get("ok", "")), "succes"
+    return render(
+        request,
+        "web/pro/avis.html",
+        {
+            "titre": "Avis reçus",
+            "profil": profil,
+            "avis": selectors.avis(gerant_id=profil.pk, limite=100),
+            "resume": selectors.resume_avis_gerant(profil.pk),
+            "reponse_max": 600,
+            "message": message,
+            "niveau": niveau,
+        },
+    )
+
+
 @gerant_obligatoire
 def tableau_de_bord(request, profil):
     message = None

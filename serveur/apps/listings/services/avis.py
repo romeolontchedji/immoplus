@@ -9,6 +9,7 @@ Règles :
 
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.audit import services as audit
 from apps.core.errors import ErreurMetier
@@ -84,6 +85,54 @@ def _prevenir_gerant(annonce: Listing, note: int) -> None:
         "Nouvel avis sur ta chambre",
         f"« {annonce.title[:60]} » a reçu une note de {note}/5.",
         data={"listing_id": str(annonce.pk), "slug": annonce.slug},
+    )
+
+
+REPONSE_MAX = 600
+
+
+@transaction.atomic
+def repondre(gerant, avis_id, texte: str) -> Review:
+    """Le gérant répond publiquement à un avis sur l'une de ses chambres (un texte, modifiable ; vide : la réponse est
+    retirée). L'auteur de l'avis est prévenu à la première réponse seulement."""
+    avis = Review.objects.select_for_update().select_related("listing").filter(
+        pk=avis_id, gerant_id=gerant.pk
+    ).first()
+    if avis is None:
+        raise ErreurMetier("not_found", "Avis introuvable.", statut=404)
+    if avis.is_hidden:
+        raise ErreurMetier(
+            "review_hidden", "Cet avis est masqué par la modération : on ne peut pas y répondre.", statut=409
+        )
+    texte = " ".join((texte or "").split())
+    if len(texte) > REPONSE_MAX:
+        raise ErreurMetier(
+            "validation_error",
+            f"Ta réponse est trop longue ({REPONSE_MAX} caractères au plus).",
+            champs={"reply": ["Trop long"]},
+        )
+    contenu.refuser_si_coordonnees(reply=texte)
+    premiere = bool(texte) and not avis.owner_reply
+    avis.owner_reply = texte
+    avis.owner_replied_at = timezone.now() if texte else None
+    avis.save(update_fields=["owner_reply", "owner_replied_at", "updated_at"])
+    audit.enregistrer(
+        "listing.avis_reponse" if texte else "listing.avis_reponse_retiree",
+        acteur=gerant.user, cible=avis.listing, metadata={"avis": str(avis.pk)},
+    )  # fmt: skip
+    if premiere:
+        transaction.on_commit(lambda: _prevenir_auteur(avis))
+    return avis
+
+
+def _prevenir_auteur(avis: Review) -> None:
+    notifications.creer(
+        avis.author_id,
+        "listing.review_reply",
+        "Le gérant a répondu à ton avis",
+        f"Sur « {avis.listing.title[:60]} » : {avis.owner_reply[:120]}",
+        data={"listing_id": str(avis.listing_id), "slug": avis.listing.slug},
+        dedupe_key=f"avis-reponse:{avis.pk}",
     )
 
 

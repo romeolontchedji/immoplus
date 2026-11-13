@@ -56,6 +56,7 @@ urlpatterns = [
     path("compte/abonnement", paiement.abonnement, name="abonnement"),
     path("pro/abonnement", paiement.abonnement, name="pro-abonnement"),
     path("pro/dashboard", p.tableau_de_bord, name="pro-dashboard"),
+    path("pro/avis", p.avis_recus, name="pro-avis"),
     path("pro/annonces", p.liste, name="pro-annonces"),
     path("pro/annonces/nouvelle", p.editeur, name="pro-annonce-nouvelle"),
     path("pro/annonces/<uuid:annonce_id>", p.editeur, name="pro-annonce"),

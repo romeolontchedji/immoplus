@@ -20,7 +20,7 @@ Priorité fixée : un système complet qui tourne de bout en bout, sans polissag
 | Administration | Statistiques : page dédiée (chiffres clés, tableaux par gérant et par locataire) et bloc sur chaque fiche | `adminsite/statistiques.py` |
 | g. modération | Signalements (un ouvert par auteur et cible), signalements automatiques, « déjà louée » (3 distincts), actions (message masqué ou supprimé, annonce masquée ou retirée, avertissement, suspension, bannissement, rétablissement), plafonds par rôle, lecture de conversation journalisée avec motif, tableau de bord de file. Administration : relecture des annonces (approuver / refuser), signalements, décisions | `apps/moderation`, `adminsite/admin_moderation.py` |
 | Liaisons | Suspension ou bannissement d'un gérant masque ses annonces et les remet à la levée ; suppression d'un compte gérant archive ses annonces | `apps/listings/receivers.py`, `apps/accounts/signals.py` |
-| Planification | 12 tâches périodiques dans `config/celery.py` (fraîcheur, vidéos louées, archivage, fin de suspension, rétention d'audit, indicateurs) | `config/celery.py`, `*/tasks.py` |
+| Planification | 14 tâches périodiques dans `config/celery.py` (fraîcheur, vidéos louées, archivage, fin de suspension, rétention d'audit, indicateurs, rappels de fin d'abonnement, résumé hebdomadaire de l'équipe) | `config/celery.py`, `*/tasks.py` |
 | Données de départ | `make seed` (paramètres, 12 quartiers de Parakou) ; `make seed DEMO=1` ajoute un gérant et 6 annonces (développement) | `adminsite/management/commands/seed.py` |
 
 Mesures : voir `docs/a-verifier.md`, section « Résultats ».
@@ -35,7 +35,7 @@ Mesures : voir `docs/a-verifier.md`, section « Résultats ».
 6. Vidéo : une seule variante MP4 ; pas de HLS multi-qualité (reporté volontairement). Durée maximale gardée à 60 s.
 7. Application mobile : retirer la caution du loyer (`AnnonceModifierScreen`, `InfosStep`, `brouillon`, `FicheScreen`) avec une version de l'API ; « marquer louée » répond maintenant `archived` ; l'e-mail confirmé et le paiement des alertes ne sont exigés que sur le site (l'API répond 402 `payment_required` quand les alertes sont payantes).
 8. Notification push des alertes sur téléphone : demande `PUSH_PROVIDER=expo` (aujourd'hui `console` sur le VPS) et une application compilée avec jetons push.
-9. Suppression définitive de comptes de test : non construite (les lignes d'audit ne se suppriment pas ; les comptes sont anonymisés).
+9. Suppression définitive de comptes de test : commande `supprimer_comptes_test` (service `migrer`, voir `docs/administration.md`) ; depuis le web, un compte reste anonymisé.
 10. Sécurité des dépendances : les alertes Dependabot de GitHub sont à traiter.
 
 ## Jamais exécuté ou jamais testé

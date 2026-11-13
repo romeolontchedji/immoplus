@@ -66,6 +66,7 @@ MENU_GERANT = (
     ("Tableau de bord", "/pro/dashboard", "layout-grid", None, False),
     ("Mes annonces", "/pro/annonces", "house", None, True),
     ("Publier une chambre", "/pro/annonces/nouvelle", "plus", None, True),
+    ("Avis reçus", "/pro/avis", "star", None, False),
     ("Messages", "/compte/messages", "message-circle", "non_lus_messages", False),
     ("Notifications", "/compte/notifications", "bell", "non_lues_notifications", False),
     ("Chambres", "/annonces", "search", None, False),

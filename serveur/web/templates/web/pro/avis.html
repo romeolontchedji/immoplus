@@ -1,0 +1,38 @@
+{% extends "web/espace.html" %}
+{% block titre %}Avis reçus — Espace Gérant — Immo+{% endblock %}
+{% block espace %}
+  <div class="pro-principal pile pile--large">
+    <div class="pro-entete">
+      <div>
+        <h1 class="pro-entete__titre">Avis reçus</h1>
+        <p class="texte-doux mb-0">
+          {% if resume.count %}Note moyenne {{ resume.average }}/5 sur {{ resume.count }} avis.{% else %}Aucun avis pour l'instant.{% endif %}
+          Tu peux répondre publiquement à chaque avis : ta réponse s'affiche sous son commentaire.
+        </p>
+      </div>
+    </div>
+    {% if message %}
+      <div class="alerte alerte--{{ niveau|default:'succes' }}" role="status"><p>{{ message }}</p></div>
+    {% endif %}
+    {% for a in avis %}
+      <article class="carte p-5 pile">
+        <header>
+          <strong>{{ a.rating }}/5</strong> · {{ a.author_name }} · <span class="texte-doux">{{ a.listing_title }} · {{ a.created_at|date:"d/m/Y" }}</span>
+        </header>
+        {% if a.comment %}<p class="mb-0">{{ a.comment }}</p>{% else %}<p class="texte-doux mb-0">(Note sans commentaire.)</p>{% endif %}
+        <form method="post" class="pile">
+          {% csrf_token %}
+          <input type="hidden" name="avis_id" value="{{ a.id }}">
+          <label for="reply-{{ a.id }}"><strong>{% if a.owner_reply %}Ta réponse{% else %}Répondre{% endif %}</strong> ({{ reponse_max }} caractères au plus, sans numéro ni lien)</label>
+          <textarea id="reply-{{ a.id }}" name="reply" rows="3" maxlength="{{ reponse_max }}">{{ a.owner_reply }}</textarea>
+          <div class="rangee">
+            <button class="bouton bouton--primaire bouton--petit" type="submit">{% if a.owner_reply %}Modifier ma réponse{% else %}Publier ma réponse{% endif %}</button>
+            {% if a.owner_reply %}<span class="texte-doux">Pour la retirer, vide le champ puis envoie.</span>{% endif %}
+          </div>
+        </form>
+      </article>
+    {% empty %}
+      <p class="texte-doux">Les avis des locataires apparaîtront ici.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

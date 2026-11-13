@@ -730,12 +730,16 @@ class AvisAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_hidden", "rating")
     search_fields = ("comment", "listing__title")
-    readonly_fields = ("listing", "author", "rating", "comment", "created_at", "updated_at")
+    readonly_fields = (
+        "listing", "author", "rating", "comment", "owner_reply", "owner_replied_at", "created_at", "updated_at",
+    )  # fmt: skip
     fields = (
         "listing",
         "author",
         "rating",
         "comment",
+        "owner_reply",
+        "owner_replied_at",
         "is_hidden",
         "hidden_reason",
         "created_at",

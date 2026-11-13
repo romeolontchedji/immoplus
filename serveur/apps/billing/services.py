@@ -17,7 +17,7 @@ from apps.core.errors import ErreurMetier
 from apps.core.providers import paiement as fournisseurs
 
 from .enums import TRANSITIONS, Fournisseur, Methode, StatutAbonnement, StatutPaiement
-from .models import Payment, Subscription
+from .models import Payment, Subscription, Transaction
 
 journal = logging.getLogger(__name__)
 PLAN_GRATUIT = "free_v1"
@@ -247,8 +247,6 @@ def activer_en_especes(*, acteur, gerant_id, plan_code: str, periodes: int = 1) 
     """Un administrateur active la formule d'un gérant qui a payé en espèces (n périodes, notées comme une transaction)."""
     from apps.accounts import selectors as comptes
 
-    from .models import Transaction
-
     if getattr(acteur, "role", None) != "admin" or not acteur.is_active:
         raise ErreurMetier("forbidden", "Réservé aux administrateurs.", statut=403)
     choisie = next((p for p in parametres.lire("PLANS") if p["code"] == plan_code), None)
@@ -319,6 +317,73 @@ def appliquer_evenement(paiement_id, statut: str) -> Payment:
     paiement.save(update_fields=["status", "paid_at", "subscription"])
     audit.enregistrer("paiement.statut", metadata={"paiement": str(paiement.pk), "statut": statut})
     return paiement
+
+
+def bilan_paiements(depuis: datetime.datetime) -> dict:
+    """Paiements réussis depuis `depuis` : nombre, total en FCFA, et la part abonnements / alertes."""
+    from django.db.models import Count, Sum
+
+    reussis = Transaction.objects.filter(status=StatutPaiement.SUCCEEDED, paid_at__gte=depuis)
+    total = reussis.aggregate(n=Count("id"), somme=Sum("amount"))
+    par_objet = {
+        o: n for o, n in reussis.values_list("objet").annotate(n=Count("id")).values_list("objet", "n")
+    }
+    return {
+        "nombre": total["n"] or 0,
+        "total": total["somme"] or 0,
+        "abonnements": par_objet.get("abonnement", 0),
+        "alertes": par_objet.get("alerte", 0),
+    }
+
+
+# --------------------------------------------------------------------------- rappels avant la fin (tâche quotidienne)
+def rappels_fin_abonnement(maintenant: datetime.datetime | None = None) -> dict:
+    """Prévient le gérant (notification, et courriel si son adresse est confirmée) quand son abonnement payant se termine
+    dans N jours (`SUBSCRIPTION_REMINDER_DAYS`, par défaut 7 et 1). Un seul rappel par abonnement, date de fin et étape :
+    relancer la tâche ne renvoie rien. Un abonnement annulé en fin de période n'est pas relancé (le gérant l'a voulu)."""
+    from apps.accounts import selectors as comptes
+    from apps.notifications import services as notifications
+
+    jours_voulus = sorted({int(j) for j in (parametres.lire("SUBSCRIPTION_REMINDER_DAYS") or []) if int(j) > 0})
+    bilan = {"rappels": 0}
+    if not jours_voulus:
+        return bilan
+    maintenant = maintenant or timezone.now()
+    aujourd_hui = timezone.localdate(maintenant)
+    horizon = maintenant + datetime.timedelta(days=max(jours_voulus) + 1)
+    formules = {p["code"]: p["label"] for p in parametres.lire("PLANS")}
+    proches = (
+        Subscription.objects.filter(
+            status__in=[StatutAbonnement.ACTIVE, StatutAbonnement.TRIALING],
+            cancel_at_period_end=False,
+            current_period_end__gt=maintenant,
+            current_period_end__lte=horizon,
+        )
+        .exclude(plan_code=PLAN_GRATUIT)
+        .order_by("current_period_end")
+    )
+    for abonnement in proches:
+        fin = timezone.localtime(abonnement.current_period_end)
+        reste = (fin.date() - aujourd_hui).days
+        if reste not in jours_voulus:
+            continue
+        profil = comptes.profil_gerant_par_id(abonnement.gerant_id)
+        if profil is None:
+            continue
+        quand = "demain" if reste == 1 else f"dans {reste} jours"
+        formule = formules.get(abonnement.plan_code, abonnement.plan_code)
+        cree = notifications.creer(
+            profil.user_id,
+            "subscription.reminder",
+            "Ton abonnement se termine bientôt",
+            f"Ton abonnement « {formule} » se termine {quand}, le {fin:%d/%m/%Y}. "
+            "Renouvelle-le pour continuer à publier de nouvelles chambres.",
+            data={"url": "/compte/abonnement", "jours": reste},
+            dedupe_key=f"abo-rappel:{abonnement.pk}:{fin.date().isoformat()}:{reste}",
+        )
+        if cree is not None:
+            bilan["rappels"] += 1
+    return bilan
 
 
 # --------------------------------------------------------------------------- échéances (tâche quotidienne)

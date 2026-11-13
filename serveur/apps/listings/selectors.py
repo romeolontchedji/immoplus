@@ -781,6 +781,22 @@ def tableau_de_bord_gerant(gerant) -> dict:
     }
 
 
+def nouvelles_annonces(depuis, *, limite: int = 10) -> tuple[int, list[dict]]:
+    """Annonces mises en ligne depuis `depuis` (même si elles ne sont plus visibles) : total et les `limite` dernières."""
+    requete = Listing.objects.filter(published_at__gte=depuis, deleted_at__isnull=True)
+    lignes = [
+        {
+            "title": a.title,
+            "district": a.district.name,
+            "rent_amount": a.rent_amount,
+            "slug": a.slug,
+            "published_at": a.published_at,
+        }
+        for a in requete.select_related("district").order_by("-published_at")[:limite]
+    ]
+    return requete.count(), lignes
+
+
 # ----------------------------------------------------------------------------- avis des locataires
 def _nom_court(nom: str | None) -> str:
     """« Awa Bio » → « Awa B. » : l'avis reste personnel sans exposer le nom complet."""
@@ -831,6 +847,8 @@ def avis(*, annonce_id=None, gerant_id=None, limite: int = 20) -> list[dict]:
             "id": a.pk,
             "rating": a.rating,
             "comment": a.comment,
+            "owner_reply": a.owner_reply,
+            "owner_replied_at": a.owner_replied_at,
             "author_name": _nom_court(noms.get(a.author_id)),
             "listing_title": a.listing.title,
             "listing_slug": a.listing.slug,

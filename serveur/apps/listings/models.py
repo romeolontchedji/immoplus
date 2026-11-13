@@ -405,6 +405,12 @@ class Review(models.Model):
     hidden_reason = models.CharField(
         max_length=200, default="", db_default="", blank=True, verbose_name="raison du masquage"
     )
+    owner_reply = models.TextField(
+        default="", db_default="", blank=True, verbose_name="réponse du gérant"
+    )
+    owner_replied_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="réponse du gérant le"
+    )
     created_at = models.DateTimeField(
         default=timezone.now, db_default=Now(), verbose_name="créé le"
     )

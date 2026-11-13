@@ -29,10 +29,11 @@ CATEGORIES = {
     "alert.match": "alertes",
     "alert.digest": "alertes",
     "favorite.unavailable": "alertes",
+    "subscription.reminder": "rappels",
 }
 NON_DESACTIVABLES = {"account.sanction"}
 # Les alertes partent aussi par courriel (adresse confirmée) : un visiteur du site n'a pas toujours l'application.
-KINDS_COURRIEL = {"alert.match", "alert.digest"}
+KINDS_COURRIEL = {"alert.match", "alert.digest", "subscription.reminder"}
 
 # Canaux Android créés par l'application (mobile/src/features/notifications/push.ts). Les messages sont prioritaires :
 # bannière immédiate, son et vibration, même téléphone en veille, comme une messagerie.
@@ -44,6 +45,7 @@ CANAUX = {
     "favorite.unavailable": "alertes",
     "listing.reminder": "rappels",
     "listing.reported_rented": "rappels",
+    "subscription.reminder": "rappels",
 }
 PRIORITAIRES = {"message.received", "message.unanswered_reminder", "account.sanction"}
 
@@ -205,6 +207,13 @@ def _apres_creation(notification_id, motif: str | None) -> None:
 def _texte_courriel(n: Notification, prenom: str) -> str:
     site = settings.SITE_URL
     lignes = [f"Bonjour {prenom}," if prenom else "Bonjour,", "", n.body, ""]
+    if n.kind == "subscription.reminder":
+        lignes += [
+            f"Renouveler mon abonnement : {site}/compte/abonnement",
+            "",
+            "Tes annonces déjà en ligne restent visibles ; il te faut un abonnement en cours pour en publier de nouvelles.",
+        ]
+        return "\n".join(lignes) + "\n"
     liste = n.data.get("_liste") or []
     if liste:
         lignes += [f"- {c['resume']} : {site}/annonces/{c['slug']}" for c in liste]
