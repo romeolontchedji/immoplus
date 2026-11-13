@@ -68,10 +68,17 @@ def _titres(params: dict) -> set[str]:
         ({"meter": "individual"}, "c"),
         ({"fenced": "true"}, "cf"),
         ({"max_distance_m": 500}, "aef"),  # borne incluse
-        ({"available_before": datetime.date.today().isoformat()}, "abcdf"),
+        (
+            {"available_before": "aujourd_hui"},
+            "abcdf",
+        ),  # remplacé par la date du jour à l'exécution
     ],
 )
 def test_chaque_filtre_seul(jeu, params, attendus):
+    # La date est lue à l'exécution (et non à la collecte) : un test lancé juste après minuit reste juste.
+    params = {
+        k: datetime.date.today().isoformat() if v == "aujourd_hui" else v for k, v in params.items()
+    }
     assert _titres(params) == set(attendus)
 
 

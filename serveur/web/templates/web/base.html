@@ -11,6 +11,14 @@
           content="{% block description %}Cherche une chambre à Parakou : visite en vidéo, gérants vérifiés, contact direct. Visite d'abord, paie ensuite.{% endblock %}">
     <link rel="icon" href="{% static 'design/logo.svg' %}" type="image/svg+xml">
     <link rel="icon" href="{% static 'design/favicon.ico' %}" sizes="any">
+    {# Application installable (PWA) #}
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#1B44D6">
+    <link rel="apple-touch-icon"
+          href="{% static 'design/icones/apple-touch-icon.png' %}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Immo+">
     <link rel="preload"
           href="{% static 'fonts/plus-jakarta-sans-latin.woff2' %}"
           as="font"
@@ -38,6 +46,28 @@
   <body>
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
     <div class="page">
+      {# Invitation à installer l'application, pour tous les visiteurs (js/pwa.js la révèle si c'est possible). #}
+      <aside class="installer"
+             data-installer
+             hidden
+             aria-label="Installer l'application">
+        <img class="installer__icone"
+             src="{% static 'design/icones/icone-192.png' %}"
+             alt=""
+             width="40"
+             height="40">
+        <p class="installer__texte">
+          <strong>Installe Immo+ sur ton téléphone</strong>
+          <span data-installer-texte>Un accès rapide depuis ton écran d'accueil, sans ouvrir le navigateur.</span>
+        </p>
+        <button class="bouton bouton--primaire bouton--petit"
+                type="button"
+                data-installer-action>Installer</button>
+        <button class="installer__fermer"
+                type="button"
+                data-installer-fermer
+                aria-label="Plus tard">×</button>
+      </aside>
       <header class="entete">
         <div class="conteneur entete__barre">
           <a class="logotype" href="/" aria-label="Immo+ — Accueil">
@@ -120,5 +150,6 @@
       {% endif %}
     </div>
     <script src="{% static 'js/mot-de-passe.js' %}" defer></script>
+    <script src="{% static 'js/pwa.js' %}" defer></script>
   </body>
 </html>

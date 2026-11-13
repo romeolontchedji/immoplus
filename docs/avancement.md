@@ -16,6 +16,8 @@
   sur les signalements, titre non dupliqué, « Voir le site » mène au site public, code de connexion retiré de l'objet du
   courriel.
 - **Accueil** : nouveaux textes (titre « Trouve ta chambre à Parakou, en deux clics. »), sous-titre centré.
+- **Application installable (PWA)** : manifeste, service worker, page hors ligne, icônes (192, 512, iPhone) et bandeau
+  « Installe Immo+ sur ton téléphone » pour tous les visiteurs (`js/pwa.js`).
 - **Alertes** : eau, électricité et budget (+ 5 000 F) souples ; cases « Douche et WC internes » et « Cour clôturée »
   visibles ; budget saisi à la main ; nom de l'alerte en premier ; distance à l'UP retirée ; mise en pause après 14 jours
   sans activité (tâche quotidienne `apps.listings.expirer_alertes`, migration `listings 0016`).
