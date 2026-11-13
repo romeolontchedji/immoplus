@@ -48,7 +48,7 @@ def connecte_obligatoire(vue):
     @wraps(vue)
     def enveloppe(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"/connexion?next={request.path}")
+            return redirect("/connexion?" + urlencode({"next": request.path}))
         if request.user.role not in ("client", "gerant"):
             raise Http404
         return vue(request, *args, **kwargs)

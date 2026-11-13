@@ -148,6 +148,14 @@ class TestMotDePasseOublie:
         inscription.demander_lien_par_email("AWA@exemple.bj")
         assert len(mail.outbox) == 1 and "/mot-de-passe/nouveau/" in mail.outbox[0].body
 
+    def test_trois_courriels_de_reinitialisation_par_heure_et_par_compte(self):
+        u, _ = inscrire()
+        u.email, u.email_verified_at = "awa@exemple.bj", u.created_at
+        u.save()
+        for _ in range(5):
+            inscription.demander_lien_par_email("awa.bio")
+        assert len(mail.outbox) == inscription.COURRIELS_REINIT_PAR_HEURE
+
     def test_lien_a_usage_unique(self):
         u, _ = inscrire()
         jeton = identifiants.creer_jeton(u, "reinitialisation")
