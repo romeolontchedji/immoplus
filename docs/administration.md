@@ -103,6 +103,17 @@ l'équipe (administrateurs et modérateurs) reçoit un **courriel à la premièr
 (`EMAIL_NOUVELLES_ANNONCES`), avec les liens pour la voir et la modérer. La modération agit après coup : **Masquer**
 l'annonce, ou **Refuser** (l'annonce passe masquée, raison « Modération » ; le gérant la voit masquée dans son espace).
 Les annonces encore « en traitement » (médias en cours) sont publiées toutes seules quand leurs médias sont prêts.
+
+**Masquer ou retirer une annonce** (administrateurs **et** modérateurs) : dans la liste, cochez une ou plusieurs annonces puis
+choisissez l'action :
+
+- **Masquer (modération)** : l'annonce quitte le site ; le gérant peut la corriger. **Remettre en ligne (annonce masquée par la
+  modération)** annule le masquage (si l'annonce est encore publiable).
+- **Retirer (modération)** : retrait **définitif** (fausse annonce, arnaque, contenu interdit) ; le gérant ne peut ni la modifier ni la
+  remettre en ligne.
+
+Une page demande un **motif obligatoire** (10 caractères au moins) : le gérant le reçoit en notification, et la décision est
+journalisée dans « Actions de modération » et dans le journal d'activité. Les mêmes décisions existent depuis un signalement.
 Une chambre **marquée louée** est archivée aussitôt, photos et vidéo supprimées.
 
 **Avis.** Publiés tout de suite. Actions **Masquer** (l'avis disparaît du public, l'auteur le garde) et
