@@ -151,3 +151,128 @@ def statistiques_html(utilisateur):
         ),
     )
     return format_html("<div>{}</div>", blocs)
+
+
+# --------------------------------------------------------------------------- page « Statistiques » de l'administration
+def vue_ensemble() -> dict:
+    """Chiffres clés de la plateforme, puis le détail par gérant et par locataire (100 premiers, les plus actifs)."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.accounts.models import GerantProfile, User
+
+    il_y_a_30j = timezone.now() - datetime.timedelta(days=30)
+    comptes_actifs = User.objects.filter(status="active", deleted_at__isnull=True)
+    ventes = Transaction.objects.filter(status="succeeded")
+    payants = Subscription.objects.filter(status__in=["active", "past_due", "trialing"]).exclude(
+        plan_code="free_v1"
+    )
+    globaux = [
+        ("Gérants actifs", comptes_actifs.filter(role="gerant").count()),
+        (
+            "Gérants vérifiés",
+            GerantProfile.objects.filter(
+                verification_status="verified", user__deleted_at__isnull=True
+            ).count(),
+        ),
+        ("Locataires actifs", comptes_actifs.filter(role="client").count()),
+        ("Nouveaux comptes (30 jours)", User.objects.filter(created_at__gte=il_y_a_30j).count()),
+        ("Annonces en ligne", Listing.objects.filter(status="published", deleted_at__isnull=True).count()),
+        (
+            "Chambres louées",
+            Listing.objects.filter(rented_at__isnull=False).count(),
+        ),
+        ("Conversations (30 jours)", Conversation.objects.filter(created_at__gte=il_y_a_30j).count()),
+        ("Alertes actives", Alert.objects.filter(is_active=True).count()),
+        ("Abonnements payants en cours", payants.count()),
+        ("Paiements réussis", ventes.count()),
+        ("Total encaissé", f"{ventes.aggregate(t=Sum('amount'))['t'] or 0} F"),
+        (
+            "Encaissé (30 jours)",
+            f"{ventes.filter(paid_at__gte=il_y_a_30j).aggregate(t=Sum('amount'))['t'] or 0} F",
+        ),
+    ]
+
+    # --- par gérant (quelques requêtes groupées, jamais une par ligne)
+    profils = list(
+        GerantProfile.objects.select_related("user").filter(user__deleted_at__isnull=True)
+    )
+    en_ligne = dict(
+        Listing.objects.filter(status="published", deleted_at__isnull=True)
+        .values_list("gerant_id")
+        .annotate(n=Count("id"))
+        .values_list("gerant_id", "n")
+    )
+    totaux = dict(
+        Listing.objects.filter(deleted_at__isnull=True)
+        .values_list("gerant_id")
+        .annotate(n=Count("id"))
+        .values_list("gerant_id", "n")
+    )
+    echanges = dict(
+        Conversation.objects.values_list("gerant_id").annotate(n=Count("id")).values_list("gerant_id", "n")
+    )
+    notes = {
+        ligne["gerant_id"]: (ligne["moyenne"], ligne["n"])
+        for ligne in Review.objects.filter(is_hidden=False, gerant__isnull=False)
+        .values("gerant_id")
+        .annotate(moyenne=Avg("rating"), n=Count("id"))
+    }
+    formules = {p["code"]: p["label"] for p in parametres.lire("PLANS")}
+    abonnements = {
+        s.gerant_id: s
+        for s in Subscription.objects.exclude(status="expired").order_by("created_at")
+    }
+    gerants = []
+    for p in profils:
+        note = notes.get(p.pk)
+        abo = abonnements.get(p.pk)
+        gerants.append(
+            {
+                "id": p.user_id,
+                "nom": p.display_name or p.user.full_name,
+                "zone": p.zone,
+                "verifie": p.verification_status == "verified",
+                "en_ligne": en_ligne.get(p.pk, 0),
+                "total": totaux.get(p.pk, 0),
+                "conversations": echanges.get(p.user_id, 0),
+                "note": round(note[0], 1) if note else None,
+                "avis": note[1] if note else 0,
+                "formule": formules.get(abo.plan_code, abo.plan_code) if abo else "—",
+                "fin": _date(abo.current_period_end) if abo and abo.plan_code != "free_v1" else "—",
+            }
+        )
+    gerants.sort(key=lambda g: (-g["en_ligne"], -g["conversations"]))
+
+    # --- par locataire
+    clients = list(
+        User.objects.filter(role="client", deleted_at__isnull=True).order_by("-last_seen_at", "-created_at")[:100]
+    )
+    ids = [c.pk for c in clients]
+    conv = dict(
+        Conversation.objects.filter(client_id__in=ids).values_list("client_id").annotate(n=Count("id")).values_list("client_id", "n")
+    )
+    favs = dict(
+        Favorite.objects.filter(user_id__in=ids).values_list("user_id").annotate(n=Count("id")).values_list("user_id", "n")
+    )
+    alertes = dict(
+        Alert.objects.filter(user_id__in=ids, is_active=True).values_list("user_id").annotate(n=Count("id")).values_list("user_id", "n")
+    )
+    payes = dict(
+        ventes.filter(user_id__in=ids).values_list("user_id").annotate(t=Sum("amount")).values_list("user_id", "t")
+    )
+    locataires = [
+        {
+            "id": c.pk,
+            "nom": c.full_name or c.username,
+            "inscrit": _date(c.created_at),
+            "vu": _date(c.last_seen_at),
+            "conversations": conv.get(c.pk, 0),
+            "favoris": favs.get(c.pk, 0),
+            "alertes": alertes.get(c.pk, 0),
+            "paye": payes.get(c.pk, 0),
+        }
+        for c in clients
+    ]
+    return {"globaux": globaux, "gerants": gerants[:100], "locataires": locataires}

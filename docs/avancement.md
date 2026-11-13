@@ -2,6 +2,12 @@
 
 > **À jour :** voir `docs/reste-a-faire.md` (comptes, annonces et médias faits ; fil, messagerie, notifications et modération à faire). Le reste de ce fichier décrit la phase 0.
 
+**2026-11-20 : statistiques en page dédiée, parcours du gérant.**
+- Administration : page « Statistiques » (`/statistiques/`, lien dans « Comptes ») : chiffres clés, tableau par gérant (annonces,
+  conversations, note, formule) et par locataire (conversations, favoris, alertes, total payé).
+- Après connexion, un gérant arrive sur son tableau de bord (plus sur le profil). Après « Marquer louée » depuis l'éditeur, retour
+  sur « Mes annonces » (plus sur l'étape 7).
+
 **2026-11-19 : suppression de compte, gérant parti, statistiques.**
 - Suppression sur le site en deux temps : mot de passe, puis page de confirmation (`/compte/supprimer`) qui dit ce qui est
   perdu : abonnement payé en cours (« ni remboursé, ni transférable, ni récupérable », case à cocher obligatoire), alertes

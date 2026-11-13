@@ -1,0 +1,68 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}{{ block.super }} lg-statistiques{% endblock %}
+{% block content %}
+  <div id="content-main">
+    <p class="lg-bandeau">
+      Vue d'ensemble de la plateforme, puis le détail par gérant et par locataire (les 100 plus actifs). Cliquez sur un nom pour
+      ouvrir sa fiche et ses statistiques complètes.
+    </p>
+    <h2 class="lg-titre-section">Chiffres clés</h2>
+    <div class="lg-grille lg-grille--3">
+      {% for libelle, valeur in globaux %}
+        <div class="lg-carte">
+          <span class="lg-chiffre__nombre">{{ valeur }}</span>
+          <span class="lg-chiffre__libelle">{{ libelle }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <h2 class="lg-titre-section">Gérants</h2>
+    <div class="module">
+      <table>
+        <thead>
+          <tr>
+            <th>Gérant</th><th>Zone</th><th>Vérifié</th><th>En ligne</th><th>Annonces</th>
+            <th>Conversations</th><th>Note</th><th>Avis</th><th>Formule</th><th>Valable jusqu'au</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in gerants %}
+            <tr>
+              <td><a href="{% url 'admin:accounts_user_change' g.id %}">{{ g.nom|default:"(sans nom)" }}</a></td>
+              <td>{{ g.zone|default:"—" }}</td>
+              <td>{% if g.verifie %}Oui{% else %}Non{% endif %}</td>
+              <td>{{ g.en_ligne }}</td><td>{{ g.total }}</td><td>{{ g.conversations }}</td>
+              <td>{{ g.note|default_if_none:"—" }}</td><td>{{ g.avis }}</td>
+              <td>{{ g.formule }}</td><td>{{ g.fin }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="10">Aucun gérant.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="lg-titre-section">Locataires</h2>
+    <div class="module">
+      <table>
+        <thead>
+          <tr>
+            <th>Locataire</th><th>Inscrit le</th><th>Dernière activité</th><th>Conversations</th>
+            <th>Favoris</th><th>Alertes actives</th><th>Total payé (F)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in locataires %}
+            <tr>
+              <td><a href="{% url 'admin:accounts_user_change' c.id %}">{{ c.nom|default:"(sans nom)" }}</a></td>
+              <td>{{ c.inscrit }}</td><td>{{ c.vu }}</td><td>{{ c.conversations }}</td>
+              <td>{{ c.favoris }}</td><td>{{ c.alertes }}</td><td>{{ c.paye }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">Aucun locataire.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

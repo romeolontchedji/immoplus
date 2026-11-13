@@ -178,6 +178,7 @@
           <h3>{% include "admin/includes_icone.html" with nom="users" %} Comptes</h3>
           <a href="{% url 'admin:accounts_gerantprofile_changelist' %}">Gérants</a>
           <a href="{% url 'admin:accounts_user_changelist' %}">Tous les comptes</a>
+          <a href="{% url 'admin:statistiques' %}"><strong>Statistiques</strong> (gérants et locataires)</a>
           {% if v.role == "admin" %}<a href="{% url 'admin:accounts_user_nouveau_gerant' %}">Créer un gérant</a>{% endif %}
           {% if v.role == "admin" %}<a href="{% url 'admin:accounts_user_nouveau_personnel' %}">Créer un membre du personnel</a>{% endif %}
         </section>

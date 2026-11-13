@@ -154,6 +154,7 @@ def liste(request, profil):
     message = {
         "supprimee": "Annonce supprimée.",
         "publiee": "Annonce publiée : elle est en ligne.",
+        "louee": "Chambre marquée louée : ses photos et sa vidéo ont été supprimées et l'annonce est archivée.",
         "attente": "Annonce enregistrée : elle sera en ligne dès que ses médias seront prêts.",
     }.get(request.GET.get("ok", ""))
     lignes = [
@@ -361,6 +362,8 @@ def editeur(request, profil, annonce_id=None):
                 if action == "publier":  # fini avec l'éditeur : retour à la liste, pas sur l'étape des médias
                     attente = annonce.status != StatutAnnonce.PUBLISHED
                     return redirect(f"/pro/annonces?ok={'attente' if attente else 'publiee'}")
+                if action == "louee":  # chambre louée = archivée : retour sur « Mes annonces », pas sur l'étape 7
+                    return redirect("/pro/annonces?ok=louee")
                 return redirect(f"/pro/annonces/{annonce.pk}?etape=7&ok=statut")
             elif action in ACTIONS_MEDIAS and annonce:
                 _agir_sur_media(profil, annonce, action, request.POST.get("media_id"))
