@@ -51,7 +51,8 @@ Une ligne par décision ; le détail de la phase 0 est dans `docs/adr/`.
 - **Recherche** : elle comprend les phrases (remplissage ignoré), reconnaît quartiers (avec fautes), types de chambre et
   équipements, passe en « ou » quand aucune annonce ne contient tous les mots, et explique ce qu'elle a compris. Pas de
   classement par pertinence (il casserait la pagination par curseur).
-- **Pré-payé** : nombre entier de mois de loyer à régler avant d'entrer (0 = aucun), à côté de l'avance ; site seulement, hors API.
+- **Pré-payé** : nombre entier de mois de loyer à régler avant d'entrer (0 = aucun), à côté de l'avance ; site, API et application (API depuis le 2026-11-14).
+- **Frais de visite** : montant en francs demandé pour visiter la chambre (0 = aucun), à côté des frais de démarcheur ; site, API et application.
 - **Lecture des conversations** : l'équipe (modérateurs et administrateurs) peut lire toute conversation pour la modération,
   avec un motif obligatoire inscrit au journal ; la liste ne montre aucun contenu.
 - **Textes légaux** : éditeur **NEXIX**, sans RCCM ni IFU affichés ; textes modifiables depuis l'administration (Markdown, barre

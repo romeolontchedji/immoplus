@@ -58,8 +58,8 @@ Ce document consigne les éléments présents sur les maquettes de référence (
 
 | Sujet | Écart | Raison |
 |---|---|---|
-| **Pré-payé** (`prepaid_months`, 0 à 12) | Champ ajouté à l'annonce, saisi dans l'éditeur du site et affiché sur la fiche ; **absent de l'API et de l'application mobile** (le contrat OpenAPI reste identique) | Demande du porteur ; l'application le laissera à 0 jusqu'à sa prochaine version |
-| **Frais de visite** (`visit_fee_amount`, en F) | Champ ajouté à l'annonce, saisi dans l'éditeur du site et affiché sur la fiche ; **absent de l'API et de l'application mobile** (le contrat OpenAPI reste identique) | Demande du porteur (2026-11-14) ; l'application le laissera à 0 jusqu'à sa prochaine version |
+| **Pré-payé** (`prepaid_months`, 0 à 12) | Champ ajouté à l'annonce, saisi dans l'éditeur du site et dans l'application, affiché sur la fiche ; présent dans l'API (entrée facultative, 0 par défaut ; sortie toujours renvoyée) | Demande du porteur ; donnée importante pour le locataire |
+| **Frais de visite** (`visit_fee_amount`, en F) | Champ ajouté à l'annonce, saisi dans l'éditeur du site et dans l'application, affiché sur la fiche ; présent dans l'API (entrée facultative, 0 par défaut ; sortie toujours renvoyée) | Demande du porteur (2026-11-14) ; donnée importante pour le locataire |
 | **Recherche qui comprend les phrases** | Quartiers, types et équipements reconnus dans le texte saisi, passage en « ou » à défaut de « et » ; messages « Compris… » sur le site | Demande du porteur ; l'API en profite sans changer de forme |
 | **Lecture des conversations par l'équipe** | Possible depuis **Chat › Conversations**, pas seulement depuis un signalement ; motif obligatoire et journal conservés | Demande du porteur (modération) ; textes légaux mis à jour |
 | **Textes légaux modifiables** | Édités dans l'administration (Markdown, barre d'outils, aperçu) au lieu de fichiers du dépôt ; les fichiers restent le texte de secours | Demande du porteur |

@@ -537,8 +537,8 @@ stateDiagram-v2
   prêtes (la vidéo est **facultative**), pas de coordonnées dans le texte. Le serveur dit précisément **ce qui manque** (« readiness »).
 - **Fraîcheur** : le masquage automatique est coupé (`STALE_HIDE_DAYS` = 0) : le gérant marque lui-même une chambre
   « louée » ou la masque.
-- **Conditions** : loyer (et « à débattre »), **caution eau** et **caution électricité** en francs, avance, **pré-payé** (nombre de mois de loyer à régler avant d'entrer, 0 = aucun ; site seulement, hors API),
-  frais de démarcheur. La caution du loyer n'est plus demandée sur le site (l'API la garde, à 0 par défaut).
+- **Conditions** : loyer (et « à débattre »), **caution eau** et **caution électricité** en francs, avance, **pré-payé** (nombre de mois de loyer à régler avant d'entrer, 0 = aucun),
+  frais de démarcheur, **frais de visite** (en francs, 0 = aucun) ; présents sur le site, dans l'API et dans l'application. La caution du loyer n'est plus demandée sur le site (l'API la garde, à 0 par défaut).
 - **Publication directe** : un gérant vérifié publie sans attendre, y compris sa première annonce ; l'équipe
   (administrateurs et modérateurs) reçoit un courriel à chaque première mise en ligne et modère après coup.
 - **Louée** (après confirmation) : les locataires en conversation sont prévenus ; **photos et vidéo sont supprimées

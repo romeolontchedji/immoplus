@@ -2,13 +2,15 @@
 
 > **À jour :** la plateforme (comptes, annonces, médias, fil, messagerie, notifications, modération, administration, paiements KKiaPay) est construite et **tourne en production** sur le VPS. Voir `docs/reste-a-faire.md` (état et reste à faire), `docs/a-verifier.md` (section D : ce qui est à confirmer) et `docs/decisions.md` (décisions de novembre 2026). Les entrées ci-dessous vont du plus récent au plus ancien ; les plus anciennes décrivent la phase 0.
 
+**2026-11-14 : frais de visite (site, API et application, migration listings 0018) ; pré-payé ajouté à l'API et à l'application ; action « Classer sans répondre » sur les messages de l'équipe ; pastille de l'accueil masquée sur téléphone.**
+
 **2026-11-13 : recherche intelligente, pré-payé, textes légaux modifiables, audit de sécurité.**
 - **Recherche** : elle comprend les phrases (remplissage ignoré), reconnaît quartiers (même avec une faute : « zogo » → Zongo),
   types de chambre (« chambre sanitaire ») et équipements (eau, électricité, cuisine, douche, clôture), passe en « ou » si
   aucune annonce ne contient tous les mots, et explique ce qu'elle a compris (messages, page vide utile, alerte reprenant
   ces critères). `services/recherche_texte.py`, `services/fil.py`, `selectors._appliquer_criteres`.
 - **Pré-payé** : nombre de mois de loyer à régler avant d'entrer (0 = aucun) ; éditeur du site et fiche ; migration
-  listings 0015 ; pas dans l'API.
+  listings 0015. Depuis le 2026-11-14, il est aussi dans l'API et l'application mobile.
 - **Textes légaux** : éditeur NEXIX sans RCCM ni IFU ; conditions et confidentialité réécrites (paiements, lecture des
   conversations, avis, messages de l'équipe) et **modifiables depuis l'administration** (Core › Textes légaux : barre
   d'outils, aperçu, version à faire accepter, rétablir l'origine, journal) ; table `legal_documents` (migration core 0012).
