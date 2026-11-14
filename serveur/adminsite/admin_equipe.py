@@ -50,7 +50,7 @@ class MessageEquipeAdmin(admin.ModelAdmin):
     list_filter = ("vers_utilisateur", ("traite_le", admin.EmptyFieldListFilter), "contexte_type")
     search_fields = ("corps", "objet", "utilisateur__full_name", "utilisateur__username")
     ordering = ("-created_at",)
-    actions = ["repondre"]
+    actions = ["repondre", "classer"]
     list_select_related = ("utilisateur", "auteur")
 
     def has_add_permission(self, request):
@@ -92,6 +92,19 @@ class MessageEquipeAdmin(admin.ModelAdmin):
         return rediriger_vers_ecriture(
             self, request, premier.utilisateur if premier else None, contexte="question"
         )
+
+    @admin.action(description="Classer sans répondre")
+    def classer(self, request, queryset):
+        _exiger_personnel(request)
+        nombre = equipe.classer_sans_repondre(request.user, queryset.values_list("pk", flat=True))
+        if nombre:
+            self.message_user(
+                request, f"{nombre} message(s) classé(s) sans réponse.", messages.SUCCESS
+            )
+        else:
+            self.message_user(
+                request, "Aucun message à classer : ils sont déjà traités.", messages.WARNING
+            )
 
     def get_urls(self):
         return [

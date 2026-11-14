@@ -83,6 +83,18 @@ def ecrire_a(
 
 
 @transaction.atomic
+def classer_sans_repondre(acteur, ids) -> int:
+    """Marque des questions comme traitées sans écrire à la personne ; renvoie le nombre de questions classées."""
+    if acteur.role not in ROLES_PERSONNEL:
+        raise ErreurMetier("forbidden", "Réservé à l'équipe.")
+    nombre = MessageEquipe.objects.filter(
+        pk__in=list(ids), vers_utilisateur=False, traite_le__isnull=True
+    ).update(traite_le=timezone.now())
+    if nombre:
+        audit.enregistrer("equipe.classe_sans_reponse", acteur=acteur, metadata={"nombre": nombre})
+    return nombre
+
+
 def ecrire_a_l_equipe(utilisateur, corps: str, *, objet: str = "") -> MessageEquipe:
     """Une question d'un locataire ou d'un gérant à l'équipe (5 par 24 h au plus)."""
     if utilisateur.role not in ROLES_CLIENTELE:

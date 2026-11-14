@@ -14,8 +14,9 @@ from apps.audit.models import AuditLog
 from apps.chat import services as chat
 from apps.listings.models import Listing
 from apps.listings.tests.fabriques import ListingFactory, gerant_verifie, medias_prets
+from apps.moderation import messages_equipe as equipe
 from apps.moderation import services
-from apps.moderation.models import ModerationAction, Report
+from apps.moderation.models import MessageEquipe, ModerationAction, Report
 
 pytestmark = [pytest.mark.integration, pytest.mark.pg, pytest.mark.django_db, pytest.mark.securite]
 
@@ -277,3 +278,14 @@ class TestTypesDeLogement:
     def test_pas_de_suppression_ni_d_ajout(self, mod):
         _, c = mod
         assert c.get(reverse("admin:listings_roomtype_add")).status_code == 403
+
+
+class TestClasserSansRepondre:
+    def test_l_action_classe_la_question_sans_ecrire(self, mod):
+        _, c = mod
+        question = equipe.ecrire_a_l_equipe(ClientFactory(), "Merci")
+        r = lancer(c, "moderation_messageequipe", "classer", [question.pk])
+        assert r.status_code == 200
+        question.refresh_from_db()
+        assert question.traite_le is not None
+        assert not MessageEquipe.objects.filter(vers_utilisateur=True).exists()

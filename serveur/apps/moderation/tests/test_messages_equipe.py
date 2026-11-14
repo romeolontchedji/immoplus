@@ -111,3 +111,19 @@ def test_consulter_une_notification_la_marque_lue_puis_redirige():
     n.refresh_from_db()
     assert n.read_at is not None
     assert c.get("/compte/notifications/pas-un-uuid/ouvrir")["Location"] == "/compte/notifications"
+
+
+def test_classer_sans_repondre_ne_previent_pas_la_personne():
+    gerant = GerantFactory()
+    question = equipe.ecrire_a_l_equipe(gerant, "Merci")
+    assert equipe.classer_sans_repondre(AdminFactory(), [question.pk]) == 1
+    question.refresh_from_db()
+    assert question.traite_le is not None
+    assert [m.vers_utilisateur for m in equipe.fil(gerant.pk)] == [False]
+    assert equipe.classer_sans_repondre(AdminFactory(), [question.pk]) == 0
+
+
+def test_classer_sans_repondre_est_reserve_a_l_equipe():
+    question = equipe.ecrire_a_l_equipe(ClientFactory(), "Merci")
+    with pytest.raises(ErreurMetier):
+        equipe.classer_sans_repondre(ClientFactory(), [question.pk])
