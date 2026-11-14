@@ -136,6 +136,10 @@ class Listing(models.Model):
     agent_fee_amount = models.IntegerField(
         default=0, db_default=0, verbose_name="frais de démarcheur (F)"
     )
+    # Frais demandés pour faire visiter la chambre : montant en F, 0 = aucun (demande du 2026-11-14).
+    visit_fee_amount = models.IntegerField(
+        default=0, db_default=0, verbose_name="frais de visite (F)"
+    )
     available_from = models.DateField(verbose_name="disponible le")
     has_private_bathroom = models.BooleanField(verbose_name="douche interne")
     is_fenced = models.BooleanField(verbose_name="clôturée")
@@ -207,6 +211,9 @@ class Listing(models.Model):
             ),
             models.CheckConstraint(
                 condition=models.Q(agent_fee_amount__gte=0), name="listings_frais_positifs"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(visit_fee_amount__gte=0), name="listings_frais_visite_positifs"
             ),
             models.CheckConstraint(
                 condition=models.Q(water_deposit_amount__gte=0, electricity_deposit_amount__gte=0),

@@ -241,6 +241,16 @@
                   {% endif %}
                 </dd>
               </div>
+              <div class="conditions__ligne">
+                <dt>Frais de visite</dt>
+                <dd>
+                  {% if f.visit_fee_amount %}
+                    {{ f.visit_fee_amount|fcfa }} F
+                  {% else %}
+                    Aucun
+                  {% endif %}
+                </dd>
+              </div>
             </dl>
           </section>
           {% if f.description_html %}

@@ -59,3 +59,25 @@ def test_le_gerant_le_renseigne_dans_l_editeur_et_la_fiche_l_affiche():
     medias_prets(annonce)
     fiche = Client().get(f"/annonces/{annonce.slug}").content.decode()
     assert "Pré-payé" in fiche and "3 mois avant d'entrer" in fiche
+
+
+def test_les_frais_de_visite_valent_zero_par_defaut_et_se_modifient():
+    p, a = _brouillon()
+    assert a.visit_fee_amount == 0
+    annonces.modifier(p, a.pk, {"visit_fee_amount": 1500})
+    assert Listing.objects.get(pk=a.pk).visit_fee_amount == 1500
+
+
+@pytest.mark.parametrize("valeur", [-1, "500", 1.5, 10_000_001])
+def test_frais_de_visite_refuses(valeur):
+    with pytest.raises(ErreurMetier) as e:
+        _brouillon(visit_fee_amount=valeur)
+    assert "visit_fee_amount" in e.value.champs
+
+
+def test_la_fiche_affiche_les_frais_de_visite():
+    p, a = _brouillon(visit_fee_amount=2000)
+    Listing.objects.filter(pk=a.pk).update(status="published")
+    medias_prets(a)
+    fiche = Client().get(f"/annonces/{a.slug}").content.decode()
+    assert "Frais de visite" in fiche and "2 000" in fiche.replace(" ", " ").replace("\xa0", " ")

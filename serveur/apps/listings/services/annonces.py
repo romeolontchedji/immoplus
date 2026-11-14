@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 CHAMPS_TEXTE_A_CONTROLER = ("title", "landmark_text", "description_md")
 CHAMPS_MODIFIABLES = (
     "title", "room_type", "district", "landmark_text", "latitude", "longitude", "rent_amount",
-    "deposit_months", "advance_months", "prepaid_months", "agent_fee_amount", "water_deposit_amount",
+    "deposit_months", "advance_months", "prepaid_months", "agent_fee_amount", "visit_fee_amount", "water_deposit_amount",
     "electricity_deposit_amount", "available_from", "has_private_bathroom", "is_fenced",
     "water_sources", "electricity_meter", "kitchen", "rent_negotiable", "description_md",
 )  # fmt: skip
@@ -77,6 +77,12 @@ def _valider(d: dict) -> None:
         isinstance(d["agent_fee_amount"], int) and d["agent_fee_amount"] >= 0
     ):
         raise _champ("agent_fee_amount", "Les frais doivent être un entier positif ou nul.")
+    if "visit_fee_amount" in d and not (
+        isinstance(d["visit_fee_amount"], int) and 0 <= d["visit_fee_amount"] <= 10_000_000
+    ):
+        raise _champ(
+            "visit_fee_amount", "Les frais de visite doivent être un montant positif ou nul."
+        )
     for nom in ("water_deposit_amount", "electricity_deposit_amount"):
         if nom in d and not (isinstance(d[nom], int) and 0 <= d[nom] <= 10_000_000):
             raise _champ(nom, "La caution doit être un montant positif ou nul, en francs.")

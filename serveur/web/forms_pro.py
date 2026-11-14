@@ -34,6 +34,10 @@ class AnnonceForm(_Base):
     agent_fee_amount = forms.IntegerField(
         label="Frais de démarcheur (FCFA)", min_value=0, required=False, initial=0
     )
+    visit_fee_amount = forms.IntegerField(
+        label="Frais de visite (FCFA)", min_value=0, max_value=10_000_000, required=False, initial=0,
+        help_text="Ce que le visiteur paie pour voir la chambre. 0 s'il n'y en a pas.",
+    )  # fmt: skip
     # Cautions des compteurs, à part de la caution du loyer (demande du 2026-10-20).
     water_deposit_amount = forms.IntegerField(
         label="Caution eau (FCFA)", min_value=0, max_value=10_000_000, required=False, initial=0,
@@ -97,6 +101,7 @@ class AnnonceForm(_Base):
         d = dict(self.cleaned_data)
         d["agent_fee_amount"] = d.get("agent_fee_amount") or 0
         d["prepaid_months"] = d.get("prepaid_months") or 0
+        d["visit_fee_amount"] = d.get("visit_fee_amount") or 0
         d["water_deposit_amount"] = d.get("water_deposit_amount") or 0
         d["electricity_deposit_amount"] = d.get("electricity_deposit_amount") or 0
         d["description_md"] = d.get("description_md") or ""
