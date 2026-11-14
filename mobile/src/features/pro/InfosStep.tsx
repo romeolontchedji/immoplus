@@ -30,6 +30,8 @@ const schema = z.object({
   // Cautions des compteurs, à part de la caution du loyer (demande du 2026-10-20) : 0 = aucune.
   water_deposit_amount: z.coerce.number().min(0, "Montant positif.").max(10_000_000, "Trop élevé."),
   electricity_deposit_amount: z.coerce.number().min(0, "Montant positif.").max(10_000_000, "Trop élevé."),
+  prepaid_months: z.coerce.number().min(0, "Entre 0 et 12.").max(12, "Entre 0 et 12."),
+  visit_fee_amount: z.coerce.number().min(0, "Montant positif.").max(10_000_000, "Trop élevé."),
   is_available: z.boolean(),
   rent_negotiable: z.boolean(),
 });
@@ -57,6 +59,8 @@ export function InfosStep() {
       deposit_months: brouillon.deposit_months ?? 2,
       water_deposit_amount: brouillon.water_deposit_amount ?? 0,
       electricity_deposit_amount: brouillon.electricity_deposit_amount ?? 0,
+      prepaid_months: brouillon.prepaid_months ?? 0,
+      visit_fee_amount: brouillon.visit_fee_amount ?? 0,
       is_available: !brouillon.available_from || brouillon.available_from <= new Date().toISOString().slice(0, 10),
       rent_negotiable: brouillon.rent_negotiable ?? false,
     },
@@ -88,6 +92,8 @@ export function InfosStep() {
       water_deposit_amount: v.water_deposit_amount,
       electricity_deposit_amount: v.electricity_deposit_amount,
       advance_months: 1,
+      prepaid_months: v.prepaid_months,
+      visit_fee_amount: v.visit_fee_amount,
       rent_negotiable: v.rent_negotiable,
       available_from: v.is_available ? new Date().toISOString().slice(0, 10) : undefined,
     });
@@ -192,6 +198,26 @@ export function InfosStep() {
                   onChangeText={(v) => field.onChange(v.replace(/\D/g, "") === "" ? 0 : Number(v.replace(/\D/g, "")))}
                   keyboardType="number-pad"
                   placeholder="0 = aucune"
+                  erreur={errors[nom]?.message}
+                />
+              )}
+            />
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: "row", gap: sp[3] }}>
+        {(["prepaid_months", "visit_fee_amount"] as const).map((nom) => (
+          <View key={nom} style={{ flex: 1 }}>
+            <Controller
+              control={control}
+              name={nom}
+              render={({ field }) => (
+                <TextField
+                  label={nom === "prepaid_months" ? "Pré-payé (mois)" : "Frais de visite (F)"}
+                  value={field.value ? String(field.value) : ""}
+                  onChangeText={(v) => field.onChange(v.replace(/\D/g, "") === "" ? 0 : Number(v.replace(/\D/g, "")))}
+                  keyboardType="number-pad"
+                  placeholder="0 = aucun"
                   erreur={errors[nom]?.message}
                 />
               )}

@@ -62,6 +62,19 @@ class TestCreation:
         assert Listing.objects.filter(pk=a["id"], search_vector__isnull=False).exists()
         assert AuditLog.objects.filter(action="listing.cree").exists()
 
+    def test_pre_paye_et_frais_de_visite_passent_par_l_api(self, pro, quartier):
+        a = creer(pro, quartier)
+        assert a["prepaid_months"] == 0 and a["visit_fee_amount"] == 0
+        r = pro.patch(
+            f"/v1/pro/listings/{a['id']}",
+            {"prepaid_months": 3, "visit_fee_amount": 2000},
+            format="json",
+        )
+        assert r.status_code == 200, r.content
+        assert r.json()["prepaid_months"] == 3 and r.json()["visit_fee_amount"] == 2000
+        r = pro.patch(f"/v1/pro/listings/{a['id']}", {"prepaid_months": 13}, format="json")
+        assert r.status_code == 400
+
     def test_les_champs_obligatoires(self, pro, quartier):
         r = pro.post("/v1/pro/listings", {"title": "Chambre propre"}, format="json")
         assert r.status_code == 400 and "rent_amount" in r.json()["error"]["fields"]

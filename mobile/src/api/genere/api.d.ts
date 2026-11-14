@@ -1178,7 +1178,11 @@ export interface components {
             rent_amount: number;
             deposit_months: number;
             advance_months: number;
+            /** @description Mois de loyer à payer avant d'entrer (0 = aucun). */
+            prepaid_months?: number;
             agent_fee_amount?: number;
+            /** @description Frais de visite en F (0 = aucun). */
+            visit_fee_amount?: number;
             /** @description Caution eau en F (0 = aucune). */
             water_deposit_amount?: number;
             /** @description Caution électricité en F (0 = aucune). */
@@ -1220,7 +1224,11 @@ export interface components {
             rent_amount: number;
             deposit_months: number;
             advance_months: number;
+            /** @description Mois de loyer à payer avant d'entrer (0 = aucun). */
+            prepaid_months: number;
             agent_fee_amount: number;
+            /** @description Frais de visite en F (0 = aucun). */
+            visit_fee_amount: number;
             water_deposit_amount: number;
             electricity_deposit_amount: number;
             /** Format: date */
@@ -1490,7 +1498,11 @@ export interface components {
             rent_amount: number;
             deposit_months: number;
             advance_months: number;
+            /** @description Mois de loyer à payer avant d'entrer (0 = aucun). */
+            prepaid_months: number;
             agent_fee_amount: number;
+            /** @description Frais de visite en F (0 = aucun). */
+            visit_fee_amount: number;
             /** @description Caution eau en F (0 = aucune). */
             water_deposit_amount: number;
             /** @description Caution électricité en F (0 = aucune). */
@@ -1779,7 +1791,11 @@ export interface components {
             rent_amount?: number;
             deposit_months?: number;
             advance_months?: number;
+            /** @description Mois de loyer à payer avant d'entrer (0 = aucun). */
+            prepaid_months?: number;
             agent_fee_amount?: number;
+            /** @description Frais de visite en F (0 = aucun). */
+            visit_fee_amount?: number;
             /** @description Caution eau en F (0 = aucune). */
             water_deposit_amount?: number;
             /** @description Caution électricité en F (0 = aucune). */

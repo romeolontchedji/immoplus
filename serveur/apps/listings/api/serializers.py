@@ -34,7 +34,19 @@ class AnnonceIn(serializers.Serializer):
     rent_amount = serializers.IntegerField(min_value=1)
     deposit_months = serializers.IntegerField(min_value=0, max_value=12)
     advance_months = serializers.IntegerField(min_value=0, max_value=12)
+    prepaid_months = serializers.IntegerField(
+        min_value=0,
+        max_value=12,
+        required=False,
+        help_text="Mois de loyer à payer avant d'entrer (0 = aucun).",
+    )
     agent_fee_amount = serializers.IntegerField(min_value=0, required=False)
+    visit_fee_amount = serializers.IntegerField(
+        min_value=0,
+        max_value=10_000_000,
+        required=False,
+        help_text="Frais de visite en F (0 = aucun).",
+    )
     water_deposit_amount = serializers.IntegerField(
         min_value=0,
         max_value=10_000_000,
@@ -81,7 +93,11 @@ class AnnonceProOut(serializers.Serializer):
     rent_amount = serializers.IntegerField()
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
+    prepaid_months = serializers.IntegerField(
+        help_text="Mois de loyer à payer avant d'entrer (0 = aucun)."
+    )
     agent_fee_amount = serializers.IntegerField()
+    visit_fee_amount = serializers.IntegerField(help_text="Frais de visite en F (0 = aucun).")
     water_deposit_amount = serializers.IntegerField()
     electricity_deposit_amount = serializers.IntegerField()
     available_from = serializers.DateField()

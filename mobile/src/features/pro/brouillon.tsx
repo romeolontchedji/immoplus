@@ -14,7 +14,9 @@ export type Brouillon = {
   rent_amount?: number;
   deposit_months?: number;
   advance_months?: number;
+  prepaid_months?: number; // mois de loyer à payer avant d'entrer (0 = aucun)
   agent_fee_amount?: number;
+  visit_fee_amount?: number; // frais de visite en F (0 = aucun)
   water_deposit_amount?: number; // caution eau en F (0 = aucune)
   electricity_deposit_amount?: number; // caution électricité en F (0 = aucune)
   available_from?: string; // AAAA-MM-JJ

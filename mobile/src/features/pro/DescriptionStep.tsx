@@ -58,6 +58,8 @@ export function DescriptionStep() {
           kitchen: brouillonMaj.kitchen ?? "", rent_negotiable: !!brouillonMaj.rent_negotiable,
           water_deposit_amount: brouillonMaj.water_deposit_amount ?? 0,
           electricity_deposit_amount: brouillonMaj.electricity_deposit_amount ?? 0,
+          prepaid_months: brouillonMaj.prepaid_months ?? 0,
+          visit_fee_amount: brouillonMaj.visit_fee_amount ?? 0,
         },
         { onSuccess: () => router.push("/pro/nouvelle-annonce/medias" as never) },
       );
@@ -72,6 +74,8 @@ export function DescriptionStep() {
       rent_negotiable: !!brouillonMaj.rent_negotiable,
       water_deposit_amount: brouillonMaj.water_deposit_amount ?? 0,
       electricity_deposit_amount: brouillonMaj.electricity_deposit_amount ?? 0,
+      prepaid_months: brouillonMaj.prepaid_months ?? 0,
+      visit_fee_amount: brouillonMaj.visit_fee_amount ?? 0,
     };
     for (const cle of CHAMPS_CREATION) corps[cle] = brouillonMaj[cle];
     if (brouillonMaj.latitude && brouillonMaj.longitude) Object.assign(corps, { latitude: brouillonMaj.latitude, longitude: brouillonMaj.longitude });

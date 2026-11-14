@@ -30,7 +30,7 @@ const entier = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(/\
 
 type Valeurs = {
   title: string; room_type: string; district: string; landmark_text: string;
-  rent_amount: string; deposit_months: string; advance_months: string; agent_fee_amount: string; available_from: string;
+  rent_amount: string; deposit_months: string; advance_months: string; prepaid_months: string; agent_fee_amount: string; visit_fee_amount: string; available_from: string;
   water_deposit_amount: string; electricity_deposit_amount: string;
   has_private_bathroom: boolean; is_fenced: boolean; water_sources: string[]; electricity_meter: string; kitchen: string;
   rent_negotiable: boolean; description_md: string;
@@ -39,7 +39,7 @@ type Valeurs = {
 const depuis = (a: AnnoncePro): Valeurs => ({
   title: a.title, room_type: a.room_type, district: a.district, landmark_text: a.landmark_text,
   rent_amount: String(a.rent_amount), deposit_months: String(a.deposit_months), advance_months: String(a.advance_months),
-  agent_fee_amount: String(a.agent_fee_amount), available_from: a.available_from,
+  prepaid_months: String(a.prepaid_months ?? 0), agent_fee_amount: String(a.agent_fee_amount), visit_fee_amount: String(a.visit_fee_amount ?? 0), available_from: a.available_from,
   water_deposit_amount: String(a.water_deposit_amount ?? 0), electricity_deposit_amount: String(a.electricity_deposit_amount ?? 0), has_private_bathroom: a.has_private_bathroom,
   is_fenced: a.is_fenced, water_sources: a.water_sources, electricity_meter: a.electricity_meter, kitchen: a.kitchen,
   rent_negotiable: a.rent_negotiable, description_md: a.description_md,
@@ -50,7 +50,7 @@ function differences(avant: Valeurs, apres: Valeurs): ModificationAnnonce {
   const corps: Record<string, unknown> = {};
   for (const cle of Object.keys(apres) as (keyof Valeurs)[]) {
     if (apres[cle] === avant[cle]) continue;
-    corps[cle] = ["rent_amount", "deposit_months", "advance_months", "agent_fee_amount", "water_deposit_amount", "electricity_deposit_amount"].includes(cle) ? entier(String(apres[cle])) : apres[cle];
+    corps[cle] = ["rent_amount", "deposit_months", "advance_months", "prepaid_months", "agent_fee_amount", "visit_fee_amount", "water_deposit_amount", "electricity_deposit_amount"].includes(cle) ? entier(String(apres[cle])) : apres[cle];
   }
   return corps as ModificationAnnonce;
 }
@@ -86,6 +86,10 @@ function Formulaire({ annonce }: { annonce: AnnoncePro }) {
       <View style={{ flexDirection: "row", gap: sp[3] }}>
         <View style={{ flex: 1 }}><TextField label="Caution du loyer (mois)" value={v.deposit_months} onChangeText={(x) => maj({ deposit_months: x })} keyboardType="number-pad" erreur={erreur("deposit_months")} /></View>
         <View style={{ flex: 1 }}><TextField label="Avance (mois)" value={v.advance_months} onChangeText={(x) => maj({ advance_months: x })} keyboardType="number-pad" erreur={erreur("advance_months")} /></View>
+      </View>
+      <View style={{ flexDirection: "row", gap: sp[3] }}>
+        <View style={{ flex: 1 }}><TextField label="Pré-payé (mois)" value={v.prepaid_months} onChangeText={(x) => maj({ prepaid_months: x })} keyboardType="number-pad" placeholder="0 = aucun" erreur={erreur("prepaid_months")} /></View>
+        <View style={{ flex: 1 }}><TextField label="Frais de visite (F)" value={v.visit_fee_amount} onChangeText={(x) => maj({ visit_fee_amount: x })} keyboardType="number-pad" placeholder="0 = aucun" erreur={erreur("visit_fee_amount")} /></View>
       </View>
       <View style={{ flexDirection: "row", gap: sp[3] }}>
         <View style={{ flex: 1 }}><TextField label="Caution eau (F)" value={v.water_deposit_amount} onChangeText={(x) => maj({ water_deposit_amount: x })} keyboardType="number-pad" placeholder="0 = aucune" erreur={erreur("water_deposit_amount")} /></View>

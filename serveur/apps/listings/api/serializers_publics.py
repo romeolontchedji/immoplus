@@ -128,7 +128,11 @@ class FicheOut(serializers.Serializer):
     rent_amount = serializers.IntegerField()
     deposit_months = serializers.IntegerField()
     advance_months = serializers.IntegerField()
+    prepaid_months = serializers.IntegerField(
+        help_text="Mois de loyer à payer avant d'entrer (0 = aucun)."
+    )
     agent_fee_amount = serializers.IntegerField()
+    visit_fee_amount = serializers.IntegerField(help_text="Frais de visite en F (0 = aucun).")
     water_deposit_amount = serializers.IntegerField(help_text="Caution eau en F (0 = aucune).")
     electricity_deposit_amount = serializers.IntegerField(
         help_text="Caution électricité en F (0 = aucune)."

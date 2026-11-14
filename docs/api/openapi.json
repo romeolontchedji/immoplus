@@ -3306,9 +3306,21 @@
                         "maximum": 12,
                         "minimum": 0
                     },
+                    "prepaid_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0,
+                        "description": "Mois de loyer à payer avant d'entrer (0 = aucun)."
+                    },
                     "agent_fee_amount": {
                         "type": "integer",
                         "minimum": 0
+                    },
+                    "visit_fee_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Frais de visite en F (0 = aucun)."
                     },
                     "water_deposit_amount": {
                         "type": "integer",
@@ -3429,8 +3441,16 @@
                     "advance_months": {
                         "type": "integer"
                     },
+                    "prepaid_months": {
+                        "type": "integer",
+                        "description": "Mois de loyer à payer avant d'entrer (0 = aucun)."
+                    },
                     "agent_fee_amount": {
                         "type": "integer"
+                    },
+                    "visit_fee_amount": {
+                        "type": "integer",
+                        "description": "Frais de visite en F (0 = aucun)."
                     },
                     "water_deposit_amount": {
                         "type": "integer"
@@ -3518,6 +3538,7 @@
                     "last_confirmed_at",
                     "latitude",
                     "longitude",
+                    "prepaid_months",
                     "published_at",
                     "rent_amount",
                     "rent_negotiable",
@@ -3528,6 +3549,7 @@
                     "title",
                     "updated_at",
                     "views_total",
+                    "visit_fee_amount",
                     "water_deposit_amount",
                     "water_sources"
                 ]
@@ -4339,8 +4361,16 @@
                     "advance_months": {
                         "type": "integer"
                     },
+                    "prepaid_months": {
+                        "type": "integer",
+                        "description": "Mois de loyer à payer avant d'entrer (0 = aucun)."
+                    },
                     "agent_fee_amount": {
                         "type": "integer"
+                    },
+                    "visit_fee_amount": {
+                        "type": "integer",
+                        "description": "Frais de visite en F (0 = aucun)."
                     },
                     "water_deposit_amount": {
                         "type": "integer",
@@ -4452,6 +4482,7 @@
                     "latitude",
                     "longitude",
                     "media",
+                    "prepaid_months",
                     "published_at",
                     "rent_amount",
                     "rent_negotiable",
@@ -4461,6 +4492,7 @@
                     "slug",
                     "status",
                     "title",
+                    "visit_fee_amount",
                     "water_deposit_amount",
                     "water_label",
                     "water_labels",
@@ -5337,9 +5369,21 @@
                         "maximum": 12,
                         "minimum": 0
                     },
+                    "prepaid_months": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 0,
+                        "description": "Mois de loyer à payer avant d'entrer (0 = aucun)."
+                    },
                     "agent_fee_amount": {
                         "type": "integer",
                         "minimum": 0
+                    },
+                    "visit_fee_amount": {
+                        "type": "integer",
+                        "maximum": 10000000,
+                        "minimum": 0,
+                        "description": "Frais de visite en F (0 = aucun)."
                     },
                     "water_deposit_amount": {
                         "type": "integer",

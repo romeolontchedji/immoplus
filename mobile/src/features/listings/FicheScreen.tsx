@@ -412,7 +412,9 @@ export function FicheScreen() {
             <Ligne libelle="Caution eau" valeur={fiche.water_deposit_amount ? francs(fiche.water_deposit_amount) : "Aucune"} />
             <Ligne libelle="Caution électricité" valeur={fiche.electricity_deposit_amount ? francs(fiche.electricity_deposit_amount) : "Aucune"} />
             {fiche.advance_months ? <Ligne libelle="Avance" valeur={`${fiche.advance_months} mois`} /> : null}
+            <Ligne libelle="Pré-payé" valeur={fiche.prepaid_months ? `${fiche.prepaid_months} mois avant d'entrer` : "Aucun"} />
             <Ligne libelle="Frais de démarcheur" valeur={fiche.agent_fee_amount ? francs(fiche.agent_fee_amount) : "Aucun"} />
+            <Ligne libelle="Frais de visite" valeur={fiche.visit_fee_amount ? francs(fiche.visit_fee_amount) : "Aucun"} />
           </View>
 
           {details ? (
