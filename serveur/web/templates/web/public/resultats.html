@@ -86,10 +86,12 @@
         {% endif %}
       </div>
       {% if resultat.alerte_proposee %}
-        <div class="etat-vide__actions">
-          <a class="bouton bouton--primaire"
-             href="/compte/alertes?{{ requete_alerte }}">Créer une alerte pour cette recherche</a>
-        </div>
+        {% if not request.user.is_authenticated or request.user.role == "client" %}
+          <div class="etat-vide__actions">
+            <a class="bouton bouton--primaire"
+               href="/compte/alertes?{{ requete_alerte }}">Créer une alerte pour cette recherche</a>
+          </div>
+        {% endif %}
       {% endif %}
     </div>
   {% else %}
@@ -124,13 +126,15 @@
     </section>
   {% endif %}
   {% if not resultat.vide and requete_alerte %}
-    <div class="bandeau-alerte">
-      <div>
-        <strong>Rien ne te convient ?</strong>
-        <p class="texte-doux mb-0">Crée une alerte, on te prévient dès qu'une chambre correspond.</p>
+    {% if not request.user.is_authenticated or request.user.role == "client" %}
+      <div class="bandeau-alerte">
+        <div>
+          <strong>Rien ne te convient ?</strong>
+          <p class="texte-doux mb-0">Crée une alerte, on te prévient dès qu'une chambre correspond.</p>
+        </div>
+        <a class="bouton bouton--primaire"
+           href="/compte/alertes?{{ requete_alerte }}">Créer une alerte</a>
       </div>
-      <a class="bouton bouton--primaire"
-         href="/compte/alertes?{{ requete_alerte }}">Créer une alerte</a>
-    </div>
+    {% endif %}
   {% endif %}
 </div>

@@ -130,3 +130,26 @@ def test_la_fiche_n_a_plus_de_lien_vers_une_carte():
     a = ListingFactory()
     page = Client().get(f"/annonces/{a.slug}").content.decode()
     assert "openstreetmap" not in page and "Voir le quartier sur la carte" not in page
+
+
+class TestSansLienMortPourLesGerants:
+    """Un gérant n'a pas d'alertes (la page répond 404) : aucun bouton ne l'y envoie."""
+
+    def test_un_gerant_ne_voit_aucun_lien_vers_les_alertes(self):
+        from apps.listings.tests.fabriques import gerant_verifie
+
+        g = gerant_verifie()
+        c = connecte(g.user)
+        assert c.get("/compte/alertes").status_code == 404
+        accueil = c.get("/").content.decode()
+        assert "/compte/alertes" not in accueil and "Gérer mes annonces" in accueil
+        a = ListingFactory()
+        assert "/compte/alertes" not in c.get(f"/annonces/{a.slug}").content.decode()
+
+    def test_visiteurs_et_locataires_gardent_le_bouton(self):
+        for page in (
+            Client().get("/").content.decode(),
+            connecte(verifie()).get("/").content.decode(),
+        ):
+            assert "Me prévenir des nouvelles chambres" in page
+            assert 'href="/compte/alertes?nouvelle=1"' in page
